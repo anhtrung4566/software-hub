@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 [assembly: AssemblyTitle("VBTM Pro 2.2.4 - Chuan Hoa Van Ban & Chinh Ta AI Offline")]
 [assembly: AssemblyDescription("Bo cong cu Chuan Hoa The Thuc Van Ban Nghi dinh 30, CAND, Tao QR & Soat Loi Chinh Ta AI Offline cho Microsoft Word")]
@@ -29,10 +30,19 @@ namespace VBTMProSuite
             Application.SetCompatibleTextRenderingDefault(false);
 
             bool launchAppDirectly = false;
+            bool uninstallMode = false;
             foreach (string a in args)
             {
                 if (a.Equals("--app", StringComparison.OrdinalIgnoreCase))
                     launchAppDirectly = true;
+                if (a.Equals("--uninstall", StringComparison.OrdinalIgnoreCase))
+                    uninstallMode = true;
+            }
+
+            if (uninstallMode)
+            {
+                RunUninstaller();
+                return;
             }
 
             string exeName = Path.GetFileName(Application.ExecutablePath);
@@ -48,6 +58,25 @@ namespace VBTMProSuite
             else
             {
                 Application.Run(new SetupWizardForm());
+            }
+        }
+
+        private static void RunUninstaller()
+        {
+            try
+            {
+                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.2.4.lnk");
+                if (File.Exists(desktopLnk)) File.Delete(desktopLnk);
+
+                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.2.4.lnk");
+                if (File.Exists(startMenuLnk)) File.Delete(startMenuLnk);
+
+                Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\VBTMPro", false);
+                MessageBox.Show("Đã gỡ cài đặt VBTM Pro 2.2.4 sạch sẽ khỏi hệ thống!", "Gỡ Cài Đặt - VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Thông báo khi gỡ cài đặt: " + ex.Message, "VBTM Pro 2.2.4");
             }
         }
     }
@@ -70,7 +99,7 @@ namespace VBTMProSuite
         public SetupWizardForm()
         {
             this.Text = "Trình Cài Đặt VBTM Pro 2.2.4 (Offline Setup)";
-            this.Size = new Size(640, 470);
+            this.ClientSize = new Size(630, 440);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -86,9 +115,8 @@ namespace VBTMProSuite
             Panel header = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 90,
-                BackColor = Color.FromArgb(30, 41, 59),
-                Padding = new Padding(22, 16, 22, 16)
+                Height = 88,
+                BackColor = Color.FromArgb(30, 41, 59)
             };
 
             Label lblTitle = new Label
@@ -116,7 +144,7 @@ namespace VBTMProSuite
             Label lblDir = new Label
             {
                 Text = "Thư mục cài đặt (Không yêu cầu quyền Administrator):",
-                Location = new Point(24, 110),
+                Location = new Point(24, 106),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(148, 163, 184)
             };
@@ -130,8 +158,8 @@ namespace VBTMProSuite
             txtInstallDir = new TextBox
             {
                 Text = defaultDir,
-                Location = new Point(24, 134),
-                Size = new Size(574, 28),
+                Location = new Point(24, 130),
+                Size = new Size(580, 28),
                 BackColor = Color.FromArgb(30, 41, 59),
                 ForeColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -143,7 +171,7 @@ namespace VBTMProSuite
             {
                 Text = "Tạo biểu tượng VBTM Pro 2.2.4 ngoài màn hình Desktop và Start Menu",
                 Checked = true,
-                Location = new Point(24, 178),
+                Location = new Point(24, 172),
                 AutoSize = true,
                 ForeColor = Color.White
             };
@@ -151,9 +179,9 @@ namespace VBTMProSuite
 
             chkWordMacroExport = new CheckBox
             {
-                Text = "Cài đặt bộ quy chuẩn Microsoft Word (Nghị định 30, CAND, HD05 & COM Automation)",
+                Text = "Tích hợp bộ quy chuẩn Microsoft Word (Nghị định 30, CAND, HD05 & COM Automation)",
                 Checked = true,
-                Location = new Point(24, 210),
+                Location = new Point(24, 202),
                 AutoSize = true,
                 ForeColor = Color.White
             };
@@ -161,17 +189,17 @@ namespace VBTMProSuite
 
             Panel infoBox = new Panel
             {
-                Location = new Point(24, 246),
-                Size = new Size(574, 82),
+                Location = new Point(24, 238),
+                Size = new Size(580, 82),
                 BackColor = Color.FromArgb(22, 32, 50)
             };
             Label lblInfo = new Label
             {
                 Text = "• Hoạt động ngoại tuyến độc lập 100% (Bảo mật tuyệt đối tài liệu nội bộ)\r\n" +
                        "• Tự động căn lề trang A4 (30-15-20-20mm), font Times New Roman 14pt trực tiếp vào Word\r\n" +
-                       "• Đi kèm tệp gỡ cài đặt sạch sẽ: Go_Cai_Dat_VBTM.bat",
+                       "• Hỗ trợ gỡ cài đặt qua Installed Apps của Windows hoặc chạy Go_Cai_Dat_VBTM.bat",
                 Location = new Point(12, 10),
-                Size = new Size(550, 64),
+                Size = new Size(556, 64),
                 ForeColor = Color.FromArgb(148, 163, 184)
             };
             infoBox.Controls.Add(lblInfo);
@@ -179,8 +207,8 @@ namespace VBTMProSuite
 
             lblStatus = new Label
             {
-                Text = "Sẵn sàng cài đặt. Nhấn 'Cài đặt ngay' để bắt đầu.",
-                Location = new Point(24, 338),
+                Text = "Sẵn sàng cài đặt. Nhấn 'Cài Đặt Ngay' để bắt đầu.",
+                Location = new Point(24, 332),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(56, 189, 248)
             };
@@ -188,8 +216,8 @@ namespace VBTMProSuite
 
             progressBar = new ProgressBar
             {
-                Location = new Point(24, 362),
-                Size = new Size(574, 14),
+                Location = new Point(24, 356),
+                Size = new Size(580, 14),
                 Value = 0
             };
             this.Controls.Add(progressBar);
@@ -197,8 +225,8 @@ namespace VBTMProSuite
             btnInstall = new Button
             {
                 Text = "Cài Đặt Ngay",
-                Location = new Point(428, 388),
-                Size = new Size(170, 36),
+                Location = new Point(434, 384),
+                Size = new Size(170, 38),
                 BackColor = Color.FromArgb(2, 132, 199),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -212,8 +240,8 @@ namespace VBTMProSuite
             btnPortable = new Button
             {
                 Text = "Chạy Ngay (Portable)",
-                Location = new Point(250, 388),
-                Size = new Size(168, 36),
+                Location = new Point(254, 384),
+                Size = new Size(170, 38),
                 BackColor = Color.FromArgb(51, 65, 85),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -237,24 +265,24 @@ namespace VBTMProSuite
         {
             if (isInstalled)
             {
-                if (File.Exists(targetExePath))
-                {
-                    Process.Start(targetExePath, "--app");
-                }
-                this.Close();
+                LaunchInstalledApp();
                 return;
             }
 
             try
             {
                 string installDir = txtInstallDir.Text.Trim();
-                progressBar.Value = 20;
-                lblStatus.Text = "Đang tạo thư mục cài đặt và sao chép tệp quy chuẩn...";
+                progressBar.Value = 25;
+                lblStatus.Text = "Đang tạo thư mục cài đặt và sao chép tệp thực thi...";
                 Application.DoEvents();
 
                 Directory.CreateDirectory(installDir);
                 targetExePath = Path.Combine(installDir, "VBTM-Pro.exe");
-                File.Copy(Application.ExecutablePath, targetExePath, true);
+
+                if (!Application.ExecutablePath.Equals(targetExePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    File.Copy(Application.ExecutablePath, targetExePath, true);
+                }
 
                 progressBar.Value = 55;
                 if (chkWordMacroExport.Checked)
@@ -263,49 +291,82 @@ namespace VBTMProSuite
                     File.WriteAllText(basPath, GetWordVbaMacroCode(), Encoding.UTF8);
                 }
 
-                // Tạo tệp Gỡ cài đặt Go_Cai_Dat_VBTM.bat đúng như hướng dẫn trên trang web
-                string uninstallBat = Path.Combine(installDir, "Go_Cai_Dat_VBTM.bat");
                 string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.2.4.lnk");
+                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.2.4.lnk");
+
+                string uninstallBat = Path.Combine(installDir, "Go_Cai_Dat_VBTM.bat");
                 File.WriteAllText(uninstallBat,
                     "@echo off\r\n" +
                     "chcp 65001 >nul\r\n" +
-                    "echo Dang go cai dat VBTM Pro 2.2.4...\r\n" +
-                    "del /f /q \"" + desktopLnk + "\" 2>nul\r\n" +
-                    "echo Da go cai dat thanh cong!\r\n" +
-                    "pause\r\n", Encoding.UTF8);
+                    "\"" + targetExePath + "\" --uninstall\r\n", Encoding.UTF8);
 
-                progressBar.Value = 80;
+                // Đăng ký vào Windows Installed Apps (Current User - không cần quyền Admin)
+                RegisterUninstallerInRegistry(installDir, targetExePath);
+
+                progressBar.Value = 85;
                 if (chkDesktopShortcut.Checked)
                 {
-                    lblStatus.Text = "Đang tạo lối tắt ngoài màn hình Desktop...";
+                    lblStatus.Text = "Đang tạo lối tắt ngoài màn hình Desktop & Start Menu...";
                     Application.DoEvents();
                     CreateShortcut(desktopLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban & Chinh Ta AI");
+                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban & Chinh Ta AI");
                 }
 
                 progressBar.Value = 100;
                 lblStatus.Text = "✓ Cài đặt VBTM Pro 2.2.4 hoàn tất thành công!";
                 lblStatus.ForeColor = Color.FromArgb(16, 185, 129);
                 isInstalled = true;
-                btnInstall.Text = "Hoàn Tất & Mở VBTM Pro";
+                btnInstall.Text = "Mở VBTM Pro 2.2.4";
                 btnInstall.BackColor = Color.FromArgb(16, 185, 129);
 
                 MessageBox.Show(
-                    "Đã cài đặt thành công VBTM Pro 2.2.4 vào máy tính!\n\n" +
-                    "• Thư mục: " + installDir + "\n" +
-                    "• Biểu tượng Desktop: VBTM Pro 2.2.4\n\n" +
-                    "Nhấn OK để khởi chạy phần mềm ngay.",
+                    "Đã cài đặt thành công VBTM Pro 2.2.4!\n\n" +
+                    "• Thư mục cài đặt: " + installDir + "\n" +
+                    "• Lối tắt Desktop: VBTM Pro 2.2.4\n\n" +
+                    "Nhấn OK để mở phần mềm ngay.",
                     "Cài Đặt Thành Công - VBTM Pro 2.2.4",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
                 );
 
-                Process.Start(targetExePath, "--app");
-                this.Close();
+                LaunchInstalledApp();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Lỗi khi cài đặt: " + ex.Message, "VBTM Pro Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void LaunchInstalledApp()
+        {
+            this.Hide();
+            using (MainStudioForm app = new MainStudioForm())
+            {
+                app.ShowDialog();
+            }
+            this.Close();
+        }
+
+        private void RegisterUninstallerInRegistry(string installDir, string exePath)
+        {
+            try
+            {
+                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\VBTMPro"))
+                {
+                    if (key != null)
+                    {
+                        key.SetValue("DisplayName", "VBTM Chuẩn Hóa Văn Bản Tiếng Việt (VBTM Pro 2.2.4)");
+                        key.SetValue("DisplayVersion", "2.2.4");
+                        key.SetValue("Publisher", "Software Hub");
+                        key.SetValue("InstallLocation", installDir);
+                        key.SetValue("DisplayIcon", exePath);
+                        key.SetValue("UninstallString", "\"" + exePath + "\" --uninstall");
+                        key.SetValue("NoModify", 1, RegistryValueKind.DWord);
+                        key.SetValue("NoRepair", 1, RegistryValueKind.DWord);
+                    }
+                }
+            }
+            catch { }
         }
 
         private void CreateShortcut(string shortcutPath, string targetPath, string arguments, string description)
@@ -357,6 +418,7 @@ namespace VBTMProSuite
         private PictureBox picQr;
         private ListBox lstIssues;
         private Label lblStatus;
+        private CheckBox chkIncludeQr;
 
         private static readonly string[,] SpellRules = new string[,]
         {
@@ -372,13 +434,16 @@ namespace VBTMProSuite
             { @"\bhổ trợ\b", "hỗ trợ", "Sai dấu hỏi/ngã ('hỗ trợ')" },
             { @"\btiêu chuẫn\b", "tiêu chuẩn", "Sai dấu hỏi/ngã ('tiêu chuẩn')" },
             { @"\bkhẩn chương\b", "khẩn trương", "Sai phụ âm ch/tr ('khẩn trương')" },
-            { @"\bsát nhập\b", "sáp nhập", "Từ chuẩn hành chính ('sáp nhập')" }
+            { @"\bsát nhập\b", "sáp nhập", "Từ chuẩn hành chính ('sáp nhập')" },
+            { @"\bxáng suốt\b", "sáng suốt", "Sai phụ âm x/s ('sáng suốt')" },
+            { @"\bgiử gìn\b", "giữ gìn", "Sai dấu hỏi/ngã ('giữ gìn')" },
+            { @"\bvửng chắc\b", "vững chắc", "Sai dấu hỏi/ngã ('vững chắc')" }
         };
 
         public MainStudioForm()
         {
             this.Text = "VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Nghị Định 30, CAND, Tạo QR & Chính Tả AI Offline";
-            this.Size = new Size(1120, 760);
+            this.ClientSize = new Size(1120, 720);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(15, 23, 42);
             this.ForeColor = Color.White;
@@ -391,13 +456,23 @@ namespace VBTMProSuite
 
         private void BuildMainUI()
         {
+            // Bottom Status Bar (Added before Fill panel for proper WinForms docking)
+            lblStatus = new Label
+            {
+                Dock = DockStyle.Bottom,
+                Height = 30,
+                Text = "  ✓ Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Quy chuẩn Nghị định 30/2020/NĐ-CP & Thông tư 30/2023/TT-BCA (CAND)",
+                BackColor = Color.FromArgb(30, 41, 59),
+                ForeColor = Color.FromArgb(56, 189, 248),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
             // Top Ribbon Bar
             Panel topBar = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = 64,
-                BackColor = Color.FromArgb(30, 41, 59),
-                Padding = new Padding(16, 10, 16, 10)
+                BackColor = Color.FromArgb(30, 41, 59)
             };
 
             Label lblBrand = new Label
@@ -412,8 +487,8 @@ namespace VBTMProSuite
 
             cboTemplate = new ComboBox
             {
-                Location = new Point(180, 18),
-                Size = new Size(250, 28),
+                Location = new Point(178, 18),
+                Size = new Size(245, 28),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9.5f)
             };
@@ -428,24 +503,30 @@ namespace VBTMProSuite
             cboTemplate.SelectedIndexChanged += (s, e) => LoadTemplate(cboTemplate.SelectedIndex);
             topBar.Controls.Add(cboTemplate);
 
-            Button btnStd = CreateBtn("Chuẩn Hóa & Sửa Chính Tả AI", new Point(445, 14), new Size(210, 36), Color.FromArgb(2, 132, 199));
+            Button btnStd = CreateBtn("1. Chuẩn Hóa & Sửa Chính Tả AI", new Point(435, 14), new Size(215, 36), Color.FromArgb(2, 132, 199));
             btnStd.Click += (s, e) => StandardizeAndFixAll();
             topBar.Controls.Add(btnStd);
 
-            Button btnWordLive = CreateBtn("Chuẩn Hóa Trên Word Đang Mở", new Point(665, 14), new Size(225, 36), Color.FromArgb(79, 70, 229));
+            Button btnWordLive = CreateBtn("2. Chuẩn Hóa Word Đang Mở", new Point(660, 14), new Size(215, 36), Color.FromArgb(79, 70, 229));
             btnWordLive.Click += (s, e) => FormatActiveWordDocument();
             topBar.Controls.Add(btnWordLive);
 
-            Button btnExportDoc = CreateBtn("Xuất File Word (.doc A4)", new Point(900, 14), new Size(185, 36), Color.FromArgb(5, 150, 105));
+            Button btnExportDoc = CreateBtn("3. Xuất & Mở Word (.doc A4)", new Point(885, 14), new Size(215, 36), Color.FromArgb(5, 150, 105));
             btnExportDoc.Click += (s, e) => ExportAndOpenWordDoc();
             topBar.Controls.Add(btnExportDoc);
 
-            this.Controls.Add(topBar);
+            // Main Scrollable Workspace
+            Panel mainArea = new Panel
+            {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Color.FromArgb(15, 23, 42)
+            };
 
-            // Main Split Container
-            Panel mainArea = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16) };
+            // Add in standard WinForms Z-order: Fill first (index 0), then Top & Bottom
             this.Controls.Add(mainArea);
-            mainArea.BringToFront();
+            this.Controls.Add(topBar);
+            this.Controls.Add(lblStatus);
 
             // Left Meta Fields
             GroupBox grpMeta = new GroupBox
@@ -453,23 +534,23 @@ namespace VBTMProSuite
                 Text = " 1. Thông Tin Thể Thức Hành Chính (Nghị Định 30 / CAND / HD05) ",
                 ForeColor = Color.FromArgb(56, 189, 248),
                 Location = new Point(16, 12),
-                Size = new Size(520, 380)
+                Size = new Size(520, 375)
             };
 
             txtGovOrg = AddLabeledInput(grpMeta, "Cơ quan chủ quản:", 28, "CÔNG AN TP ĐÀ NẴNG");
-            txtIssueOrg = AddLabeledInput(grpMeta, "Đơn vị ban hành:", 64, "PHÒNG KỸ THUẬT HÌNH SỰ");
-            txtDocNum = AddLabeledInput(grpMeta, "Số & Ký hiệu:", 100, "86/BC-PC09");
-            txtLocation = AddLabeledInput(grpMeta, "Địa danh, ngày tháng:", 136, "Đà Nẵng, ngày 11 tháng 11 năm 2026");
-            txtDocType = AddLabeledInput(grpMeta, "Tên loại văn bản:", 172, "BÁO CÁO");
-            txtSubject = AddLabeledInput(grpMeta, "Trích yếu nội dung:", 208, "Kết quả ứng dụng phần mềm chuẩn hóa văn bản và số hóa tài liệu");
-            txtSignerTitle = AddLabeledInput(grpMeta, "Chức vụ người ký:", 244, "TRƯỞNG PHÒNG");
-            txtSignerName = AddLabeledInput(grpMeta, "Họ tên người ký:", 280, "Thượng tá Trần Minh Quân");
+            txtIssueOrg = AddLabeledInput(grpMeta, "Đơn vị ban hành:", 62, "PHÒNG KỸ THUẬT HÌNH SỰ");
+            txtDocNum = AddLabeledInput(grpMeta, "Số & Ký hiệu:", 96, "86/BC-PC09");
+            txtLocation = AddLabeledInput(grpMeta, "Địa danh, ngày tháng:", 130, "Đà Nẵng, ngày 11 tháng 11 năm 2026");
+            txtDocType = AddLabeledInput(grpMeta, "Tên loại văn bản:", 164, "BÁO CÁO");
+            txtSubject = AddLabeledInput(grpMeta, "Trích yếu nội dung:", 198, "Kết quả ứng dụng phần mềm chuẩn hóa văn bản và số hóa tài liệu");
+            txtSignerTitle = AddLabeledInput(grpMeta, "Chức vụ người ký:", 232, "TRƯỞNG PHÒNG");
+            txtSignerName = AddLabeledInput(grpMeta, "Họ tên người ký:", 266, "Thượng tá Trần Minh Quân");
 
-            Label lblRec = new Label { Text = "Nơi nhận:", Location = new Point(14, 318), AutoSize = true, ForeColor = Color.LightGray };
+            Label lblRec = new Label { Text = "Nơi nhận:", Location = new Point(14, 304), AutoSize = true, ForeColor = Color.LightGray };
             txtRecipients = new TextBox
             {
-                Location = new Point(155, 315),
-                Size = new Size(345, 50),
+                Location = new Point(155, 302),
+                Size = new Size(345, 58),
                 Multiline = true,
                 ScrollBars = ScrollBars.Vertical,
                 Text = "- Ban Giám đốc CATP (để b/c);\r\n- Phòng Tham mưu;\r\n- Lưu: VT, PC09."
@@ -483,32 +564,39 @@ namespace VBTMProSuite
             {
                 Text = " 2. Tạo Mã QR Động & Thẩm Định Chính Tả AI Offline ",
                 ForeColor = Color.FromArgb(56, 189, 248),
-                Location = new Point(16, 400),
-                Size = new Size(520, 225)
+                Location = new Point(16, 395),
+                Size = new Size(520, 218)
             };
 
             picQr = new PictureBox
             {
-                Location = new Point(16, 28),
-                Size = new Size(110, 110),
+                Location = new Point(16, 26),
+                Size = new Size(106, 106),
                 BackColor = Color.White,
                 SizeMode = PictureBoxSizeMode.Zoom
             };
             grpQr.Controls.Add(picQr);
 
-            Label lblQr = new Label { Text = "Nội dung mã QR xác thực:", Location = new Point(140, 26), AutoSize = true, ForeColor = Color.LightGray };
-            grpQr.Controls.Add(lblQr);
+            chkIncludeQr = new CheckBox
+            {
+                Text = "Đính kèm mã QR khi xuất ra Word",
+                Checked = true,
+                Location = new Point(140, 24),
+                AutoSize = true,
+                ForeColor = Color.White
+            };
+            grpQr.Controls.Add(chkIncludeQr);
 
             txtQrContent = new TextBox
             {
-                Location = new Point(140, 48),
+                Location = new Point(140, 50),
                 Size = new Size(255, 26),
                 Text = "VBTM-VERIFY:86/BC-PC09|PC09-DANANG|2026"
             };
             txtQrContent.TextChanged += (s, e) => UpdateQrPreview();
             grpQr.Controls.Add(txtQrContent);
 
-            Button btnSaveQr = CreateBtn("Lưu Ảnh QR", new Point(405, 45), new Size(98, 28), Color.FromArgb(51, 65, 85));
+            Button btnSaveQr = CreateBtn("Lưu Ảnh QR", new Point(402, 48), new Size(102, 28), Color.FromArgb(51, 65, 85));
             btnSaveQr.Click += (s, e) =>
             {
                 using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PNG Image|*.png", FileName = "MaQR_VanBan.png" })
@@ -516,7 +604,7 @@ namespace VBTMProSuite
                     if (sfd.ShowDialog() == DialogResult.OK && picQr.Image != null)
                     {
                         picQr.Image.Save(sfd.FileName, ImageFormat.Png);
-                        MessageBox.Show("Đã lưu mã QR tại: " + sfd.FileName, "VBTM Pro 2.2.4");
+                        MessageBox.Show("Đã lưu ảnh mã QR tại:\n" + sfd.FileName, "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             };
@@ -524,8 +612,8 @@ namespace VBTMProSuite
 
             lstIssues = new ListBox
             {
-                Location = new Point(140, 82),
-                Size = new Size(364, 128),
+                Location = new Point(140, 84),
+                Size = new Size(364, 120),
                 BackColor = Color.FromArgb(30, 41, 59),
                 ForeColor = Color.FromArgb(251, 191, 36),
                 BorderStyle = BorderStyle.FixedSingle
@@ -533,7 +621,7 @@ namespace VBTMProSuite
             lstIssues.Items.Add("✓ Hệ thống AI Offline sẵn sàng rà soát lỗi chính tả & thể thức.");
             grpQr.Controls.Add(lstIssues);
 
-            Button btnSampleErr = CreateBtn("Thử Chèn Lỗi", new Point(16, 148), new Size(110, 28), Color.FromArgb(71, 85, 105));
+            Button btnSampleErr = CreateBtn("Chèn Lỗi Mẫu", new Point(16, 140), new Size(106, 30), Color.FromArgb(71, 85, 105));
             btnSampleErr.Click += (s, e) =>
             {
                 txtBody.Text = "Thực hiện chủ chương cải cách hành chính, đơn vị đã khẩn chương chiển khai kế hoạc bổ xung trang thiết bị và sử lý nghiêm các trường hợp sai phạm , đảm bảo kiểm xoát chính sác tiến độ công việc và hổ trợ cán bộ đạt tiêu chuẫn đề ra";
@@ -541,7 +629,7 @@ namespace VBTMProSuite
             };
             grpQr.Controls.Add(btnSampleErr);
 
-            Button btnCheck = CreateBtn("Rà Soát Lỗi", new Point(16, 182), new Size(110, 28), Color.FromArgb(2, 132, 199));
+            Button btnCheck = CreateBtn("Rà Soát Lỗi", new Point(16, 176), new Size(106, 30), Color.FromArgb(2, 132, 199));
             btnCheck.Click += (s, e) => ScanIssuesOnly();
             grpQr.Controls.Add(btnCheck);
 
@@ -553,13 +641,13 @@ namespace VBTMProSuite
                 Text = " 3. Nội Dung Văn Bản Chính (Phông chữ chuẩn Times New Roman 14pt - Khổ A4) ",
                 ForeColor = Color.FromArgb(56, 189, 248),
                 Location = new Point(550, 12),
-                Size = new Size(536, 613)
+                Size = new Size(550, 601)
             };
 
             txtBody = new TextBox
             {
                 Location = new Point(14, 28),
-                Size = new Size(508, 570),
+                Size = new Size(522, 558),
                 Multiline = true,
                 ScrollBars = ScrollBars.Vertical,
                 Font = new Font("Times New Roman", 13.5f),
@@ -568,17 +656,6 @@ namespace VBTMProSuite
             };
             grpEditor.Controls.Add(txtBody);
             mainArea.Controls.Add(grpEditor);
-
-            lblStatus = new Label
-            {
-                Dock = DockStyle.Bottom,
-                Height = 28,
-                Text = "  Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Quy chuẩn Nghị định 30/2020/NĐ-CP & Thông tư 30/2023/TT-BCA (CAND)",
-                BackColor = Color.FromArgb(30, 41, 59),
-                ForeColor = Color.FromArgb(148, 163, 184),
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            this.Controls.Add(lblStatus);
         }
 
         private TextBox AddLabeledInput(Control parent, string label, int y, string defaultVal)
@@ -609,6 +686,7 @@ namespace VBTMProSuite
 
         private void LoadTemplate(int idx)
         {
+            if (txtGovOrg == null) return;
             if (idx == 0)
             {
                 txtGovOrg.Text = "ỦY BAN NHÂN DÂN TP ĐÀ NẴNG";
@@ -653,6 +731,10 @@ namespace VBTMProSuite
                 txtDocType.Text = "BÁO CÁO";
                 txtSubject.Text = "Tổng kết công tác cải cách hành chính và chuyển đổi số trong công tác Đảng năm 2026";
                 txtBody.Text = "Thực hiện Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy Phòng Kỹ thuật hình sự báo cáo kết quả thực hiện chuẩn hóa toàn bộ hệ thống văn bản nội bộ./.";
+            }
+            if (txtQrContent != null)
+            {
+                txtQrContent.Text = "VBTM:" + txtDocNum.Text + "|" + txtIssueOrg.Text;
             }
         }
 
@@ -707,10 +789,9 @@ namespace VBTMProSuite
             txtBody.Text = raw;
             ScanIssuesOnly();
             lblStatus.Text = "  ✓ Đã chuẩn hóa thể thức Nghị định 30 & tự động sửa " + fixedCount + " lỗi chính tả tiếng Việt!";
-            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ký hiệu kết thúc và sửa " + fixedCount + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ký hiệu kết thúc và tự động sửa " + fixedCount + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        // Kết nối trực tiếp vào cửa sổ Microsoft Word đang mở qua COM Automation
         private void FormatActiveWordDocument()
         {
             try
@@ -718,7 +799,6 @@ namespace VBTMProSuite
                 Type wordType = Type.GetTypeFromProgID("Word.Application");
                 if (wordType == null)
                 {
-                    MessageBox.Show("Máy tính chưa cài đặt Microsoft Word. Đang chuyển sang chế độ xuất tệp .doc chuẩn A4!", "VBTM Pro 2.2.4");
                     ExportAndOpenWordDoc();
                     return;
                 }
@@ -730,15 +810,26 @@ namespace VBTMProSuite
                 }
                 catch
                 {
-                    wordApp = Activator.CreateInstance(wordType);
+                    // Nếu chưa mở Word, tự động xuất văn bản hiện tại ra file .doc chuẩn A4 và mở bằng Word
+                    string tempDocPath = Path.Combine(Path.GetTempPath(), "VBTM_VanBan_ChuanHoa_ND30.doc");
+                    WriteWordDocFile(tempDocPath);
+                    Process.Start(tempDocPath);
+                    lblStatus.Text = "  ✓ Đã khởi tạo tài liệu chuẩn Nghị định 30 và mở trực tiếp trong Microsoft Word!";
+                    return;
                 }
 
                 wordType.InvokeMember("Visible", BindingFlags.SetProperty, null, wordApp, new object[] { true });
                 object docs = wordType.InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
                 int count = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
-                object doc = count > 0
-                    ? wordType.InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null)
-                    : docs.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, docs, null);
+                if (count == 0)
+                {
+                    string tempDocPath = Path.Combine(Path.GetTempPath(), "VBTM_VanBan_ChuanHoa_ND30.doc");
+                    WriteWordDocFile(tempDocPath);
+                    Process.Start(tempDocPath);
+                    return;
+                }
+
+                object doc = wordType.InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
 
                 // Thiết lập lề trang A4 chuẩn Nghị định 30 (1 cm = 28.3465 pt)
                 object pageSetup = doc.GetType().InvokeMember("PageSetup", BindingFlags.GetProperty, null, doc, null);
@@ -752,7 +843,14 @@ namespace VBTMProSuite
                 font.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, font, new object[] { "Times New Roman" });
                 font.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, font, new object[] { 14f });
 
-                MessageBox.Show("Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo Nghị định 30/2020/NĐ-CP:\n• Khổ A4, Lề Trái 30mm - Phải 15mm - Trên/Dưới 20mm\n• Font chữ: Times New Roman 14pt!", "VBTM Pro 2.2.4 - Word Add-in", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo Nghị định 30/2020/NĐ-CP:\n\n" +
+                    "• Khổ giấy A4, Lề Trái 30mm - Phải 15mm - Trên 20mm - Dưới 20mm\n" +
+                    "• Phông chữ chuẩn: Times New Roman 14pt!",
+                    "VBTM Pro 2.2.4 - Word Automation",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
             }
             catch
             {
@@ -760,30 +858,33 @@ namespace VBTMProSuite
             }
         }
 
-        private void ExportAndOpenWordDoc()
+        private void WriteWordDocFile(string filePath)
         {
-            using (SaveFileDialog sfd = new SaveFileDialog
+            StringBuilder sbBody = new StringBuilder();
+            foreach (string line in txtBody.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
-                Filter = "Microsoft Word Document (*.doc)|*.doc",
-                FileName = "VanBan_ChuanHoa_ND30.doc"
-            })
+                sbBody.AppendFormat("<p style='text-indent:1.27cm;text-align:justify;margin:0 0 6pt 0;font-size:14pt;'>{0}</p>",
+                    System.Security.SecurityElement.Escape(line.Trim()));
+            }
+
+            StringBuilder sbRec = new StringBuilder();
+            foreach (string r in txtRecipients.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (sfd.ShowDialog() != DialogResult.OK) return;
+                sbRec.AppendFormat("<div>{0}</div>", System.Security.SecurityElement.Escape(r.Trim()));
+            }
 
-                StringBuilder sbBody = new StringBuilder();
-                foreach (string line in txtBody.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            string qrImgHtml = "";
+            if (chkIncludeQr != null && chkIncludeQr.Checked && picQr.Image != null)
+            {
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    sbBody.AppendFormat("<p style='text-indent:1.27cm;text-align:justify;margin:0 0 6pt 0;font-size:14pt;'>{0}</p>",
-                        System.Security.SecurityElement.Escape(line.Trim()));
+                    picQr.Image.Save(ms, ImageFormat.Png);
+                    string b64 = Convert.ToBase64String(ms.ToArray());
+                    qrImgHtml = "<div style='margin-top:8pt;'><img src='data:image/png;base64," + b64 + "' width='72' height='72'/><div style='font-size:8.5pt;color:#444;'>Mã QR xác thực VBTM</div></div>";
                 }
+            }
 
-                StringBuilder sbRec = new StringBuilder();
-                foreach (string r in txtRecipients.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    sbRec.AppendFormat("<div>{0}</div>", System.Security.SecurityElement.Escape(r.Trim()));
-                }
-
-                string html = @"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            string html = @"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'>
 <style>
 @page Section1 { size:21.0cm 29.7cm; margin:2.0cm 1.5cm 2.0cm 3.0cm; }
@@ -810,12 +911,25 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
 <p style='text-align:center;font-weight:bold;font-size:13.5pt;margin:0 0 14pt 0;'>" + System.Security.SecurityElement.Escape(txtSubject.Text) + @"</p>
 " + sbBody.ToString() + @"
 <table style='margin-top:18pt;'><tr>
-<td style='width:50%;font-size:11pt;'><b><i>Nơi nhận:</i></b>" + sbRec.ToString() + @"</td>
+<td style='width:50%;font-size:11pt;'><b><i>Nơi nhận:</i></b>" + sbRec.ToString() + qrImgHtml + @"</td>
 <td style='width:50%;text-align:center;font-size:13pt;'><b>" + System.Security.SecurityElement.Escape(txtSignerTitle.Text) + @"</b><br/><br/><br/><br/><b>" + System.Security.SecurityElement.Escape(txtSignerName.Text) + @"</b></td>
 </tr></table>
 </div></body></html>";
 
-                File.WriteAllText(sfd.FileName, html, new UTF8Encoding(true));
+            File.WriteAllText(filePath, html, new UTF8Encoding(true));
+        }
+
+        private void ExportAndOpenWordDoc()
+        {
+            using (SaveFileDialog sfd = new SaveFileDialog
+            {
+                Filter = "Microsoft Word Document (*.doc)|*.doc",
+                FileName = "VanBan_ChuanHoa_ND30.doc"
+            })
+            {
+                if (sfd.ShowDialog() != DialogResult.OK) return;
+                WriteWordDocFile(sfd.FileName);
+                lblStatus.Text = "  ✓ Đã xuất tệp Word chuẩn Nghị định 30: " + sfd.FileName;
                 if (MessageBox.Show("Đã xuất tệp Word chuẩn Nghị định 30 thành công!\nBạn có muốn mở tệp ngay không?", "VBTM Pro 2.2.4", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                 {
                     Process.Start(sfd.FileName);
@@ -825,6 +939,7 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
 
         private void UpdateQrPreview()
         {
+            if (picQr == null || txtQrContent == null) return;
             string text = txtQrContent.Text.Trim();
             if (string.IsNullOrEmpty(text)) text = "VBTM-PRO";
             int size = 25, scale = 4, pad = 6;
