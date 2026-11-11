@@ -4,10 +4,10 @@
     "name": "VBTM Pro",
     "version": "2.2.4",
     "setupFile": "VBTM-Setup-2.2.4.exe",
-    "badge": "Nghị Định 30 & CAND",
+    "badge": "Đảng Ủy & UBND Phường",
     "platform": "Windows 10/11 & Word",
     "tagline": "Chuẩn Hóa Thể Thức Văn Bản, Tạo Mã QR Động & Soát Lỗi Chính Tả AI Offline",
-    "shortDesc": "Chuẩn hóa thể thức văn bản hành chính theo Nghị định 30/2020/NĐ-CP, Hướng dẫn 05-HD/VPTW và quy chuẩn CAND. Tích hợp tạo mã QR động và soát lỗi chính tả AI ngoại tuyến 100% cho Microsoft Word.",
+    "shortDesc": "Chuẩn hóa thể thức văn bản hành chính của Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP và văn bản của Đảng ủy phường theo Hướng dẫn 36-HD/VPTW, 05-HD/VPTW. Tích hợp tạo mã QR động và soát lỗi chính tả AI ngoại tuyến 100% cho Microsoft Word.",
     "iconColor": "linear-gradient(145deg, #0ea5e9 0%, #2563eb 50%, #1e1b4b 100%)",
     "iconSvg": "<svg viewBox=\"0 0 64 64\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"11\" y=\"9\" width=\"34\" height=\"46\" rx=\"5\" fill=\"#ffffff\"/><line x1=\"17\" y1=\"18\" x2=\"32\" y2=\"18\" stroke=\"#2563eb\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><line x1=\"17\" y1=\"24\" x2=\"39\" y2=\"24\" stroke=\"#64748b\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"17\" y1=\"30\" x2=\"35\" y2=\"30\" stroke=\"#64748b\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"17\" y1=\"36\" x2=\"28\" y2=\"36\" stroke=\"#64748b\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"44\" cy=\"43\" r=\"13\" fill=\"#0ea5e9\" stroke=\"#ffffff\" stroke-width=\"2\"/><path d=\"M38 43.5L42 47.5L50 39\" stroke=\"#ffffff\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
   },
@@ -16,10 +16,10 @@
     "name": "VietNamOCR 3.2 Pro",
     "version": "3.2.0",
     "setupFile": "VietNamOCR-Setup-3.2.0-x64.exe",
-    "badge": "Chính Xác Cao",
+    "badge": "Số Hóa Hồ Sơ Phường",
     "platform": "Windows 10/11 x64",
     "tagline": "Số Hóa Tài Liệu Tiếng Việt Từ Ảnh & PDF Scan Sang Word / Excel",
-    "shortDesc": "Nhận diện chữ tiếng Việt từ hình ảnh và tài liệu PDF scan chuẩn xác. Tự động sửa lỗi dấu, xoay trang, bóc tách & nối bảng biểu đa trang và xuất trực tiếp sang Word (.doc) / Excel (.xls).",
+    "shortDesc": "Nhận diện chữ tiếng Việt từ hình ảnh và tài liệu PDF scan phục vụ lưu trữ hồ sơ Đảng ủy và UBND phường. Tự động sửa lỗi dấu, xoay trang, bóc tách & nối bảng biểu đa trang và xuất trực tiếp sang Word (.doc) / Excel (.xls).",
     "iconColor": "linear-gradient(145deg, #6443ff 0%, #4a29db 50%, #281195 100%)",
     "iconSvg": "<svg viewBox=\"10 16 108 96\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M37 25 h36 l20 20 v56 a6 6 0 0 1 -6 6 H37 a6 6 0 0 1 -6 -6 V31 a6 6 0 0 1 6 -6 z\" fill=\"#ffffff\"/><path d=\"M73 25 v16 a4 4 0 0 0 4 4 h16 z\" fill=\"#cbd5e1\"/><rect x=\"41\" y=\"37\" width=\"24\" height=\"4\" rx=\"2\" fill=\"#64748b\"/><rect x=\"41\" y=\"46\" width=\"45\" height=\"3.5\" rx=\"1.75\" fill=\"#94a3b8\"/><rect x=\"41\" y=\"54\" width=\"45\" height=\"3.5\" rx=\"1.75\" fill=\"#94a3b8\"/><rect x=\"41\" y=\"62\" width=\"45\" height=\"3.5\" rx=\"1.75\" fill=\"#94a3b8\"/><rect x=\"41\" y=\"70\" width=\"45\" height=\"3.5\" rx=\"1.75\" fill=\"#94a3b8\"/><line x1=\"15\" y1=\"65\" x2=\"113\" y2=\"65\" stroke=\"#00f5d4\" stroke-width=\"4\" stroke-linecap=\"round\"/></svg>"
   }
