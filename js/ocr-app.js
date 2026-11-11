@@ -1,6 +1,6 @@
 /**
  * VietNamOCR 3.2 Pro - Số Hóa Tài Liệu Tiếng Việt Từ Ảnh & PDF Scan Sang Word / Excel
- * Hỗ trợ: Nhận diện tiếng Việt, Xoay trang, Làm nét ảnh scan, Bóc tách & Nối bảng biểu đa trang
+ * Hỗ trợ: Lưu trữ hồ sơ Đảng ủy & UBND phường, Nhận diện tiếng Việt, Xoay trang, Làm nét ảnh scan, Bóc tách & Nối bảng biểu đa trang
  */
 
 let ocrRotation = 0;
@@ -10,17 +10,17 @@ let isSampleDocLoaded = false;
 let samplePageIndex = 1;
 
 // Dữ liệu bảng biểu hiện tại (hỗ trợ chỉnh sửa trực tiếp & nối đa trang)
-let ocrTableHeaders = ['STT', 'Số / Ký hiệu', 'Ngày ban hành', 'Trích yếu nội dung văn bản', 'Đơn vị thực hiện'];
+let ocrTableHeaders = ['STT', 'Số / Ký hiệu', 'Ngày ban hành', 'Trích yếu nội dung văn bản', 'Cơ quan / Bộ phận'];
 let ocrTableRows = [
-  ['01', '86/BC-PC09', '11/11/2026', 'Báo cáo kết quả ứng dụng phần mềm chuẩn hóa văn bản VBTM Pro', 'Phòng KTHS'],
-  ['02', '120/QĐ-PC09', '11/11/2026', 'Quyết định ban hành Quy chế sử dụng phần mềm nội bộ ngoại tuyến', 'Đội Tổng hợp'],
-  ['03', '145/STTTT-CNTT', '11/11/2026', 'Triển khai số hóa hồ sơ tài liệu bằng VietNamOCR 3.2 Pro', 'Phòng CNTT']
+  ['01', '86/BC-UBND', '11/11/2026', 'Báo cáo kết quả công tác cải cách hành chính và chuyển đổi số tại phường', 'UBND Phường'],
+  ['02', '42-BC/ĐU', '11/11/2026', 'Báo cáo công tác xây dựng Đảng và triển khai văn bản điện tử năm 2026', 'Đảng ủy Phường'],
+  ['03', '120/QĐ-UBND', '11/11/2026', 'Quyết định ban hành Quy chế số hóa hồ sơ, tài liệu lưu trữ tại địa phương', 'Văn phòng - Thống kê']
 ];
 
 const EXTRA_PAGE_ROWS = [
-  ['04', '152/KH-PC09', '12/11/2026', 'Kế hoạch tập huấn chuyển đổi số và bảo mật thông tin nội bộ', 'Các Đội nghiệp vụ'],
-  ['05', '168/TB-CATP', '15/11/2026', 'Thông báo kết luận hội nghị tổng kết công tác kỹ thuật năm 2026', 'Toàn đơn vị'],
-  ['06', '175/CV-PC09', '18/11/2026', 'Rà soát, chuẩn hóa dữ liệu lưu trữ điện tử quý IV/2026', 'Bộ phận Văn thư']
+  ['04', '15-KH/ĐU', '12/11/2026', 'Kế hoạch quán triệt, triển khai chuẩn hóa thể thức văn bản của Đảng ủy', 'Văn phòng Đảng ủy'],
+  ['05', '168/TB-UBND', '15/11/2026', 'Thông báo lịch tiếp công dân và giải quyết thủ tục hành chính tại phường', 'UBND Phường'],
+  ['06', '175/CV-UBND', '18/11/2026', 'Công văn rà soát, lập danh mục hồ sơ lưu trữ điện tử quý IV/2026', 'Bộ phận Một cửa']
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -60,7 +60,6 @@ function setupOcrDropzone() {
     }
   });
 
-  // Hỗ trợ dán ảnh trực tiếp từ Clipboard (Ctrl+V)
   window.addEventListener('paste', (e) => {
     const items = e.clipboardData?.items || [];
     for (let i = 0; i < items.length; i++) {
@@ -96,7 +95,6 @@ function handleUploadedFile(file) {
   reader.readAsDataURL(file);
 }
 
-// Tạo ảnh văn bản hành chính & bảng biểu mẫu trực tiếp trên Canvas để người dùng test 1-click
 function loadSampleDocumentImage(page = 1, customLabel = '') {
   isSampleDocLoaded = true;
   samplePageIndex = page;
@@ -109,11 +107,9 @@ function loadSampleDocumentImage(page = 1, customLabel = '') {
   canvas.width = 780;
   canvas.height = 500;
 
-  // Nền giấy scan hơi ngả màu thực tế
   ctx.fillStyle = ocrHighContrast ? '#ffffff' : '#f8fafc';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Viền trang tài liệu
   ctx.strokeStyle = '#cbd5e1';
   ctx.lineWidth = 2;
   ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
@@ -121,31 +117,29 @@ function loadSampleDocumentImage(page = 1, customLabel = '') {
   ctx.fillStyle = '#0f172a';
   ctx.font = 'bold 15px "Times New Roman", serif';
   ctx.textAlign = 'center';
-  ctx.fillText('CÔNG AN TP ĐÀ NẴNG', 180, 52);
-  ctx.fillText('PHÒNG KỸ THUẬT HÌNH SỰ', 180, 74);
+  ctx.fillText('ỦY BAN NHÂN DÂN PHƯỜNG', 180, 52);
+  ctx.fillText('VĂN PHÒNG - THỐNG KÊ', 180, 74);
 
   ctx.fillText('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', 535, 52);
   ctx.fillText('Độc lập - Tự do - Hạnh phúc', 535, 74);
 
   ctx.font = 'italic 14px "Times New Roman", serif';
-  ctx.fillText(`Đà Nẵng, ngày 11 tháng 11 năm 2026 (Trang ${page})`, 535, 100);
+  ctx.fillText(`Phường, ngày 11 tháng 11 năm 2026 (Trang ${page})`, 535, 100);
 
-  ctx.font = 'bold 17px "Times New Roman", serif';
-  ctx.fillText(customLabel ? `TÀI LIỆU SCAN: ${customLabel.toUpperCase()}` : 'DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ NGHIỆP VỤ', 390, 138);
+  ctx.font = 'bold 16.5px "Times New Roman", serif';
+  ctx.fillText(customLabel ? `TÀI LIỆU SCAN: ${customLabel.toUpperCase()}` : 'DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ ĐẢNG ỦY & UBND PHƯỜNG', 390, 138);
 
   ctx.textAlign = 'left';
   ctx.font = '14.5px "Times New Roman", serif';
-  ctx.fillText('1. Đơn vị thực hiện: Phòng Kỹ thuật hình sự - Công an TP Đà Nẵng.', 44, 172);
+  ctx.fillText('1. Đơn vị thực hiện: Văn phòng Đảng ủy và Văn phòng - Thống kê UBND phường.', 44, 172);
   ctx.fillText('2. Kết quả nhận diện chữ tiếng Việt và bóc tách bảng biểu tự động hoàn toàn ngoại tuyến:', 44, 196);
 
-  // Vẽ bảng biểu trên ảnh mẫu
   const startX = 44, startY = 216;
   const colWidths = [55, 125, 110, 285, 115];
   const rowH = 38;
-  const headers = ['STT', 'Số / Ký hiệu', 'Ngày BH', 'Trích yếu nội dung văn bản', 'Đơn vị'];
+  const headers = ['STT', 'Số / Ký hiệu', 'Ngày BH', 'Trích yếu nội dung văn bản', 'Bộ phận'];
   const rows = page === 1 ? ocrTableRows.slice(0, 3) : EXTRA_PAGE_ROWS;
 
-  // Vẽ Header bảng
   let curX = startX;
   ctx.fillStyle = ocrHighContrast ? '#e2e8f0' : '#f1f5f9';
   ctx.fillRect(startX, startY, 690, rowH);
@@ -160,7 +154,6 @@ function loadSampleDocumentImage(page = 1, customLabel = '') {
     curX += colWidths[i];
   });
 
-  // Vẽ các hàng dữ liệu
   rows.forEach((r, rIdx) => {
     let cx = startX;
     const cy = startY + (rIdx + 1) * rowH;
@@ -175,9 +168,9 @@ function loadSampleDocumentImage(page = 1, customLabel = '') {
   });
 
   ctx.font = 'italic 13.5px "Times New Roman", serif';
-  ctx.fillText('Ghi chú: Tài liệu đã được kiểm định độ chính xác và đồng bộ sang Microsoft Word & Excel./.', 44, 415);
+  ctx.fillText('Ghi chú: Hồ sơ đã được kiểm định độ chính xác và đồng bộ sang Microsoft Word & Excel./.', 44, 415);
   ctx.font = 'bold 14px "Times New Roman", serif';
-  ctx.fillText('XÁC NHẬN CỦA ĐƠN VỊ', 540, 435);
+  ctx.fillText('TM. ỦY BAN NHÂN DÂN PHƯỜNG', 495, 435);
 }
 
 function drawCanvasImage() {
@@ -234,7 +227,6 @@ function toggleHighContrast() {
   }
 }
 
-// Chạy nhận diện chữ Tiếng Việt (Tesseract.js + Bộ chuẩn hóa tiếng Việt chuyên sâu)
 async function runVietnameseOcr() {
   const statusEl = document.getElementById('ocrStatusText');
   const progressFill = document.getElementById('ocrProgressFill');
@@ -246,34 +238,31 @@ async function runVietnameseOcr() {
   statusEl.textContent = 'Đang phân tích bố cục trang & nhận diện chữ Tiếng Việt...';
   progressFill.style.width = '25%';
 
-  // Nếu đang dùng tài liệu mẫu hoặc chạy trong môi trường không có mạng tải worker CDN,
-  // cung cấp kết quả nhận diện chuẩn xác tức thì hoặc gọi Tesseract.js nếu người dùng tải ảnh riêng
   if (isSampleDocLoaded) {
     setTimeout(() => { progressFill.style.width = '65%'; statusEl.textContent = 'Đang bóc tách bảng biểu & chuẩn hóa dấu thanh Tiếng Việt...'; }, 220);
     setTimeout(() => {
       progressFill.style.width = '100%';
       statusEl.textContent = 'Hoàn tất nhận diện (Độ chính xác: 99.4% · Chế độ Offline)';
       textOutput.value =
-`CÔNG AN TP ĐÀ NẴNG
-PHÒNG KỸ THUẬT HÌNH SỰ
+`ỦY BAN NHÂN DÂN PHƯỜNG
+VĂN PHÒNG - THỐNG KÊ
 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
 Độc lập - Tự do - Hạnh phúc
 
-Đà Nẵng, ngày 11 tháng 11 năm 2026
+Phường, ngày 11 tháng 11 năm 2026
 
-DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ NGHIỆP VỤ
+DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ HÀNH CHÍNH ĐẢNG ỦY & UBND PHƯỜNG
 
-1. Đơn vị thực hiện: Phòng Kỹ thuật hình sự - Công an TP Đà Nẵng.
+1. Đơn vị thực hiện: Văn phòng Đảng ủy và Văn phòng - Thống kê UBND phường.
 2. Kết quả nhận diện chữ tiếng Việt và bóc tách bảng biểu tự động hoàn toàn ngoại tuyến:
 - Bóc tách thành công ${ocrTableRows.length} hàng dữ liệu vào Bảng biểu tương tác bên dưới.
-- Ghi chú: Tài liệu đã được kiểm định độ chính xác và đồng bộ sang Microsoft Word & Excel./.`;
+- Ghi chú: Hồ sơ đã được kiểm định độ chính xác và đồng bộ sang Microsoft Word & Excel./.`;
       renderEditableTable();
       if (window.showToast) window.showToast('Nhận diện văn bản & bóc tách bảng biểu Tiếng Việt thành công!');
     }, 550);
     return;
   }
 
-  // Nếu người dùng tải ảnh thực tế từ máy tính lên, thử chạy Tesseract.js (nếu có mạng tải CDN)
   try {
     if (window.Tesseract) {
       statusEl.textContent = 'Đang khởi chạy bộ máy AI OCR Tiếng Việt (vie)...';
@@ -297,7 +286,6 @@ DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ NGHIỆP VỤ
     console.warn('Tesseract offline fallback:', err);
   }
 
-  // Fallback khi chạy hoàn toàn Offline không có Internet tải worker
   progressFill.style.width = '100%';
   statusEl.textContent = 'Đã hoàn tất phân tích khung ảnh (Chế độ Offline cục bộ)';
   if (!textOutput.value.trim()) {
@@ -305,7 +293,6 @@ DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ NGHIỆP VỤ
   }
 }
 
-// Hậu xử lý: Sửa lỗi dấu, chuẩn hóa khoảng trắng, nối dòng bị đứt đoạn
 function cleanAndNormalizeOcrText(raw) {
   let text = String(raw || '')
     .replace(/[ \t]+/g, ' ')
@@ -324,7 +311,6 @@ function normalizeOcrTextEditor() {
   if (window.showToast) window.showToast('Đã tự động sửa lỗi khoảng trắng, dấu câu & chuẩn hóa văn bản OCR!');
 }
 
-// Nếu văn bản OCR có các dòng phân tách bằng tab hoặc nhiều khoảng trắng/dấu gạch đứng, tự động tách vào bảng
 function parseTableFromOcrText(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const potentialRows = [];
@@ -341,7 +327,6 @@ function parseTableFromOcrText(text) {
   }
 }
 
-// Hiển thị bảng dữ liệu tương tác (chỉnh sửa trực tiếp từng ô & đồng bộ xuất Word/Excel)
 function renderEditableTable() {
   const container = document.getElementById('ocrTableContainer');
   if (!container) return;
@@ -382,7 +367,6 @@ function addOcrTableRow() {
   if (window.showToast) window.showToast('Đã thêm 1 hàng mới vào bảng dữ liệu');
 }
 
-// Tính năng nổi bật: Tự động nối bảng biểu kéo dài qua nhiều trang (Multi-page Table Merge)
 function mergeNextPageTable() {
   loadSampleDocumentImage(2);
   let added = 0;
@@ -403,7 +387,6 @@ function mergeNextPageTable() {
   }
 }
 
-// Xuất văn bản + bảng biểu sang Microsoft Word (.doc giữ nguyên cấu trúc bảng biểu)
 function exportOcrToWord() {
   const textContent = document.getElementById('ocrResultText')?.value || '';
   const paragraphs = textContent
@@ -434,7 +417,7 @@ function exportOcrToWord() {
   <body>
     <div class="Section1">
       ${paragraphs}
-      <h3 style="font-size: 14pt; margin-top: 14pt;">BẢNG BIỂU SỐ HÓA TÀI LIỆU</h3>
+      <h3 style="font-size: 14pt; margin-top: 14pt;">BẢNG BIỂU SỐ HÓA HỒ SƠ</h3>
       <table>
         <thead><tr>${ths}</tr></thead>
         <tbody>${trs}</tbody>
@@ -447,16 +430,15 @@ function exportOcrToWord() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'VietNamOCR_VanBan_BangBieu.doc';
+  a.download = 'VietNamOCR_HoSo_Phuong.doc';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  if (window.showToast) window.showToast('Đã đồng bộ và xuất tệp Microsoft Word: VietNamOCR_VanBan_BangBieu.doc');
+  if (window.showToast) window.showToast('Đã đồng bộ và xuất tệp Microsoft Word: VietNamOCR_HoSo_Phuong.doc');
 }
 
-// Xuất bảng biểu sang Microsoft Excel (.xls giữ nguyên định dạng cột/hàng tiếng Việt)
 function exportOcrToExcel() {
   const ths = ocrTableHeaders.map(h => `<th style="border: 1px solid #000; background: #dbeafe; font-weight: bold; padding: 6px;">${escapeHtml(h)}</th>`).join('');
   const trs = ocrTableRows.map(r => {
@@ -485,13 +467,13 @@ function exportOcrToExcel() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'VietNamOCR_BangBieu.xls';
+  a.download = 'VietNamOCR_BangBieu_Phuong.xls';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  if (window.showToast) window.showToast('Đã đồng bộ và xuất tệp Microsoft Excel: VietNamOCR_BangBieu.xls');
+  if (window.showToast) window.showToast('Đã đồng bộ và xuất tệp Microsoft Excel: VietNamOCR_BangBieu_Phuong.xls');
 }
 
 function escapeHtml(str) {
