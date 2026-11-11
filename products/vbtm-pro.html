@@ -4,8 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường</title>
-  <meta name="description" content="Phần mềm & Add-in Microsoft Word chuẩn hóa thể thức văn bản của Đảng ủy và Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP, Hướng dẫn 36-HD/VPTW & 05-HD/VPTW, tạo mã QR động và soát lỗi chính tả AI ngoại tuyến.">
+  <meta name="description" content="Phần mềm & Add-in Microsoft Word chuẩn hóa thể thức văn bản của Đảng ủy và Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP, Hướng dẫn 36-HD/VPTW & 05-HD/VPTW, tạo mã QR thật (ISO 18004) và soát lỗi chính tả AI.">
   <link rel="stylesheet" href="../css/style.css">
+  <!-- Thư viện đọc trực tiếp file Word .docx thực tế (Mammoth.js) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- Thư viện tạo mã QR chuẩn quốc tế ISO/IEC 18004 quét được bằng mọi điện thoại/Zalo -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -34,7 +38,6 @@
         </div>
       </a>
 
-      <!-- Menu: chỉ gồm Phần mềm và Dùng trực tuyến -->
       <div class="nav-center">
         <a href="../index.html#productsSection" class="nav-link active">Phần Mềm</a>
         <a href="#liveStudio" class="nav-link">Dùng Trực Tuyến</a>
@@ -63,7 +66,7 @@
           </div>
           <div class="detail-app-titles">
             <h1>VBTM Pro</h1>
-            <p class="detail-app-tagline">Bộ công cụ Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường, Tạo Mã QR và Soát Lỗi Chính Tả AI Ngoại Tuyến cho Microsoft Word</p>
+            <p class="detail-app-tagline">Bộ công cụ Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường, Đọc File .DOCX, Tạo Mã QR Chuẩn Quốc Tế và Soát Lỗi Chính Tả AI</p>
             <div class="detail-badges-row">
               <span class="card-version">v2.2.4</span>
               <span class="badge-tag badge-platform">Windows 10/11 &amp; Word</span>
@@ -82,74 +85,17 @@
             <span>Tải VBTM-Setup-2.2.4.exe</span>
           </a>
           <div class="detail-dl-meta">
-            Đã kiểm định sạch 100% &bull; Không yêu cầu quyền Administrator
+            Hỗ trợ nạp trực tiếp file .DOCX / .DOC &amp; Tự động chuẩn hóa Word
           </div>
         </div>
       </div>
 
       <!-- Description Block -->
       <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08);">
-        <h3 style="font-size: 1.2rem; margin-bottom: 12px; color: var(--accent-color);">Giới Thiệu Ứng Dụng</h3>
-        <p style="font-size: 1.02rem; line-height: 1.7; color: var(--text-secondary);">VBTM Pro là bộ phần mềm &amp; Add-in chuyên nghiệp dành cho Microsoft Word, phục vụ công tác soạn thảo, thẩm định và chuẩn hóa thể thức văn bản hành chính của <strong>Ủy ban nhân dân phường / HĐND - UBND phường</strong> theo <strong>Nghị định 30/2020/NĐ-CP</strong> và văn bản của <strong>Đảng ủy phường</strong> theo <strong>Hướng dẫn 36-HD/VPTW &amp; 05-HD/VPTW</strong> của Văn phòng Trung ương Đảng. Phiên bản 2.2.4 tích hợp chức năng tạo và chèn mã QR động trực tiếp, bộ máy soát lỗi chính tả Tiếng Việt và kiểm tra thể thức AI Offline 100%, vận hành độc lập không cần Internet, không đòi hỏi quyền Administrator khi cài đặt và tương thích mượt mà với cả Word 32-bit và 64-bit trên Windows 10/11.</p>
+        <h3 style="font-size: 1.2rem; margin-bottom: 12px; color: var(--accent-color);">Giới Thiệu Ứng Dụng (Tích Hợp Đọc File .DOCX &amp; Mã QR Thực Tế)</h3>
+        <p style="font-size: 1.02rem; line-height: 1.7; color: var(--text-secondary);">VBTM Pro 2.2.4 cho phép bạn <strong>nạp trực tiếp tệp văn bản Word (<code>.docx</code>, <code>.doc</code>, <code>.txt</code>) có sẵn từ máy tính</strong> hoặc soạn thảo mới để tự động chuẩn hóa thể thức văn bản hành chính của <strong>Ủy ban nhân dân phường / HĐND - UBND phường</strong> theo <strong>Nghị định 30/2020/NĐ-CP</strong> và văn bản của <strong>Đảng ủy phường</strong> theo <strong>Hướng dẫn 36-HD/VPTW &amp; 05-HD/VPTW</strong>. Phần mềm tích hợp bộ tạo <strong>mã QR chuẩn quốc tế ISO/IEC 18004 (quét được ngay bằng Camera điện thoại và Zalo)</strong> cùng bộ máy rà soát, tự động sửa lỗi chính tả Tiếng Việt hành chính chuyên sâu.</p>
       </div>
     </div>
-
-    <!-- Installation & Usage Guide Box -->
-    <section class="features-box" id="guideSection" style="margin-bottom: 36px;">
-      <div class="section-title-wrap">
-        <div>
-          <h2 class="section-heading">Hướng Dẫn Cài Đặt Ngoại Tuyến (Offline)</h2>
-          <p style="color: var(--text-muted); font-size: 0.90rem;">Quy trình cài đặt tự động nhanh chóng và an toàn trên các máy tính nội bộ không có mạng Internet</p>
-        </div>
-      </div>
-
-      <div class="features-grid" style="grid-template-columns: 1fr;">
-        <div class="feature-glass-card" style="border-left: 4px solid #0284c7;">
-          <div class="feature-icon-circle" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          </div>
-          <h3 class="feature-title">Quy Trình Cài Đặt Tự Động (Khuyến nghị)</h3>
-          <p class="feature-desc">Trình cài đặt tự động sao chép các tệp quy chuẩn, tạo biểu tượng ngoài màn hình Desktop và kết nối trực tiếp với Microsoft Word mà không yêu cầu quyền Administrator:</p>
-          <ol style="margin: 14px 0 0 20px; padding: 0; color: var(--text-secondary); line-height: 1.9; font-size: 0.95rem;">
-            <li>Tải tệp <code>VBTM-Setup-2.2.4.exe</code> về máy tính (hoặc chép qua USB).</li>
-            <li>Nhấp đúp chuột vào tệp <code>VBTM-Setup-2.2.4.exe</code> để mở giao diện <strong>Trình Cài Đặt VBTM Pro 2.2.4</strong>.</li>
-            <li>Nhấn nút <strong>"Cài Đặt Ngay"</strong> (hoặc chọn <strong>"Chạy Ngay (Portable)"</strong> để dùng liền không cần cài).</li>
-            <li>Trình cài đặt sẽ tự động cài vào thư mục người dùng, tạo biểu tượng <strong>VBTM Pro 2.2.4</strong> ngoài màn hình Desktop và khởi chạy phần mềm.</li>
-            <li>Trong phần mềm, bạn có thể bấm <strong>"Chuẩn Hóa Word Đang Mở"</strong> để tự động căn lề trang A4 (30-15-20-20mm) &amp; font Times New Roman 14pt trực tiếp trên cửa sổ Word, hoặc bấm <strong>"Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- Integrity & Uninstall Guidance -->
-      <div style="margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
-        <div class="feature-glass-card" style="padding: 20px;">
-          <h4 style="font-size: 1.02rem; margin-bottom: 8px; color: var(--accent-color); display: flex; align-items: center; gap: 8px;">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            Kiểm Tra Tính Toàn Vẹn Tệp (SHA256)
-          </h4>
-          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px;">
-            Đảm bảo tệp cài đặt nguyên bản bằng lệnh PowerShell:
-          </p>
-          <code style="display: block; padding: 8px 12px; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 0.82rem; color: #38bdf8; word-break: break-all;">
-            Get-FileHash .\VBTM-Setup-2.2.4.exe -Algorithm SHA256
-          </code>
-          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; word-break: break-all;">
-            Mã chuẩn: <code id="sha256Code">f7a103b1b8d3699b86ec088d1f2d78f6d69646b3f1a1a59b7d1b559ae4a74474</code>
-          </div>
-        </div>
-
-        <div class="feature-glass-card" style="padding: 20px;">
-          <h4 style="font-size: 1.02rem; margin-bottom: 8px; color: var(--accent-color); display: flex; align-items: center; gap: 8px;">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-            Gỡ Cài Đặt Hoặc Cài Lại
-          </h4>
-          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
-            • Chạy tệp <code>Go_Cai_Dat_VBTM.bat</code> trong thư mục cài đặt (<code>%LOCALAPPDATA%\Programs\VBTM-Pro</code>).<br>
-            • Hoặc xóa trực tiếp thư mục cài đặt mà không để lại tệp rác trong hệ thống.
-          </p>
-        </div>
-      </div>
-    </section>
 
     <!-- ===================================================================
          LIVE INTERACTIVE SOFTWARE: VBTM PRO 2.2.4 STUDIO
@@ -162,7 +108,7 @@
             <span class="win-dot yellow"></span>
             <span class="win-dot green"></span>
           </div>
-          <span style="font-weight: 800; font-size: 1rem;">VBTM Pro 2.2.4 · Sử Dụng Trực Tiếp Trên Trình Duyệt (Đảng Ủy &amp; UBND Phường)</span>
+          <span style="font-weight: 800; font-size: 1rem;">VBTM Pro 2.2.4 · Chuẩn Hóa Văn Bản Đảng Ủy &amp; UBND Phường (Hỗ Trợ Nạp File .DOCX)</span>
         </div>
 
         <div class="studio-tabs">
@@ -175,22 +121,23 @@
 
       <div class="studio-body" id="vbtmStudioApp">
         <div class="toolbar-actions">
-          <button type="button" class="btn-tool primary" onclick="standardizeTextContent()">
+          <input type="file" id="vbtmWordFileInput" accept=".docx,.doc,.txt" style="display: none;">
+          <button type="button" class="btn-tool primary" onclick="document.getElementById('vbtmWordFileInput').click()" style="background: linear-gradient(135deg, #4f46e5, #2563eb);">
+            <span>📂 Tải File Word (.docx / .txt) Lên Để Chuẩn Hóa</span>
+          </button>
+
+          <button type="button" class="btn-tool primary" onclick="standardizeAndFixEverything()">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>Chuẩn Hóa Thể Thức NĐ30 / Đảng Ủy</span>
+            <span>⚡ Chuẩn Hóa Thể Thức &amp; Tự Động Sửa Lỗi</span>
           </button>
 
           <button type="button" class="btn-tool" onclick="runSpellAndFormatCheck()">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span>Soát Lỗi Chính Tả &amp; Thể Thức AI</span>
+            <span>Rà Soát Lỗi Chính Tả AI</span>
           </button>
 
           <button type="button" class="btn-tool" onclick="insertSampleTypos()">
-            <span>Thử Chèn Đoạn Lỗi Mẫu</span>
-          </button>
-
-          <button type="button" class="btn-tool" onclick="fixAllIssues()">
-            <span>Tự Động Sửa Tất Cả Lỗi</span>
+            <span>Chèn Đoạn Văn Lỗi Để Thử</span>
           </button>
 
           <button type="button" class="btn-tool success" onclick="exportWordDocument()" style="margin-left: auto;">
@@ -203,7 +150,7 @@
           <div class="studio-panel">
             <div class="studio-panel-title">
               <span>1. Thông Tin Thể Thức &amp; Nội Dung Văn Bản</span>
-              <span class="card-version">Times New Roman · A4</span>
+              <span class="card-version">Times New Roman 14pt · Khổ A4</span>
             </div>
 
             <div class="form-grid-2">
@@ -254,8 +201,8 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Nội dung văn bản chính</label>
-              <textarea id="vbtmDocBody" class="glass-textarea" rows="7"></textarea>
+              <label class="form-label">Nội dung văn bản chính (Có thể dán trực tiếp văn bản thô vào đây rồi bấm Chuẩn Hóa)</label>
+              <textarea id="vbtmDocBody" class="glass-textarea" rows="8"></textarea>
             </div>
 
             <div class="form-grid-2">
@@ -271,25 +218,26 @@
             </div>
 
             <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--glass-border); display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <canvas id="vbtmQrCanvas" width="90" height="90" style="border-radius: 8px; border: 1px solid var(--glass-border); background: #fff; width: 84px; height: 84px;"></canvas>
+              <canvas id="vbtmQrCanvas" width="120" height="120" style="border-radius: 8px; border: 1px solid var(--glass-border); background: #fff; width: 92px; height: 92px;"></canvas>
               <div style="flex: 1; min-width: 200px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                  <label class="form-label" style="color: var(--accent-color);">Mã QR Động Xác Thực Văn Bản</label>
+                  <label class="form-label" style="color: var(--accent-color);">Mã QR Động Chuẩn Quốc Tế ISO 18004 (Quét Bằng Zalo/Camera)</label>
                   <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                     <input type="checkbox" id="vbtmIncludeQr" checked> Đính kèm QR vào văn bản Word
                   </label>
                 </div>
-                <input type="text" id="vbtmQrText" class="glass-input" placeholder="Nội dung mã QR (Số hiệu, đơn vị, ngày ban hành)">
+                <input type="text" id="vbtmQrText" class="glass-input" placeholder="Nhập link tra cứu văn bản hoặc mã xác thực hồ sơ...">
               </div>
             </div>
 
             <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--glass-border);">
               <div class="studio-panel-title" style="margin-bottom: 8px;">
-                <span>Kết Quả Thẩm Định Chính Tả &amp; Thể Thức AI Offline</span>
+                <span>Kết Quả Thẩm Định Chính Tả &amp; Thể Thức AI</span>
+                <button type="button" class="btn-tool primary" onclick="fixAllIssues()" style="padding: 3px 10px; font-size: 0.76rem;">Tự động sửa hết lỗi</button>
               </div>
               <div id="vbtmIssueList" class="issue-list">
                 <div class="issue-item ok">
-                  <span>Nhấn "Soát Lỗi Chính Tả &amp; Thể Thức AI" trên thanh công cụ để rà soát toàn bộ văn bản.</span>
+                  <span>Nhấn "Chuẩn Hóa Thể Thức &amp; Tự Động Sửa Lỗi" để tự động làm sạch và chuẩn hóa toàn bộ văn bản.</span>
                 </div>
               </div>
             </div>
@@ -308,66 +256,26 @@
       </div>
     </section>
 
-    <!-- Key Features Grid -->
-    <section class="features-box" id="featuresSection">
+    <!-- Installation & Usage Guide Box -->
+    <section class="features-box" id="guideSection" style="margin-top: 36px; margin-bottom: 36px;">
       <div class="section-title-wrap">
-        <h2 class="section-heading">Tính Năng Cốt Lõi</h2>
-      </div>
-
-      <div class="features-grid">
-        <div class="feature-glass-card">
-          <div class="feature-icon-circle">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          </div>
-          <h3 class="feature-title">Tạo &amp; Chèn Mã QR Động Trực Tiếp</h3>
-          <p class="feature-desc">Tích hợp công cụ tạo mã QR nhanh chóng ngay trong văn bản Word để chèn mã hồ sơ, văn bản điện tử hoặc thông tin xác thực của Đảng ủy và UBND phường.</p>
-        </div>
-
-        <div class="feature-glass-card">
-          <div class="feature-icon-circle">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-          </div>
-          <h3 class="feature-title">Chuẩn Hóa Văn Bản UBND Phường (Nghị Định 30/2020/NĐ-CP)</h3>
-          <p class="feature-desc">Tự động căn chỉnh lề trang A4, font chữ Times New Roman, cỡ chữ, khoảng cách đoạn, số ký hiệu, trích yếu, địa danh, ngày tháng và quyền hạn ký TM. ỦY BAN NHÂN DÂN.</p>
-        </div>
-
-        <div class="feature-glass-card">
-          <div class="feature-icon-circle">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-          </div>
-          <h3 class="feature-title">Chuẩn Hóa Văn Bản Đảng Ủy Phường (HD 36 &amp; 05-HD/VPTW)</h3>
-          <p class="feature-desc">Tích hợp sẵn kho biểu mẫu Công văn, Báo cáo, Kế hoạch, Nghị quyết, Quyết định của Đảng ủy phường và các chi bộ trực thuộc theo đúng quy định của Văn phòng Trung ương Đảng.</p>
-        </div>
-
-        <div class="feature-glass-card">
-          <div class="feature-icon-circle">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-          </div>
-          <h3 class="feature-title">Soát Lỗi Chính Tả &amp; Thể Thức AI Offline</h3>
-          <p class="feature-desc">Tự động phát hiện lỗi chính tả tiếng Việt, sai dấu thanh và kiểm tra tính hợp lệ của bố cục văn bản mà không cần kết nối Internet.</p>
+        <div>
+          <h2 class="section-heading">Hướng Dẫn Cài Đặt Bản Máy Tính Windows (.exe)</h2>
+          <p style="color: var(--text-muted); font-size: 0.90rem;">Quy trình cài đặt tự động nhanh chóng và an toàn trên Windows 10/11</p>
         </div>
       </div>
-    </section>
 
-    <!-- Technical Specs Table -->
-    <section class="specs-table-box" id="specsSection">
-      <h2 class="section-heading">Yêu Cầu Hệ Thống &amp; Thông Số</h2>
-      <div class="specs-grid">
-        <div class="spec-cell">
-          <div class="spec-name">Hệ điều hành</div>
-          <div class="spec-val">Windows 10 hoặc Windows 11 (64-bit)</div>
-        </div>
-        <div class="spec-cell">
-          <div class="spec-name">Microsoft Office</div>
-          <div class="spec-val">Word 2013, 2016, 2019, 2021 hoặc Office 365 (32-bit &amp; 64-bit)</div>
-        </div>
-        <div class="spec-cell">
-          <div class="spec-name">Nền tảng .NET</div>
-          <div class="spec-val">.NET Framework 4.8 (đã tích hợp sẵn trên Windows 10/11)</div>
-        </div>
-        <div class="spec-cell">
-          <div class="spec-name">Quyền cài đặt</div>
-          <div class="spec-val">Không yêu cầu quyền Quản trị viên (Administrator)</div>
+      <div class="features-grid" style="grid-template-columns: 1fr;">
+        <div class="feature-glass-card" style="border-left: 4px solid #0284c7;">
+          <h3 class="feature-title">Quy Trình Cài Đặt &amp; Sử Dụng</h3>
+          <ol style="margin: 10px 0 0 20px; padding: 0; color: var(--text-secondary); line-height: 1.9; font-size: 0.95rem;">
+            <li>Tải tệp <code>VBTM-Setup-2.2.4.exe</code> về máy tính.</li>
+            <li>Nhấp đúp chuột vào tệp <code>VBTM-Setup-2.2.4.exe</code> và nhấn <strong>"Cài Đặt Ngay"</strong> (hoặc <strong>"Chạy Ngay (Không Cần Cài)"</strong>).</li>
+            <li>Trong phần mềm: Bấm <strong>"Mở File Word (.docx / .doc)"</strong> để nạp văn bản cần chuẩn hóa, bấm <strong>"1. Chuẩn Hóa &amp; Sửa Chính Tả AI"</strong>, sau đó bấm <strong>"2. Chuẩn Hóa Word Đang Mở"</strong> hoặc <strong>"3. Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
+          </ol>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
+            Mã chuẩn SHA256: <code id="sha256Code">f7a103b1b8d3699b86ec088d1f2d78f6d69646b3f1a1a59b7d1b559ae4a74474</code>
+          </div>
         </div>
       </div>
     </section>
