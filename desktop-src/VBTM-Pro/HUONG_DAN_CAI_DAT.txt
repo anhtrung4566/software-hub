@@ -1,7 +1,7 @@
 ﻿===================================================================
 BỘ CÀI ĐẶT VBTM PRO 2.2.4 (WINDOWS NATIVE EXE - OFFLINE 100%)
-Chuẩn hóa văn bản Nghị định 30/2020/NĐ-CP, Hướng dẫn 05-HD/VPTW,
-Quy chuẩn CAND, Tạo mã QR động & Soát lỗi chính tả cho MS Word
+Chuẩn hóa văn bản Đảng ủy & UBND Phường (Nghị định 30/2020/NĐ-CP,
+Hướng dẫn 36 & 05-HD/VPTW), Tạo mã QR động & Soát lỗi chính tả AI
 ===================================================================
 
 1. CÁCH CÀI ĐẶT & SỬ DỤNG:
@@ -11,8 +11,8 @@ Quy chuẩn CAND, Tạo mã QR động & Soát lỗi chính tả cho MS Word
    - Hoặc nhấn "Chạy Ngay (Không Cần Cài)" để mở phần mềm ngay lập tức.
 
 2. TÍNH NĂNG TRONG PHẦN MỀM:
-   - Kết nối trực tiếp vào Microsoft Word đang mở (COM Automation) để tự động
-     định dạng lề chuẩn Nghị định 30 (Trái 3cm, Phải 2cm, Trên/Dưới 2cm),
-     phông chữ Times New Roman 14pt và chèn Quốc hiệu - Tiêu ngữ chuẩn.
-   - Chuẩn hóa thể thức tự động, soát lỗi chính tả & lỗi đánh máy tiếng Việt.
-   - Tạo mã QR tra cứu văn bản động và xuất thẳng ra tệp Word (.doc) kèm mã QR.
+   - Biểu mẫu chuẩn của Ủy ban nhân dân phường (Nghị định 30/2020/NĐ-CP)
+     và Đảng ủy phường (Hướng dẫn 36-HD/VPTW & 05-HD/VPTW).
+   - Kết nối trực tiếp vào Microsoft Word đang mở để tự động căn lề trang A4
+     (Trái 30mm, Phải 15mm, Trên/Dưới 20mm), phông chữ Times New Roman 14pt.
+   - Tạo mã QR động và xuất thẳng ra tệp Word (.doc) kèm mã QR.
