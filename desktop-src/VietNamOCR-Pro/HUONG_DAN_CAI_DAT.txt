@@ -1,0 +1,18 @@
+﻿===================================================================
+BỘ CÀI ĐẶT VIETNAMOCR 3.2 PRO (x64 WINDOWS NATIVE EXE - OFFLINE 100%)
+Số hóa tài liệu tiếng Việt từ Ảnh & PDF Scan, Nối bảng biểu đa trang
+và Xuất trực tiếp sang Microsoft Word (.doc) & Excel (.xls)
+===================================================================
+
+1. CÁCH CÀI ĐẶT & SỬ DỤNG:
+   - Nháy đúp chuột vào tệp: VietNamOCR-Setup-3.2.0-x64.exe
+   - Nhấn nút "Cài Đặt Ngay" để tự động cài vào máy và tạo biểu tượng
+     "VietNamOCR 3.2 Pro" ngoài màn hình Desktop (Không cần quyền Admin).
+   - Hoặc nhấn "Chạy Ngay (Không Cần Cài)" để mở phần mềm ngay lập tức.
+
+2. TÍNH NĂNG TRONG PHẦN MỀM:
+   - Chọn tệp Ảnh (.png, .jpg, .bmp, .tif) hoặc PDF Scan (.pdf), hoặc nhấn Ctrl+V
+     để dán ảnh chụp màn hình trực tiếp vào phần mềm.
+   - Xoay trang 90 độ, Làm rõ chữ Scan mờ và Nhận diện chữ Tiếng Việt Offline.
+   - Tự động bóc tách và nối bảng biểu kéo dài qua nhiều trang (+ Nối Bảng Trang 2).
+   - Xuất trực tiếp kết quả ra tệp Microsoft Word (.doc) và Excel (.xls).
