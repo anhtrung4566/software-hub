@@ -8,8 +8,9 @@ const DEFAULT_PRODUCTS = [
     id: "vbtm-pro",
     name: "VBTM Pro",
     version: "2.2.4",
+    setupFile: "VBTM-Setup-2.2.4.exe",
     badge: "Nghị Định 30 & CAND",
-    platform: "Windows / Word / Web App",
+    platform: "Windows 10/11 & Word",
     tagline: "Chuẩn Hóa Thể Thức Văn Bản, Tạo Mã QR Động & Soát Lỗi Chính Tả AI Offline",
     shortDesc: "Chuẩn hóa thể thức văn bản hành chính theo Nghị định 30/2020/NĐ-CP, Hướng dẫn 05-HD/VPTW và quy chuẩn CAND. Tích hợp tạo mã QR động và soát lỗi chính tả AI ngoại tuyến 100% cho Microsoft Word.",
     iconColor: "linear-gradient(145deg, #0ea5e9 0%, #2563eb 50%, #1e1b4b 100%)",
@@ -19,8 +20,9 @@ const DEFAULT_PRODUCTS = [
     id: "vietnam-ocr",
     name: "VietNamOCR 3.2 Pro",
     version: "3.2.0",
+    setupFile: "VietNamOCR-Setup-3.2.0-x64.exe",
     badge: "Chính Xác Cao",
-    platform: "Windows x64 / Web App",
+    platform: "Windows 10/11 x64",
     tagline: "Số Hóa Tài Liệu Tiếng Việt Từ Ảnh & PDF Scan Sang Word / Excel",
     shortDesc: "Nhận diện chữ tiếng Việt từ hình ảnh và tài liệu PDF scan chuẩn xác. Tự động sửa lỗi dấu, xoay trang, bóc tách & nối bảng biểu đa trang và xuất trực tiếp sang Word (.doc) / Excel (.xls).",
     iconColor: "linear-gradient(145deg, #6443ff 0%, #4a29db 50%, #281195 100%)",
@@ -74,9 +76,7 @@ async function loadProducts() {
       renderProducts(items);
       return;
     }
-  } catch (e) {
-    // Fallback to inline products when opened via file://
-  }
+  } catch (e) {}
   renderProducts(DEFAULT_PRODUCTS);
 }
 
@@ -106,12 +106,12 @@ function renderProducts(items) {
       </div>
 
       <div class="card-actions">
-        <a href="./products/${product.id}.html#liveStudio" class="btn-glass-primary">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"></polygon></svg>
-          <span>Mở Phần Mềm</span>
+        <a href="./downloads/${product.setupFile}" class="btn-glass-primary" download="${product.setupFile}">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Tải ${product.setupFile}</span>
         </a>
         <a href="./products/${product.id}.html" class="btn-glass-secondary">
-          <span>Chi Tiết & Tải Về</span>
+          <span>Xem Chi Tiết & Dùng Thử</span>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </a>
       </div>
@@ -143,34 +143,4 @@ function showToast(message) {
   }, 3800);
 }
 
-function copyStk() {
-  const stkEl = document.getElementById('stkValue');
-  const stk = stkEl ? stkEl.textContent.trim() : '0651000888272';
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(stk).then(() => onCopySuccess(stk)).catch(() => fallbackCopy(stk));
-  } else {
-    fallbackCopy(stk);
-  }
-}
-
-function onCopySuccess(stk) {
-  const txt = document.getElementById('copyText');
-  if (txt) txt.textContent = 'Đã Chép!';
-  showToast('Đã sao chép Số tài khoản: ' + stk);
-  setTimeout(() => {
-    if (txt) txt.textContent = 'Sao Chép';
-  }, 2500);
-}
-
-function fallbackCopy(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand('copy');
-  document.body.removeChild(ta);
-  onCopySuccess(text);
-}
-
 window.showToast = showToast;
-window.copyStk = copyStk;
