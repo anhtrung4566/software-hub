@@ -12,7 +12,7 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("VietNamOCR 3.2 Pro - So Hoa Tai Lieu Tieng Viet & Noi Bang Bieu")]
-[assembly: AssemblyDescription("Ung dung nhan dien chu tieng Viet tu hinh anh & PDF scan hoan toan ngoai tuyen")]
+[assembly: AssemblyDescription("Ung dung nhan dien chu tieng Viet tu hinh anh & PDF scan phuc vu luu tru ho so Dang uy va UBND Phuong")]
 [assembly: AssemblyCompany("Software Hub")]
 [assembly: AssemblyProduct("VietNamOCR 3.2 Pro")]
 [assembly: AssemblyVersion("3.2.0.0")]
@@ -127,7 +127,7 @@ namespace VietNamOCRSuite
 
             Label lblSub = new Label
             {
-                Text = "Số hóa tài liệu tiếng Việt từ Ảnh & PDF Scan, nối bảng biểu đa trang và xuất Word/Excel",
+                Text = "Số hóa hồ sơ tiếng Việt từ Ảnh & PDF Scan phục vụ Đảng ủy và UBND Phường, xuất Word/Excel",
                 Font = new Font("Segoe UI", 9.2f),
                 ForeColor = Color.FromArgb(203, 213, 225),
                 AutoSize = true,
@@ -204,7 +204,7 @@ namespace VietNamOCRSuite
             Label lblInfo = new Label
             {
                 Text = "• Nhận diện chữ Tiếng Việt Offline 100%, xoay trang và làm rõ chữ Scan mờ\r\n" +
-                       "• Tự động bóc tách & nối bảng biểu kéo dài qua nhiều trang tài liệu\r\n" +
+                       "• Tự động bóc tách & nối bảng biểu hồ sơ kéo dài qua nhiều trang tài liệu\r\n" +
                        "• Đồng bộ chỉnh sửa trực tiếp vào tệp xuất Microsoft Word (.doc) & Excel (.xls)",
                 Location = new Point(12, 10),
                 Size = new Size(555, 64),
@@ -303,8 +303,8 @@ namespace VietNamOCRSuite
                 progressBar.Value = 75;
                 if (chkDesktopShortcut.Checked)
                 {
-                    CreateShortcut(desktopLnk, targetExePath, "--app", "VietNamOCR 3.2 Pro - Nhan dien chu tieng Viet & Noi bang bieu");
-                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VietNamOCR 3.2 Pro - Nhan dien chu tieng Viet & Noi bang bieu");
+                    CreateShortcut(desktopLnk, targetExePath, "--app", "VietNamOCR 3.2 Pro - So hoa ho so Dang uy & UBND Phuong");
+                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VietNamOCR 3.2 Pro - So hoa ho so Dang uy & UBND Phuong");
                 }
 
                 RegisterUninstaller(installDir, targetExePath);
@@ -341,7 +341,7 @@ namespace VietNamOCRSuite
                 {
                     if (key != null)
                     {
-                        key.SetValue("DisplayName", "VietNamOCR 3.2 Pro (x64) - Số Hóa Tài Liệu Tiếng Việt");
+                        key.SetValue("DisplayName", "VietNamOCR 3.2 Pro (x64) - Số Hóa Hồ Sơ Tiếng Việt");
                         key.SetValue("DisplayVersion", "3.2.0");
                         key.SetValue("Publisher", "Software Hub");
                         key.SetValue("DisplayIcon", exePath);
@@ -390,7 +390,7 @@ namespace VietNamOCRSuite
 
         public OcrMainForm()
         {
-            this.Text = "VietNamOCR 3.2 Pro (x64) · Số Hóa Tài Liệu Tiếng Việt, Nối Bảng Biểu Đa Trang & Xuất Word/Excel";
+            this.Text = "VietNamOCR 3.2 Pro (x64) · Số Hóa Hồ Sơ Đảng Ủy & UBND Phường, Nối Bảng Biểu Đa Trang & Xuất Word/Excel";
             this.Size = new Size(1150, 770);
             this.MinimumSize = new Size(1020, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -417,7 +417,6 @@ namespace VietNamOCRSuite
 
         private void BuildMainUI()
         {
-            // Top Bar
             Panel topBar = new Panel
             {
                 Dock = DockStyle.Top,
@@ -469,18 +468,16 @@ namespace VietNamOCRSuite
             btnExcel.Click += (s, e) => ExportToExcel();
             topBar.Controls.Add(btnExcel);
 
-            // Status Bar
             lblStatus = new Label
             {
                 Dock = DockStyle.Bottom,
                 Height = 28,
-                Text = "  Trạng thái: Sẵn sàng nhận diện chữ Tiếng Việt Offline 100% | Đồng bộ trực tiếp sang Microsoft Word & Excel",
+                Text = "  Trạng thái: Sẵn sàng nhận diện hồ sơ Tiếng Việt Offline 100% | Đồng bộ trực tiếp sang Microsoft Word & Excel",
                 BackColor = Color.FromArgb(30, 27, 75),
                 ForeColor = Color.FromArgb(148, 163, 184),
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            // Main Workspace Panel (Add first so DockStyle.Fill respects Top and Bottom bars)
             Panel mainArea = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -491,10 +488,9 @@ namespace VietNamOCRSuite
             this.Controls.Add(topBar);
             this.Controls.Add(lblStatus);
 
-            // Left Image Viewer
             GroupBox grpImg = new GroupBox
             {
-                Text = " 1. Hình Ảnh / Trang Tài Liệu Scan (Hỗ trợ Ctrl+V dán ảnh chụp màn hình) ",
+                Text = " 1. Hình Ảnh / Trang Hồ Sơ Scan (Hỗ trợ Ctrl+V dán ảnh chụp màn hình) ",
                 ForeColor = Color.FromArgb(56, 189, 248),
                 Location = new Point(16, 12),
                 Size = new Size(490, 615)
@@ -510,7 +506,7 @@ namespace VietNamOCRSuite
             };
             grpImg.Controls.Add(picDoc);
 
-            Button btnSample1 = CreateBtn("Hồ Sơ Scan Mẫu", new Point(14, 568), new Size(145, 34), Color.FromArgb(51, 65, 85));
+            Button btnSample1 = CreateBtn("Hồ Sơ Phường Mẫu", new Point(14, 568), new Size(145, 34), Color.FromArgb(51, 65, 85));
             btnSample1.Click += (s, e) => LoadSampleDocumentImage(1);
             grpImg.Controls.Add(btnSample1);
 
@@ -537,7 +533,6 @@ namespace VietNamOCRSuite
 
             mainArea.Controls.Add(grpImg);
 
-            // Right Top: Recognized Vietnamese Text
             GroupBox grpText = new GroupBox
             {
                 Text = " 2. Văn Bản Tiếng Việt Nhận Diện (Chỉnh sửa & đồng bộ trực tiếp vào Word) ",
@@ -559,7 +554,6 @@ namespace VietNamOCRSuite
             grpText.Controls.Add(txtOcrResult);
             mainArea.Controls.Add(grpText);
 
-            // Right Bottom: Interactive Multi-page Table Grid
             GroupBox grpGrid = new GroupBox
             {
                 Text = " 3. Bảng Biểu Bóc Tách & Nối Đa Trang (Chỉnh sửa trực tiếp đồng bộ sang Word & Excel) ",
@@ -573,11 +567,11 @@ namespace VietNamOCRSuite
             tableData.Columns.Add("Số / Ký hiệu");
             tableData.Columns.Add("Ngày ban hành");
             tableData.Columns.Add("Trích yếu nội dung văn bản");
-            tableData.Columns.Add("Đơn vị");
+            tableData.Columns.Add("Cơ quan / Bộ phận");
 
-            tableData.Rows.Add("01", "86/BC-PC09", "11/11/2026", "Báo cáo kết quả ứng dụng phần mềm chuẩn hóa văn bản VBTM Pro", "Phòng KTHS");
-            tableData.Rows.Add("02", "120/QĐ-PC09", "11/11/2026", "Quyết định ban hành Quy chế sử dụng phần mềm nội bộ ngoại tuyến", "Đội Tổng hợp");
-            tableData.Rows.Add("03", "145/STTTT-CNTT", "11/11/2026", "Triển khai số hóa hồ sơ tài liệu bằng VietNamOCR 3.2 Pro", "Phòng CNTT");
+            tableData.Rows.Add("01", "86/BC-UBND", "11/11/2026", "Báo cáo kết quả công tác cải cách hành chính và chuyển đổi số tại phường", "UBND Phường");
+            tableData.Rows.Add("02", "42-BC/ĐU", "11/11/2026", "Báo cáo công tác xây dựng Đảng và triển khai văn bản điện tử năm 2026", "Đảng ủy Phường");
+            tableData.Rows.Add("03", "120/QĐ-UBND", "11/11/2026", "Quyết định ban hành Quy chế số hóa hồ sơ, tài liệu lưu trữ tại địa phương", "Văn phòng - Thống kê");
 
             gridTable = new DataGridView
             {
@@ -619,7 +613,6 @@ namespace VietNamOCRSuite
                 Bitmap dst = new Bitmap(src.Width, src.Height);
                 using (Graphics g = Graphics.FromImage(dst))
                 {
-                    // High-contrast filter for faded scanned documents
                     float contrast = 1.35f;
                     float t = (1.0f - contrast) / 2.0f;
                     ColorMatrix cm = new ColorMatrix(new float[][]
@@ -699,7 +692,7 @@ namespace VietNamOCRSuite
                 {
                     g.DrawString("TÀI LIỆU PDF SCAN: " + fileName.ToUpperInvariant(), fBold, Brushes.DarkBlue, 36, 36);
                     g.DrawString("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\n      Độc lập - Tự do - Hạnh phúc", fBold, Brushes.Black, 330, 36);
-                    g.DrawString("BÁO CÁO SỐ HÓA TÀI LIỆU TỪ TỆP PDF SCAN", new Font("Times New Roman", 13.5f, FontStyle.Bold), Brushes.Black, 140, 105);
+                    g.DrawString("HỒ SƠ SỐ HÓA TÀI LIỆU TỪ TỆP PDF SCAN", new Font("Times New Roman", 13.5f, FontStyle.Bold), Brushes.Black, 140, 105);
                     g.DrawString("Tệp nguồn: " + fileName, fReg, Brushes.Black, 36, 150);
                     g.DrawString("Trạng thái: Đã nạp lớp ảnh PDF Scan vào bộ đệm nhận diện ngoại tuyến.", fReg, Brushes.Black, 36, 178);
                     g.DrawString("Nhấn 'Nhận Diện Tiếng Việt (OCR)' để trích xuất toàn bộ nội dung văn bản và bảng biểu.", fReg, Brushes.DarkSlateGray, 36, 206);
@@ -720,10 +713,10 @@ namespace VietNamOCRSuite
                 using (Font fBold = new Font("Times New Roman", 12f, FontStyle.Bold))
                 using (Font fReg = new Font("Times New Roman", 11.5f))
                 {
-                    g.DrawString("CÔNG AN TP ĐÀ NẴNG\nPHÒNG KỸ THUẬT HÌNH SỰ", fBold, Brushes.Black, 40, 32);
+                    g.DrawString("ỦY BAN NHÂN DÂN PHƯỜNG\n  VĂN PHÒNG - THỐNG KÊ", fBold, Brushes.Black, 40, 32);
                     g.DrawString("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\n      Độc lập - Tự do - Hạnh phúc", fBold, Brushes.Black, 340, 32);
-                    g.DrawString("DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ (TRANG " + page + ")", new Font("Times New Roman", 13.5f, FontStyle.Bold), Brushes.DarkBlue, 130, 95);
-                    g.DrawString("1. Đơn vị thực hiện: Phòng Kỹ thuật hình sự - Công an TP Đà Nẵng.", fReg, Brushes.Black, 36, 135);
+                    g.DrawString("DANH MỤC HỒ SƠ SỐ HÓA ĐẢNG ỦY & UBND PHƯỜNG (TRANG " + page + ")", new Font("Times New Roman", 12.5f, FontStyle.Bold), Brushes.DarkBlue, 85, 95);
+                    g.DrawString("1. Đơn vị thực hiện: Văn phòng Đảng ủy và Văn phòng - Thống kê UBND phường.", fReg, Brushes.Black, 36, 135);
                     g.DrawString("2. Bảng tổng hợp hồ sơ văn bản đã được nhận diện và bóc tách tự động:", fReg, Brushes.Black, 36, 160);
 
                     int y = 195;
@@ -745,13 +738,13 @@ namespace VietNamOCRSuite
             picDoc.Image = bmp;
 
             txtOcrResult.Text =
-                "CÔNG AN TP ĐÀ NẴNG\r\n" +
-                "PHÒNG KỸ THUẬT HÌNH SỰ\r\n" +
+                "ỦY BAN NHÂN DÂN PHƯỜNG\r\n" +
+                "VĂN PHÒNG - THỐNG KÊ\r\n" +
                 "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\r\n" +
                 "Độc lập - Tự do - Hạnh phúc\r\n\r\n" +
-                "Đà Nẵng, ngày 11 tháng 11 năm 2026\r\n\r\n" +
-                "DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ NGHIỆP VỤ (TRANG " + page + ")\r\n\r\n" +
-                "1. Đơn vị thực hiện: Phòng Kỹ thuật hình sự - Công an TP Đà Nẵng.\r\n" +
+                "Phường, ngày 11 tháng 11 năm 2026\r\n\r\n" +
+                "DANH MỤC VĂN BẢN SỐ HÓA HỒ SƠ ĐẢNG ỦY & UBND PHƯỜNG (TRANG " + page + ")\r\n\r\n" +
+                "1. Đơn vị thực hiện: Văn phòng Đảng ủy và Văn phòng - Thống kê UBND phường.\r\n" +
                 "2. Kết quả nhận diện chữ tiếng Việt và bóc tách bảng biểu tự động hoàn toàn ngoại tuyến./.";
         }
 
@@ -851,8 +844,8 @@ foreach ($line in $result.Lines) {
             string s = text;
             s = Regex.Replace(s, @"\bCONG HOA XA HOI CHU NGHIA VIET NAM\b", "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", RegexOptions.IgnoreCase);
             s = Regex.Replace(s, @"\bDoc lap\s*-\s*Tu do\s*-\s*Hanh phuc\b", "Độc lập - Tự do - Hạnh phúc", RegexOptions.IgnoreCase);
-            s = Regex.Replace(s, @"\bCONG AN\b", "CÔNG AN", RegexOptions.IgnoreCase);
-            s = Regex.Replace(s, @"\bPHONG KY THUAT HINH SU\b", "PHÒNG KỸ THUẬT HÌNH SỰ", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\bUY BAN NHAN DAN PHUONG\b", "ỦY BAN NHÂN DÂN PHƯỜNG", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\bDANG UY PHUONG\b", "ĐẢNG ỦY PHƯỜNG", RegexOptions.IgnoreCase);
             s = Regex.Replace(s, @"\bQUYET DINH\b", "QUYẾT ĐỊNH", RegexOptions.IgnoreCase);
             s = Regex.Replace(s, @"\bBAO CAO\b", "BÁO CÁO", RegexOptions.IgnoreCase);
             s = Regex.Replace(s, @"\bKE HOACH\b", "KẾ HOẠCH", RegexOptions.IgnoreCase);
@@ -874,7 +867,7 @@ foreach ($line in $result.Lines) {
                         string soKh = parts[1].Trim();
                         string ngay = parts[2].Trim();
                         string trichYeu = parts.Length >= 4 ? parts[3].Trim() : "Văn bản nhận diện từ ảnh Scan";
-                        string donVi = parts.Length >= 5 ? parts[4].Trim() : "Đơn vị";
+                        string donVi = parts.Length >= 5 ? parts[4].Trim() : "UBND Phường";
                         tableData.Rows.Add(stt, soKh, ngay, trichYeu, donVi);
                     }
                 }
@@ -883,8 +876,8 @@ foreach ($line in $result.Lines) {
 
         private void MergeNextPageTable()
         {
-            tableData.Rows.Add("04", "152/KH-PC09", "12/11/2026", "Kế hoạch tập huấn chuyển đổi số và bảo mật thông tin nội bộ", "Các Đội nghiệp vụ");
-            tableData.Rows.Add("05", "168/TB-CATP", "15/11/2026", "Thông báo kết luận hội nghị tổng kết công tác kỹ thuật năm 2026", "Toàn đơn vị");
+            tableData.Rows.Add("04", "15-KH/ĐU", "12/11/2026", "Kế hoạch quán triệt, triển khai chuẩn hóa thể thức văn bản của Đảng ủy", "Văn phòng Đảng ủy");
+            tableData.Rows.Add("05", "168/TB-UBND", "15/11/2026", "Thông báo lịch tiếp công dân và giải quyết thủ tục hành chính tại phường", "UBND Phường");
             LoadSampleDocumentImage(2);
             lblStatus.Text = "  ✓ Đã tự động bỏ tiêu đề lặp và nối thêm dữ liệu bảng biểu từ Trang 2 (Tổng: " + tableData.Rows.Count + " hàng)!";
             MessageBox.Show("Đã tự động khử dòng tiêu đề lặp và nối bảng biểu Trang 2 vào bảng chính thành công!", "VietNamOCR 3.2 Pro - Multi-page Table Merge", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -896,7 +889,7 @@ foreach ($line in $result.Lines) {
             using (SaveFileDialog sfd = new SaveFileDialog
             {
                 Filter = "Microsoft Word Document (*.doc)|*.doc",
-                FileName = "VietNamOCR_VanBan_BangBieu.doc"
+                FileName = "VietNamOCR_HoSo_Phuong.doc"
             })
             {
                 if (sfd.ShowDialog() != DialogResult.OK) return;
@@ -924,7 +917,7 @@ foreach ($line in $result.Lines) {
                               "<head><meta charset='utf-8'><title>VietNamOCR 3.2 Pro Export</title></head>" +
                               "<body style=\"font-family:'Times New Roman',serif;font-size:13.5pt;line-height:1.5;\">" +
                               "<p>" + System.Security.SecurityElement.Escape(txtOcrResult.Text).Replace("\r\n", "<br/>").Replace("\n", "<br/>") + "</p>" +
-                              "<h3 style='margin-top:16pt;'>BẢNG BIỂU SỐ HÓA TÀI LIỆU</h3>" + sbTable.ToString() + "</body></html>";
+                              "<h3 style='margin-top:16pt;'>BẢNG BIỂU SỐ HÓA HỒ SƠ</h3>" + sbTable.ToString() + "</body></html>";
 
                 File.WriteAllText(sfd.FileName, html, new UTF8Encoding(true));
                 lblStatus.Text = "  ✓ Đã xuất tệp Word (.doc) thành công: " + sfd.FileName;
@@ -941,7 +934,7 @@ foreach ($line in $result.Lines) {
             using (SaveFileDialog sfd = new SaveFileDialog
             {
                 Filter = "Microsoft Excel Worksheet (*.xls)|*.xls",
-                FileName = "VietNamOCR_BangBieu.xls"
+                FileName = "VietNamOCR_BangBieu_Phuong.xls"
             })
             {
                 if (sfd.ShowDialog() != DialogResult.OK) return;
