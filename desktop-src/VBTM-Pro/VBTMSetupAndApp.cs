@@ -12,8 +12,8 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("VBTM Pro 2.2.4 - Chuan Hoa Van Ban & Chinh Ta AI Offline")]
-[assembly: AssemblyDescription("Bo cong cu Chuan Hoa The Thuc Van Ban Nghi dinh 30, CAND, Tao QR & Soat Loi Chinh Ta AI Offline cho Microsoft Word")]
+[assembly: AssemblyTitle("VBTM Pro 2.2.4 - Chuan Hoa Van Ban Dang Uy & UBND Phuong")]
+[assembly: AssemblyDescription("Bo cong cu Chuan Hoa The Thuc Van Ban Nghi dinh 30, Van ban Dang, Tao QR & Soat Loi Chinh Ta AI Offline cho Microsoft Word")]
 [assembly: AssemblyCompany("Software Hub")]
 [assembly: AssemblyProduct("VBTM Pro 2.2.4")]
 [assembly: AssemblyVersion("2.2.4.0")]
@@ -130,8 +130,8 @@ namespace VBTMProSuite
 
             Label lblSub = new Label
             {
-                Text = "Chuẩn hóa văn bản Nghị định 30/2020/NĐ-CP, Quy chuẩn CAND, Tạo QR & Chính tả AI cho Word",
-                Font = new Font("Segoe UI", 9.2f),
+                Text = "Chuẩn hóa văn bản Đảng ủy & UBND Phường (Nghị định 30, HD 36 & 05-HD/VPTW), Tạo QR & Chính tả AI",
+                Font = new Font("Segoe UI", 9.0f),
                 ForeColor = Color.FromArgb(203, 213, 225),
                 AutoSize = true,
                 Location = new Point(24, 50)
@@ -179,7 +179,7 @@ namespace VBTMProSuite
 
             chkWordMacroExport = new CheckBox
             {
-                Text = "Tích hợp bộ quy chuẩn Microsoft Word (Nghị định 30, CAND, HD05 & COM Automation)",
+                Text = "Tích hợp bộ quy chuẩn Microsoft Word (Nghị định 30/2020/NĐ-CP, Hướng dẫn 36 & 05-HD/VPTW)",
                 Checked = true,
                 Location = new Point(24, 202),
                 AutoSize = true,
@@ -195,7 +195,7 @@ namespace VBTMProSuite
             };
             Label lblInfo = new Label
             {
-                Text = "• Hoạt động ngoại tuyến độc lập 100% (Bảo mật tuyệt đối tài liệu nội bộ)\r\n" +
+                Text = "• Hoạt động ngoại tuyến độc lập 100% phục vụ Đảng ủy và Ủy ban nhân dân phường\r\n" +
                        "• Tự động căn lề trang A4 (30-15-20-20mm), font Times New Roman 14pt trực tiếp vào Word\r\n" +
                        "• Hỗ trợ gỡ cài đặt qua Installed Apps của Windows hoặc chạy Go_Cai_Dat_VBTM.bat",
                 Location = new Point(12, 10),
@@ -239,9 +239,9 @@ namespace VBTMProSuite
 
             btnPortable = new Button
             {
-                Text = "Chạy Ngay (Portable)",
-                Location = new Point(254, 384),
-                Size = new Size(170, 38),
+                Text = "Chạy Ngay (Không Cần Cài)",
+                Location = new Point(236, 384),
+                Size = new Size(188, 38),
                 BackColor = Color.FromArgb(51, 65, 85),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -249,15 +249,7 @@ namespace VBTMProSuite
                 Cursor = Cursors.Hand
             };
             btnPortable.FlatAppearance.BorderSize = 0;
-            btnPortable.Click += (s, e) =>
-            {
-                this.Hide();
-                using (MainStudioForm app = new MainStudioForm())
-                {
-                    app.ShowDialog();
-                }
-                this.Close();
-            };
+            btnPortable.Click += (s, e) => LaunchInstalledApp();
             this.Controls.Add(btnPortable);
         }
 
@@ -300,7 +292,6 @@ namespace VBTMProSuite
                     "chcp 65001 >nul\r\n" +
                     "\"" + targetExePath + "\" --uninstall\r\n", Encoding.UTF8);
 
-                // Đăng ký vào Windows Installed Apps (Current User - không cần quyền Admin)
                 RegisterUninstallerInRegistry(installDir, targetExePath);
 
                 progressBar.Value = 85;
@@ -308,8 +299,8 @@ namespace VBTMProSuite
                 {
                     lblStatus.Text = "Đang tạo lối tắt ngoài màn hình Desktop & Start Menu...";
                     Application.DoEvents();
-                    CreateShortcut(desktopLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban & Chinh Ta AI");
-                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban & Chinh Ta AI");
+                    CreateShortcut(desktopLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
+                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
                 }
 
                 progressBar.Value = 100;
@@ -355,7 +346,7 @@ namespace VBTMProSuite
                 {
                     if (key != null)
                     {
-                        key.SetValue("DisplayName", "VBTM Chuẩn Hóa Văn Bản Tiếng Việt (VBTM Pro 2.2.4)");
+                        key.SetValue("DisplayName", "VBTM Chuẩn Hóa Văn Bản Đảng Ủy & UBND Phường (VBTM Pro 2.2.4)");
                         key.SetValue("DisplayVersion", "2.2.4");
                         key.SetValue("Publisher", "Software Hub");
                         key.SetValue("InstallLocation", installDir);
@@ -402,7 +393,7 @@ namespace VBTMProSuite
                    "        .Name = \"Times New Roman\"\r\n" +
                    "        .Size = 14\r\n" +
                    "    End With\r\n" +
-                   "    MsgBox \"Da chuan hoa van ban theo Nghi dinh 30/2020/ND-CP!\", vbInformation, \"VBTM Pro 2.2.4\"\r\n" +
+                   "    MsgBox \"Da chuan hoa van ban theo Nghi dinh 30/2020/ND-CP & Quy chuan Dang uy - UBND Phuong!\", vbInformation, \"VBTM Pro 2.2.4\"\r\n" +
                    "End Sub\r\n";
         }
     }
@@ -442,7 +433,7 @@ namespace VBTMProSuite
 
         public MainStudioForm()
         {
-            this.Text = "VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Nghị Định 30, CAND, Tạo QR & Chính Tả AI Offline";
+            this.Text = "VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy & UBND Phường, Tạo QR & Chính Tả AI Offline";
             this.ClientSize = new Size(1120, 720);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(15, 23, 42);
@@ -456,18 +447,16 @@ namespace VBTMProSuite
 
         private void BuildMainUI()
         {
-            // Bottom Status Bar (Added before Fill panel for proper WinForms docking)
             lblStatus = new Label
             {
                 Dock = DockStyle.Bottom,
                 Height = 30,
-                Text = "  ✓ Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Quy chuẩn Nghị định 30/2020/NĐ-CP & Thông tư 30/2023/TT-BCA (CAND)",
+                Text = "  ✓ Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Quy chuẩn Nghị định 30/2020/NĐ-CP (UBND Phường) & Hướng dẫn 36, 05-HD/VPTW (Đảng ủy Phường)",
                 BackColor = Color.FromArgb(30, 41, 59),
                 ForeColor = Color.FromArgb(56, 189, 248),
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            // Top Ribbon Bar
             Panel topBar = new Panel
             {
                 Dock = DockStyle.Top,
@@ -488,16 +477,16 @@ namespace VBTMProSuite
             cboTemplate = new ComboBox
             {
                 Location = new Point(178, 18),
-                Size = new Size(245, 28),
+                Size = new Size(248, 28),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9.5f)
             };
             cboTemplate.Items.AddRange(new object[]
             {
-                "1. Mẫu Công Văn (Nghị định 30/2020/NĐ-CP)",
-                "2. Mẫu Báo Cáo (Quy chuẩn CAND - TT30)",
-                "3. Mẫu Quyết Định (Quy chuẩn CAND - TT30)",
-                "4. Mẫu Báo Cáo Đảng (Hướng dẫn 05-HD/VPTW)"
+                "1. Mẫu Công Văn UBND Phường (Nghị định 30)",
+                "2. Mẫu Báo Cáo UBND Phường (Nghị định 30)",
+                "3. Mẫu Quyết Định UBND Phường (Nghị định 30)",
+                "4. Mẫu Báo Cáo Đảng Ủy Phường (HD 36 & 05)"
             });
             cboTemplate.SelectedIndex = 0;
             cboTemplate.SelectedIndexChanged += (s, e) => LoadTemplate(cboTemplate.SelectedIndex);
@@ -515,7 +504,6 @@ namespace VBTMProSuite
             btnExportDoc.Click += (s, e) => ExportAndOpenWordDoc();
             topBar.Controls.Add(btnExportDoc);
 
-            // Main Scrollable Workspace
             Panel mainArea = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -523,28 +511,26 @@ namespace VBTMProSuite
                 BackColor = Color.FromArgb(15, 23, 42)
             };
 
-            // Add in standard WinForms Z-order: Fill first (index 0), then Top & Bottom
             this.Controls.Add(mainArea);
             this.Controls.Add(topBar);
             this.Controls.Add(lblStatus);
 
-            // Left Meta Fields
             GroupBox grpMeta = new GroupBox
             {
-                Text = " 1. Thông Tin Thể Thức Hành Chính (Nghị Định 30 / CAND / HD05) ",
+                Text = " 1. Thông Tin Thể Thức Hành Chính (Đảng Ủy & Ủy Ban Nhân Dân Phường) ",
                 ForeColor = Color.FromArgb(56, 189, 248),
                 Location = new Point(16, 12),
                 Size = new Size(520, 375)
             };
 
-            txtGovOrg = AddLabeledInput(grpMeta, "Cơ quan chủ quản:", 28, "CÔNG AN TP ĐÀ NẴNG");
-            txtIssueOrg = AddLabeledInput(grpMeta, "Đơn vị ban hành:", 62, "PHÒNG KỸ THUẬT HÌNH SỰ");
-            txtDocNum = AddLabeledInput(grpMeta, "Số & Ký hiệu:", 96, "86/BC-PC09");
-            txtLocation = AddLabeledInput(grpMeta, "Địa danh, ngày tháng:", 130, "Đà Nẵng, ngày 11 tháng 11 năm 2026");
-            txtDocType = AddLabeledInput(grpMeta, "Tên loại văn bản:", 164, "BÁO CÁO");
-            txtSubject = AddLabeledInput(grpMeta, "Trích yếu nội dung:", 198, "Kết quả ứng dụng phần mềm chuẩn hóa văn bản và số hóa tài liệu");
-            txtSignerTitle = AddLabeledInput(grpMeta, "Chức vụ người ký:", 232, "TRƯỞNG PHÒNG");
-            txtSignerName = AddLabeledInput(grpMeta, "Họ tên người ký:", 266, "Thượng tá Trần Minh Quân");
+            txtGovOrg = AddLabeledInput(grpMeta, "Cơ quan cấp trên:", 28, "ỦY BAN NHÂN DÂN QUẬN");
+            txtIssueOrg = AddLabeledInput(grpMeta, "Cơ quan ban hành:", 62, "ỦY BAN NHÂN DÂN PHƯỜNG");
+            txtDocNum = AddLabeledInput(grpMeta, "Số & Ký hiệu:", 96, "145/UBND-VP");
+            txtLocation = AddLabeledInput(grpMeta, "Địa danh, ngày tháng:", 130, "Phường, ngày 11 tháng 11 năm 2026");
+            txtDocType = AddLabeledInput(grpMeta, "Tên loại văn bản:", 164, "");
+            txtSubject = AddLabeledInput(grpMeta, "Trích yếu nội dung:", 198, "V/v triển khai ứng dụng chuẩn hóa thể thức văn bản và số hóa hồ sơ");
+            txtSignerTitle = AddLabeledInput(grpMeta, "Chức vụ người ký:", 232, "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH");
+            txtSignerName = AddLabeledInput(grpMeta, "Họ tên người ký:", 266, "Nguyễn Văn An");
 
             Label lblRec = new Label { Text = "Nơi nhận:", Location = new Point(14, 304), AutoSize = true, ForeColor = Color.LightGray };
             txtRecipients = new TextBox
@@ -553,13 +539,12 @@ namespace VBTMProSuite
                 Size = new Size(345, 58),
                 Multiline = true,
                 ScrollBars = ScrollBars.Vertical,
-                Text = "- Ban Giám đốc CATP (để b/c);\r\n- Phòng Tham mưu;\r\n- Lưu: VT, PC09."
+                Text = "- Như trên;\r\n- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- Lưu: VT, VP."
             };
             grpMeta.Controls.Add(lblRec);
             grpMeta.Controls.Add(txtRecipients);
             mainArea.Controls.Add(grpMeta);
 
-            // QR Code & AI Spellcheck Group
             GroupBox grpQr = new GroupBox
             {
                 Text = " 2. Tạo Mã QR Động & Thẩm Định Chính Tả AI Offline ",
@@ -591,7 +576,7 @@ namespace VBTMProSuite
             {
                 Location = new Point(140, 50),
                 Size = new Size(255, 26),
-                Text = "VBTM-VERIFY:86/BC-PC09|PC09-DANANG|2026"
+                Text = "VBTM-VERIFY:145/UBND-VP|UBND-PHUONG|2026"
             };
             txtQrContent.TextChanged += (s, e) => UpdateQrPreview();
             grpQr.Controls.Add(txtQrContent);
@@ -599,7 +584,7 @@ namespace VBTMProSuite
             Button btnSaveQr = CreateBtn("Lưu Ảnh QR", new Point(402, 48), new Size(102, 28), Color.FromArgb(51, 65, 85));
             btnSaveQr.Click += (s, e) =>
             {
-                using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PNG Image|*.png", FileName = "MaQR_VanBan.png" })
+                using (SaveFileDialog sfd = new SaveFileDialog { Filter = "PNG Image|*.png", FileName = "MaQR_VanBan_Phuong.png" })
                 {
                     if (sfd.ShowDialog() == DialogResult.OK && picQr.Image != null)
                     {
@@ -624,7 +609,7 @@ namespace VBTMProSuite
             Button btnSampleErr = CreateBtn("Chèn Lỗi Mẫu", new Point(16, 140), new Size(106, 30), Color.FromArgb(71, 85, 105));
             btnSampleErr.Click += (s, e) =>
             {
-                txtBody.Text = "Thực hiện chủ chương cải cách hành chính, đơn vị đã khẩn chương chiển khai kế hoạc bổ xung trang thiết bị và sử lý nghiêm các trường hợp sai phạm , đảm bảo kiểm xoát chính sác tiến độ công việc và hổ trợ cán bộ đạt tiêu chuẫn đề ra";
+                txtBody.Text = "Thực hiện chủ chương cải cách hành chính tại địa phương, Ủy ban nhân dân phường đã khẩn chương chiển khai kế hoạc bổ xung trang thiết bị và sử lý nghiêm các trường hợp sai phạm , đảm bảo kiểm xoát chính sác tiến độ công việc và hổ trợ cán bộ đạt tiêu chuẫn đề ra";
                 ScanIssuesOnly();
             };
             grpQr.Controls.Add(btnSampleErr);
@@ -635,7 +620,6 @@ namespace VBTMProSuite
 
             mainArea.Controls.Add(grpQr);
 
-            // Right Editor Box
             GroupBox grpEditor = new GroupBox
             {
                 Text = " 3. Nội Dung Văn Bản Chính (Phông chữ chuẩn Times New Roman 14pt - Khổ A4) ",
@@ -689,48 +673,61 @@ namespace VBTMProSuite
             if (txtGovOrg == null) return;
             if (idx == 0)
             {
-                txtGovOrg.Text = "ỦY BAN NHÂN DÂN TP ĐÀ NẴNG";
-                txtIssueOrg.Text = "SỞ THÔNG TIN VÀ TRUYỀN THÔNG";
-                txtDocNum.Text = "145/STTTT-CNTT";
+                txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                txtDocNum.Text = "145/UBND-VP";
                 txtDocType.Text = "";
-                txtSubject.Text = "V/v triển khai phần mềm chuẩn hóa văn bản và số hóa tài liệu ngoại tuyến năm 2026";
-                txtBody.Text = "Thực hiện Kế hoạch chuyển đổi số và hiện đại hóa công tác hành chính năm 2026, Sở Thông tin và Truyền thông triển khai bộ công cụ chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\r\n\r\n" +
-                               "1. Các phòng, ban, đơn vị trực thuộc thực hiện rà soát, chuẩn hóa toàn bộ văn bản dự thảo trước khi trình ký ban hành; đảm bảo đúng quy định về lề trang A4 (Trái 30mm, Phải 15mm, Trên 20mm, Dưới 20mm), phông chữ Times New Roman, cỡ chữ 13-14pt.\r\n\r\n" +
-                               "2. Ứng dụng công cụ kiểm tra lỗi chính tả tiếng Việt ngoại tuyến (Offline 100%) nhằm bảo đảm an toàn thông tin và bảo vệ bí mật nhà nước./.";
+                txtSubject.Text = "V/v triển khai ứng dụng chuẩn hóa thể thức văn bản và số hóa hồ sơ hành chính tại địa phương";
+                txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                txtSignerName.Text = "Nguyễn Văn An";
+                txtRecipients.Text = "- Như trên;\r\n- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- UBMTTQ và các đoàn thể phường;\r\n- Các tổ dân phố;\r\n- Lưu: VT, VP.";
+                txtBody.Text = "Thực hiện Kế hoạch cải cách hành chính và chuyển đổi số năm 2026, Ủy ban nhân dân phường triển khai bộ công cụ chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư.\r\n\r\n" +
+                               "1. Các bộ phận chuyên môn, công chức thuộc Ủy ban nhân dân phường thực hiện rà soát, chuẩn hóa toàn bộ văn bản dự thảo trước khi trình ký ban hành; bảo đảm đúng quy định về khổ giấy A4, lề trang (Trái 30mm, Phải 15mm, Trên 20mm, Dưới 20mm), phông chữ Times New Roman, cỡ chữ 13-14pt.\r\n\r\n" +
+                               "2. Đẩy mạnh số hóa hồ sơ, tài liệu lưu trữ và ứng dụng công cụ kiểm tra lỗi chính tả tiếng Việt ngoại tuyến (Offline 100%) nhằm nâng cao chất lượng ban hành văn bản./.";
             }
             else if (idx == 1)
             {
-                txtGovOrg.Text = "CÔNG AN TP ĐÀ NẴNG";
-                txtIssueOrg.Text = "PHÒNG KỸ THUẬT HÌNH SỰ";
-                txtDocNum.Text = "86/BC-PC09";
+                txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                txtDocNum.Text = "86/BC-UBND";
                 txtDocType.Text = "BÁO CÁO";
-                txtSubject.Text = "Kết quả ứng dụng phần mềm chuẩn hóa văn bản và nhận diện tài liệu OCR phục vụ công tác chuyên môn";
-                txtBody.Text = "Thực hiện chương trình công tác kỹ thuật hình sự và đẩy mạnh ứng dụng khoa học công nghệ trong năm 2026, Phòng Kỹ thuật hình sự báo cáo kết quả triển khai như sau:\r\n\r\n" +
+                txtSubject.Text = "Kết quả thực hiện công tác cải cách hành chính, văn thư lưu trữ và chuyển đổi số trên địa bàn phường năm 2026";
+                txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                txtSignerName.Text = "Nguyễn Văn An";
+                txtRecipients.Text = "- UBND Quận (để b/c);\r\n- Phòng Nội vụ;\r\n- Thường trực Đảng ủy, HĐND phường;\r\n- CT, các PCT UBND phường;\r\n- Lưu: VT, VP.";
+                txtBody.Text = "Thực hiện Kế hoạch công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường báo cáo kết quả triển khai công tác chuẩn hóa văn bản và số hóa hồ sơ trên địa bàn phường như sau:\r\n\r\n" +
                                "I. KẾT QUẢ ĐẠT ĐƯỢC\r\n" +
-                               "1. Đã đưa vào vận hành phần mềm VBTM Pro 2.2.4 phục vụ chuẩn hóa thể thức văn bản theo đúng quy chuẩn Công an nhân dân và Nghị định số 30/2020/NĐ-CP.\r\n\r\n" +
-                               "2. Tích hợp thành công mô-đun soát lỗi chính tả AI tiếng Việt ngoại tuyến 100% và tạo mã QR xác thực văn bản trực tiếp cho Microsoft Word./.";
+                               "1. Công tác ban hành văn bản: 100% văn bản hành chính của Hội đồng nhân dân và Ủy ban nhân dân phường được chuẩn hóa đồng bộ theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\r\n\r\n" +
+                               "2. Công tác số hóa hồ sơ: Đã ứng dụng phần mềm VBTM Pro 2.2.4 và VietNamOCR 3.2 Pro phục vụ rà soát lỗi chính tả tiếng Việt, tạo mã QR quản lý hồ sơ và bóc tách dữ liệu bảng biểu sang Word, Excel nhanh chóng, chính xác./.";
             }
             else if (idx == 2)
             {
-                txtGovOrg.Text = "CÔNG AN TP ĐÀ NẴNG";
-                txtIssueOrg.Text = "PHÒNG KỸ THUẬT HÌNH SỰ";
-                txtDocNum.Text = "120/QĐ-PC09";
+                txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                txtDocNum.Text = "120/QĐ-UBND";
                 txtDocType.Text = "QUYẾT ĐỊNH";
-                txtSubject.Text = "Về việc ban hành Quy chế sử dụng phần mềm nội bộ ngoại tuyến trong đơn vị";
-                txtBody.Text = "Căn cứ Thông tư số 30/2023/TT-BCA quy định về công tác văn thư trong Công an nhân dân;\r\n\r\n" +
-                               "Theo đề nghị của Đội Tổng hợp,\r\n\r\n" +
+                txtSubject.Text = "Về việc ban hành Quy chế quản lý, chuẩn hóa văn bản và số hóa hồ sơ tài liệu tại Ủy ban nhân dân phường";
+                txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                txtSignerName.Text = "Nguyễn Văn An";
+                txtRecipients.Text = "- Như Điều 3;\r\n- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- Lưu: VT, VP.";
+                txtBody.Text = "Căn cứ Luật Tổ chức chính quyền địa phương;\r\n\r\n" +
+                               "Căn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\r\n\r\n" +
+                               "Theo đề nghị của Công chức Văn phòng - Thống kê phường,\r\n\r\n" +
                                "QUYẾT ĐỊNH:\r\n\r\n" +
-                               "Điều 1. Ban hành kèm theo Quyết định này Quy chế quản lý, vận hành và sử dụng bộ công cụ VBTM Pro 2.2.4 và VietNamOCR 3.2 Pro trên hệ thống máy tính nội bộ.\r\n\r\n" +
-                               "Điều 2. Các Đội nghiệp vụ và toàn thể cán bộ, chiến sĩ thuộc đơn vị chịu trách nhiệm thi hành Quyết định này./.";
+                               "Điều 1. Ban hành kèm theo Quyết định này Quy chế ứng dụng phần mềm chuẩn hóa thể thức văn bản VBTM Pro 2.2.4 và số hóa hồ sơ tài liệu VietNamOCR 3.2 Pro trong công tác văn thư, lưu trữ tại Ủy ban nhân dân phường.\r\n\r\n" +
+                               "Điều 2. Công chức Văn phòng - Thống kê và các cán bộ, công chức, bộ phận chuyên môn thuộc Ủy ban nhân dân phường chịu trách nhiệm thi hành Quyết định này./.";
             }
             else
             {
-                txtGovOrg.Text = "ĐẢNG ỦY CÔNG AN TP ĐÀ NẴNG";
-                txtIssueOrg.Text = "ĐẢNG ỦY PHÒNG KỸ THUẬT HÌNH SỰ";
+                txtGovOrg.Text = "QUẬN ỦY";
+                txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
                 txtDocNum.Text = "42-BC/ĐU";
                 txtDocType.Text = "BÁO CÁO";
-                txtSubject.Text = "Tổng kết công tác cải cách hành chính và chuyển đổi số trong công tác Đảng năm 2026";
-                txtBody.Text = "Thực hiện Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy Phòng Kỹ thuật hình sự báo cáo kết quả thực hiện chuẩn hóa toàn bộ hệ thống văn bản nội bộ./.";
+                txtSubject.Text = "Tổng kết công tác xây dựng Đảng, cải cách hành chính trong Đảng và chuyển đổi số tại Đảng bộ phường năm 2026";
+                txtSignerTitle.Text = "T/M ĐẢNG ỦY - BÍ THƯ";
+                txtSignerName.Text = "Trần Minh Quân";
+                txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c);\r\n- Văn phòng Quận ủy;\r\n- Các đồng chí Đảng ủy viên;\r\n- HĐND, UBND, UBMTTQ phường;\r\n- Các chi bộ trực thuộc;\r\n- Lưu Văn phòng Đảng ủy.";
+                txtBody.Text = "Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện chuẩn hóa toàn bộ hệ thống văn bản của Đảng ủy và các chi bộ trực thuộc năm 2026./.";
             }
             if (txtQrContent != null)
             {
@@ -759,7 +756,7 @@ namespace VBTMProSuite
             }
             if (lstIssues.Items.Count == 0)
             {
-                lstIssues.Items.Add("✓ Văn bản đạt chuẩn 100% về chính tả và thể thức Nghị định 30!");
+                lstIssues.Items.Add("✓ Văn bản đạt chuẩn 100% về chính tả và thể thức Đảng ủy / UBND phường!");
             }
         }
 
@@ -788,7 +785,7 @@ namespace VBTMProSuite
 
             txtBody.Text = raw;
             ScanIssuesOnly();
-            lblStatus.Text = "  ✓ Đã chuẩn hóa thể thức Nghị định 30 & tự động sửa " + fixedCount + " lỗi chính tả tiếng Việt!";
+            lblStatus.Text = "  ✓ Đã chuẩn hóa thể thức Đảng ủy / UBND phường & tự động sửa " + fixedCount + " lỗi chính tả tiếng Việt!";
             MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ký hiệu kết thúc và tự động sửa " + fixedCount + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -810,11 +807,10 @@ namespace VBTMProSuite
                 }
                 catch
                 {
-                    // Nếu chưa mở Word, tự động xuất văn bản hiện tại ra file .doc chuẩn A4 và mở bằng Word
-                    string tempDocPath = Path.Combine(Path.GetTempPath(), "VBTM_VanBan_ChuanHoa_ND30.doc");
+                    string tempDocPath = Path.Combine(Path.GetTempPath(), "VBTM_VanBan_Phuong_ChuanHoa.doc");
                     WriteWordDocFile(tempDocPath);
-                    Process.Start(tempDocPath);
-                    lblStatus.Text = "  ✓ Đã khởi tạo tài liệu chuẩn Nghị định 30 và mở trực tiếp trong Microsoft Word!";
+                    Process.Start(new ProcessStartInfo(tempDocPath) { UseShellExecute = true });
+                    lblStatus.Text = "  ✓ Đã khởi tạo tài liệu chuẩn A4 và mở trực tiếp trong Microsoft Word!";
                     return;
                 }
 
@@ -823,20 +819,19 @@ namespace VBTMProSuite
                 int count = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
                 if (count == 0)
                 {
-                    string tempDocPath = Path.Combine(Path.GetTempPath(), "VBTM_VanBan_ChuanHoa_ND30.doc");
+                    string tempDocPath = Path.Combine(Path.GetTempPath(), "VBTM_VanBan_Phuong_ChuanHoa.doc");
                     WriteWordDocFile(tempDocPath);
-                    Process.Start(tempDocPath);
+                    Process.Start(new ProcessStartInfo(tempDocPath) { UseShellExecute = true });
                     return;
                 }
 
                 object doc = wordType.InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
 
-                // Thiết lập lề trang A4 chuẩn Nghị định 30 (1 cm = 28.3465 pt)
                 object pageSetup = doc.GetType().InvokeMember("PageSetup", BindingFlags.GetProperty, null, doc, null);
-                pageSetup.GetType().InvokeMember("TopMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 56.7f });    // 2.0 cm
-                pageSetup.GetType().InvokeMember("BottomMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 56.7f }); // 2.0 cm
-                pageSetup.GetType().InvokeMember("LeftMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 85.05f });  // 3.0 cm
-                pageSetup.GetType().InvokeMember("RightMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 42.5f });  // 1.5 cm
+                pageSetup.GetType().InvokeMember("TopMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 56.7f });
+                pageSetup.GetType().InvokeMember("BottomMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 56.7f });
+                pageSetup.GetType().InvokeMember("LeftMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 85.05f });
+                pageSetup.GetType().InvokeMember("RightMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 42.5f });
 
                 object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
                 object font = content.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, content, null);
@@ -844,7 +839,7 @@ namespace VBTMProSuite
                 font.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, font, new object[] { 14f });
 
                 MessageBox.Show(
-                    "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo Nghị định 30/2020/NĐ-CP:\n\n" +
+                    "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo quy chuẩn Đảng ủy & UBND Phường:\n\n" +
                     "• Khổ giấy A4, Lề Trái 30mm - Phải 15mm - Trên 20mm - Dưới 20mm\n" +
                     "• Phông chữ chuẩn: Times New Roman 14pt!",
                     "VBTM Pro 2.2.4 - Word Automation",
@@ -884,6 +879,14 @@ namespace VBTMProSuite
                 }
             }
 
+            bool isDang = (cboTemplate != null && cboTemplate.SelectedIndex == 3) ||
+                          txtIssueOrg.Text.IndexOf("ĐẢNG", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            string rightHeaderHtml = isDang
+                ? "<div style='font-size:12pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
+                : "<div style='font-size:12pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>" +
+                  "<div style='font-size:13pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>";
+
             string html = @"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'>
 <style>
@@ -901,8 +904,7 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
   <div style='font-size:13pt;margin-top:6pt;'>Số: " + System.Security.SecurityElement.Escape(txtDocNum.Text) + @"</div>
 </td>
 <td style='width:56%;text-align:center;'>
-  <div style='font-size:12pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-  <div style='font-size:13pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>
+  " + rightHeaderHtml + @"
   <hr style='width:48%;border:0;border-top:1px solid #000;'/>
   <div style='font-size:13pt;font-style:italic;margin-top:6pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
 </td>
@@ -924,15 +926,15 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
             using (SaveFileDialog sfd = new SaveFileDialog
             {
                 Filter = "Microsoft Word Document (*.doc)|*.doc",
-                FileName = "VanBan_ChuanHoa_ND30.doc"
+                FileName = "VanBan_Phuong_ChuanHoa.doc"
             })
             {
                 if (sfd.ShowDialog() != DialogResult.OK) return;
                 WriteWordDocFile(sfd.FileName);
-                lblStatus.Text = "  ✓ Đã xuất tệp Word chuẩn Nghị định 30: " + sfd.FileName;
-                if (MessageBox.Show("Đã xuất tệp Word chuẩn Nghị định 30 thành công!\nBạn có muốn mở tệp ngay không?", "VBTM Pro 2.2.4", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                lblStatus.Text = "  ✓ Đã xuất tệp Word chuẩn A4: " + sfd.FileName;
+                if (MessageBox.Show("Đã xuất tệp Word chuẩn thể thức thành công!\nBạn có muốn mở tệp ngay không?", "VBTM Pro 2.2.4", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                 {
-                    Process.Start(sfd.FileName);
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
                 }
             }
         }
