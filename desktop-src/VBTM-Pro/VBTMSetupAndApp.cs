@@ -5,6 +5,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.IO.Compression;
+using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -428,12 +430,33 @@ namespace VBTMProSuite
             { @"\bsát nhập\b", "sáp nhập", "Từ chuẩn hành chính ('sáp nhập')" },
             { @"\bxáng suốt\b", "sáng suốt", "Sai phụ âm x/s ('sáng suốt')" },
             { @"\bgiử gìn\b", "giữ gìn", "Sai dấu hỏi/ngã ('giữ gìn')" },
-            { @"\bvửng chắc\b", "vững chắc", "Sai dấu hỏi/ngã ('vững chắc')" }
+            { @"\bvửng chắc\b", "vững chắc", "Sai dấu hỏi/ngã ('vững chắc')" },
+            { @"\bchặc chẽ\b", "chặt chẽ", "Sai âm cuối c/t ('chặt chẽ')" },
+            { @"\bsâu xát\b", "sâu sát", "Sai phụ âm x/s ('sâu sát')" },
+            { @"\bquan chọng\b", "quan trọng", "Sai phụ âm ch/tr ('quan trọng')" },
+            { @"\bchách nhiệm\b", "trách nhiệm", "Sai phụ âm ch/tr ('trách nhiệm')" },
+            { @"\btrực chách\b", "trực trách", "Sai phụ âm ch/tr ('trực trách')" },
+            { @"\bphát chiển\b", "phát triển", "Sai phụ âm ch/tr ('phát triển')" },
+            { @"\btập chung\b", "tập trung", "Sai phụ âm ch/tr ('tập trung')" },
+            { @"\btuyên chuyền\b", "tuyên truyền", "Sai phụ âm ch/tr ('tuyên truyền')" },
+            { @"\brà xoát\b", "rà soát", "Sai phụ âm x/s ('rà soát')" },
+            { @"\bxắp xếp\b", "sắp xếp", "Sai phụ âm x/s ('sắp xếp')" },
+            { @"\bsắp sếp\b", "sắp xếp", "Sai phụ âm s/x ('sắp xếp')" },
+            { @"\bsuất sắc\b", "xuất sắc", "Sai phụ âm s/x ('xuất sắc')" },
+            { @"\bsản suất\b", "sản xuất", "Sai phụ âm s/x ('sản xuất')" },
+            { @"\bngân xách\b", "ngân sách", "Sai phụ âm x/s ('ngân sách')" },
+            { @"\bdanh xách\b", "danh sách", "Sai phụ âm x/s ('danh sách')" },
+            { @"\bchính xách\b", "chính sách", "Sai phụ âm x/s ('chính sách')" },
+            { @"\bkỷ thuật\b", "kỹ thuật", "Sai dấu hỏi/ngã ('kỹ thuật')" },
+            { @"\blỉnh vực\b", "lĩnh vực", "Sai dấu hỏi/ngã ('lĩnh vực')" },
+            { @"\bmẩu mực\b", "mẫu mực", "Sai dấu hỏi/ngã ('mẫu mực')" },
+            { @"\bhướng dẩn\b", "hướng dẫn", "Sai dấu hỏi/ngã ('hướng dẫn')" }
         };
 
         public MainStudioForm()
         {
-            this.Text = "VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy & UBND Phường, Tạo QR & Chính Tả AI Offline";
+            try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls; } catch { }
+            this.Text = "VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy & UBND Phường, Tạo QR & Chính Tả AI";
             this.ClientSize = new Size(1120, 720);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(15, 23, 42);
@@ -476,10 +499,10 @@ namespace VBTMProSuite
 
             cboTemplate = new ComboBox
             {
-                Location = new Point(178, 18),
-                Size = new Size(248, 28),
+                Location = new Point(166, 18),
+                Size = new Size(218, 28),
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9.5f)
+                Font = new Font("Segoe UI", 9.0f)
             };
             cboTemplate.Items.AddRange(new object[]
             {
@@ -492,15 +515,19 @@ namespace VBTMProSuite
             cboTemplate.SelectedIndexChanged += (s, e) => LoadTemplate(cboTemplate.SelectedIndex);
             topBar.Controls.Add(cboTemplate);
 
-            Button btnStd = CreateBtn("1. Chuẩn Hóa & Sửa Chính Tả AI", new Point(435, 14), new Size(215, 36), Color.FromArgb(2, 132, 199));
+            Button btnOpenFile = CreateBtn("📂 Mở File (.docx/.txt)", new Point(390, 14), new Size(165, 36), Color.FromArgb(14, 165, 233));
+            btnOpenFile.Click += (s, e) => OpenWordOrTextFileFromDisk();
+            topBar.Controls.Add(btnOpenFile);
+
+            Button btnStd = CreateBtn("1. Chuẩn Hóa & Sửa Lỗi AI", new Point(562, 14), new Size(185, 36), Color.FromArgb(2, 132, 199));
             btnStd.Click += (s, e) => StandardizeAndFixAll();
             topBar.Controls.Add(btnStd);
 
-            Button btnWordLive = CreateBtn("2. Chuẩn Hóa Word Đang Mở", new Point(660, 14), new Size(215, 36), Color.FromArgb(79, 70, 229));
+            Button btnWordLive = CreateBtn("2. Chuẩn Hóa Word Đang Mở", new Point(754, 14), new Size(182, 36), Color.FromArgb(79, 70, 229));
             btnWordLive.Click += (s, e) => FormatActiveWordDocument();
             topBar.Controls.Add(btnWordLive);
 
-            Button btnExportDoc = CreateBtn("3. Xuất & Mở Word (.doc A4)", new Point(885, 14), new Size(215, 36), Color.FromArgb(5, 150, 105));
+            Button btnExportDoc = CreateBtn("3. Xuất Word (.doc A4)", new Point(942, 14), new Size(162, 36), Color.FromArgb(5, 150, 105));
             btnExportDoc.Click += (s, e) => ExportAndOpenWordDoc();
             topBar.Controls.Add(btnExportDoc);
 
@@ -939,11 +966,117 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
             }
         }
 
+        private void OpenWordOrTextFileFromDisk()
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog
+            {
+                Title = "Chọn tệp văn bản Word (.docx, .doc) hoặc Text (.txt) để chuẩn hóa",
+                Filter = "Word & Text Files (*.docx;*.doc;*.txt)|*.docx;*.doc;*.txt|All Files (*.*)|*.*"
+            })
+            {
+                if (ofd.ShowDialog() != DialogResult.OK) return;
+
+                try
+                {
+                    string ext = Path.GetExtension(ofd.FileName).ToLowerInvariant();
+                    string extractedText = "";
+
+                    if (ext == ".docx")
+                    {
+                        string tempZip = Path.Combine(Path.GetTempPath(), "vbtm_docx_" + Guid.NewGuid().ToString("N") + ".zip");
+                        string tempExtractDir = Path.Combine(Path.GetTempPath(), "vbtm_docx_dir_" + Guid.NewGuid().ToString("N"));
+                        try
+                        {
+                            File.Copy(ofd.FileName, tempZip, true);
+                            ZipFile.ExtractToDirectory(tempZip, tempExtractDir);
+                            string xmlPath = Path.Combine(tempExtractDir, "word", "document.xml");
+                            if (File.Exists(xmlPath))
+                            {
+                                string xml = File.ReadAllText(xmlPath, Encoding.UTF8);
+                                xml = Regex.Replace(xml, @"</w:p>", "\r\n\r\n");
+                                xml = Regex.Replace(xml, @"<w:br[^>]*/?>", "\r\n");
+                                xml = Regex.Replace(xml, @"<[^>]+>", "");
+                                extractedText = WebUtility.HtmlDecode(xml);
+                            }
+                        }
+                        finally
+                        {
+                            try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
+                            try { if (Directory.Exists(tempExtractDir)) Directory.Delete(tempExtractDir, true); } catch { }
+                        }
+                    }
+                    else
+                    {
+                        string rawContent = File.ReadAllText(ofd.FileName, Encoding.UTF8);
+                        if (rawContent.IndexOf("<html", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            rawContent.IndexOf("<p", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            string stripped = Regex.Replace(rawContent, @"<style[\s\S]*?</style>", "", RegexOptions.IgnoreCase);
+                            stripped = Regex.Replace(stripped, @"</(p|div|tr|h1|h2|h3)>", "\r\n\r\n", RegexOptions.IgnoreCase);
+                            stripped = Regex.Replace(stripped, @"<br\s*/?>", "\r\n", RegexOptions.IgnoreCase);
+                            stripped = Regex.Replace(stripped, @"<[^>]+>", " ");
+                            extractedText = WebUtility.HtmlDecode(stripped);
+                        }
+                        else
+                        {
+                            extractedText = rawContent;
+                        }
+                    }
+
+                    extractedText = Regex.Replace(extractedText ?? "", @"(\r?\n){3,}", "\r\n\r\n").Trim();
+                    if (string.IsNullOrWhiteSpace(extractedText))
+                    {
+                        MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp đã chọn!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (extractedText.IndexOf("ĐẢNG CỘNG SẢN VIỆT NAM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        extractedText.IndexOf("ĐẢNG ỦY", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        txtGovOrg.Text = "QUẬN ỦY";
+                        txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                    }
+
+                    txtBody.Text = extractedText;
+                    StandardizeAndFixAll();
+                    lblStatus.Text = "  ✓ Đã đọc và chuẩn hóa tệp: " + Path.GetFileName(ofd.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi khi đọc tệp văn bản: " + ex.Message, "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
         private void UpdateQrPreview()
         {
             if (picQr == null || txtQrContent == null) return;
             string text = txtQrContent.Text.Trim();
             if (string.IsNullOrEmpty(text)) text = "VBTM-PRO";
+
+            try
+            {
+                string url = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=6&ecc=M&data=" + Uri.EscapeDataString(text);
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                req.Timeout = 2500;
+                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                using (Stream s = resp.GetResponseStream())
+                {
+                    if (s != null)
+                    {
+                        using (Image img = Image.FromStream(s))
+                        {
+                            picQr.Image = new Bitmap(img);
+                            return;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback offline matrix if no internet connection
+            }
+
             int size = 25, scale = 4, pad = 6;
             Bitmap bmp = new Bitmap(size * scale + pad * 2, size * scale + pad * 2);
             using (Graphics g = Graphics.FromImage(bmp))
