@@ -418,6 +418,20 @@ namespace VietNamOCRSuite
             this.Font = new Font("Segoe UI", 9.5f);
             this.KeyPreview = true;
             this.KeyDown += OcrMainForm_KeyDown;
+            this.AllowDrop = true;
+            this.DragEnter += (s, e) =>
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                    e.Effect = DragDropEffects.Copy;
+            };
+            this.DragDrop += (s, e) =>
+            {
+                string[] files = e.Data.GetData(DataFormats.FileDrop) as string[];
+                if (files != null && files.Length > 0)
+                {
+                    LoadDocumentFromPath(files[0]);
+                }
+            };
 
             BuildMainUI();
             LoadSampleDocumentImage(1);
@@ -721,68 +735,79 @@ namespace VietNamOCRSuite
             using (OpenFileDialog ofd = new OpenFileDialog
             {
                 Title = "Chọn tệp Hình ảnh hoặc PDF Scan cần nhận diện",
-                Filter = "Tài liệu Scan & PDF (*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.webp;*.pdf)|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.webp;*.pdf|Tất cả các tệp (*.*)|*.*"
+                Filter = "Tài liệu Scan & PDF (*.pdf;*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff;*.webp)|*.pdf;*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff;*.webp|Tệp PDF (*.pdf)|*.pdf|Tất cả các tệp (*.*)|*.*"
             })
             {
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    try
+                    LoadDocumentFromPath(ofd.FileName);
+                }
+            }
+        }
+
+        private void LoadDocumentFromPath(string filePath)
+        {
+            try
+            {
+                currentFilePath = filePath;
+                string ext = Path.GetExtension(filePath).ToLowerInvariant();
+                if (ext == ".pdf")
+                {
+                    lblStatus.Text = "  Đang đọc và kết xuất trang PDF thực tế: " + Path.GetFileName(filePath) + "...";
+                    Application.DoEvents();
+                    currentPdfPageIndex = 1;
+                    if (RenderRealPdfPageToPictureBox(filePath, 1, out totalPdfPages))
                     {
-                        currentFilePath = ofd.FileName;
-                        string ext = Path.GetExtension(ofd.FileName).ToLowerInvariant();
-                        if (ext == ".pdf")
-                        {
-                            lblStatus.Text = "  Đang đọc và kết xuất trang PDF thực tế bằng Windows.Data.Pdf...";
-                            Application.DoEvents();
-                            currentPdfPageIndex = 1;
-                            if (RenderRealPdfPageToPictureBox(ofd.FileName, 1, out totalPdfPages))
-                            {
-                                isSampleDoc = false;
-                                isPdfLoaded = true;
-                                UpdatePdfButtons();
-                                lblStatus.Text = "  ✓ Đã nạp tệp PDF (" + totalPdfPages + " trang). Đang tự động nhận diện chữ Tiếng Việt...";
-                                Application.DoEvents();
-                                RunVietnameseOcr(false);
-                            }
-                        }
-                        else
-                        {
-                            using (FileStream fs = new FileStream(ofd.FileName, FileMode.Open, FileAccess.Read))
-                            {
-                                using (Image temp = Image.FromStream(fs))
-                                {
-                                    picDoc.Image = new Bitmap(temp);
-                                }
-                            }
-                            isSampleDoc = false;
-                            isPdfLoaded = false;
-                            UpdatePdfButtons();
-                            lblStatus.Text = "  ✓ Đã tải tệp ảnh: " + Path.GetFileName(ofd.FileName) + ". Đang tự động nhận diện chữ Tiếng Việt...";
-                            Application.DoEvents();
-                            RunVietnameseOcr(false);
-                        }
+                        isSampleDoc = false;
+                        isPdfLoaded = true;
+                        UpdatePdfButtons();
+                        lblStatus.Text = "  ✓ Đã nạp tệp PDF (" + totalPdfPages + " trang). Đang tự động nhận diện chữ Tiếng Việt...";
+                        Application.DoEvents();
+                        RunVietnameseOcr(false);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        MessageBox.Show("Không thể đọc tệp đã chọn: " + ex.Message, "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        lblStatus.Text = "  ⚠ Không thể kết xuất trang PDF: " + Path.GetFileName(filePath);
+                        MessageBox.Show("Không thể kết xuất tệp PDF đã chọn. Vui lòng kiểm tra tệp PDF không bị đặt mật khẩu bảo vệ.", "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
+                else
+                {
+                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    {
+                        using (Image temp = Image.FromStream(fs))
+                        {
+                            picDoc.Image = new Bitmap(temp);
+                        }
+                    }
+                    isSampleDoc = false;
+                    isPdfLoaded = false;
+                    UpdatePdfButtons();
+                    lblStatus.Text = "  ✓ Đã tải tệp ảnh: " + Path.GetFileName(filePath) + ". Đang tự động nhận diện chữ Tiếng Việt...";
+                    Application.DoEvents();
+                    RunVietnameseOcr(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể đọc tệp đã chọn: " + ex.Message, "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
         private string lastExtractedPdfPageText = "";
 
-        // Kết xuất trực tiếp trang PDF thật sang ảnh độ phân giải cao bằng Windows.Data.Pdf.PdfDocument (LoadFromStreamAsync + Seek(0))
+        // Kết xuất trực tiếp trang PDF thật sang ảnh độ phân giải cao bằng tệp kịch bản .ps1 (Windows.Data.Pdf.PdfDocument + Ghostscript Fallback)
         private bool RenderRealPdfPageToPictureBox(string pdfPath, int pageOneBased, out int pageCount)
         {
             pageCount = 1;
             lastExtractedPdfPageText = "";
+            string outPng = Path.Combine(Path.GetTempPath(), "vnocr_real_pdf_page_" + Guid.NewGuid().ToString("N") + ".png");
+            string outTxt = Path.Combine(Path.GetTempPath(), "vnocr_real_pdf_text_" + Guid.NewGuid().ToString("N") + ".txt");
+            string tempPs1 = Path.Combine(Path.GetTempPath(), "vnocr_pdf_render_" + Guid.NewGuid().ToString("N") + ".ps1");
+
             try
             {
-                string outPng = Path.Combine(Path.GetTempPath(), "vnocr_real_pdf_page_" + Guid.NewGuid().ToString("N") + ".png");
-                string outTxt = Path.Combine(Path.GetTempPath(), "vnocr_real_pdf_text_" + Guid.NewGuid().ToString("N") + ".txt");
-
-                // Nếu máy có sẵn Ghostscript (PDF24), trích xuất thêm lớp văn bản gốc chính xác 100% của trang PDF
+                // 1. Nếu máy có sẵn Ghostscript (PDF24), trích xuất thêm lớp văn bản gốc chính xác 100% của trang PDF
                 string gsExe = @"C:\Program Files\PDF24\gs\bin\gswin64c.exe";
                 if (File.Exists(gsExe))
                 {
@@ -808,8 +833,10 @@ namespace VietNamOCRSuite
                     catch { }
                 }
 
+                // 2. Chạy Windows.Data.Pdf.PdfDocument thông qua tệp kịch bản .ps1 (Tránh lỗi PowerShell -Command - đọc từng dòng làm hỏng hàm Await nhiều dòng)
                 int zeroIdx = Math.Max(0, pageOneBased - 1);
                 string psScript = @"
+$ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
 $null = [Windows.Data.Pdf.PdfDocument, Windows.Data.Pdf, ContentType = WindowsRuntime]
 $null = [Windows.Data.Pdf.PdfPageRenderOptions, Windows.Data.Pdf, ContentType = WindowsRuntime]
@@ -844,13 +871,15 @@ $fs.Close()
 $netStream.Close()
 $inFileStream.Close()
 ";
+                File.WriteAllText(tempPs1, psScript, new UTF8Encoding(true));
+
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    Arguments = "-NoProfile -NonInteractive -Command -",
+                    Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + tempPs1 + "\"",
                     UseShellExecute = false,
-                    RedirectStandardInput = true,
                     RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                     CreateNoWindow = true,
                     StandardOutputEncoding = Encoding.UTF8
                 };
@@ -858,16 +887,34 @@ $inFileStream.Close()
                 string output = "";
                 using (Process p = Process.Start(psi))
                 {
-                    p.StandardInput.WriteLine(psScript);
-                    p.StandardInput.Close();
                     output = p.StandardOutput.ReadToEnd().Trim();
-                    p.WaitForExit(14000);
+                    p.WaitForExit(15000);
                 }
 
                 Match m = Regex.Match(output, @"PAGES=(\d+)");
                 if (m.Success)
                 {
                     int.TryParse(m.Groups[1].Value, out pageCount);
+                }
+
+                // 3. Dự phòng: Nếu tệp ảnh chưa được tạo bởi Windows.Data.Pdf và máy có Ghostscript (PDF24), kết xuất trực tiếp bằng Ghostscript png16m
+                if ((!File.Exists(outPng) || new FileInfo(outPng).Length == 0) && File.Exists(gsExe))
+                {
+                    try
+                    {
+                        ProcessStartInfo gsPngPsi = new ProcessStartInfo
+                        {
+                            FileName = gsExe,
+                            Arguments = string.Format("-dNOPAUSE -dBATCH -dSAFER -q -sDEVICE=png16m -r200 -dFirstPage={0} -dLastPage={0} \"-sOutputFile={1}\" \"{2}\"", pageOneBased, outPng, pdfPath),
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        using (Process gp = Process.Start(gsPngPsi))
+                        {
+                            gp.WaitForExit(10000);
+                        }
+                    }
+                    catch { }
                 }
 
                 if (File.Exists(outPng) && new FileInfo(outPng).Length > 0)
@@ -879,13 +926,18 @@ $inFileStream.Close()
                             picDoc.Image = new Bitmap(tmp);
                         }
                     }
-                    try { File.Delete(outPng); } catch { }
                     return true;
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Lỗi kết xuất trang PDF: " + ex.Message, "VietNamOCR 3.2 Pro");
+            }
+            finally
+            {
+                try { if (File.Exists(tempPs1)) File.Delete(tempPs1); } catch { }
+                try { if (File.Exists(outPng)) File.Delete(outPng); } catch { }
+                try { if (File.Exists(outTxt)) File.Delete(outTxt); } catch { }
             }
             return false;
         }
@@ -1068,9 +1120,10 @@ $inFileStream.Close()
 
         private string TryLocalWindowsOcr(Image img)
         {
+            string tempImg = Path.Combine(Path.GetTempPath(), "vnocr_temp_" + Guid.NewGuid().ToString("N") + ".png");
+            string tempPs1 = Path.Combine(Path.GetTempPath(), "vnocr_winrt_" + Guid.NewGuid().ToString("N") + ".ps1");
             try
             {
-                string tempImg = Path.Combine(Path.GetTempPath(), "vnocr_temp_" + Guid.NewGuid().ToString("N") + ".png");
                 img.Save(tempImg, ImageFormat.Png);
 
                 string psScript = @"
@@ -1096,12 +1149,13 @@ foreach ($line in $result.Lines) {
 }
 $inFileStream.Close()
 ";
+                File.WriteAllText(tempPs1, psScript, new UTF8Encoding(true));
+
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    Arguments = "-NoProfile -NonInteractive -Command -",
+                    Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + tempPs1 + "\"",
                     UseShellExecute = false,
-                    RedirectStandardInput = true,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true,
                     StandardOutputEncoding = Encoding.UTF8
@@ -1109,15 +1163,17 @@ $inFileStream.Close()
 
                 using (Process p = Process.Start(psi))
                 {
-                    p.StandardInput.WriteLine(psScript);
-                    p.StandardInput.Close();
                     string output = p.StandardOutput.ReadToEnd().Trim();
                     p.WaitForExit(10000);
-                    try { if (File.Exists(tempImg)) File.Delete(tempImg); } catch { }
                     return output;
                 }
             }
             catch { }
+            finally
+            {
+                try { if (File.Exists(tempImg)) File.Delete(tempImg); } catch { }
+                try { if (File.Exists(tempPs1)) File.Delete(tempPs1); } catch { }
+            }
             return "";
         }
 
