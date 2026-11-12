@@ -233,22 +233,111 @@ function bindVbtmEvents() {
 }
 
 // ============================================================================
-// ĐỌC TRỰC TIẾP FILE WORD (.DOCX / .DOC / .TXT) TỪ MÁY TÍNH LÊN ĐỂ CHUẨN HÓA
+// ĐỌC TRỰC TIẾP FILE WORD (.DOCX / .DOC) & PDF (.PDF) TỪ MÁY TÍNH ĐỂ CHUẨN HÓA
 // ============================================================================
+if (window.pdfjsLib) {
+  try {
+    const workerCode = 'importScripts("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js");';
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+  } catch (e) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+}
+
+async function extractTextFromPdfInVbtm(file) {
+  if (!window.pdfjsLib) {
+    throw new Error('Thư viện đọc PDF đang tải, vui lòng thử lại.');
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  let pdfDoc;
+  try {
+    pdfDoc = await window.pdfjsLib.getDocument({
+      data: new Uint8Array(arrayBuffer),
+      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+      cMapPacked: true
+    }).promise;
+  } catch (e) {
+    pdfDoc = await window.pdfjsLib.getDocument({
+      data: new Uint8Array(await file.arrayBuffer()),
+      disableWorker: true
+    }).promise;
+  }
+
+  const allPagesText = [];
+  for (let p = 1; p <= pdfDoc.numPages; p++) {
+    const page = await pdfDoc.getPage(p);
+    const textContent = await page.getTextContent();
+    const items = (textContent?.items || []).filter(it => (it.str || '').trim().length > 0);
+    if (items.length > 0) {
+      const mapped = items.map(it => ({
+        str: it.str,
+        x: it.transform ? it.transform[4] : 0,
+        y: it.transform ? it.transform[5] : 0
+      }));
+      mapped.sort((a, b) => {
+        if (Math.abs(b.y - a.y) > 4.5) return b.y - a.y;
+        return a.x - b.x;
+      });
+      const lines = [];
+      let curLine = [];
+      let curY = null;
+      mapped.forEach(item => {
+        if (curY === null || Math.abs(item.y - curY) <= 4.5) {
+          curLine.push(item);
+          if (curY === null) curY = item.y;
+        } else {
+          lines.push(curLine.sort((a, b) => a.x - b.x).map(i => i.str.trim()).join(' '));
+          curLine = [item];
+          curY = item.y;
+        }
+      });
+      if (curLine.length > 0) {
+        lines.push(curLine.sort((a, b) => a.x - b.x).map(i => i.str.trim()).join(' '));
+      }
+      allPagesText.push(lines.join('\n'));
+    } else {
+      // Nếu là trang PDF scan ảnh, tự động render trang ra ảnh và gọi AI Neural OCR Tiếng Việt
+      const viewport = page.getViewport({ scale: 2.0 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      const b64 = canvas.toDataURL('image/jpeg', 0.92);
+      const fd = new FormData();
+      fd.append('apikey', 'helloworld');
+      fd.append('base64Image', b64);
+      fd.append('language', 'auto');
+      fd.append('OCREngine', '2');
+      fd.append('scale', 'true');
+      const resp = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: fd });
+      const json = await resp.json();
+      if (json?.ParsedResults?.[0]?.ParsedText) {
+        allPagesText.push(json.ParsedResults[0].ParsedText.trim());
+      }
+    }
+  }
+  return allPagesText.join('\n\n');
+}
+
 function setupWordFileUpload() {
   const fileInput = document.getElementById('vbtmWordFileInput');
   if (!fileInput) return;
 
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
+  const processFile = async (file) => {
     if (!file) return;
-    fileInput.value = '';
-
     try {
       const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const isPdf = ext === 'pdf' || file.type === 'application/pdf';
       let rawText = '';
 
-      if (ext === 'docx' && window.mammoth) {
+      if (isPdf) {
+        if (window.showToast) window.showToast(`Đang đọc tệp PDF "${file.name}" để chuẩn hóa thể thức...`);
+        rawText = await extractTextFromPdfInVbtm(file);
+      } else if (ext === 'docx' && window.mammoth) {
         const arrayBuffer = await file.arrayBuffer();
         const result = await window.mammoth.extractRawText({ arrayBuffer });
         rawText = result.value || '';
@@ -270,10 +359,28 @@ function setupWordFileUpload() {
 
       parseUploadedDocumentAndStandardize(rawText, file.name);
     } catch (err) {
-      console.error('Lỗi đọc tệp Word:', err);
+      console.error('Lỗi đọc tệp:', err);
       if (window.showToast) window.showToast('Lỗi khi đọc tệp: ' + err.message);
     }
+  };
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    fileInput.value = '';
+    await processFile(file);
   });
+
+  // Hỗ trợ kéo thả trực tiếp file .docx, .doc, .pdf, .txt vào khung VBTM Pro Studio
+  const studioApp = document.getElementById('vbtmStudioApp');
+  if (studioApp) {
+    studioApp.addEventListener('dragover', (e) => e.preventDefault());
+    studioApp.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      if (e.dataTransfer?.files?.[0]) {
+        await processFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
 }
 
 // Phân tích thông minh văn bản tải lên và tự động bóc tách các trường thể thức (Không trộn dữ liệu mẫu vào file của người dùng!)
