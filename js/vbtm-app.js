@@ -156,9 +156,9 @@ const VBTM_TEMPLATES = {
     location: 'Phường',
     docDate: '2026-11-11',
     docType: '',
-    docSubject: 'V/v quán triệt thực hiện thể thức văn bản của Đảng theo Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW',
-    docBody: `Kính gửi: Các chi bộ trực thuộc Đảng ủy phường.\n\nThực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường yêu cầu các chi bộ trực thuộc thực hiện nghiêm túc các nội dung sau:\n\n1. Thực hiện thống nhất phông chữ Times New Roman (bộ mã ký tự Unicode), cỡ chữ 14pt, định lề trang A4 (lề trên 20mm, lề dưới 20mm, lề trái 30mm, lề phải 15mm) đối với toàn bộ nghị quyết, báo cáo, chương trình, kế hoạch, biên bản sinh hoạt chi bộ.\n\n2. Tăng cường ứng dụng phần mềm chuẩn hóa thể thức và rà soát chính tả tiếng Việt ngoại tuyến để bảo đảm tính trang trọng, chính xác của văn kiện Đảng.\n\nĐề nghị cấp ủy các chi bộ trực thuộc nghiêm túc quán triệt và tổ chức thực hiện./.`,
-    recipients: `- Như trên,\n- Văn phòng Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- Lưu Văn phòng Đảng ủy.`,
+    docSubject: 'V/v quán triệt thực hiện thể thức và kỹ thuật trình bày văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW',
+    docBody: `Kính gửi: Các chi bộ trực thuộc Đảng ủy phường.\n\nThực hiện Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường yêu cầu các chi bộ trực thuộc thực hiện nghiêm túc các nội dung sau:\n\n1. Thực hiện thống nhất phông chữ Times New Roman (bộ mã ký tự Unicode), cỡ chữ 14pt, định lề trang A4 (lề trên 20mm, lề dưới 20mm, lề trái 30mm, lề phải 15mm) đối với toàn bộ nghị quyết, báo cáo, chương trình, kế hoạch, biên bản sinh hoạt chi bộ.\n\n2. Tăng cường ứng dụng phần mềm chuẩn hóa thể thức và rà soát chính tả tiếng Việt ngoại tuyến để bảo đảm tính trang trọng, chính xác của văn kiện Đảng.\n\nĐề nghị cấp ủy các chi bộ trực thuộc nghiêm túc quán triệt và tổ chức thực hiện./.`,
+    recipients: `- Như trên;\n- Văn phòng Quận ủy (để b/c);\n- Các đồng chí Đảng ủy viên;\n- Lưu Văn phòng Đảng ủy.`,
     signerTitle: 'T/M BAN THƯỜNG VỤ\nBÍ THƯ',
     signerName: 'Trần Minh Quân'
   },
@@ -171,8 +171,8 @@ const VBTM_TEMPLATES = {
     docDate: '2026-11-11',
     docType: 'BÁO CÁO',
     docSubject: 'Tổng kết công tác xây dựng Đảng, cải cách hành chính trong Đảng và chuyển đổi số tại Đảng bộ phường năm 2026',
-    docBody: `Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện công tác văn thư, lưu trữ và chuyển đổi số năm 2026 như sau:\n\nI. KẾT QUẢ THỰC HIỆN\n1. Toàn bộ hệ thống nghị quyết, quyết định, chương trình, kế hoạch, báo cáo và công văn của Đảng ủy phường và các chi bộ trực thuộc đều được chuẩn hóa đúng thể thức văn bản của Đảng.\n\n2. Việc ứng dụng bộ công cụ kiểm tra chính tả tiếng Việt và chuẩn hóa thể thức ngoại tuyến 100% giúp nâng cao chất lượng văn bản tham mưu của Văn phòng Đảng ủy, bảo đảm tuyệt đối an toàn thông tin nội bộ.\n\nII. NHIỆM VỤ TRỌNG TÂM THỜI GIAN TỚI\nTiếp tục đẩy mạnh số hóa hồ sơ đảng viên, văn kiện của Đảng ủy và hướng dẫn các chi bộ trực thuộc thực hiện đồng bộ, thống nhất./.`,
-    recipients: `- Ban Thường vụ Quận ủy (để b/c),\n- Văn phòng Quận ủy,\n- Các đồng chí Đảng ủy viên,\n- HĐND, UBND, UBMTTQ phường,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
+    docBody: `Thực hiện Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện công tác văn thư, lưu trữ và chuyển đổi số năm 2026 như sau:\n\nI. KẾT QUẢ THỰC HIỆN\n1. Toàn bộ hệ thống nghị quyết, quyết định, chương trình, kế hoạch, báo cáo và công văn của Đảng ủy phường và các chi bộ trực thuộc đều được chuẩn hóa đúng thể thức văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW.\n\n2. Việc ứng dụng bộ công cụ kiểm tra chính tả tiếng Việt và chuẩn hóa thể thức ngoại tuyến 100% giúp nâng cao chất lượng văn bản tham mưu của Văn phòng Đảng ủy, bảo đảm tuyệt đối an toàn thông tin nội bộ.\n\nII. NHIỆM VỤ TRỌNG TÂM THỜI GIAN TỚI\nTiếp tục đẩy mạnh số hóa hồ sơ đảng viên, văn kiện của Đảng ủy và hướng dẫn các chi bộ trực thuộc thực hiện đồng bộ, thống nhất./.`,
+    recipients: `- Ban Thường vụ Quận ủy (để b/c);\n- Văn phòng Quận ủy;\n- Các đồng chí Đảng ủy viên;\n- HĐND, UBND, UBMTTQ phường;\n- Các chi bộ trực thuộc;\n- Lưu Văn phòng Đảng ủy.`,
     signerTitle: 'T/M ĐẢNG ỦY\nBÍ THƯ',
     signerName: 'Trần Minh Quân'
   },
@@ -185,8 +185,8 @@ const VBTM_TEMPLATES = {
     docDate: '2026-11-11',
     docType: 'NGHỊ QUYẾT',
     docSubject: 'Về tăng cường sự lãnh đạo của Đảng đối với công tác cải cách hành chính và chuyển đổi số trên địa bàn phường',
-    docBody: `Thực hiện Chương trình công tác toàn khóa của Ban Chấp hành Đảng bộ phường, sau khi thảo luận đề án của Ban Thường vụ Đảng ủy, Ban Chấp hành Đảng bộ phường quyết nghị:\n\nI. TÌNH HÌNH VÀ NGUYÊN NHÂN\nCông tác cải cách hành chính và chuyển đổi số tại Đảng bộ và chính quyền phường thời gian qua đạt nhiều kết quả quan trọng; chất lượng ban hành văn kiện, nghị quyết được chuẩn hóa đồng bộ.\n\nII. MỤC TIÊU, NHIỆM VỤ VÀ GIẢI PHÁP\n1. Phấn đấu 100% văn bản của Đảng ủy và các chi bộ trực thuộc được soạn thảo, thẩm định đúng quy định tại Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW.\n\n2. Giao Văn phòng Đảng ủy chủ trì, phối hợp với Ủy ban nhân dân phường hướng dẫn, kiểm tra việc thực hiện Nghị quyết này và định kỳ báo cáo Ban Thường vụ Đảng ủy./.`,
-    recipients: `- Ban Thường vụ Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- HĐND, UBND, UBMTTQ phường,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
+    docBody: `Thực hiện Chương trình công tác toàn khóa của Ban Chấp hành Đảng bộ phường, sau khi thảo luận đề án của Ban Thường vụ Đảng ủy, Ban Chấp hành Đảng bộ phường quyết nghị:\n\nI. TÌNH HÌNH VÀ NGUYÊN NHÂN\nCông tác cải cách hành chính và chuyển đổi số tại Đảng bộ và chính quyền phường thời gian qua đạt nhiều kết quả quan trọng; chất lượng ban hành văn kiện, nghị quyết được chuẩn hóa đồng bộ.\n\nII. MỤC TIÊU, NHIỆM VỤ VÀ GIẢI PHÁP\n1. Phấn đấu 100% văn bản của Đảng ủy và các chi bộ trực thuộc được soạn thảo, thẩm định đúng quy định tại Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng.\n\n2. Giao Văn phòng Đảng ủy chủ trì, phối hợp với Ủy ban nhân dân phường hướng dẫn, kiểm tra việc thực hiện Nghị quyết này và định kỳ báo cáo Ban Thường vụ Đảng ủy./.`,
+    recipients: `- Ban Thường vụ Quận ủy (để b/c);\n- Các đồng chí Đảng ủy viên;\n- HĐND, UBND, UBMTTQ phường;\n- Các chi bộ trực thuộc;\n- Lưu Văn phòng Đảng ủy.`,
     signerTitle: 'T/M ĐẢNG ỦY\nBÍ THƯ',
     signerName: 'Trần Minh Quân'
   },
@@ -198,9 +198,9 @@ const VBTM_TEMPLATES = {
     location: 'Phường',
     docDate: '2026-11-11',
     docType: 'KẾ HOẠCH',
-    docSubject: 'Tập huấn nghiệp vụ công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản Đảng năm 2026',
-    docBody: `Căn cứ Hướng dẫn số 36-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường ban hành Kế hoạch tập huấn nghiệp vụ công tác văn thư cho cấp ủy các chi bộ trực thuộc như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\nNâng cao kỹ năng soạn thảo, chuẩn hóa thể thức nghị quyết, biên bản, báo cáo của các chi bộ trực thuộc Đảng ủy phường.\n\nII. NỘI DUNG VÀ THỜI GIAN\n1. Nội dung: Hướng dẫn quy chuẩn trình bày văn bản Đảng và thực hành phần mềm chuẩn hóa văn bản VBTM Pro 2.2.4.\n\n2. Thời gian: Hoàn thành trong tháng 11 năm 2026.\n\nIII. TỔ CHỨC THỰC HIỆN\nVăn phòng Đảng ủy chuẩn bị tài liệu, phần mềm và đôn đốc các chi bộ tham gia đầy đủ./.`,
-    recipients: `- Văn phòng Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
+    docSubject: 'Tập huấn nghiệp vụ công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW',
+    docBody: `Căn cứ Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường ban hành Kế hoạch tập huấn nghiệp vụ công tác văn thư cho cấp ủy các chi bộ trực thuộc như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\nNâng cao kỹ năng soạn thảo, chuẩn hóa thể thức nghị quyết, biên bản, báo cáo của các chi bộ trực thuộc Đảng ủy phường.\n\nII. NỘI DUNG VÀ THỜI GIAN\n1. Nội dung: Hướng dẫn quy chuẩn trình bày văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW và thực hành phần mềm chuẩn hóa văn bản VBTM Pro 2.2.4.\n\n2. Thời gian: Hoàn thành trong tháng 11 năm 2026.\n\nIII. TỔ CHỨC THỰC HIỆN\nVăn phòng Đảng ủy chuẩn bị tài liệu, phần mềm và đôn đốc các chi bộ tham gia đầy đủ./.`,
+    recipients: `- Văn phòng Quận ủy (để b/c);\n- Các đồng chí Đảng ủy viên;\n- Các chi bộ trực thuộc;\n- Lưu Văn phòng Đảng ủy.`,
     signerTitle: 'T/M BAN THƯỜNG VỤ\nPHÓ BÍ THƯ THƯỜNG TRỰC',
     signerName: 'Phạm Thị Thanh Hoa'
   },
@@ -213,8 +213,8 @@ const VBTM_TEMPLATES = {
     docDate: '2026-11-11',
     docType: 'CHƯƠNG TRÌNH',
     docSubject: 'Công tác kiểm tra, giám sát của Ban Thường vụ Đảng ủy phường năm 2026',
-    docBody: `Căn cứ Điều lệ Đảng Cộng sản Việt Nam và Chương trình kiểm tra, giám sát của Quận ủy, Ban Thường vụ Đảng ủy phường xây dựng Chương trình công tác kiểm tra, giám sát năm 2026 như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\nChủ động phòng ngừa vi phạm, nâng cao năng lực lãnh đạo và sức chiến đấu của các tổ chức đảng trực thuộc.\n\nII. NỘI DUNG KIỂM TRA, GIÁM SÁT\n1. Giám sát việc thực hiện Quy chế làm việc, nền nếp sinh hoạt chi bộ và việc chấp hành thể thức văn bản của Đảng theo Hướng dẫn số 36-HD/VPTW.\n\n2. Kiểm tra việc thực hiện nhiệm vụ cải cách hành chính, chuyển đổi số gắn với trách nhiệm nêu gương của cán bộ, đảng viên.\n\nIII. TỔ CHỨC THỰC HIỆN\nỦy ban Kiểm tra Đảng ủy chủ trì tham mưu giúp Ban Thường vụ Đảng ủy tổ chức thực hiện Chương trình này./.`,
-    recipients: `- Ủy ban Kiểm tra Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- UBKT Đảng ủy phường,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
+    docBody: `Căn cứ Điều lệ Đảng Cộng sản Việt Nam và Chương trình kiểm tra, giám sát của Quận ủy, Ban Thường vụ Đảng ủy phường xây dựng Chương trình công tác kiểm tra, giám sát năm 2026 như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\nChủ động phòng ngừa vi phạm, nâng cao năng lực lãnh đạo và sức chiến đấu của các tổ chức đảng trực thuộc.\n\nII. NỘI DUNG KIỂM TRA, GIÁM SÁT\n1. Giám sát việc thực hiện Quy chế làm việc, nền nếp sinh hoạt chi bộ và việc chấp hành thể thức văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW.\n\n2. Kiểm tra việc thực hiện nhiệm vụ cải cách hành chính, chuyển đổi số gắn với trách nhiệm nêu gương của cán bộ, đảng viên.\n\nIII. TỔ CHỨC THỰC HIỆN\nỦy ban Kiểm tra Đảng ủy chủ trì tham mưu giúp Ban Thường vụ Đảng ủy tổ chức thực hiện Chương trình này./.`,
+    recipients: `- Ủy ban Kiểm tra Quận ủy (để b/c);\n- Các đồng chí Đảng ủy viên;\n- UBKT Đảng ủy phường;\n- Các chi bộ trực thuộc;\n- Lưu Văn phòng Đảng ủy.`,
     signerTitle: 'T/M BAN THƯỜNG VỤ\nBÍ THƯ',
     signerName: 'Trần Minh Quân'
   },
@@ -227,8 +227,8 @@ const VBTM_TEMPLATES = {
     docDate: '2026-11-11',
     docType: 'QUYẾT ĐỊNH',
     docSubject: 'Ban hành Quy chế quản lý, khai thác văn bản điện tử và lưu trữ hồ sơ tại Văn phòng Đảng ủy phường',
-    docBody: `Căn cứ Điều lệ Đảng Cộng sản Việt Nam;\n\nCăn cứ Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng;\n\nXét đề nghị của Văn phòng Đảng ủy phường,\n\nBAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH\n\nĐiều 1. Ban hành kèm theo Quyết định này Quy chế quản lý, chuẩn hóa thể thức văn bản của Đảng và lưu trữ hồ sơ điện tử tại Đảng bộ phường.\n\nĐiều 2. Văn phòng Đảng ủy, các ban xây dựng Đảng và các chi bộ trực thuộc chịu trách nhiệm thi hành Quyết định này.\n\nĐiều 3. Quyết định này có hiệu lực kể từ ngày ký./.`,
-    recipients: `- Văn phòng Quận ủy (để b/c),\n- Như Điều 2,\n- Các đồng chí Đảng ủy viên,\n- Lưu Văn phòng Đảng ủy.`,
+    docBody: `Căn cứ Điều lệ Đảng Cộng sản Việt Nam;\n\nCăn cứ Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng;\n\nXét đề nghị của Văn phòng Đảng ủy phường,\n\nBAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH\n\nĐiều 1. Ban hành kèm theo Quyết định này Quy chế quản lý, chuẩn hóa thể thức văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW và lưu trữ hồ sơ điện tử tại Đảng bộ phường.\n\nĐiều 2. Văn phòng Đảng ủy, các ban xây dựng Đảng và các chi bộ trực thuộc chịu trách nhiệm thi hành Quyết định này.\n\nĐiều 3. Quyết định này có hiệu lực kể từ ngày ký./.`,
+    recipients: `- Văn phòng Quận ủy (để b/c);\n- Như Điều 2;\n- Các đồng chí Đảng ủy viên;\n- Lưu Văn phòng Đảng ủy.`,
     signerTitle: 'T/M BAN THƯỜNG VỤ\nBÍ THƯ',
     signerName: 'Trần Minh Quân'
   }
@@ -1276,11 +1276,13 @@ function renderA4Preview() {
     : `<span class="a4-line-sep" style="width: 38%;"></span>`;
 
   const congVanSubjectHtml = (!docType && docSubject)
-    ? `<div style="font-size: 12pt; margin-top: 4px; ${isParty ? 'font-style: italic;' : ''}">${escapeHtml(docSubject)}</div>`
+    ? `<div style="font-size: 12pt; margin-top: 4px;">${escapeHtml(docSubject)}</div>`
     : '';
 
+  // Theo Hướng dẫn 05-HD/VPTW: Từ "Nơi nhận:" cỡ chữ 14pt, kiểu chữ đứng, có gạch chân dưới từ "Nơi nhận", sau có dấu hai chấm (:)
+  // Theo Nghị định 30/2020/NĐ-CP: Từ "Nơi nhận:" cỡ chữ 12pt, in nghiêng, đậm
   const noiNhanHeaderHtml = isParty
-    ? `<div style="font-size: 12pt; font-style: italic; text-decoration: underline;">Nơi nhận:</div>`
+    ? `<div style="font-size: 14pt; font-style: normal; font-weight: normal;"><span style="text-decoration: underline;">Nơi nhận</span>:</div>`
     : `<div style="font-size: 12pt; font-weight: bold; font-style: italic;">Nơi nhận:</div>`;
 
   const noiNhanListFontSize = isParty ? '12pt' : '11pt';
@@ -1289,22 +1291,22 @@ function renderA4Preview() {
     <table class="a4-header-table">
       <tr>
         <td style="width: 44%; text-align: center; vertical-align: top;">
-          ${govOrg ? `<div style="font-size: ${isParty ? '13.5pt' : '12.5pt'}; text-transform: uppercase;">${escapeHtml(govOrg)}</div>` : ''}
-          <div style="font-size: ${isParty ? '13.5pt' : '12.5pt'}; font-weight: bold; text-transform: uppercase;">${escapeHtml(issueOrg)}</div>
+          ${govOrg ? `<div style="font-size: ${isParty ? '14pt' : '12.5pt'}; text-transform: uppercase;">${escapeHtml(govOrg)}</div>` : ''}
+          <div style="font-size: ${isParty ? '14pt' : '12.5pt'}; font-weight: bold; text-transform: uppercase;">${escapeHtml(issueOrg)}</div>
           ${leftSeparatorHtml}
-          <div style="font-size: ${isParty ? '13.5pt' : '13pt'}; margin-top: 6px;">${escapeHtml(numberLabel)}</div>
+          <div style="font-size: ${isParty ? '14pt' : '13pt'}; margin-top: 6px;">${escapeHtml(numberLabel)}</div>
           ${congVanSubjectHtml}
         </td>
         <td style="width: 56%; text-align: center; vertical-align: top;">
-          <div style="font-size: ${isParty ? '14pt' : '12.5pt'}; font-weight: bold; text-transform: uppercase;">${rightHeaderTop}</div>
+          <div style="font-size: ${isParty ? '15pt' : '12.5pt'}; font-weight: bold; text-transform: uppercase;">${rightHeaderTop}</div>
           ${rightHeaderSub ? `<div style="font-size: 13.5pt; font-weight: bold;">${rightHeaderSub}</div>` : ''}
           <span class="a4-line-sep" style="width: ${isParty ? '58%' : '52%'};"></span>
-          <div style="font-size: 13.5pt; font-style: italic; margin-top: 8px;">${escapeHtml(dateLine)}</div>
+          <div style="font-size: ${isParty ? '14pt' : '13.5pt'}; font-style: italic; margin-top: 8px;">${escapeHtml(dateLine)}</div>
         </td>
       </tr>
     </table>
 
-    ${docType ? `<div class="a4-doc-title" style="font-size: 14pt; font-weight: bold; text-align: center; margin-top: 14pt; margin-bottom: 4pt;">${escapeHtml(docType)}</div>` : ''}
+    ${docType ? `<div class="a4-doc-title" style="font-size: ${isParty ? '15pt' : '14pt'}; font-weight: bold; text-align: center; margin-top: 14pt; margin-bottom: 4pt;">${escapeHtml(docType)}</div>` : ''}
     ${docType && docSubject ? `<div class="a4-doc-subject" style="font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 14pt;">${escapeHtml(docSubject)}<span class="a4-line-sep" style="width: 32%; margin-top: 5px;"></span></div>` : ''}
 
     <div class="a4-doc-body" style="margin-top: ${docType ? '4pt' : '12pt'};">
@@ -1339,7 +1341,7 @@ function exportWordDocument() {
     xmlns="http://www.w3.org/TR/REC-html40">
   <head>
     <meta charset="utf-8">
-    <title>Van Ban Chuan Hoa ND30 & HD36</title>
+    <title>Van Ban Chuan Hoa ND30 & HD05</title>
     <!--[if gte mso 9]><xml>
       <w:WordDocument>
         <w:View>Print</w:View>
