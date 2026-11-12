@@ -1,7 +1,7 @@
 Attribute VB_Name = "VBTM_Pro_ND30"
 ' =============================================================================
 ' VBTM Pro 2.2.4 - Add-in Macro Chuan Hoa Van Ban Dang Uy & UBND Phuong
-' Quy chuan: Nghi dinh 30/2020/ND-CP & Huong dan 36, 05-HD/VPTW
+' Quy chuan: Nghi dinh 30/2020/ND-CP & Huong dan 05-HD/VPTW
 ' =============================================================================
 
 Sub ChuanHoaVanBan_NghiDinh30()
