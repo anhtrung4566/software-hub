@@ -9,7 +9,13 @@
  */
 
 if (window.pdfjsLib) {
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  try {
+    const workerCode = 'importScripts("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js");';
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+  } catch (e) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
 }
 
 let ocrRotation = 0;
@@ -49,18 +55,26 @@ function setupOcrDropzone() {
   const fileInput = document.getElementById('ocrFileInput');
   if (!dropzone || !fileInput) return;
 
-  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.click();
+  });
+  fileInput.addEventListener('click', (e) => e.stopPropagation());
 
-  dropzone.addEventListener('dragover', (e) => {
+  // Cho phép kéo thả file PDF / Ảnh vào bất kỳ đâu trong khung Studio
+  const studioApp = document.getElementById('ocrStudioApp') || dropzone;
+  studioApp.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropzone.classList.add('dragover');
   });
 
-  dropzone.addEventListener('dragleave', () => {
-    dropzone.classList.remove('dragover');
+  studioApp.addEventListener('dragleave', (e) => {
+    if (!studioApp.contains(e.relatedTarget)) {
+      dropzone.classList.remove('dragover');
+    }
   });
 
-  dropzone.addEventListener('drop', (e) => {
+  studioApp.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -122,19 +136,34 @@ async function handleUploadedFile(file) {
   reader.readAsDataURL(file);
 }
 
-// Đọc tệp PDF thực tế nhiều trang bằng PDF.js
+// Đọc tệp PDF thực tế nhiều trang bằng PDF.js (Tự động vượt rào CORS Worker trên mọi trình duyệt)
 async function loadRealPdfDocument(file) {
   const statusEl = document.getElementById('ocrStatusText');
   const progressFill = document.getElementById('ocrProgressFill');
   try {
     if (!window.pdfjsLib) {
-      throw new Error('Thư viện PDF.js đang tải, vui lòng thử lại sau giây lát.');
+      throw new Error('Thư viện PDF.js đang tải, vui lòng kiểm tra kết nối mạng và thử lại.');
     }
-    statusEl.textContent = `Đang đọc tệp PDF "${file.name}"...`;
-    progressFill.style.width = '30%';
+    if (statusEl) statusEl.textContent = `Đang đọc tệp PDF "${file.name}"...`;
+    if (progressFill) progressFill.style.width = '30%';
 
     const arrayBuffer = await file.arrayBuffer();
-    loadedPdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const uint8Data = new Uint8Array(arrayBuffer);
+
+    try {
+      loadedPdfDoc = await window.pdfjsLib.getDocument({
+        data: uint8Data,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true
+      }).promise;
+    } catch (workerErr) {
+      console.warn('Chuyển sang chế độ đọc PDF trực tiếp không qua Worker:', workerErr);
+      loadedPdfDoc = await window.pdfjsLib.getDocument({
+        data: new Uint8Array(await file.arrayBuffer()),
+        disableWorker: true
+      }).promise;
+    }
+
     totalPdfPages = loadedPdfDoc.numPages;
     currentPdfPage = 1;
 
@@ -145,7 +174,7 @@ async function loadRealPdfDocument(file) {
     await renderCurrentPdfPage(false);
   } catch (err) {
     console.error('Lỗi đọc PDF:', err);
-    statusEl.textContent = `Lỗi khi đọc tệp PDF: ${err.message}`;
+    if (statusEl) statusEl.textContent = `Lỗi khi đọc tệp PDF: ${err.message}`;
     if (window.showToast) window.showToast('Không thể đọc tệp PDF này: ' + err.message);
   }
 }
