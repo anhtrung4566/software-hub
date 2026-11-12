@@ -132,7 +132,7 @@ namespace VBTMProSuite
 
             Label lblSub = new Label
             {
-                Text = "Chuẩn hóa văn bản Đảng ủy & UBND Phường (Nghị định 30, HD 36 & 05-HD/VPTW), Tạo QR & Chính tả AI",
+                Text = "Chuẩn hóa văn bản Đảng ủy & UBND Phường (Nghị định 30 & Hướng dẫn 05-HD/VPTW), Tạo QR & Chính tả AI",
                 Font = new Font("Segoe UI", 9.0f),
                 ForeColor = Color.FromArgb(203, 213, 225),
                 AutoSize = true,
@@ -181,7 +181,7 @@ namespace VBTMProSuite
 
             chkWordMacroExport = new CheckBox
             {
-                Text = "Tích hợp bộ quy chuẩn Microsoft Word (Nghị định 30/2020/NĐ-CP, Hướng dẫn 36 & 05-HD/VPTW)",
+                Text = "Tích hợp bộ quy chuẩn Microsoft Word (Nghị định 30/2020/NĐ-CP & Hướng dẫn số 05-HD/VPTW)",
                 Checked = true,
                 Location = new Point(24, 202),
                 AutoSize = true,
@@ -582,7 +582,7 @@ namespace VBTMProSuite
             {
                 Dock = DockStyle.Bottom,
                 Height = 30,
-                Text = "  ✓ Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Đầy đủ 16 mẫu chuẩn Nghị định 30/2020/NĐ-CP (UBND Phường) & Hướng dẫn 36, 05-HD/VPTW (Đảng ủy Phường)",
+                Text = "  ✓ Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Đầy đủ 16 mẫu chuẩn Nghị định 30/2020/NĐ-CP (UBND Phường) & Hướng dẫn 05-HD/VPTW (Đảng ủy Phường)",
                 BackColor = Color.FromArgb(30, 41, 59),
                 ForeColor = Color.FromArgb(56, 189, 248),
                 TextAlign = ContentAlignment.MiddleLeft
@@ -624,12 +624,12 @@ namespace VBTMProSuite
                 "8. Nghị quyết HĐND Phường (Nghị định 30)",
                 "9. Biên bản họp UBND Phường (Nghị định 30)",
                 "10. Giấy mời họp UBND Phường (Nghị định 30)",
-                "11. Công văn Đảng ủy Phường (HD 36 & 05)",
-                "12. Báo cáo Đảng ủy Phường (HD 36 & 05)",
-                "13. Nghị quyết Đảng ủy Phường (HD 36 & 05)",
-                "14. Kế hoạch Đảng ủy Phường (HD 36 & 05)",
-                "15. Chương trình Đảng ủy Phường (HD 36 & 05)",
-                "16. Quyết định Đảng ủy Phường (HD 36 & 05)"
+                "11. Công văn Đảng ủy Phường (HD 05-HD/VPTW)",
+                "12. Báo cáo Đảng ủy Phường (HD 05-HD/VPTW)",
+                "13. Nghị quyết Đảng ủy Phường (HD 05-HD/VPTW)",
+                "14. Kế hoạch Đảng ủy Phường (HD 05-HD/VPTW)",
+                "15. Chương trình Đảng ủy Phường (HD 05-HD/VPTW)",
+                "16. Quyết định Đảng ủy Phường (HD 05-HD/VPTW)"
             });
             cboTemplate.SelectedIndex = 0;
             cboTemplate.SelectedIndexChanged += (s, e) => LoadTemplate(cboTemplate.SelectedIndex);
@@ -984,12 +984,12 @@ namespace VBTMProSuite
                     txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
                     txtDocNum.Text = "58-CV/ĐU";
                     txtDocType.Text = "";
-                    txtSubject.Text = "V/v quán triệt thực hiện thể thức văn bản của Đảng theo Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW";
+                    txtSubject.Text = "V/v quán triệt thực hiện thể thức và kỹ thuật trình bày văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW";
                     txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - BÍ THƯ";
                     txtSignerName.Text = "Trần Minh Quân";
-                    txtRecipients.Text = "- Như trên,\r\n- Văn phòng Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtRecipients.Text = "- Như trên;\r\n- Văn phòng Quận ủy (để b/c);\r\n- Các đồng chí Đảng ủy viên;\r\n- Lưu Văn phòng Đảng ủy.";
                     txtBody.Text = "Kính gửi: Các chi bộ trực thuộc Đảng ủy phường.\r\n\r\n" +
-                                   "Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường yêu cầu các chi bộ trực thuộc thực hiện nghiêm túc các nội dung sau:\r\n\r\n" +
+                                   "Thực hiện Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường yêu cầu các chi bộ trực thuộc thực hiện nghiêm túc các nội dung sau:\r\n\r\n" +
                                    "1. Thực hiện thống nhất phông chữ Times New Roman (bộ mã ký tự Unicode), cỡ chữ 14pt, định lề trang A4 (lề trên 20mm, lề dưới 20mm, lề trái 30mm, lề phải 15mm) đối với toàn bộ nghị quyết, báo cáo, chương trình, kế hoạch, biên bản sinh hoạt chi bộ.\r\n\r\n" +
                                    "2. Đề nghị cấp ủy các chi bộ trực thuộc nghiêm túc quán triệt và tổ chức thực hiện./.";
                     break;
@@ -1001,8 +1001,8 @@ namespace VBTMProSuite
                     txtSubject.Text = "Tổng kết công tác xây dựng Đảng, cải cách hành chính trong Đảng và chuyển đổi số tại Đảng bộ phường năm 2026";
                     txtSignerTitle.Text = "T/M ĐẢNG ỦY - BÍ THƯ";
                     txtSignerName.Text = "Trần Minh Quân";
-                    txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c),\r\n- Văn phòng Quận ủy,\r\n- Các đồng chí Đảng ủy viên,\r\n- HĐND, UBND, UBMTTQ phường,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
-                    txtBody.Text = "Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện chuẩn hóa toàn bộ hệ thống văn bản của Đảng ủy và các chi bộ trực thuộc năm 2026./.";
+                    txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c);\r\n- Văn phòng Quận ủy;\r\n- Các đồng chí Đảng ủy viên;\r\n- HĐND, UBND, UBMTTQ phường;\r\n- Các chi bộ trực thuộc;\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Thực hiện Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện chuẩn hóa toàn bộ hệ thống văn bản của Đảng ủy và các chi bộ trực thuộc năm 2026./.";
                     break;
                 case 12: // 13. Nghị quyết Đảng ủy Phường
                     txtGovOrg.Text = "QUẬN ỦY";
@@ -1012,23 +1012,23 @@ namespace VBTMProSuite
                     txtSubject.Text = "Về tăng cường sự lãnh đạo của Đảng đối với công tác cải cách hành chính và chuyển đổi số trên địa bàn phường";
                     txtSignerTitle.Text = "T/M ĐẢNG ỦY - BÍ THƯ";
                     txtSignerName.Text = "Trần Minh Quân";
-                    txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- HĐND, UBND, UBMTTQ phường,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c);\r\n- Các đồng chí Đảng ủy viên;\r\n- HĐND, UBND, UBMTTQ phường;\r\n- Các chi bộ trực thuộc;\r\n- Lưu Văn phòng Đảng ủy.";
                     txtBody.Text = "Thực hiện Chương trình công tác toàn khóa của Ban Chấp hành Đảng bộ phường, sau khi thảo luận đề án của Ban Thường vụ Đảng ủy, Ban Chấp hành Đảng bộ phường quyết nghị:\r\n\r\n" +
                                    "I. TÌNH HÌNH VÀ NGUYÊN NHÂN\r\n\r\n" +
                                    "Công tác cải cách hành chính và chuyển đổi số tại Đảng bộ và chính quyền phường thời gian qua đạt nhiều kết quả quan trọng; chất lượng ban hành văn kiện, nghị quyết được chuẩn hóa đồng bộ.\r\n\r\n" +
                                    "II. MỤC TIÊU, NHIỆM VỤ VÀ GIẢI PHÁP\r\n\r\n" +
-                                   "Phấn đấu 100% văn bản của Đảng ủy và các chi bộ trực thuộc được soạn thảo, thẩm định đúng quy định tại Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW./.";
+                                   "Phấn đấu 100% văn bản của Đảng ủy và các chi bộ trực thuộc được soạn thảo, thẩm định đúng quy định tại Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng./.";
                     break;
                 case 13: // 14. Kế hoạch Đảng ủy Phường
                     txtGovOrg.Text = "QUẬN ỦY";
                     txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
                     txtDocNum.Text = "24-KH/ĐU";
                     txtDocType.Text = "KẾ HOẠCH";
-                    txtSubject.Text = "Tập huấn nghiệp vụ công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản Đảng năm 2026";
+                    txtSubject.Text = "Tập huấn nghiệp vụ công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW";
                     txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - PHÓ BÍ THƯ THƯỜNG TRỰC";
                     txtSignerName.Text = "Phạm Thị Thanh Hoa";
-                    txtRecipients.Text = "- Văn phòng Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
-                    txtBody.Text = "Căn cứ Hướng dẫn số 36-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường ban hành Kế hoạch tập huấn nghiệp vụ công tác văn thư cho cấp ủy các chi bộ trực thuộc như sau:\r\n\r\n" +
+                    txtRecipients.Text = "- Văn phòng Quận ủy (để b/c);\r\n- Các đồng chí Đảng ủy viên;\r\n- Các chi bộ trực thuộc;\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Căn cứ Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường ban hành Kế hoạch tập huấn nghiệp vụ công tác văn thư cho cấp ủy các chi bộ trực thuộc như sau:\r\n\r\n" +
                                    "I. MỤC ĐÍCH, YÊU CẦU\r\n\r\n" +
                                    "Nâng cao kỹ năng soạn thảo, chuẩn hóa thể thức nghị quyết, biên bản, báo cáo của các chi bộ trực thuộc Đảng ủy phường.\r\n\r\n" +
                                    "II. TỔ CHỨC THỰC HIỆN\r\n\r\n" +
@@ -1042,7 +1042,7 @@ namespace VBTMProSuite
                     txtSubject.Text = "Công tác kiểm tra, giám sát của Ban Thường vụ Đảng ủy phường năm 2026";
                     txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - BÍ THƯ";
                     txtSignerName.Text = "Trần Minh Quân";
-                    txtRecipients.Text = "- Ủy ban Kiểm tra Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- UBKT Đảng ủy phường,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtRecipients.Text = "- Ủy ban Kiểm tra Quận ủy (để b/c);\r\n- Các đồng chí Đảng ủy viên;\r\n- UBKT Đảng ủy phường;\r\n- Các chi bộ trực thuộc;\r\n- Lưu Văn phòng Đảng ủy.";
                     txtBody.Text = "Căn cứ Điều lệ Đảng Cộng sản Việt Nam và Chương trình kiểm tra, giám sát của Quận ủy, Ban Thường vụ Đảng ủy phường xây dựng Chương trình công tác kiểm tra, giám sát năm 2026 như sau:\r\n\r\n" +
                                    "I. MỤC ĐÍCH, YÊU CẦU\r\n\r\n" +
                                    "Chủ động phòng ngừa vi phạm, nâng cao năng lực lãnh đạo và sức chiến đấu của các tổ chức đảng trực thuộc.\r\n\r\n" +
@@ -1057,12 +1057,12 @@ namespace VBTMProSuite
                     txtSubject.Text = "Ban hành Quy chế quản lý, khai thác văn bản điện tử và lưu trữ hồ sơ tại Văn phòng Đảng ủy phường";
                     txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - BÍ THƯ";
                     txtSignerName.Text = "Trần Minh Quân";
-                    txtRecipients.Text = "- Văn phòng Quận ủy (để b/c),\r\n- Như Điều 2,\r\n- Các đồng chí Đảng ủy viên,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtRecipients.Text = "- Văn phòng Quận ủy (để b/c);\r\n- Như Điều 2;\r\n- Các đồng chí Đảng ủy viên;\r\n- Lưu Văn phòng Đảng ủy.";
                     txtBody.Text = "Căn cứ Điều lệ Đảng Cộng sản Việt Nam;\r\n\r\n" +
-                                   "Căn cứ Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng;\r\n\r\n" +
+                                   "Căn cứ Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng;\r\n\r\n" +
                                    "Xét đề nghị của Văn phòng Đảng ủy phường,\r\n\r\n" +
                                    "BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH\r\n\r\n" +
-                                   "Điều 1. Ban hành kèm theo Quyết định này Quy chế quản lý, chuẩn hóa thể thức văn bản của Đảng và lưu trữ hồ sơ điện tử tại Đảng bộ phường.\r\n\r\n" +
+                                   "Điều 1. Ban hành kèm theo Quyết định này Quy chế quản lý, chuẩn hóa thể thức văn bản của Đảng theo Hướng dẫn số 05-HD/VPTW và lưu trữ hồ sơ điện tử tại Đảng bộ phường.\r\n\r\n" +
                                    "Điều 2. Văn phòng Đảng ủy, các ban xây dựng Đảng và các chi bộ trực thuộc chịu trách nhiệm thi hành Quyết định này.\r\n\r\n" +
                                    "Điều 3. Quyết định này có hiệu lực kể từ ngày ký./.";
                     break;
@@ -1197,7 +1197,7 @@ namespace VBTMProSuite
 
                 object doc = wordType.InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
 
-                // 1. Định lề trang khổ A4 chuẩn Nghị định 30/2020/NĐ-CP & Hướng dẫn 36-HD/VPTW (Trên 20mm, Dưới 20mm, Trái 30mm, Phải 15mm)
+                // 1. Định lề trang khổ A4 chuẩn Nghị định 30/2020/NĐ-CP & Hướng dẫn 05-HD/VPTW (Trên 20mm, Dưới 20mm, Trái 30mm, Phải 15mm)
                 object pageSetup = doc.GetType().InvokeMember("PageSetup", BindingFlags.GetProperty, null, doc, null);
                 try { pageSetup.GetType().InvokeMember("PaperSize", BindingFlags.SetProperty, null, pageSetup, new object[] { 7 }); } catch { }
                 pageSetup.GetType().InvokeMember("TopMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 56.7f });
@@ -1431,7 +1431,7 @@ td, p { font-family:'Times New Roman',serif; }
                           txtIssueOrg.Text.IndexOf("CHI BỘ", StringComparison.OrdinalIgnoreCase) >= 0;
 
             string rightHeaderHtml = isDang
-                ? "<div style='font-size:14pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
+                ? "<div style='font-size:15pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
                 : "<div style='font-size:12.5pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>" +
                   "<div style='font-size:13.5pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>";
 
@@ -1444,13 +1444,13 @@ td, p { font-family:'Times New Roman',serif; }
             string docTypeStr = txtDocType.Text.Trim();
             string docSubjStr = txtSubject.Text.Trim();
             string congVanSubjLeftHtml = (string.IsNullOrEmpty(docTypeStr) && !string.IsNullOrEmpty(docSubjStr))
-                ? ("<div style='font-size:12pt;margin-top:4pt;" + (isDang ? "font-style:italic;" : "") + "'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</div>")
+                ? ("<div style='font-size:12pt;margin-top:4pt;'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</div>")
                 : "";
 
             string centerTitleBlockHtml = "";
             if (!string.IsNullOrEmpty(docTypeStr))
             {
-                centerTitleBlockHtml += "<p style='text-align:center;font-weight:bold;font-size:14pt;margin:14pt 0 4pt 0;'>" + System.Security.SecurityElement.Escape(docTypeStr) + "</p>";
+                centerTitleBlockHtml += "<p style='text-align:center;font-weight:bold;font-size:" + (isDang ? "15pt" : "14pt") + ";margin:14pt 0 4pt 0;'>" + System.Security.SecurityElement.Escape(docTypeStr) + "</p>";
                 if (!string.IsNullOrEmpty(docSubjStr))
                 {
                     centerTitleBlockHtml += "<p style='text-align:center;font-weight:bold;font-size:14pt;margin:0 0 4pt 0;'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</p>" +
@@ -1466,8 +1466,9 @@ td, p { font-family:'Times New Roman',serif; }
                 Array.ConvertAll(txtSignerTitle.Text.Split(new[] { "\r\n", "\n", " - " }, StringSplitOptions.RemoveEmptyEntries),
                 s => System.Security.SecurityElement.Escape(s.Trim())));
 
+            // Theo Hướng dẫn 05-HD/VPTW: Từ "Nơi nhận:" cỡ chữ 14pt, kiểu chữ đứng, có gạch chân dưới từ "Nơi nhận", sau có dấu hai chấm (:)
             string noiNhanHeaderHtml = isDang
-                ? "<div style='font-size:12pt;font-style:italic;text-decoration:underline;'>Nơi nhận:</div>"
+                ? "<div style='font-size:14pt;font-style:normal;font-weight:normal;'><u>Nơi nhận</u>:</div>"
                 : "<div style='font-size:12pt;font-weight:bold;font-style:italic;'>Nơi nhận:</div>";
             string noiNhanSize = isDang ? "12pt" : "11pt";
 
@@ -1492,16 +1493,16 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
 <body><div class='Section1'>
 <table><tr>
 <td style='width:44%;text-align:center;'>
-  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + ";'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
-  <div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + @";font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
+  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? "14pt" : "12.5pt") + ";'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
+  <div style='font-size:" + (isDang ? "14pt" : "12.5pt") + @";font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
   " + leftSepHtml + @"
-  <div style='font-size:13pt;margin-top:6pt;'>" + System.Security.SecurityElement.Escape(numberLabel) + @"</div>
+  <div style='font-size:" + (isDang ? "14pt" : "13pt") + @";margin-top:6pt;'>" + System.Security.SecurityElement.Escape(numberLabel) + @"</div>
   " + congVanSubjLeftHtml + @"
 </td>
 <td style='width:56%;text-align:center;'>
   " + rightHeaderHtml + @"
   <hr style='width:" + (isDang ? "56%" : "48%") + @";border:0;border-top:1px solid #000;'/>
-  <div style='font-size:13.5pt;font-style:italic;margin-top:6pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
+  <div style='font-size:" + (isDang ? "14pt" : "13.5pt") + @";font-style:italic;margin-top:6pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
 </td>
 </tr></table>
 " + centerTitleBlockHtml + @"
