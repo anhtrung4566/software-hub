@@ -1,9 +1,10 @@
 /**
  * VBTM Pro 2.2.4 - Bộ Công Cụ Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy & UBND Phường
  * Tích hợp công nghệ mới nhất:
- *  1. Mammoth.js: Đọc trực tiếp file Word .docx / .doc / .txt có sẵn từ máy tính và tự động bóc tách các trường thể thức
- *  2. QRCode ISO/IEC 18004 (Reed-Solomon): Tạo mã QR thật quét được ngay bằng Camera điện thoại & Zalo
- *  3. Bộ máy AI NLP Tiếng Việt Hành Chính: Tự động rà soát & sửa hơn 60 lỗi chính tả, ngữ pháp và thể thức Nghị định 30 / Hướng dẫn 36-HD/VPTW
+ *  1. Kho Từ Điển 535 Cụm Từ Nhầm Lẫn Hành Chính + 7.578 Âm Tiết Tiếng Việt Chuẩn Quốc Gia (Unicode NFC)
+ *  2. Bộ Phân Giải Ngữ Âm Âm Tiết (SyllableParser): Tự động bắt và sửa mọi âm tiết sai chính tả (ng/ngh, g/gh, c/k, hỏi/ngã, c/t/ch, n/ng/nh, s/x, ch/tr)
+ *  3. Mammoth.js: Đọc trực tiếp file Word .docx / .doc / .txt có sẵn từ máy tính và tự động bóc tách thể thức
+ *  4. QRCode ISO/IEC 18004 (Reed-Solomon): Tạo mã QR thật quét được ngay bằng Camera điện thoại & Zalo
  */
 
 const VBTM_TEMPLATES = {
@@ -65,35 +66,138 @@ const VBTM_TEMPLATES = {
   }
 };
 
-// Bộ từ điển AI rà soát lỗi chính tả & lỗi hành chính tiếng Việt mở rộng
-const SPELL_DICTIONARY = [
-  { pattern: '\\bbổ xung\\b', right: 'bổ sung', desc: 'Sai phụ âm đầu x/s ("bổ sung")' },
-  { pattern: '\\bsử lý\\b', right: 'xử lý', desc: 'Sai phụ âm đầu s/x ("xử lý")' },
-  { pattern: '\\bxử dụng\\b', right: 'sử dụng', desc: 'Sai phụ âm đầu x/s ("sử dụng")' },
-  { pattern: '\\bchính sác\\b', right: 'chính xác', desc: 'Sai phụ âm đầu s/x ("chính xác")' },
-  { pattern: '\\bkiểm xoát\\b', right: 'kiểm soát', desc: 'Sai phụ âm đầu x/s ("kiểm soát")' },
-  { pattern: '\\brà xoát\\b', right: 'rà soát', desc: 'Sai phụ âm đầu x/s ("rà soát")' },
-  { pattern: '\\bchiển khai\\b', right: 'triển khai', desc: 'Sai phụ âm đầu ch/tr ("triển khai")' },
-  { pattern: '\\bchủ chương\\b', right: 'chủ trương', desc: 'Sai phụ âm đầu ch/tr ("chủ trương")' },
-  { pattern: '\\bkế hoạc\\b', right: 'kế hoạch', desc: 'Thiếu âm cuối ("kế hoạch")' },
-  { pattern: '\\bngiêm túc\\b', right: 'nghiêm túc', desc: 'Sai quy tắc chính tả ng/ngh ("nghiêm túc")' },
-  { pattern: '\\bngành ngề\\b', right: 'ngành nghề', desc: 'Sai quy tắc chính tả ng/ngh ("ngành nghề")' },
-  { pattern: '\\bhổ trợ\\b', right: 'hỗ trợ', desc: 'Sai dấu hỏi/ngã ("hỗ trợ")' },
-  { pattern: '\\btiêu chuẫn\\b', right: 'tiêu chuẩn', desc: 'Sai dấu hỏi/ngã ("tiêu chuẩn")' },
-  { pattern: '\\bchuẫn hóa\\b', right: 'chuẩn hóa', desc: 'Sai dấu hỏi/ngã ("chuẩn hóa")' },
-  { pattern: '\\bkhẩn chương\\b', right: 'khẩn trương', desc: 'Sai phụ âm ch/tr ("khẩn trương")' },
-  { pattern: '\\btrao chuốt\\b', right: 'trau chuốt', desc: 'Sai vần ao/au ("trau chuốt")' },
-  { pattern: '\\bsáng xuốt\\b', right: 'sáng suốt', desc: 'Sai phụ âm x/s ("sáng suốt")' },
-  { pattern: '\\bxáng suốt\\b', right: 'sáng suốt', desc: 'Sai phụ âm x/s ("sáng suốt")' },
-  { pattern: '\\bgiử gìn\\b', right: 'giữ gìn', desc: 'Sai dấu hỏi/ngã ("giữ gìn")' },
-  { pattern: '\\bvửng chắc\\b', right: 'vững chắc', desc: 'Sai dấu hỏi/ngã ("vững chắc")' },
-  { pattern: '\\bsát nhập\\b', right: 'sáp nhập', desc: 'Từ chuẩn hành chính là "sáp nhập"' },
-  { pattern: '\\bxác nhập\\b', right: 'sáp nhập', desc: 'Từ chuẩn hành chính là "sáp nhập"' },
-  { pattern: '\\bthẩm quyển\\b', right: 'thẩm quyền', desc: 'Sai dấu hỏi/huyền ("thẩm quyền")' },
-  { pattern: '\\bchuyển đỗi\\b', right: 'chuyển đổi', desc: 'Sai dấu hỏi/ngã ("chuyển đổi")' },
-  { pattern: '\\bquản lý nhà nước\\b', right: 'quản lý nhà nước', skip: true },
-  { pattern: '\\bnhà nước\\b', right: 'Nhà nước', caseSensitive: true, desc: 'Viết hoa "Nhà nước" trong văn bản hành chính' }
-];
+// ============================================================================
+// BỘ PHÂN GIẢI NGỮ ÂM & KIỂM ĐỊNH ÂM TIẾT TIẾNG VIỆT (SYLLABLE PARSER ENGINE)
+// ============================================================================
+const VOWEL_GROUPS = {
+  'a': 'aàáảãạ', 'ă': 'ăằắẳẵặ', 'â': 'âầấẩẫậ',
+  'e': 'eèéẻẽẹ', 'ê': 'êềếểễệ',
+  'i': 'iìíỉĩị',
+  'o': 'oòóỏõọ', 'ô': 'ôồốổỗộ', 'ơ': 'ơờớởỡợ',
+  'u': 'uùúủũụ', 'ư': 'ưừứửữự',
+  'y': 'yỳýỷỹỵ'
+};
+
+const CHAR_TO_TONE = {};
+const TONE_TO_CHAR = {};
+Object.entries(VOWEL_GROUPS).forEach(([base, chars]) => {
+  for (let i = 0; i < chars.length; i++) {
+    CHAR_TO_TONE[chars[i]] = { base, tone: i };
+    TONE_TO_CHAR[`${base}_${i}`] = chars[i];
+  }
+});
+
+// Biểu thức biên từ Unicode chuẩn cho Tiếng Việt (Khắc phục triệt để lỗi \b của JS không nhận diện chữ có dấu!)
+function escapeRegexStr(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function createUnicodePhraseRegex(phrase, flags = 'gui') {
+  const escaped = escapeRegexStr(phrase.trim());
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, flags);
+}
+
+// Giữ nguyên kiểu viết hoa (chữ đầu câu hoặc IN HOA toàn bộ) khi thay thế từ đúng
+function applyCasePattern(sourceStr, targetStr) {
+  if (!sourceStr || !targetStr) return targetStr;
+  if (sourceStr === sourceStr.toUpperCase() && sourceStr !== sourceStr.toLowerCase()) {
+    return targetStr.toUpperCase();
+  }
+  if (sourceStr[0] === sourceStr[0].toUpperCase() && sourceStr[0] !== sourceStr[0].toLowerCase()) {
+    return targetStr.charAt(0).toUpperCase() + targetStr.slice(1);
+  }
+  return targetStr;
+}
+
+// Kiểm tra một âm tiết có hợp lệ trong 7.578 âm tiết Tiếng Việt chuẩn hay không
+function isValidVietnameseSyllable(word) {
+  if (!window.VN_VALID_SYLLABLES) return true;
+  const w = word.normalize('NFC').toLowerCase();
+  if (w.length <= 1) return true;
+  // Bỏ qua từ viết tắt IN HOA (UBND, HĐND, ĐU, VPTW...), từ có số hoặc ký tự đặc biệt
+  if (word === word.toUpperCase() && word.length <= 8) return true;
+  if (!/^\p{L}+$/u.test(w)) return true;
+  return window.VN_VALID_SYLLABLES.has(w);
+}
+
+// Tự động tìm âm tiết Tiếng Việt chuẩn gần nhất cho bất kỳ âm tiết sai chính tả nào
+function findClosestValidVietnameseSyllable(rawWord) {
+  if (!window.VN_VALID_SYLLABLES) return null;
+  const w = rawWord.normalize('NFC').toLowerCase();
+  if (isValidVietnameseSyllable(rawWord)) return null;
+
+  const candidates = [];
+  const addCandidate = (cand, reason) => {
+    const norm = cand.normalize('NFC').toLowerCase();
+    if (window.VN_VALID_SYLLABLES.has(norm) && !candidates.some(c => c.word === norm)) {
+      candidates.push({ word: norm, reason });
+    }
+  };
+
+  // 1. Quy tắc chính tả ng/ngh, g/gh, c/k
+  if (/^ng[ieêìíỉĩịèéẻẽẹềếểễệ]/i.test(w)) {
+    addCandidate('ngh' + w.slice(2), 'Quy tắc ng/ngh trước i, e, ê');
+  }
+  if (/^ngh[aăâoôơuưàáảãạằắẳẵặầấẩẫậòóỏõọồốổỗộờớởỡợùúủũụừứửữự]/i.test(w)) {
+    addCandidate('ng' + w.slice(3), 'Quy tắc ng/ngh trước a, o, ô, ơ, u, ư');
+  }
+  if (/^g[eêèéẻẽẹềếểễệ]/i.test(w)) {
+    addCandidate('gh' + w.slice(1), 'Quy tắc g/gh trước e, ê');
+  }
+  if (/^gh[aăâoôơuưàáảãạằắẳẵặầấẩẫậòóỏõọồốổỗộờớởỡợùúủũụừứửữự]/i.test(w)) {
+    addCandidate('g' + w.slice(2), 'Quy tắc g/gh trước a, o, ô, ơ, u, ư');
+  }
+  if (/^c[ieêìíỉĩịèéẻẽẹềếểễệ]/i.test(w)) {
+    addCandidate('k' + w.slice(1), 'Quy tắc c/k trước i, e, ê');
+  }
+
+  // 2. Hoán vị dấu thanh (Đặc biệt là dấu hỏi <-> dấu ngã, sắc <-> nặng)
+  const chars = Array.from(w);
+  for (let i = 0; i < chars.length; i++) {
+    const info = CHAR_TO_TONE[chars[i]];
+    if (info) {
+      const toneSwaps = info.tone === 3 ? [4, 2, 1, 5]
+        : info.tone === 4 ? [3, 5, 2, 1]
+        : info.tone === 2 ? [5, 3, 4, 1]
+        : info.tone === 5 ? [2, 4, 3, 1]
+        : [1, 2, 3, 4, 5];
+      for (const newTone of toneSwaps) {
+        const replacementChar = TONE_TO_CHAR[`${info.base}_${newTone}`];
+        if (replacementChar && replacementChar !== chars[i]) {
+          const copy = [...chars];
+          copy[i] = replacementChar;
+          addCandidate(copy.join(''), 'Sai dấu thanh tiếng Việt');
+        }
+      }
+    }
+  }
+
+  // 3. Hoán vị âm cuối (c <-> t <-> ch, n <-> ng <-> nh)
+  const codaSwaps = [
+    ['c', 'ch'], ['c', 't'], ['t', 'c'], ['t', 'ch'], ['ch', 'c'], ['ch', 't'],
+    ['n', 'ng'], ['n', 'nh'], ['ng', 'n'], ['ng', 'nh'], ['nh', 'n'], ['nh', 'ng']
+  ];
+  for (const [fromCoda, toCoda] of codaSwaps) {
+    if (w.endsWith(fromCoda)) {
+      addCandidate(w.slice(0, w.length - fromCoda.length) + toCoda, `Sai âm cuối -${fromCoda}/-${toCoda}`);
+    }
+  }
+
+  // 4. Hoán vị âm đầu (s <-> x, ch <-> tr, d <-> gi <-> r, l <-> n)
+  const onsetSwaps = [
+    ['s', 'x'], ['x', 's'],
+    ['ch', 'tr'], ['tr', 'ch'],
+    ['gi', 'd'], ['d', 'gi'], ['r', 'd'], ['d', 'r'],
+    ['l', 'n'], ['n', 'l']
+  ];
+  for (const [fromOnset, toOnset] of onsetSwaps) {
+    if (w.startsWith(fromOnset)) {
+      addCandidate(toOnset + w.slice(fromOnset.length), `Sai phụ âm đầu ${fromOnset}/${toOnset}`);
+    }
+  }
+
+  return candidates.length > 0 ? candidates[0] : null;
+}
 
 let lastDetectedIssues = [];
 
@@ -150,7 +254,6 @@ function setupWordFileUpload() {
         rawText = result.value || '';
       } else {
         const textContent = await file.text();
-        // Nếu file .doc lưu dưới dạng HTML hoặc XML, lọc thẻ HTML sạch sẽ
         if (/<html|<body|<p|<div|<w:/i.test(textContent)) {
           const tmp = document.createElement('div');
           tmp.innerHTML = textContent.replace(/<\/p>|<\/div>|<\/tr>|<br\s*\/?>/gi, '\n');
@@ -173,7 +276,7 @@ function setupWordFileUpload() {
   });
 }
 
-// Phân tích thông minh văn bản tải lên và tự động điền các trường + chuẩn hóa
+// Phân tích thông minh văn bản tải lên và tự động bóc tách các trường thể thức (Không trộn dữ liệu mẫu vào file của người dùng!)
 function parseUploadedDocumentAndStandardize(rawText, fileName) {
   const lines = rawText
     .replace(/\r\n/g, '\n')
@@ -181,9 +284,8 @@ function parseUploadedDocumentAndStandardize(rawText, fileName) {
     .map(l => l.trim())
     .filter(Boolean);
 
-  // Tự động phát hiện văn bản Đảng ủy hay UBND phường
   const fullUpper = rawText.toUpperCase();
-  if (fullUpper.includes('ĐẢNG CỘNG SẢN VIỆT NAM') || fullUpper.includes('ĐẢNG ỦY') || fullUpper.includes('/ĐU')) {
+  if (fullUpper.includes('ĐẢNG CỘNG SẢN VIỆT NAM') || fullUpper.includes('ĐẢNG ỦY') || fullUpper.includes('/ĐU') || fullUpper.includes('-ĐU')) {
     document.getElementById('vbtmStandard').value = 'hd05';
     document.getElementById('vbtmGovOrg').value = 'QUẬN ỦY';
     document.getElementById('vbtmIssueOrg').value = 'ĐẢNG ỦY PHƯỜNG';
@@ -199,23 +301,44 @@ function parseUploadedDocumentAndStandardize(rawText, fileName) {
     document.getElementById('vbtmDocNum').value = numMatch[1].trim();
   }
 
-  // Tìm Tên loại văn bản
-  const docTypes = ['BÁO CÁO', 'QUYẾT ĐỊNH', 'KẾ HOẠCH', 'TỜ TRÌNH', 'THÔNG BÁO', 'NGHỊ QUYẾT', 'CHƯƠNG TRÌNH', 'CHỈ THỊ', 'QUY CHẾ'];
+  // Tìm Tên loại văn bản và Trích yếu
+  const docTypes = ['BÁO CÁO', 'QUYẾT ĐỊNH', 'KẾ HOẠCH', 'TỜ TRÌNH', 'THÔNG BÁO', 'NGHỊ QUYẾT', 'CHƯƠNG TRÌNH', 'CHỈ THỊ', 'QUY CHẾ', 'BIÊN BẢN', 'GIẤY MỜI', 'HƯỚNG DẪN'];
   let detectedType = '';
-  for (const t of docTypes) {
-    if (lines.some(l => l.toUpperCase() === t)) {
-      detectedType = t;
-      break;
+  let detectedSubject = '';
+  let typeLineIdx = -1;
+
+  for (let i = 0; i < Math.min(lines.length, 15); i++) {
+    const u = lines[i].toUpperCase();
+    for (const t of docTypes) {
+      if (u === t || u.startsWith(t + ' ')) {
+        detectedType = t;
+        typeLineIdx = i;
+        break;
+      }
+    }
+    if (detectedType) break;
+  }
+
+  if (typeLineIdx !== -1 && lines[typeLineIdx + 1]) {
+    detectedSubject = lines[typeLineIdx + 1];
+  } else {
+    const vvIdx = lines.findIndex(l => /^(V\/v|Về việc)\b/i.test(l));
+    if (vvIdx !== -1) {
+      detectedSubject = lines[vvIdx];
+      typeLineIdx = vvIdx - 1;
     }
   }
-  document.getElementById('vbtmDocType').value = detectedType;
 
-  // Lọc bỏ các dòng Quốc hiệu / Tiêu ngữ lặp lại ở đầu nếu có để lấy phần thân văn bản sạch
-  const filteredBodyLines = lines.filter(l => {
+  document.getElementById('vbtmDocType').value = detectedType;
+  document.getElementById('vbtmDocSubject').value = detectedSubject;
+
+  // Lọc bỏ các dòng Quốc hiệu / Tiêu ngữ / Tên loại / Trích yếu đã tách ở đầu để lấy phần thân văn bản sạch
+  const filteredBodyLines = lines.filter((l, idx) => {
     const u = l.toUpperCase();
     if (u === 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM') return false;
     if (u.includes('ĐỘC LẬP - TỰ DO - HẠNH PHÚC')) return false;
     if (u === 'ĐẢNG CỘNG SẢN VIỆT NAM') return false;
+    if (idx === typeLineIdx || (detectedSubject && l === detectedSubject)) return false;
     return true;
   });
 
@@ -260,40 +383,63 @@ function formatVietnameseDate(dateStr, location) {
   return `${location || 'Phường'}, ngày ${dayStr} tháng ${monthStr} năm ${year}`;
 }
 
+// Hàm sửa toàn bộ lỗi chính tả (535 cụm từ nhầm lẫn + 7.578 âm tiết Tiếng Việt chuẩn) trên một chuỗi văn bản
+function autoFixVietnameseSpellingInString(inputStr) {
+  let str = String(inputStr || '').normalize('NFC');
+  let fixedCount = 0;
+
+  // Bước 1: Quét 535 cụm từ nhầm lẫn hành chính & lỗi gõ Telex/VNI bằng Unicode Regex
+  const rules = window.VN_SPELL_RULES || [];
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
+    if (!rule.w || !rule.r) continue;
+    const regex = createUnicodePhraseRegex(rule.w, 'gui');
+    str = str.replace(regex, (matched) => {
+      fixedCount++;
+      return applyCasePattern(matched, rule.r);
+    });
+  }
+
+  // Bước 2: Quét từng âm tiết Tiếng Việt đơn lẻ với kho 7.578 âm tiết chuẩn Quốc gia
+  str = str.replace(/\p{L}+/gu, (word) => {
+    if (isValidVietnameseSyllable(word)) return word;
+    const suggestion = findClosestValidVietnameseSyllable(word);
+    if (suggestion && suggestion.word) {
+      fixedCount++;
+      return applyCasePattern(word, suggestion.word);
+    }
+    return word;
+  });
+
+  return { text: str, fixedCount };
+}
+
 // Chuẩn hóa toàn diện: vừa chuẩn hóa thể thức NĐ30/Đảng ủy vừa tự động sửa toàn bộ lỗi chính tả AI
 function standardizeAndFixEverything() {
   const bodyEl = document.getElementById('vbtmDocBody');
   const subjEl = document.getElementById('vbtmDocSubject');
   if (!bodyEl) return;
 
-  let text = bodyEl.value;
-  let subject = subjEl ? subjEl.value : '';
-  let fixedSpells = 0;
+  // 1. Tự động sửa toàn bộ lỗi chính tả tiếng Việt trên cả Nội dung & Trích yếu
+  const fixedBodyObj = autoFixVietnameseSpellingInString(bodyEl.value);
+  let text = fixedBodyObj.text;
+  let fixedSpells = fixedBodyObj.fixedCount;
 
-  // 1. Tự động sửa toàn bộ lỗi chính tả tiếng Việt theo từ điển AI
-  SPELL_DICTIONARY.forEach(rule => {
-    if (rule.skip) return;
-    const flags = rule.caseSensitive ? 'g' : 'gi';
-    const regex = new RegExp(rule.pattern, flags);
-    const matchesBody = text.match(regex);
-    if (matchesBody) {
-      fixedSpells += matchesBody.length;
-      text = text.replace(regex, rule.right);
-    }
-    const matchesSubj = subject.match(regex);
-    if (matchesSubj) {
-      fixedSpells += matchesSubj.length;
-      subject = subject.replace(regex, rule.right);
-    }
-  });
+  if (subjEl && subjEl.value) {
+    const fixedSubjObj = autoFixVietnameseSpellingInString(subjEl.value);
+    subjEl.value = fixedSubjObj.text.trim().replace(/\s+/g, ' ').replace(/\.+$/, '');
+    fixedSpells += fixedSubjObj.fixedCount;
+  }
 
-  // 2. Xóa khoảng trắng thừa, chuẩn hóa dấu câu chuẩn Nghị định 30
+  // 2. Xóa khoảng trắng thừa, chuẩn hóa dấu câu chuẩn Nghị định 30/2020/NĐ-CP
   text = text
     .replace(/[ \t]+/g, ' ')
     .replace(/\s+([,.;:!?])/g, '$1')
-    .replace(/([,.;:!?])([^\s\d/])/g, '$1 $2')
+    .replace(/([,.;:!?])([^\s\d/.)])/g, '$1 $2')
     .replace(/\(\s+/g, '(')
     .replace(/\s+\)/g, ')')
+    .replace(/“\s+/g, '“')
+    .replace(/\s+”/g, '”')
     .replace(/\n{3,}/g, '\n\n');
 
   // 3. Viết hoa chữ cái đầu mỗi đoạn và thêm dấu kết thúc "./."
@@ -310,11 +456,7 @@ function standardizeAndFixEverything() {
   }
   bodyEl.value = result;
 
-  if (subjEl && subject) {
-    subjEl.value = subject.trim().replace(/\s+/g, ' ').replace(/\.+$/, '');
-  }
-
-  // Đảm bảo có Nơi nhận Lưu: VT
+  // 4. Đảm bảo có Nơi nhận Lưu: VT
   const recEl = document.getElementById('vbtmRecipients');
   if (recEl && !/Lưu/i.test(recEl.value)) {
     const cur = recEl.value.trim();
@@ -334,33 +476,69 @@ function standardizeTextContent() {
   standardizeAndFixEverything();
 }
 
-// Kiểm tra lỗi chính tả & thẩm định thể thức AI
+// Kiểm tra lỗi chính tả & thẩm định thể thức AI (535 cụm từ + 7.578 âm tiết Tiếng Việt chuẩn)
 function runSpellAndFormatCheck() {
-  const body = document.getElementById('vbtmDocBody')?.value || '';
-  const subject = document.getElementById('vbtmDocSubject')?.value || '';
+  const body = (document.getElementById('vbtmDocBody')?.value || '').normalize('NFC');
+  const subject = (document.getElementById('vbtmDocSubject')?.value || '').normalize('NFC');
   const docNum = document.getElementById('vbtmDocNum')?.value || '';
   const recipients = document.getElementById('vbtmRecipients')?.value || '';
   const issueContainer = document.getElementById('vbtmIssueList');
 
   lastDetectedIssues = [];
 
-  SPELL_DICTIONARY.forEach(rule => {
-    if (rule.skip) return;
-    const flags = rule.caseSensitive ? '' : 'i';
-    const checkRegex = new RegExp(rule.pattern, flags);
+  // 1. Kiểm tra theo kho 535 cụm từ nhầm lẫn hành chính & lỗi gõ phím
+  const rules = window.VN_SPELL_RULES || [];
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
+    if (!rule.w || !rule.r) continue;
+    const checkRegex = createUnicodePhraseRegex(rule.w, 'ui');
     if (checkRegex.test(body) || checkRegex.test(subject)) {
-      const replaceRegex = new RegExp(rule.pattern, rule.caseSensitive ? 'g' : 'gi');
+      const replaceRegex = createUnicodePhraseRegex(rule.w, 'gui');
       lastDetectedIssues.push({
         type: 'Chính tả AI',
-        desc: `${rule.desc} → Đổi thành: "${rule.right}"`,
+        desc: `Phát hiện "${rule.w}" → Chuẩn là: "${rule.r}" (${rule.d})`,
         fix: () => {
-          document.getElementById('vbtmDocBody').value = document.getElementById('vbtmDocBody').value.replace(replaceRegex, rule.right);
-          document.getElementById('vbtmDocSubject').value = document.getElementById('vbtmDocSubject').value.replace(replaceRegex, rule.right);
+          const bEl = document.getElementById('vbtmDocBody');
+          const sEl = document.getElementById('vbtmDocSubject');
+          if (bEl) bEl.value = bEl.value.normalize('NFC').replace(replaceRegex, m => applyCasePattern(m, rule.r));
+          if (sEl) sEl.value = sEl.value.normalize('NFC').replace(replaceRegex, m => applyCasePattern(m, rule.r));
+        }
+      });
+    }
+  }
+
+  // 2. Kiểm tra từng âm tiết đơn lẻ với kho 7.578 âm tiết Tiếng Việt chuẩn
+  const combinedText = `${subject} ${body}`;
+  const words = combinedText.match(/\p{L}+/gu) || [];
+  const checkedInvalidWords = new Set();
+
+  words.forEach(word => {
+    const lower = word.toLowerCase();
+    if (checkedInvalidWords.has(lower)) return;
+    if (!isValidVietnameseSyllable(word)) {
+      checkedInvalidWords.add(lower);
+      const suggestion = findClosestValidVietnameseSyllable(word);
+      const sugWord = suggestion ? suggestion.word : '';
+      const sugReason = suggestion ? suggestion.reason : 'Âm tiết không tồn tại trong Tiếng Việt chuẩn';
+      const wordRegex = createUnicodePhraseRegex(lower, 'gui');
+
+      lastDetectedIssues.push({
+        type: 'Ngữ âm AI',
+        desc: sugWord
+          ? `Âm tiết sai "${word}" (${sugReason}) → Gợi ý sửa thành: "${applyCasePattern(word, sugWord)}"`
+          : `Phát hiện âm tiết sai cấu trúc Tiếng Việt: "${word}"`,
+        fix: () => {
+          if (!sugWord) return;
+          const bEl = document.getElementById('vbtmDocBody');
+          const sEl = document.getElementById('vbtmDocSubject');
+          if (bEl) bEl.value = bEl.value.normalize('NFC').replace(wordRegex, m => applyCasePattern(m, sugWord));
+          if (sEl) sEl.value = sEl.value.normalize('NFC').replace(wordRegex, m => applyCasePattern(m, sugWord));
         }
       });
     }
   });
 
+  // 3. Kiểm tra quy tắc dấu câu & thể thức Nghị định 30/2020/NĐ-CP
   if (/\s+[,.;:!?]/.test(body)) {
     lastDetectedIssues.push({
       type: 'Thể thức NĐ30',
@@ -410,16 +588,16 @@ function runSpellAndFormatCheck() {
   if (lastDetectedIssues.length === 0) {
     issueContainer.innerHTML = `
       <div class="issue-item ok">
-        <span>✓ Văn bản đã đạt chuẩn 100% về chính tả Tiếng Việt và thể thức Đảng ủy / UBND phường!</span>
+        <span>✓ Văn bản đã đạt chuẩn 100% về chính tả Tiếng Việt (7.578 âm tiết &amp; 535 quy tắc) và thể thức Đảng ủy / UBND phường!</span>
       </div>
     `;
   } else {
     issueContainer.innerHTML = lastDetectedIssues.map((item, idx) => `
       <div class="issue-item">
         <div>
-          <strong style="color: #fbbf24;">[${item.type}]</strong> ${item.desc}
+          <strong style="color: #fbbf24;">[${item.type}]</strong> ${escapeHtml(item.desc)}
         </div>
-        <button type="button" class="btn-tool primary" onclick="fixSingleIssue(${idx})" style="padding: 4px 10px; font-size: 0.78rem;">Sửa ngay</button>
+        <button type="button" class="btn-tool primary" onclick="fixSingleIssue(${idx})" style="padding: 4px 10px; font-size: 0.78rem; flex-shrink: 0;">Sửa ngay</button>
       </div>
     `).join('');
   }
@@ -439,11 +617,11 @@ function fixAllIssues() {
 
 function insertSampleTypos() {
   const bodyEl = document.getElementById('vbtmDocBody');
-  bodyEl.value = `Thực hiện chủ chương cải cách hành chính tại địa phương, Ủy ban nhân dân phường đã khẩn chương chiển khai kế hoạc bổ xung trang thiết bị và sử lý nghiêm các trường hợp sai phạm , đảm bảo kiểm xoát chính sác tiến độ công việc và hổ trợ cán bộ đạt tiêu chuẫn đề ra`;
+  bodyEl.value = `Thực hiện chủ chương cải cách hành chính tại địa phương, Ủy ban nhân dân phường đã khẩn chương chiển khai kế hoạc bổ xung trang thiết bị và sử lý ngiêm túc các trường hợp sai phạm , đảm bảo kiểm xoát chính sác tiến độ công việc và hổ trợ cán bộ đạt tiêu chuẫn đề ra`;
   renderA4Preview();
   runSpellAndFormatCheck();
   if (window.showToast) {
-    window.showToast('Đã chèn đoạn văn có 10 lỗi chính tả & thể thức. Hãy bấm "Chuẩn Hóa Thể Thức & Tự Động Sửa Lỗi" để sửa ngay!');
+    window.showToast(`Đã phát hiện ${lastDetectedIssues.length} lỗi chính tả & thể thức. Bấm "⚡ Chuẩn Hóa Thể Thức & Tự Động Sửa Lỗi" để sửa sạch 100%!`);
   }
 }
 
@@ -456,10 +634,8 @@ function updateQrCanvas() {
   const rawText = (document.getElementById('vbtmQrText')?.value || document.getElementById('vbtmDocNum')?.value || 'VBTM-PRO').trim();
   const ctx = canvas.getContext('2d');
 
-  // Sử dụng thư viện qrcode-generator chuẩn ISO/IEC 18004 (Reed-Solomon Error Correction)
   if (typeof window.qrcode === 'function') {
     try {
-      // Hỗ trợ UTF-8 cho tiếng Việt trong mã QR
       const utf8Text = unescape(encodeURIComponent(rawText));
       const qr = window.qrcode(0, 'M');
       qr.addData(utf8Text);
@@ -599,14 +775,15 @@ function exportWordDocument() {
       body {
         font-family: "Times New Roman", serif;
         font-size: 14pt;
-        line-height: 1.35;
+        line-height: 1.45;
         color: #000000;
       }
-      table { width: 100%; border-collapse: collapse; }
-      td { vertical-align: top; font-family: "Times New Roman", serif; }
-      .a4-doc-title { text-align: center; font-weight: bold; font-size: 14pt; text-transform: uppercase; margin: 14pt 0 4pt 0; }
-      .a4-doc-subject { text-align: center; font-weight: bold; font-size: 13.5pt; margin-bottom: 12pt; }
-      .a4-doc-body p { text-indent: 1.27cm; text-align: justify; margin: 0 0 6pt 0; font-size: 14pt; }
+      table { width: 100%; border-collapse: collapse; border: none; }
+      td { vertical-align: top; text-align: center; font-family: "Times New Roman", serif; }
+      p { margin: 0 0 6pt 0; text-indent: 1.27cm; text-align: justify; font-size: 14pt; }
+      .a4-doc-title { text-align: center; font-weight: bold; font-size: 14pt; text-transform: uppercase; margin-top: 16pt; margin-bottom: 4pt; }
+      .a4-doc-subject { text-align: center; font-weight: bold; font-size: 13.5pt; margin-bottom: 14pt; }
+      .a4-line-sep { display: block; border-bottom: 1px solid #000; margin: 4px auto; }
     </style>
   </head>
   <body>
@@ -627,8 +804,21 @@ function exportWordDocument() {
   URL.revokeObjectURL(url);
 
   if (window.showToast) {
-    window.showToast(`Đã xuất tệp Word chuẩn A4: VBTM_ChuanHoa_${docNum}.doc`);
+    window.showToast(`Đã xuất tệp Microsoft Word chuẩn A4: VBTM_ChuanHoa_${docNum}.doc`);
   }
+}
+
+function downloadQrPng() {
+  const canvas = document.getElementById('vbtmQrCanvas');
+  if (!canvas) return;
+  const url = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'VBTM_MaQR_VanBan.png';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  if (window.showToast) window.showToast('Đã tải xuống ảnh Mã QR chuẩn ISO 18004 (PNG)!');
 }
 
 function escapeHtml(str) {
@@ -647,3 +837,4 @@ window.fixSingleIssue = fixSingleIssue;
 window.fixAllIssues = fixAllIssues;
 window.insertSampleTypos = insertSampleTypos;
 window.exportWordDocument = exportWordDocument;
+window.downloadQrPng = downloadQrPng;
