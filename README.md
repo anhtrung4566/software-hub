@@ -3,7 +3,7 @@
 Cổng thông tin và ứng dụng Web/Desktop với giao diện **iOS 18 Liquid Glassmorphism** phục vụ công tác văn thư, lưu trữ của **Đảng ủy và Ủy ban nhân dân phường**, bao gồm 2 phần mềm cốt lõi:
 
 1. **VBTM Pro 2.2.4** (`/products/vbtm-pro.html`):
-   - Chuẩn hóa thể thức văn bản hành chính của **Ủy ban nhân dân phường** theo **Nghị định 30/2020/NĐ-CP** và văn bản của **Đảng ủy phường** theo **Hướng dẫn 36-HD/VPTW & 05-HD/VPTW**.
+   - Chuẩn hóa thể thức văn bản hành chính của **Ủy ban nhân dân phường** theo **Nghị định 30/2020/NĐ-CP** và văn bản của **Đảng ủy phường** theo **Hướng dẫn số 05-HD/VPTW**.
    - Tạo và chèn **Mã QR động** xác thực văn bản trực tiếp.
    - **Soát lỗi chính tả & thẩm định thể thức AI ngoại tuyến 100%**.
    - Xem trước trang A4 thời gian thực, chuẩn hóa trực tiếp cửa sổ Word đang mở và **Xuất ra file Microsoft Word (`.doc`)**.
