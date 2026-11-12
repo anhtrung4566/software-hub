@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VBTM Pro 4.0 Ultimate · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường</title>
-  <meta name="description" content="Phần mềm & Add-in Microsoft Word chuẩn hóa thể thức văn bản của Đảng ủy và Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP, Hướng dẫn 36-HD/VPTW & 05-HD/VPTW, tạo mã QR thật (ISO 18004) và soát lỗi chính tả AI.">
+  <meta name="description" content="Phần mềm & Add-in Microsoft Word chuẩn hóa thể thức văn bản của Đảng ủy và Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP và Hướng dẫn số 05-HD/VPTW, tạo mã QR thật (ISO 18004) và soát lỗi chính tả AI.">
   <link rel="stylesheet" href="../css/style.css">
   <!-- Thư viện đọc trực tiếp file Word .docx thực tế (Mammoth.js) & file PDF đa trang (PDF.js) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -95,7 +95,7 @@
       <!-- Description Block -->
       <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08);">
         <h3 style="font-size: 1.2rem; margin-bottom: 12px; color: var(--accent-color);">Giới Thiệu Ứng Dụng (Tích Hợp Đọc File .DOCX &amp; Mã QR Thực Tế)</h3>
-        <p style="font-size: 1.02rem; line-height: 1.7; color: var(--text-secondary);">VBTM Pro 2.2.4 cho phép bạn <strong>nạp trực tiếp tệp văn bản Word (<code>.docx</code>, <code>.doc</code>, <code>.txt</code>) có sẵn từ máy tính</strong> hoặc soạn thảo mới để tự động chuẩn hóa thể thức văn bản hành chính của <strong>Ủy ban nhân dân phường / HĐND - UBND phường</strong> theo <strong>Nghị định 30/2020/NĐ-CP</strong> và văn bản của <strong>Đảng ủy phường</strong> theo <strong>Hướng dẫn 36-HD/VPTW &amp; 05-HD/VPTW</strong>. Phần mềm tích hợp bộ tạo <strong>mã QR chuẩn quốc tế ISO/IEC 18004 (quét được ngay bằng Camera điện thoại và Zalo)</strong> cùng bộ máy rà soát, tự động sửa lỗi chính tả Tiếng Việt hành chính chuyên sâu.</p>
+        <p style="font-size: 1.02rem; line-height: 1.7; color: var(--text-secondary);">VBTM Pro 2.2.4 cho phép bạn <strong>nạp trực tiếp tệp văn bản Word (<code>.docx</code>, <code>.doc</code>, <code>.txt</code>) hoặc PDF có sẵn từ máy tính</strong> hoặc soạn thảo mới để tự động chuẩn hóa thể thức văn bản hành chính của <strong>Ủy ban nhân dân phường / HĐND - UBND phường</strong> theo <strong>Nghị định 30/2020/NĐ-CP</strong> và văn bản của <strong>Đảng ủy phường</strong> theo <strong>Hướng dẫn số 05-HD/VPTW</strong> của Văn phòng Trung ương Đảng. Phần mềm tích hợp bộ tạo <strong>mã QR chuẩn quốc tế ISO/IEC 18004 (quét được ngay bằng Camera điện thoại và Zalo)</strong> cùng bộ máy rà soát, tự động sửa lỗi chính tả Tiếng Việt hành chính chuyên sâu.</p>
       </div>
     </div>
 
@@ -132,7 +132,7 @@
               <option value="ubnd_bienban">9. Biên bản họp UBND Phường</option>
               <option value="ubnd_giaymoi">10. Giấy mời họp UBND Phường</option>
             </optgroup>
-            <optgroup label="II. Khối Đảng Ủy &amp; Chi Bộ Phường (Hướng dẫn 36 &amp; 05-HD/VPTW)">
+            <optgroup label="II. Khối Đảng Ủy &amp; Chi Bộ Phường (Hướng dẫn số 05-HD/VPTW)">
               <option value="danguy_congvan">11. Công văn Đảng ủy Phường</option>
               <option value="danguy_baocao">12. Báo cáo Đảng ủy Phường</option>
               <option value="danguy_nghiquyet">13. Nghị quyết Đảng ủy / Chi bộ Phường</option>
@@ -183,7 +183,7 @@
                 <label class="form-label">Bộ Quy Chuẩn Thể Thức</label>
                 <select id="vbtmStandard" class="glass-select">
                   <option value="nd30">Nghị định 30/2020/NĐ-CP (HĐND &amp; UBND Phường)</option>
-                  <option value="hd05">Hướng dẫn 36 &amp; 05-HD/VPTW (Đảng ủy Phường)</option>
+                  <option value="hd05">Hướng dẫn số 05-HD/VPTW (Đảng ủy Phường)</option>
                 </select>
               </div>
               <div class="form-group">
@@ -299,7 +299,7 @@
             <li>Trong phần mềm: Bấm <strong>"Mở File Word (.docx / .doc)"</strong> để nạp văn bản cần chuẩn hóa, bấm <strong>"1. Chuẩn Hóa &amp; Sửa Chính Tả AI"</strong>, sau đó bấm <strong>"2. Chuẩn Hóa Word Đang Mở"</strong> hoặc <strong>"3. Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
           </ol>
           <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
-            Mã chuẩn SHA256: <code id="sha256Code">750121a7eda2f22287d819e6abb52c24349e1fb1f9e1141c6ed66b7e926167c8</code>
+            Mã chuẩn SHA256: <code id="sha256Code">206871c54d24faf7924410265d531cb1cf02a1f78dd7fdfff4c886fbb6893acb</code>
           </div>
         </div>
       </div>
