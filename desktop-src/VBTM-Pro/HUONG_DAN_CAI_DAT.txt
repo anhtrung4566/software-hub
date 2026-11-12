@@ -1,7 +1,7 @@
 ﻿===================================================================
 BỘ CÀI ĐẶT VBTM PRO 2.2.4 (WINDOWS NATIVE EXE - OFFLINE 100%)
-Chuẩn hóa văn bản Đảng ủy & UBND Phường (Nghị định 30/2020/NĐ-CP,
-Hướng dẫn 36 & 05-HD/VPTW), Tạo mã QR động & Soát lỗi chính tả AI
+Chuẩn hóa văn bản Đảng ủy & UBND Phường (Nghị định 30/2020/NĐ-CP &
+Hướng dẫn số 05-HD/VPTW), Tạo mã QR động & Soát lỗi chính tả AI
 ===================================================================
 
 1. CÁCH CÀI ĐẶT & SỬ DỤNG:
@@ -12,7 +12,7 @@ Hướng dẫn 36 & 05-HD/VPTW), Tạo mã QR động & Soát lỗi chính tả 
 
 2. TÍNH NĂNG TRONG PHẦN MỀM:
    - Biểu mẫu chuẩn của Ủy ban nhân dân phường (Nghị định 30/2020/NĐ-CP)
-     và Đảng ủy phường (Hướng dẫn 36-HD/VPTW & 05-HD/VPTW).
+     và Đảng ủy phường (Hướng dẫn số 05-HD/VPTW).
    - Kết nối trực tiếp vào Microsoft Word đang mở để tự động căn lề trang A4
      (Trái 30mm, Phải 15mm, Trên/Dưới 20mm), phông chữ Times New Roman 14pt.
    - Tạo mã QR động và xuất thẳng ra tệp Word (.doc) kèm mã QR.
