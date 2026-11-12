@@ -6,8 +6,10 @@
   <title>VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường</title>
   <meta name="description" content="Phần mềm & Add-in Microsoft Word chuẩn hóa thể thức văn bản của Đảng ủy và Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP, Hướng dẫn 36-HD/VPTW & 05-HD/VPTW, tạo mã QR thật (ISO 18004) và soát lỗi chính tả AI.">
   <link rel="stylesheet" href="../css/style.css">
-  <!-- Thư viện đọc trực tiếp file Word .docx thực tế (Mammoth.js) -->
+  <!-- Thư viện đọc trực tiếp file Word .docx thực tế (Mammoth.js) & file PDF đa trang (PDF.js) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
   <!-- Thư viện tạo mã QR chuẩn quốc tế ISO/IEC 18004 quét được bằng mọi điện thoại/Zalo -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head>
@@ -121,9 +123,9 @@
 
       <div class="studio-body" id="vbtmStudioApp">
         <div class="toolbar-actions">
-          <input type="file" id="vbtmWordFileInput" accept=".docx,.doc,.txt" style="display: none;">
+          <input type="file" id="vbtmWordFileInput" accept=".docx,.doc,.pdf,.txt,application/pdf" style="display: none;">
           <button type="button" class="btn-tool primary" onclick="document.getElementById('vbtmWordFileInput').click()" style="background: linear-gradient(135deg, #4f46e5, #2563eb);">
-            <span>📂 Tải File Word (.docx / .txt) Lên Để Chuẩn Hóa</span>
+            <span>📂 Tải File Word (.docx) / PDF Lên Để Chuẩn Hóa</span>
           </button>
 
           <button type="button" class="btn-tool primary" onclick="standardizeAndFixEverything()">
