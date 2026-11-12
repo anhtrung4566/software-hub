@@ -503,9 +503,77 @@ namespace VBTMProSuite
             this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5f);
 
+            SyncWordAddInPresetsToPhuong();
             BuildMainUI();
             LoadTemplate(0);
             UpdateQrPreview();
+        }
+
+        private void SyncWordAddInPresetsToPhuong()
+        {
+            try
+            {
+                string vbtmAppData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM");
+                if (!Directory.Exists(vbtmAppData)) Directory.CreateDirectory(vbtmAppData);
+
+                string presetsJson = @"{
+  ""agencies_admin"": [
+    { ""parent_agency"": ""ỦY BAN NHÂN DÂN QUẬN"", ""agency_name"": ""ỦY BAN NHÂN DÂN PHƯỜNG"", ""code_prefix"": ""UBND-VP"" },
+    { ""parent_agency"": """", ""agency_name"": ""HỘI ĐỒNG NHÂN DÂN PHƯỜNG"", ""code_prefix"": ""NQ-HĐND"" }
+  ],
+  ""agencies_party"": [
+    { ""parent_agency"": ""QUẬN ỦY"", ""agency_name"": ""ĐẢNG ỦY PHƯỜNG"", ""code_prefix"": ""ĐU"" },
+    { ""parent_agency"": ""ĐẢNG ỦY PHƯỜNG"", ""agency_name"": ""CHI BỘ TRỰC THUỘC"", ""code_prefix"": ""CB"" }
+  ],
+  ""signers_admin"": [
+    { ""signer_type"": ""TM. ỦY BAN NHÂN DÂN"", ""position"": ""CHỦ TỊCH"", ""rank"": """", ""fullname"": ""Nguyễn Văn An"" },
+    { ""signer_type"": ""KT. CHỦ TỊCH"", ""position"": ""PHÓ CHỦ TỊCH"", ""rank"": """", ""fullname"": ""Lê Thị Mai"" }
+  ],
+  ""signers_party"": [
+    { ""signer_type"": ""T/M ĐẢNG ỦY"", ""position"": ""BÍ THƯ"", ""rank"": """", ""fullname"": ""Trần Minh Quân"" },
+    { ""signer_type"": ""T/M BAN THƯỜNG VỤ"", ""position"": ""PHÓ BÍ THƯ THƯỜNG TRỰC"", ""rank"": """", ""fullname"": ""Phạm Thị Thanh Hoa"" }
+  ],
+  ""recipients_list"": [
+    ""Như trên;"",
+    ""Thường trực Đảng ủy, HĐND phường (để b/c);"",
+    ""Chủ tịch, các PCT UBND phường;"",
+    ""UBMTTQ và các đoàn thể phường;"",
+    ""Các chi bộ trực thuộc;"",
+    ""Các tổ dân phố;"",
+    ""Lưu: VT, VP."",
+    ""Lưu Văn phòng Đảng ủy.""
+  ],
+  ""formatting"": {
+    ""admin"": {
+      ""font_name"": ""Times New Roman"",
+      ""body_size"": 14,
+      ""line_spacing"": 1.15,
+      ""space_before"": 0,
+      ""space_after"": 6,
+      ""first_line_indent_cm"": 1.27,
+      ""margin_top_cm"": 2.0,
+      ""margin_bottom_cm"": 2.0,
+      ""margin_left_cm"": 3.0,
+      ""margin_right_cm"": 1.5
+    },
+    ""party"": {
+      ""font_name"": ""Times New Roman"",
+      ""body_size"": 14,
+      ""line_spacing"": 1.15,
+      ""space_before"": 0,
+      ""space_after"": 6,
+      ""first_line_indent_cm"": 1.27,
+      ""margin_top_cm"": 2.0,
+      ""margin_bottom_cm"": 2.0,
+      ""margin_left_cm"": 3.0,
+      ""margin_right_cm"": 1.5
+    }
+  }
+}";
+                File.WriteAllText(Path.Combine(vbtmAppData, "vbtm_presets.json"), presetsJson, new UTF8Encoding(false));
+                File.WriteAllText(Path.Combine(vbtmAppData, "user_presets.json"), presetsJson, new UTF8Encoding(false));
+            }
+            catch { }
         }
 
         private void BuildMainUI()
@@ -514,7 +582,7 @@ namespace VBTMProSuite
             {
                 Dock = DockStyle.Bottom,
                 Height = 30,
-                Text = "  ✓ Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Quy chuẩn Nghị định 30/2020/NĐ-CP (UBND Phường) & Hướng dẫn 36, 05-HD/VPTW (Đảng ủy Phường)",
+                Text = "  ✓ Trạng thái: Hoạt động ngoại tuyến 100% (Offline) | Đầy đủ 16 mẫu chuẩn Nghị định 30/2020/NĐ-CP (UBND Phường) & Hướng dẫn 36, 05-HD/VPTW (Đảng ủy Phường)",
                 BackColor = Color.FromArgb(30, 41, 59),
                 ForeColor = Color.FromArgb(56, 189, 248),
                 TextAlign = ContentAlignment.MiddleLeft
@@ -530,40 +598,52 @@ namespace VBTMProSuite
             Label lblBrand = new Label
             {
                 Text = "VBTM Pro 2.2.4",
-                Font = new Font("Segoe UI", 14f, FontStyle.Bold),
+                Font = new Font("Segoe UI", 13.5f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(56, 189, 248),
-                Location = new Point(16, 16),
+                Location = new Point(12, 16),
                 AutoSize = true
             };
             topBar.Controls.Add(lblBrand);
 
             cboTemplate = new ComboBox
             {
-                Location = new Point(166, 18),
-                Size = new Size(218, 28),
+                Location = new Point(155, 18),
+                Size = new Size(235, 28),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9.0f)
             };
             cboTemplate.Items.AddRange(new object[]
             {
-                "1. Mẫu Công Văn UBND Phường (Nghị định 30)",
-                "2. Mẫu Báo Cáo UBND Phường (Nghị định 30)",
-                "3. Mẫu Quyết Định UBND Phường (Nghị định 30)",
-                "4. Mẫu Báo Cáo Đảng Ủy Phường (HD 36 & 05)"
+                "1. Công văn UBND Phường (Nghị định 30)",
+                "2. Báo cáo UBND Phường (Nghị định 30)",
+                "3. Quyết định (cá biệt) UBND Phường (NĐ 30)",
+                "4. Quyết định (Quy chế) UBND Phường (NĐ 30)",
+                "5. Kế hoạch UBND Phường (Nghị định 30)",
+                "6. Tờ trình UBND Phường (Nghị định 30)",
+                "7. Thông báo UBND Phường (Nghị định 30)",
+                "8. Nghị quyết HĐND Phường (Nghị định 30)",
+                "9. Biên bản họp UBND Phường (Nghị định 30)",
+                "10. Giấy mời họp UBND Phường (Nghị định 30)",
+                "11. Công văn Đảng ủy Phường (HD 36 & 05)",
+                "12. Báo cáo Đảng ủy Phường (HD 36 & 05)",
+                "13. Nghị quyết Đảng ủy Phường (HD 36 & 05)",
+                "14. Kế hoạch Đảng ủy Phường (HD 36 & 05)",
+                "15. Chương trình Đảng ủy Phường (HD 36 & 05)",
+                "16. Quyết định Đảng ủy Phường (HD 36 & 05)"
             });
             cboTemplate.SelectedIndex = 0;
             cboTemplate.SelectedIndexChanged += (s, e) => LoadTemplate(cboTemplate.SelectedIndex);
             topBar.Controls.Add(cboTemplate);
 
-            Button btnOpenFile = CreateBtn("📂 Mở File (.docx/.txt)", new Point(390, 14), new Size(165, 36), Color.FromArgb(14, 165, 233));
+            Button btnOpenFile = CreateBtn("📂 Mở File (.docx/.pdf)", new Point(396, 14), new Size(162, 36), Color.FromArgb(14, 165, 233));
             btnOpenFile.Click += (s, e) => OpenWordOrTextFileFromDisk();
             topBar.Controls.Add(btnOpenFile);
 
-            Button btnStd = CreateBtn("1. Chuẩn Hóa & Sửa Lỗi AI", new Point(562, 14), new Size(185, 36), Color.FromArgb(2, 132, 199));
+            Button btnStd = CreateBtn("1. Chuẩn Hóa & Sửa Lỗi AI", new Point(564, 14), new Size(182, 36), Color.FromArgb(2, 132, 199));
             btnStd.Click += (s, e) => StandardizeAndFixAll();
             topBar.Controls.Add(btnStd);
 
-            Button btnWordLive = CreateBtn("2. Chuẩn Hóa Word Đang Mở", new Point(754, 14), new Size(182, 36), Color.FromArgb(79, 70, 229));
+            Button btnWordLive = CreateBtn("2. Chuẩn Hóa Word Đang Mở", new Point(752, 14), new Size(184, 36), Color.FromArgb(79, 70, 229));
             btnWordLive.Click += (s, e) => FormatActiveWordDocument();
             topBar.Controls.Add(btnWordLive);
 
@@ -738,63 +818,254 @@ namespace VBTMProSuite
         private void LoadTemplate(int idx)
         {
             if (txtGovOrg == null) return;
-            if (idx == 0)
+            isPreservedPdfMode = false;
+            switch (idx)
             {
-                txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
-                txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
-                txtDocNum.Text = "145/UBND-VP";
-                txtDocType.Text = "";
-                txtSubject.Text = "V/v triển khai ứng dụng chuẩn hóa thể thức văn bản và số hóa hồ sơ hành chính tại địa phương";
-                txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
-                txtSignerName.Text = "Nguyễn Văn An";
-                txtRecipients.Text = "- Như trên;\r\n- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- UBMTTQ và các đoàn thể phường;\r\n- Các tổ dân phố;\r\n- Lưu: VT, VP.";
-                txtBody.Text = "Thực hiện Kế hoạch cải cách hành chính và chuyển đổi số năm 2026, Ủy ban nhân dân phường triển khai bộ công cụ chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư.\r\n\r\n" +
-                               "1. Các bộ phận chuyên môn, công chức thuộc Ủy ban nhân dân phường thực hiện rà soát, chuẩn hóa toàn bộ văn bản dự thảo trước khi trình ký ban hành; bảo đảm đúng quy định về khổ giấy A4, lề trang (Trái 30mm, Phải 15mm, Trên 20mm, Dưới 20mm), phông chữ Times New Roman, cỡ chữ 13-14pt.\r\n\r\n" +
-                               "2. Đẩy mạnh số hóa hồ sơ, tài liệu lưu trữ và ứng dụng công cụ kiểm tra lỗi chính tả tiếng Việt ngoại tuyến (Offline 100%) nhằm nâng cao chất lượng ban hành văn bản./.";
-            }
-            else if (idx == 1)
-            {
-                txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
-                txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
-                txtDocNum.Text = "86/BC-UBND";
-                txtDocType.Text = "BÁO CÁO";
-                txtSubject.Text = "Kết quả thực hiện công tác cải cách hành chính, văn thư lưu trữ và chuyển đổi số trên địa bàn phường năm 2026";
-                txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
-                txtSignerName.Text = "Nguyễn Văn An";
-                txtRecipients.Text = "- UBND Quận (để b/c);\r\n- Phòng Nội vụ;\r\n- Thường trực Đảng ủy, HĐND phường;\r\n- CT, các PCT UBND phường;\r\n- Lưu: VT, VP.";
-                txtBody.Text = "Thực hiện Kế hoạch công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường báo cáo kết quả triển khai công tác chuẩn hóa văn bản và số hóa hồ sơ trên địa bàn phường như sau:\r\n\r\n" +
-                               "I. KẾT QUẢ ĐẠT ĐƯỢC\r\n" +
-                               "1. Công tác ban hành văn bản: 100% văn bản hành chính của Hội đồng nhân dân và Ủy ban nhân dân phường được chuẩn hóa đồng bộ theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\r\n\r\n" +
-                               "2. Công tác số hóa hồ sơ: Đã ứng dụng phần mềm VBTM Pro 2.2.4 và VietNamOCR 3.2 Pro phục vụ rà soát lỗi chính tả tiếng Việt, tạo mã QR quản lý hồ sơ và bóc tách dữ liệu bảng biểu sang Word, Excel nhanh chóng, chính xác./.";
-            }
-            else if (idx == 2)
-            {
-                txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
-                txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
-                txtDocNum.Text = "120/QĐ-UBND";
-                txtDocType.Text = "QUYẾT ĐỊNH";
-                txtSubject.Text = "Về việc ban hành Quy chế quản lý, chuẩn hóa văn bản và số hóa hồ sơ tài liệu tại Ủy ban nhân dân phường";
-                txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
-                txtSignerName.Text = "Nguyễn Văn An";
-                txtRecipients.Text = "- Như Điều 3;\r\n- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- Lưu: VT, VP.";
-                txtBody.Text = "Căn cứ Luật Tổ chức chính quyền địa phương;\r\n\r\n" +
-                               "Căn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\r\n\r\n" +
-                               "Theo đề nghị của Công chức Văn phòng - Thống kê phường,\r\n\r\n" +
-                               "QUYẾT ĐỊNH:\r\n\r\n" +
-                               "Điều 1. Ban hành kèm theo Quyết định này Quy chế ứng dụng phần mềm chuẩn hóa thể thức văn bản VBTM Pro 2.2.4 và số hóa hồ sơ tài liệu VietNamOCR 3.2 Pro trong công tác văn thư, lưu trữ tại Ủy ban nhân dân phường.\r\n\r\n" +
-                               "Điều 2. Công chức Văn phòng - Thống kê và các cán bộ, công chức, bộ phận chuyên môn thuộc Ủy ban nhân dân phường chịu trách nhiệm thi hành Quyết định này./.";
-            }
-            else
-            {
-                txtGovOrg.Text = "QUẬN ỦY";
-                txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
-                txtDocNum.Text = "42-BC/ĐU";
-                txtDocType.Text = "BÁO CÁO";
-                txtSubject.Text = "Tổng kết công tác xây dựng Đảng, cải cách hành chính trong Đảng và chuyển đổi số tại Đảng bộ phường năm 2026";
-                txtSignerTitle.Text = "T/M ĐẢNG ỦY - BÍ THƯ";
-                txtSignerName.Text = "Trần Minh Quân";
-                txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c);\r\n- Văn phòng Quận ủy;\r\n- Các đồng chí Đảng ủy viên;\r\n- HĐND, UBND, UBMTTQ phường;\r\n- Các chi bộ trực thuộc;\r\n- Lưu Văn phòng Đảng ủy.";
-                txtBody.Text = "Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện chuẩn hóa toàn bộ hệ thống văn bản của Đảng ủy và các chi bộ trực thuộc năm 2026./.";
+                case 0: // 1. Công văn UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "145/UBND-VP";
+                    txtDocType.Text = "";
+                    txtSubject.Text = "V/v triển khai ứng dụng chuẩn hóa thể thức văn bản và số hóa hồ sơ hành chính tại địa phương";
+                    txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- Như trên;\r\n- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- UBMTTQ và các đoàn thể phường;\r\n- Các tổ dân phố;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "Kính gửi: Các bộ phận chuyên môn, cán bộ, công chức thuộc Ủy ban nhân dân phường.\r\n\r\n" +
+                                   "Thực hiện Kế hoạch cải cách hành chính và chuyển đổi số năm 2026, Ủy ban nhân dân phường triển khai bộ công cụ chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư.\r\n\r\n" +
+                                   "1. Các bộ phận chuyên môn, công chức thuộc Ủy ban nhân dân phường thực hiện rà soát, chuẩn hóa toàn bộ văn bản dự thảo trước khi trình ký ban hành; bảo đảm đúng quy định về khổ giấy A4, lề trang (Trái 30mm, Phải 15mm, Trên 20mm, Dưới 20mm), phông chữ Times New Roman, cỡ chữ 13-14pt.\r\n\r\n" +
+                                   "2. Đẩy mạnh số hóa hồ sơ, tài liệu lưu trữ và ứng dụng công cụ kiểm tra lỗi chính tả tiếng Việt ngoại tuyến (Offline 100%) nhằm nâng cao chất lượng ban hành văn bản./.";
+                    break;
+                case 1: // 2. Báo cáo UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "86/BC-UBND";
+                    txtDocType.Text = "BÁO CÁO";
+                    txtSubject.Text = "Kết quả thực hiện công tác cải cách hành chính, văn thư lưu trữ và chuyển đổi số trên địa bàn phường năm 2026";
+                    txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- UBND Quận (để b/c);\r\n- Phòng Nội vụ;\r\n- Thường trực Đảng ủy, HĐND phường;\r\n- CT, các PCT UBND phường;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "Thực hiện Kế hoạch công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường báo cáo kết quả triển khai công tác chuẩn hóa văn bản và số hóa hồ sơ trên địa bàn phường như sau:\r\n\r\n" +
+                                   "I. KẾT QUẢ ĐẠT ĐƯỢC\r\n\r\n" +
+                                   "1. Công tác ban hành văn bản: 100% văn bản hành chính của Hội đồng nhân dân và Ủy ban nhân dân phường được chuẩn hóa đồng bộ theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ.\r\n\r\n" +
+                                   "2. Công tác số hóa hồ sơ: Đã ứng dụng phần mềm VBTM Pro 2.2.4 và VietNamOCR 3.2 Pro phục vụ rà soát lỗi chính tả tiếng Việt, tạo mã QR quản lý hồ sơ và bóc tách dữ liệu bảng biểu sang Word, Excel nhanh chóng, chính xác.\r\n\r\n" +
+                                   "II. PHƯƠNG HƯỚNG, NHIỆM VỤ TRONG THỜI GIAN TỚI\r\n\r\n" +
+                                   "Tiếp tục duy trì nền nếp công tác văn thư, lưu trữ và nâng cao hiệu quả giải quyết thủ tục hành chính phục vụ nhân dân./.";
+                    break;
+                case 2: // 3. Quyết định (cá biệt) UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "120/QĐ-UBND";
+                    txtDocType.Text = "QUYẾT ĐỊNH";
+                    txtSubject.Text = "Về việc thành lập Tổ công tác kiểm tra, rà soát công tác văn thư, lưu trữ và chuyển đổi số tại Ủy ban nhân dân phường";
+                    txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- Như Điều 3;\r\n- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "ỦY BAN NHÂN DÂN PHƯỜNG\r\n\r\n" +
+                                   "Căn cứ Luật Tổ chức chính quyền địa phương;\r\n\r\n" +
+                                   "Căn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\r\n\r\n" +
+                                   "Theo đề nghị của Công chức Văn phòng - Thống kê phường,\r\n\r\n" +
+                                   "QUYẾT ĐỊNH:\r\n\r\n" +
+                                   "Điều 1. Thành lập Tổ công tác kiểm tra, rà soát công tác chuẩn hóa thể thức văn bản hành chính và lập hồ sơ điện tử tại Ủy ban nhân dân phường.\r\n\r\n" +
+                                   "Điều 2. Tổ công tác có nhiệm vụ hướng dẫn, kiểm tra việc thực hiện quy chuẩn văn bản theo Nghị định số 30/2020/NĐ-CP và báo cáo Chủ tịch Ủy ban nhân dân phường kết quả thực hiện.\r\n\r\n" +
+                                   "Điều 3. Quyết định này có hiệu lực thi hành kể từ ngày ký. Công chức Văn phòng - Thống kê và các ông, bà có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này./.";
+                    break;
+                case 3: // 4. Quyết định (Quy chế) UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "125/QĐ-UBND";
+                    txtDocType.Text = "QUYẾT ĐỊNH";
+                    txtSubject.Text = "Ban hành Quy chế công tác văn thư, lưu trữ và chuẩn hóa văn bản điện tử tại Ủy ban nhân dân phường";
+                    txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- Như Điều 3;\r\n- UBND Quận (để b/c);\r\n- Thường trực Đảng ủy, HĐND phường;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "ỦY BAN NHÂN DÂN PHƯỜNG\r\n\r\n" +
+                                   "Căn cứ Luật Tổ chức chính quyền địa phương;\r\n\r\n" +
+                                   "Căn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\r\n\r\n" +
+                                   "Theo đề nghị của Công chức Văn phòng - Thống kê phường,\r\n\r\n" +
+                                   "QUYẾT ĐỊNH:\r\n\r\n" +
+                                   "Điều 1. Ban hành kèm theo Quyết định này Quy chế công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản hành chính tại Ủy ban nhân dân phường.\r\n\r\n" +
+                                   "Điều 2. Quyết định này có hiệu lực thi hành kể từ ngày ký.\r\n\r\n" +
+                                   "Điều 3. Công chức Văn phòng - Thống kê và các bộ phận chuyên môn, cán bộ, công chức thuộc Ủy ban nhân dân phường chịu trách nhiệm thi hành Quyết định này./.";
+                    break;
+                case 4: // 5. Kế hoạch UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "92/KH-UBND";
+                    txtDocType.Text = "KẾ HOẠCH";
+                    txtSubject.Text = "Triển khai công tác cải cách hành chính, chuyển đổi số và chuẩn hóa văn bản trên địa bàn phường năm 2026";
+                    txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- UBND Quận (để b/c);\r\n- Thường trực Đảng ủy, HĐND phường;\r\n- Chủ tịch, các PCT UBND phường;\r\n- Các bộ phận chuyên môn;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "Thực hiện Kế hoạch của Ủy ban nhân dân quận về công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường ban hành Kế hoạch triển khai thực hiện cụ thể như sau:\r\n\r\n" +
+                                   "I. MỤC ĐÍCH, YÊU CẦU\r\n\r\n" +
+                                   "1. Bảo đảm 100% văn bản ban hành của Ủy ban nhân dân phường tuân thủ đúng quy định tại Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ.\r\n\r\n" +
+                                   "2. Gắn công tác chuẩn hóa văn bản với việc số hóa hồ sơ, giải quyết thủ tục hành chính nhanh gọn, chính xác.\r\n\r\n" +
+                                   "II. TỔ CHỨC THỰC HIỆN\r\n\r\n" +
+                                   "Giao Công chức Văn phòng - Thống kê chủ trì, phối hợp với các công chức chuyên môn triển khai thực hiện nghiêm túc Kế hoạch này./.";
+                    break;
+                case 5: // 6. Tờ trình UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "64/TTr-UBND";
+                    txtDocType.Text = "TỜ TRÌNH";
+                    txtSubject.Text = "Về việc đề nghị phê duyệt phương án nâng cấp hạ tầng công nghệ thông tin và số hóa hồ sơ lưu trữ tại phường";
+                    txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- Như trên;\r\n- Phòng Nội vụ, Phòng Tài chính - Kế hoạch;\r\n- Thường trực Đảng ủy, HĐND phường;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "Kính gửi: Ủy ban nhân dân quận.\r\n\r\n" +
+                                   "Căn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\r\n\r\n" +
+                                   "Nhằm đáp ứng yêu cầu hiện đại hóa nền hành chính và số hóa hồ sơ tài liệu tại địa phương, Ủy ban nhân dân phường kính trình Ủy ban nhân dân quận xem xét, phê duyệt phương án triển khai phần mềm chuẩn hóa thể thức văn bản và số hóa tài liệu lưu trữ năm 2026.\r\n\r\n" +
+                                   "Ủy ban nhân dân phường kính trình Ủy ban nhân dân quận xem xét, quyết định./.";
+                    break;
+                case 6: // 7. Thông báo UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "168/TB-UBND";
+                    txtDocType.Text = "THÔNG BÁO";
+                    txtSubject.Text = "Kết luận của Chủ tịch Ủy ban nhân dân phường tại cuộc họp giao ban công tác cải cách hành chính tháng 11 năm 2026";
+                    txtSignerTitle.Text = "TL. CHỦ TỊCH - VĂN PHÒNG - THỐNG KÊ";
+                    txtSignerName.Text = "Lê Hoàng Nam";
+                    txtRecipients.Text = "- Thường trực Đảng ủy, HĐND phường (để b/c);\r\n- Chủ tịch, các PCT UBND phường;\r\n- Các công chức chuyên môn;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "Ngày 10 tháng 11 năm 2026, Chủ tịch Ủy ban nhân dân phường đã chủ trì cuộc họp giao ban đánh giá kết quả công tác cải cách hành chính và văn thư lưu trữ. Sau khi nghe báo cáo và ý kiến phát biểu của các bộ phận chuyên môn, Chủ tịch Ủy ban nhân dân phường kết luận như sau:\r\n\r\n" +
+                                   "1. Biểu dương bộ phận Văn phòng - Thống kê và các công chức chuyên môn đã thực hiện tốt việc chuẩn hóa thể thức văn bản theo Nghị định số 30/2020/NĐ-CP.\r\n\r\n" +
+                                   "2. Yêu cầu các bộ phận tiếp tục kiểm soát chặt chẽ chất lượng dự thảo văn bản, sử dụng tính năng soát lỗi chính tả và đính kèm mã QR xác thực trên toàn bộ văn bản ban hành./.";
+                    break;
+                case 7: // 8. Nghị quyết HĐND Phường
+                    txtGovOrg.Text = "";
+                    txtIssueOrg.Text = "HỘI ĐỒNG NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "18/NQ-HĐND";
+                    txtDocType.Text = "NGHỊ QUYẾT";
+                    txtSubject.Text = "Về nhiệm vụ phát triển kinh tế - xã hội, quốc phòng - an ninh và đẩy mạnh cải cách hành chính năm 2026";
+                    txtSignerTitle.Text = "CHỦ TỊCH";
+                    txtSignerName.Text = "Trần Minh Quân";
+                    txtRecipients.Text = "- Thường trực HĐND, UBND Quận (để b/c);\r\n- Thường trực Đảng ủy phường;\r\n- Thường trực HĐND, UBND, UBMTTQ phường;\r\n- Lưu: VT.";
+                    txtBody.Text = "HỘI ĐỒNG NHÂN DÂN PHƯỜNG\r\nKHÓA XII, KỲ HỌP THỨ 10\r\n\r\n" +
+                                   "Căn cứ Luật Tổ chức chính quyền địa phương;\r\n\r\n" +
+                                   "Xét Tờ trình của Ủy ban nhân dân phường và Báo cáo thẩm tra của các Ban Hội đồng nhân dân phường,\r\n\r\n" +
+                                   "QUYẾT NGHỊ:\r\n\r\n" +
+                                   "Điều 1. Tán thành Báo cáo kết quả thực hiện nhiệm vụ phát triển kinh tế - xã hội, cải cách hành chính và chuyển đổi số trên địa bàn phường.\r\n\r\n" +
+                                   "Điều 2. Giao Ủy ban nhân dân phường tổ chức triển khai thực hiện Nghị quyết này; đẩy mạnh chuẩn hóa văn bản theo Nghị định số 30/2020/NĐ-CP.\r\n\r\n" +
+                                   "Điều 3. Thường trực Hội đồng nhân dân, các Ban của Hội đồng nhân dân và đại biểu Hội đồng nhân dân phường giám sát việc thực hiện Nghị quyết này./.";
+                    break;
+                case 8: // 9. Biên bản họp UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "09/BB-UBND";
+                    txtDocType.Text = "BIÊN BẢN";
+                    txtSubject.Text = "Họp rà soát, nghiệm thu kết quả chuẩn hóa văn bản và số hóa hồ sơ hành chính năm 2026";
+                    txtSignerTitle.Text = "CHỦ TRÌ CUỘC HỌP - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- Thành phần dự họp;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "Hôm nay, vào lúc 08 giờ 00 phút ngày 11 tháng 11 năm 2026, tại Phòng họp Ủy ban nhân dân phường, chúng tôi gồm:\r\n\r\n" +
+                                   "I. THÀNH PHẦN THAM DỰ\r\n\r\n" +
+                                   "1. Ông Nguyễn Văn An - Chủ tịch Ủy ban nhân dân phường, Chủ trì.\r\n\r\n" +
+                                   "2. Ông Lê Hoàng Nam - Công chức Văn phòng - Thống kê, Thư ký.\r\n\r\n" +
+                                   "II. NỘI DUNG CUỘC HỌP\r\n\r\n" +
+                                   "Công chức Văn phòng - Thống kê báo cáo kết quả chuẩn hóa 100% văn bản theo Nghị định số 30/2020/NĐ-CP và số hóa tài liệu lưu trữ. Các thành viên dự họp thảo luận và thống nhất nghiệm thu kết quả thực hiện./.";
+                    break;
+                case 9: // 10. Giấy mời họp UBND Phường
+                    txtGovOrg.Text = "ỦY BAN NHÂN DÂN QUẬN";
+                    txtIssueOrg.Text = "ỦY BAN NHÂN DÂN PHƯỜNG";
+                    txtDocNum.Text = "210/GM-UBND";
+                    txtDocType.Text = "GIẤY MỜI";
+                    txtSubject.Text = "Họp triển khai công tác chuẩn hóa thể thức văn bản và tập huấn số hóa hồ sơ lưu trữ";
+                    txtSignerTitle.Text = "TM. ỦY BAN NHÂN DÂN - CHỦ TỊCH";
+                    txtSignerName.Text = "Nguyễn Văn An";
+                    txtRecipients.Text = "- Như trên;\r\n- Chủ tịch, các PCT UBND phường;\r\n- Lưu: VT, VP.";
+                    txtBody.Text = "Kính gửi: Các đồng chí cán bộ, công chức chuyên môn và Tổ trưởng các tổ dân phố thuộc phường.\r\n\r\n" +
+                                   "Ủy ban nhân dân phường tổ chức hội nghị triển khai công tác chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP và hướng dẫn sử dụng phần mềm VBTM Pro 2.2.4.\r\n\r\n" +
+                                   "1. Thành phần: Lãnh đạo Ủy ban nhân dân phường, toàn thể cán bộ, công chức chuyên môn và Tổ trưởng các tổ dân phố.\r\n\r\n" +
+                                   "2. Thời gian: 08 giờ 00 phút, ngày 15 tháng 11 năm 2026.\r\n\r\n" +
+                                   "3. Địa điểm: Hội trường Ủy ban nhân dân phường.\r\n\r\n" +
+                                   "Đề nghị các đồng chí sắp xếp công việc tham dự đầy đủ, đúng giờ./.";
+                    break;
+                case 10: // 11. Công văn Đảng ủy Phường
+                    txtGovOrg.Text = "QUẬN ỦY";
+                    txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                    txtDocNum.Text = "58-CV/ĐU";
+                    txtDocType.Text = "";
+                    txtSubject.Text = "V/v quán triệt thực hiện thể thức văn bản của Đảng theo Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW";
+                    txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - BÍ THƯ";
+                    txtSignerName.Text = "Trần Minh Quân";
+                    txtRecipients.Text = "- Như trên,\r\n- Văn phòng Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Kính gửi: Các chi bộ trực thuộc Đảng ủy phường.\r\n\r\n" +
+                                   "Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường yêu cầu các chi bộ trực thuộc thực hiện nghiêm túc các nội dung sau:\r\n\r\n" +
+                                   "1. Thực hiện thống nhất phông chữ Times New Roman (bộ mã ký tự Unicode), cỡ chữ 14pt, định lề trang A4 (lề trên 20mm, lề dưới 20mm, lề trái 30mm, lề phải 15mm) đối với toàn bộ nghị quyết, báo cáo, chương trình, kế hoạch, biên bản sinh hoạt chi bộ.\r\n\r\n" +
+                                   "2. Đề nghị cấp ủy các chi bộ trực thuộc nghiêm túc quán triệt và tổ chức thực hiện./.";
+                    break;
+                case 11: // 12. Báo cáo Đảng ủy Phường
+                    txtGovOrg.Text = "QUẬN ỦY";
+                    txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                    txtDocNum.Text = "42-BC/ĐU";
+                    txtDocType.Text = "BÁO CÁO";
+                    txtSubject.Text = "Tổng kết công tác xây dựng Đảng, cải cách hành chính trong Đảng và chuyển đổi số tại Đảng bộ phường năm 2026";
+                    txtSignerTitle.Text = "T/M ĐẢNG ỦY - BÍ THƯ";
+                    txtSignerName.Text = "Trần Minh Quân";
+                    txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c),\r\n- Văn phòng Quận ủy,\r\n- Các đồng chí Đảng ủy viên,\r\n- HĐND, UBND, UBMTTQ phường,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện chuẩn hóa toàn bộ hệ thống văn bản của Đảng ủy và các chi bộ trực thuộc năm 2026./.";
+                    break;
+                case 12: // 13. Nghị quyết Đảng ủy Phường
+                    txtGovOrg.Text = "QUẬN ỦY";
+                    txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                    txtDocNum.Text = "15-NQ/ĐU";
+                    txtDocType.Text = "NGHỊ QUYẾT";
+                    txtSubject.Text = "Về tăng cường sự lãnh đạo của Đảng đối với công tác cải cách hành chính và chuyển đổi số trên địa bàn phường";
+                    txtSignerTitle.Text = "T/M ĐẢNG ỦY - BÍ THƯ";
+                    txtSignerName.Text = "Trần Minh Quân";
+                    txtRecipients.Text = "- Ban Thường vụ Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- HĐND, UBND, UBMTTQ phường,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Thực hiện Chương trình công tác toàn khóa của Ban Chấp hành Đảng bộ phường, sau khi thảo luận đề án của Ban Thường vụ Đảng ủy, Ban Chấp hành Đảng bộ phường quyết nghị:\r\n\r\n" +
+                                   "I. TÌNH HÌNH VÀ NGUYÊN NHÂN\r\n\r\n" +
+                                   "Công tác cải cách hành chính và chuyển đổi số tại Đảng bộ và chính quyền phường thời gian qua đạt nhiều kết quả quan trọng; chất lượng ban hành văn kiện, nghị quyết được chuẩn hóa đồng bộ.\r\n\r\n" +
+                                   "II. MỤC TIÊU, NHIỆM VỤ VÀ GIẢI PHÁP\r\n\r\n" +
+                                   "Phấn đấu 100% văn bản của Đảng ủy và các chi bộ trực thuộc được soạn thảo, thẩm định đúng quy định tại Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW./.";
+                    break;
+                case 13: // 14. Kế hoạch Đảng ủy Phường
+                    txtGovOrg.Text = "QUẬN ỦY";
+                    txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                    txtDocNum.Text = "24-KH/ĐU";
+                    txtDocType.Text = "KẾ HOẠCH";
+                    txtSubject.Text = "Tập huấn nghiệp vụ công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản Đảng năm 2026";
+                    txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - PHÓ BÍ THƯ THƯỜNG TRỰC";
+                    txtSignerName.Text = "Phạm Thị Thanh Hoa";
+                    txtRecipients.Text = "- Văn phòng Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Căn cứ Hướng dẫn số 36-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường ban hành Kế hoạch tập huấn nghiệp vụ công tác văn thư cho cấp ủy các chi bộ trực thuộc như sau:\r\n\r\n" +
+                                   "I. MỤC ĐÍCH, YÊU CẦU\r\n\r\n" +
+                                   "Nâng cao kỹ năng soạn thảo, chuẩn hóa thể thức nghị quyết, biên bản, báo cáo của các chi bộ trực thuộc Đảng ủy phường.\r\n\r\n" +
+                                   "II. TỔ CHỨC THỰC HIỆN\r\n\r\n" +
+                                   "Văn phòng Đảng ủy chuẩn bị tài liệu, phần mềm và đôn đốc các chi bộ tham gia đầy đủ./.";
+                    break;
+                case 14: // 15. Chương trình công tác Đảng ủy Phường
+                    txtGovOrg.Text = "QUẬN ỦY";
+                    txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                    txtDocNum.Text = "10-CTr/ĐU";
+                    txtDocType.Text = "CHƯƠNG TRÌNH";
+                    txtSubject.Text = "Công tác kiểm tra, giám sát của Ban Thường vụ Đảng ủy phường năm 2026";
+                    txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - BÍ THƯ";
+                    txtSignerName.Text = "Trần Minh Quân";
+                    txtRecipients.Text = "- Ủy ban Kiểm tra Quận ủy (để b/c),\r\n- Các đồng chí Đảng ủy viên,\r\n- UBKT Đảng ủy phường,\r\n- Các chi bộ trực thuộc,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Căn cứ Điều lệ Đảng Cộng sản Việt Nam và Chương trình kiểm tra, giám sát của Quận ủy, Ban Thường vụ Đảng ủy phường xây dựng Chương trình công tác kiểm tra, giám sát năm 2026 như sau:\r\n\r\n" +
+                                   "I. MỤC ĐÍCH, YÊU CẦU\r\n\r\n" +
+                                   "Chủ động phòng ngừa vi phạm, nâng cao năng lực lãnh đạo và sức chiến đấu của các tổ chức đảng trực thuộc.\r\n\r\n" +
+                                   "II. TỔ CHỨC THỰC HIỆN\r\n\r\n" +
+                                   "Ủy ban Kiểm tra Đảng ủy chủ trì tham mưu giúp Ban Thường vụ Đảng ủy tổ chức thực hiện Chương trình này./.";
+                    break;
+                default: // 16. Quyết định Đảng ủy Phường
+                    txtGovOrg.Text = "QUẬN ỦY";
+                    txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                    txtDocNum.Text = "35-QĐ/ĐU";
+                    txtDocType.Text = "QUYẾT ĐỊNH";
+                    txtSubject.Text = "Ban hành Quy chế quản lý, khai thác văn bản điện tử và lưu trữ hồ sơ tại Văn phòng Đảng ủy phường";
+                    txtSignerTitle.Text = "T/M BAN THƯỜNG VỤ - BÍ THƯ";
+                    txtSignerName.Text = "Trần Minh Quân";
+                    txtRecipients.Text = "- Văn phòng Quận ủy (để b/c),\r\n- Như Điều 2,\r\n- Các đồng chí Đảng ủy viên,\r\n- Lưu Văn phòng Đảng ủy.";
+                    txtBody.Text = "Căn cứ Điều lệ Đảng Cộng sản Việt Nam;\r\n\r\n" +
+                                   "Căn cứ Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng;\r\n\r\n" +
+                                   "Xét đề nghị của Văn phòng Đảng ủy phường,\r\n\r\n" +
+                                   "BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH\r\n\r\n" +
+                                   "Điều 1. Ban hành kèm theo Quyết định này Quy chế quản lý, chuẩn hóa thể thức văn bản của Đảng và lưu trữ hồ sơ điện tử tại Đảng bộ phường.\r\n\r\n" +
+                                   "Điều 2. Văn phòng Đảng ủy, các ban xây dựng Đảng và các chi bộ trực thuộc chịu trách nhiệm thi hành Quyết định này.\r\n\r\n" +
+                                   "Điều 3. Quyết định này có hiệu lực kể từ ngày ký./.";
+                    break;
             }
             if (txtQrContent != null)
             {
@@ -855,6 +1126,11 @@ namespace VBTMProSuite
                 return prefix + m.Groups[2].Value;
             }, RegexOptions.IgnoreCase);
 
+            // Chuẩn hóa cách ghi ngày tháng theo Phụ lục I Nghị định 30/2020/NĐ-CP
+            raw = Regex.Replace(raw, @"\bngày\s+([1-9])(?=\s+tháng\b)", "ngày 0$1", RegexOptions.IgnoreCase);
+            raw = Regex.Replace(raw, @"\btháng\s+([12])(?=\s+năm\b)", "tháng 0$1", RegexOptions.IgnoreCase);
+            raw = Regex.Replace(raw, @"\btháng\s+0([3-9])(?=\s+năm\b)", "tháng $1", RegexOptions.IgnoreCase);
+
             raw = Regex.Replace(raw, @"[ \t]+", " ");
             raw = Regex.Replace(raw, @"\s+([,.;:!?])", "$1");
             raw = Regex.Replace(raw, @"([,.;:!?])([^\s\d/.)])", "$1 $2");
@@ -880,7 +1156,7 @@ namespace VBTMProSuite
             int totalFixed = bodyFixed + subjFixed;
             ScanIssuesOnly();
             lblStatus.Text = "  ✓ Đã chuẩn hóa thể thức Đảng ủy / UBND phường & tự động sửa " + totalFixed + " lỗi chính tả tiếng Việt!";
-            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ký hiệu kết thúc và tự động sửa " + totalFixed + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ngày tháng, ký hiệu kết thúc và tự động sửa " + totalFixed + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void FormatActiveWordDocument()
@@ -921,18 +1197,21 @@ namespace VBTMProSuite
 
                 object doc = wordType.InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
 
+                // 1. Định lề trang khổ A4 chuẩn Nghị định 30/2020/NĐ-CP & Hướng dẫn 36-HD/VPTW (Trên 20mm, Dưới 20mm, Trái 30mm, Phải 15mm)
                 object pageSetup = doc.GetType().InvokeMember("PageSetup", BindingFlags.GetProperty, null, doc, null);
+                try { pageSetup.GetType().InvokeMember("PaperSize", BindingFlags.SetProperty, null, pageSetup, new object[] { 7 }); } catch { }
                 pageSetup.GetType().InvokeMember("TopMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 56.7f });
                 pageSetup.GetType().InvokeMember("BottomMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 56.7f });
                 pageSetup.GetType().InvokeMember("LeftMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 85.05f });
                 pageSetup.GetType().InvokeMember("RightMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 42.5f });
+                try { pageSetup.GetType().InvokeMember("DifferentFirstPageHeaderFooter", BindingFlags.SetProperty, null, pageSetup, new object[] { -1 }); } catch { }
 
+                // 2. Đặt phông chữ Times New Roman (Giữ nguyên cỡ chữ riêng của bảng Quốc hiệu / Nơi nhận, không ghi đè toàn bộ 14pt lên bảng!)
                 object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
                 object font = content.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, content, null);
                 font.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, font, new object[] { "Times New Roman" });
-                font.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, font, new object[] { 14f });
 
-                // Đọc nội dung từ Word, tự động sửa toàn bộ lỗi chính tả & dấu câu trực tiếp trên từng đoạn văn của Word
+                // 3. Duyệt từng đoạn văn an toàn tuyệt đối (Không bao giờ làm hỏng ô bảng \r\a của Word!)
                 int fixedInWord = 0;
                 try
                 {
@@ -944,15 +1223,46 @@ namespace VBTMProSuite
                         object para = paragraphs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paragraphs, new object[] { pIdx });
                         object pRange = para.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, para, null);
                         string pText = Convert.ToString(pRange.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, pRange, null));
-                        if (!string.IsNullOrWhiteSpace(pText))
+                        if (string.IsNullOrWhiteSpace(pText)) continue;
+
+                        bool isTableCell = pText.Contains("\a");
+                        try
                         {
-                            string cleanP = pText.TrimEnd('\r', '\a', '\n');
-                            int pFixed = 0;
-                            string fixedP = FixAllVietnameseSpellingAndPunctuation(cleanP, out pFixed);
+                            object pTables = pRange.GetType().InvokeMember("Tables", BindingFlags.GetProperty, null, pRange, null);
+                            int tblCount = (int)pTables.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, pTables, null);
+                            if (tblCount > 0) isTableCell = true;
+                        }
+                        catch { }
+
+                        string cleanP = pText.TrimEnd('\r', '\a', '\n');
+                        if (string.IsNullOrWhiteSpace(cleanP)) continue;
+
+                        int pFixed = 0;
+                        string fixedP = FixAllVietnameseSpellingAndPunctuation(cleanP, out pFixed);
+
+                        if (!isTableCell)
+                        {
+                            // Chỉ định dạng 14pt + thụt lề 1.27cm (36pt) + giãn đoạn 6pt cho đoạn văn thân bài bên ngoài bảng
+                            bool isHeadingOrCentered = Regex.IsMatch(cleanP.Trim(), @"^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|BIÊN BẢN|GIẤY MỜI|QUYẾT ĐỊNH\s*:|QUYẾT NGHỊ\s*:|BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH)$", RegexOptions.IgnoreCase);
+                            try
+                            {
+                                object pFont = pRange.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, pRange, null);
+                                pFont.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, pFont, new object[] { 14f });
+                                if (!isHeadingOrCentered)
+                                {
+                                    para.GetType().InvokeMember("SpaceAfter", BindingFlags.SetProperty, null, para, new object[] { 6f });
+                                    para.GetType().InvokeMember("FirstLineIndent", BindingFlags.SetProperty, null, para, new object[] { 36f });
+                                    para.GetType().InvokeMember("Alignment", BindingFlags.SetProperty, null, para, new object[] { 3 }); // wdAlignParagraphJustify = 3
+                                }
+                            }
+                            catch { }
+
                             if (pFixed > 0 || fixedP != cleanP)
                             {
                                 fixedInWord += pFixed;
-                                pRange.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, pRange, new object[] { fixedP + "\r" });
+                                int endPos = (int)pRange.GetType().InvokeMember("End", BindingFlags.GetProperty, null, pRange, null);
+                                pRange.GetType().InvokeMember("End", BindingFlags.SetProperty, null, pRange, new object[] { endPos - 1 });
+                                pRange.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, pRange, new object[] { fixedP });
                             }
                             sbAll.AppendLine(fixedP);
                         }
@@ -966,10 +1276,11 @@ namespace VBTMProSuite
                 catch { }
 
                 MessageBox.Show(
-                    "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo quy chuẩn Đảng ủy & UBND Phường:\n\n" +
-                    "• Khổ giấy A4, Lề Trái 30mm - Phải 15mm - Trên 20mm - Dưới 20mm\n" +
-                    "• Phông chữ chuẩn: Times New Roman 14pt\n" +
-                    "• Tự động sửa " + fixedInWord + " lỗi chính tả & dấu câu trực tiếp trong Word!",
+                    "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo đúng quy định:\n\n" +
+                    "• Khổ giấy A4 (210mm x 297mm), Lề Trái 30mm - Phải 15mm - Trên 20mm - Dưới 20mm\n" +
+                    "• Phông chữ: Times New Roman (Giữ nguyên cỡ chữ chuẩn của bảng Quốc hiệu & Nơi nhận, chuẩn hóa thân bài 14pt, thụt đầu dòng 1.27cm, cách đoạn 6pt)\n" +
+                    "• Đánh số trang tự động từ trang 2 ở lề trên (ẩn số trang ở trang 1)\n" +
+                    "• Tự động sửa " + fixedInWord + " lỗi chính tả, ngày tháng & dấu câu trực tiếp trong Word!",
                     "VBTM Pro 2.2.4 - Word Automation",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
@@ -1069,10 +1380,33 @@ td, p { font-family:'Times New Roman',serif; }
             }
 
             StringBuilder sbBody = new StringBuilder();
-            foreach (string line in txtBody.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (string rawLine in txtBody.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
-                sbBody.AppendFormat("<p style='text-indent:1.27cm;text-align:justify;margin:0 0 6pt 0;font-size:14pt;'>{0}</p>",
-                    System.Security.SecurityElement.Escape(line.Trim()));
+                string line = rawLine.Trim();
+                string esc = System.Security.SecurityElement.Escape(line);
+                if (Regex.IsMatch(line, @"^(QUYẾT ĐỊNH|QUYẾT NGHỊ|NGHỊ QUYẾT|BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN PHƯỜNG|HỘI ĐỒNG NHÂN DÂN PHƯỜNG)\s*:?$", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(line, @"^KHÓA\s+[IVX0-9]+", RegexOptions.IgnoreCase))
+                {
+                    sbBody.AppendFormat("<p style='text-indent:0;text-align:center;font-weight:bold;margin:6pt 0;font-size:14pt;'>{0}</p>", esc);
+                }
+                else if (Regex.IsMatch(line, @"^[IVX]+\.\s+", RegexOptions.IgnoreCase))
+                {
+                    sbBody.AppendFormat("<p style='text-indent:0;text-align:left;font-weight:bold;margin:6pt 0 4pt 0;font-size:14pt;'>{0}</p>", esc);
+                }
+                else
+                {
+                    Match dm = Regex.Match(line, @"^(Điều\s+\d+\.|Kính gửi\s*:)\s*(.*)$", RegexOptions.IgnoreCase);
+                    if (dm.Success)
+                    {
+                        sbBody.AppendFormat("<p style='text-indent:1.27cm;text-align:justify;margin:0 0 6pt 0;font-size:14pt;'><b>{0}</b> {1}</p>",
+                            System.Security.SecurityElement.Escape(dm.Groups[1].Value),
+                            System.Security.SecurityElement.Escape(dm.Groups[2].Value));
+                    }
+                    else
+                    {
+                        sbBody.AppendFormat("<p style='text-indent:1.27cm;text-align:justify;margin:0 0 6pt 0;font-size:14pt;'>{0}</p>", esc);
+                    }
+                }
             }
 
             StringBuilder sbRec = new StringBuilder();
@@ -1092,43 +1426,96 @@ td, p { font-family:'Times New Roman',serif; }
                 }
             }
 
-            bool isDang = (cboTemplate != null && cboTemplate.SelectedIndex == 3) ||
-                          txtIssueOrg.Text.IndexOf("ĐẢNG", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isDang = (cboTemplate != null && cboTemplate.SelectedIndex >= 10) ||
+                          txtIssueOrg.Text.IndexOf("ĐẢNG", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                          txtIssueOrg.Text.IndexOf("CHI BỘ", StringComparison.OrdinalIgnoreCase) >= 0;
 
             string rightHeaderHtml = isDang
-                ? "<div style='font-size:12pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
-                : "<div style='font-size:12pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>" +
-                  "<div style='font-size:13pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>";
+                ? "<div style='font-size:14pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
+                : "<div style='font-size:12.5pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>" +
+                  "<div style='font-size:13.5pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>";
+
+            string cleanNum = Regex.Replace(txtDocNum.Text.Trim(), @"^Số\s*:?\s*", "", RegexOptions.IgnoreCase);
+            string numberLabel = isDang ? ("Số " + cleanNum) : ("Số: " + cleanNum);
+            string leftSepHtml = isDang
+                ? "<div style='font-size:13pt;font-weight:bold;line-height:1;margin:2pt 0;'>*</div>"
+                : "<hr style='width:38%;border:0;border-top:1px solid #000;'/>";
+
+            string docTypeStr = txtDocType.Text.Trim();
+            string docSubjStr = txtSubject.Text.Trim();
+            string congVanSubjLeftHtml = (string.IsNullOrEmpty(docTypeStr) && !string.IsNullOrEmpty(docSubjStr))
+                ? ("<div style='font-size:12pt;margin-top:4pt;" + (isDang ? "font-style:italic;" : "") + "'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</div>")
+                : "";
+
+            string centerTitleBlockHtml = "";
+            if (!string.IsNullOrEmpty(docTypeStr))
+            {
+                centerTitleBlockHtml += "<p style='text-align:center;font-weight:bold;font-size:14pt;margin:14pt 0 4pt 0;'>" + System.Security.SecurityElement.Escape(docTypeStr) + "</p>";
+                if (!string.IsNullOrEmpty(docSubjStr))
+                {
+                    centerTitleBlockHtml += "<p style='text-align:center;font-weight:bold;font-size:14pt;margin:0 0 4pt 0;'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</p>" +
+                                            "<hr style='width:32%;border:0;border-top:1px solid #000;margin-bottom:12pt;'/>";
+                }
+            }
+            else
+            {
+                centerTitleBlockHtml = "<div style='height:10pt;'></div>";
+            }
+
+            string signerTitleFormatted = string.Join("<br/>",
+                Array.ConvertAll(txtSignerTitle.Text.Split(new[] { "\r\n", "\n", " - " }, StringSplitOptions.RemoveEmptyEntries),
+                s => System.Security.SecurityElement.Escape(s.Trim())));
+
+            string noiNhanHeaderHtml = isDang
+                ? "<div style='font-size:12pt;font-style:italic;text-decoration:underline;'>Nơi nhận:</div>"
+                : "<div style='font-size:12pt;font-weight:bold;font-style:italic;'>Nơi nhận:</div>";
+            string noiNhanSize = isDang ? "12pt" : "11pt";
 
             string html = @"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
 <style>
-@page Section1 { size:21.0cm 29.7cm; margin:2.0cm 1.5cm 2.0cm 3.0cm; }
-div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:14pt; color:#000; }
+@page Section1 {
+  size:21.0cm 29.7cm;
+  margin:2.0cm 1.5cm 2.0cm 3.0cm;
+  mso-header-margin:1.0cm;
+  mso-footer-margin:1.0cm;
+  mso-title-page:yes;
+  mso-header:h1;
+  mso-first-header:fh1;
+}
+div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:14pt; color:#000; line-height:1.38; }
+p.MsoHeader, li.MsoHeader, div.MsoHeader { margin:0cm; text-align:center; font-size:13pt; font-family:'Times New Roman',serif; }
 table { width:100%; border-collapse:collapse; }
 td { vertical-align:top; font-family:'Times New Roman',serif; }
 </style></head>
 <body><div class='Section1'>
 <table><tr>
 <td style='width:44%;text-align:center;'>
-  <div style='font-size:12pt;'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + @"</div>
-  <div style='font-size:12pt;font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
-  <hr style='width:38%;border:0;border-top:1px solid #000;'/>
-  <div style='font-size:13pt;margin-top:6pt;'>Số: " + System.Security.SecurityElement.Escape(txtDocNum.Text) + @"</div>
+  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + ";'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
+  <div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + @";font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
+  " + leftSepHtml + @"
+  <div style='font-size:13pt;margin-top:6pt;'>" + System.Security.SecurityElement.Escape(numberLabel) + @"</div>
+  " + congVanSubjLeftHtml + @"
 </td>
 <td style='width:56%;text-align:center;'>
   " + rightHeaderHtml + @"
-  <hr style='width:48%;border:0;border-top:1px solid #000;'/>
-  <div style='font-size:13pt;font-style:italic;margin-top:6pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
+  <hr style='width:" + (isDang ? "56%" : "48%") + @";border:0;border-top:1px solid #000;'/>
+  <div style='font-size:13.5pt;font-style:italic;margin-top:6pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
 </td>
 </tr></table>
-<p style='text-align:center;font-weight:bold;font-size:14pt;margin:16pt 0 4pt 0;'>" + System.Security.SecurityElement.Escape(txtDocType.Text) + @"</p>
-<p style='text-align:center;font-weight:bold;font-size:13.5pt;margin:0 0 14pt 0;'>" + System.Security.SecurityElement.Escape(txtSubject.Text) + @"</p>
+" + centerTitleBlockHtml + @"
 " + sbBody.ToString() + @"
-<table style='margin-top:18pt;'><tr>
-<td style='width:50%;font-size:11pt;'><b><i>Nơi nhận:</i></b>" + sbRec.ToString() + qrImgHtml + @"</td>
-<td style='width:50%;text-align:center;font-size:13pt;'><b>" + System.Security.SecurityElement.Escape(txtSignerTitle.Text) + @"</b><br/><br/><br/><br/><b>" + System.Security.SecurityElement.Escape(txtSignerName.Text) + @"</b></td>
+<table style='margin-top:16pt;'><tr>
+<td style='width:50%;font-size:" + noiNhanSize + @";'>" + noiNhanHeaderHtml + sbRec.ToString() + qrImgHtml + @"</td>
+<td style='width:50%;text-align:center;font-size:13.5pt;'><b>" + signerTitleFormatted + @"</b><br/><br/><br/><br/><b>" + System.Security.SecurityElement.Escape(txtSignerName.Text) + @"</b></td>
 </tr></table>
+<div style='mso-element:header' id='fh1'><p class='MsoHeader'>&nbsp;</p></div>
+<div style='mso-element:header' id='h1'>
+  <p class='MsoHeader' align='center' style='text-align:center;font-size:13pt;font-family:""Times New Roman"",serif;'>
+    <!--[if supportFields]><span style='mso-element:field-begin'></span> PAGE <span style='mso-element:field-separator'></span><![endif]-->2<!--[if supportFields]><span style='mso-element:field-end'></span><![endif]-->
+  </p>
+</div>
 </div></body></html>";
 
             File.WriteAllText(filePath, html, new UTF8Encoding(true));
