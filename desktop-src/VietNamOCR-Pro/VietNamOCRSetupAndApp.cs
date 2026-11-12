@@ -300,6 +300,11 @@ namespace VietNamOCRSuite
                 {
                     File.Copy(Application.ExecutablePath, targetExePath, true);
                 }
+                string altExePath = Path.Combine(installDir, "VietNamOCR-Pro.exe");
+                if (!string.Equals(Application.ExecutablePath, altExePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    try { File.Copy(Application.ExecutablePath, altExePath, true); } catch { }
+                }
 
                 string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VietNamOCR 3.2 Pro.lnk");
                 string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VietNamOCR 3.2 Pro.lnk");
@@ -765,20 +770,49 @@ namespace VietNamOCRSuite
             }
         }
 
-        // Kết xuất trực tiếp trang PDF thật sang ảnh độ phân giải cao bằng Windows.Data.Pdf.PdfDocument
+        private string lastExtractedPdfPageText = "";
+
+        // Kết xuất trực tiếp trang PDF thật sang ảnh độ phân giải cao bằng Windows.Data.Pdf.PdfDocument (LoadFromStreamAsync + Seek(0))
         private bool RenderRealPdfPageToPictureBox(string pdfPath, int pageOneBased, out int pageCount)
         {
             pageCount = 1;
+            lastExtractedPdfPageText = "";
             try
             {
-                string outPng = Path.Combine(Path.GetTempPath(), "vnocr_real_pdf_page.png");
-                if (File.Exists(outPng)) File.Delete(outPng);
+                string outPng = Path.Combine(Path.GetTempPath(), "vnocr_real_pdf_page_" + Guid.NewGuid().ToString("N") + ".png");
+                string outTxt = Path.Combine(Path.GetTempPath(), "vnocr_real_pdf_text_" + Guid.NewGuid().ToString("N") + ".txt");
+
+                // Nếu máy có sẵn Ghostscript (PDF24), trích xuất thêm lớp văn bản gốc chính xác 100% của trang PDF
+                string gsExe = @"C:\Program Files\PDF24\gs\bin\gswin64c.exe";
+                if (File.Exists(gsExe))
+                {
+                    try
+                    {
+                        ProcessStartInfo gsTxtPsi = new ProcessStartInfo
+                        {
+                            FileName = gsExe,
+                            Arguments = string.Format("-dNOPAUSE -dBATCH -dSAFER -q -sDEVICE=txtwrite -dFirstPage={0} -dLastPage={0} \"-sOutputFile={1}\" \"{2}\"", pageOneBased, outTxt, pdfPath),
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        using (Process gp = Process.Start(gsTxtPsi))
+                        {
+                            gp.WaitForExit(6000);
+                        }
+                        if (File.Exists(outTxt))
+                        {
+                            lastExtractedPdfPageText = File.ReadAllText(outTxt, Encoding.UTF8).Trim();
+                            try { File.Delete(outTxt); } catch { }
+                        }
+                    }
+                    catch { }
+                }
 
                 int zeroIdx = Math.Max(0, pageOneBased - 1);
                 string psScript = @"
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
-$null = [Windows.Storage.StorageFile, Windows.Storage, ContentType = WindowsRuntime]
 $null = [Windows.Data.Pdf.PdfDocument, Windows.Data.Pdf, ContentType = WindowsRuntime]
+$null = [Windows.Data.Pdf.PdfPageRenderOptions, Windows.Data.Pdf, ContentType = WindowsRuntime]
 $null = [Windows.Storage.Streams.InMemoryRandomAccessStream, Windows.Storage.Streams, ContentType = WindowsRuntime]
 function Await($WinRtTask, $ResultType) {
     $asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1' })[0]
@@ -792,17 +826,23 @@ function AwaitAction($WinRtAction) {
     $netTask = $asTask.Invoke($null, @($WinRtAction))
     $netTask.Wait(-1) | Out-Null
 }
-$file = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync('" + pdfPath.Replace("'", "''") + @"')) ([Windows.Storage.StorageFile])
-$pdf = Await ([Windows.Data.Pdf.PdfDocument]::LoadFromFileAsync($file)) ([Windows.Data.Pdf.PdfDocument])
+$inFileStream = [System.IO.File]::OpenRead('" + pdfPath.Replace("'", "''") + @"')
+$inRandomStream = [System.IO.WindowsRuntimeStreamExtensions]::AsRandomAccessStream($inFileStream)
+$pdf = Await ([Windows.Data.Pdf.PdfDocument]::LoadFromStreamAsync($inRandomStream)) ([Windows.Data.Pdf.PdfDocument])
 Write-Output ('PAGES=' + $pdf.PageCount)
 $page = $pdf.GetPage(" + zeroIdx + @")
+$opts = New-Object Windows.Data.Pdf.PdfPageRenderOptions
+$opts.DestinationWidth = 1800
 $stream = New-Object Windows.Storage.Streams.InMemoryRandomAccessStream
-AwaitAction ($page.RenderToStreamAsync($stream))
+AwaitAction ($page.RenderToStreamAsync($stream, $opts))
+$stream.Seek(0)
 $netStream = [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($stream)
 $fs = [System.IO.File]::Create('" + outPng.Replace("'", "''") + @"')
 $netStream.CopyTo($fs)
+$fs.Flush()
 $fs.Close()
 $netStream.Close()
+$inFileStream.Close()
 ";
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
@@ -821,7 +861,7 @@ $netStream.Close()
                     p.StandardInput.WriteLine(psScript);
                     p.StandardInput.Close();
                     output = p.StandardOutput.ReadToEnd().Trim();
-                    p.WaitForExit(12000);
+                    p.WaitForExit(14000);
                 }
 
                 Match m = Regex.Match(output, @"PAGES=(\d+)");
@@ -830,7 +870,7 @@ $netStream.Close()
                     int.TryParse(m.Groups[1].Value, out pageCount);
                 }
 
-                if (File.Exists(outPng))
+                if (File.Exists(outPng) && new FileInfo(outPng).Length > 0)
                 {
                     using (FileStream fs = new FileStream(outPng, FileMode.Open, FileAccess.Read))
                     {
@@ -839,6 +879,7 @@ $netStream.Close()
                             picDoc.Image = new Bitmap(tmp);
                         }
                     }
+                    try { File.Delete(outPng); } catch { }
                     return true;
                 }
             }
@@ -900,7 +941,7 @@ $netStream.Close()
         }
 
         // =========================================================================
-        // BỘ MÁY NHẬN DIỆN CHỮ TIẾNG VIỆT ĐA TẦNG (AI NEURAL ENGINE 2 + WINRT)
+        // BỘ MÁY NHẬN DIỆN CHỮ TIẾNG VIỆT ĐA TẦNG (DIRECT PDF + AI NEURAL ENGINE 2 + WINRT)
         // =========================================================================
         private void RunVietnameseOcr(bool appendTableMode)
         {
@@ -915,21 +956,31 @@ $netStream.Close()
 
             try
             {
-                lblStatus.Text = "  Đang chạy bộ máy AI Neural OCR Tiếng Việt (Engine 2 - Nhận diện dấu thanh & bảng biểu)...";
-                Application.DoEvents();
+                string recognizedText = "";
 
-                // 1. Lưu ảnh JPEG chất lượng cao để gửi vào AI Neural OCR Tiếng Việt
-                string recognizedText = TryCloudNeuralVietnameseOcr(picDoc.Image);
+                // Tầng 0: Nếu là tệp PDF có lớp văn bản gốc đã được trích xuất trực tiếp
+                if (isPdfLoaded && !string.IsNullOrWhiteSpace(lastExtractedPdfPageText) && lastExtractedPdfPageText.Length >= 10)
+                {
+                    recognizedText = lastExtractedPdfPageText;
+                }
 
-                // 2. Nếu máy không có kết nối mạng, chuyển sang Windows WinRT OCR cục bộ
-                if (string.IsNullOrEmpty(recognizedText))
+                // Tầng 1: Gọi AI Neural OCR Tiếng Việt (Engine 2 với language=auto + isTable=true)
+                if (string.IsNullOrWhiteSpace(recognizedText))
+                {
+                    lblStatus.Text = "  Đang chạy bộ máy AI Neural OCR Tiếng Việt (Engine 2 - Nhận diện dấu thanh & bảng biểu)...";
+                    Application.DoEvents();
+                    recognizedText = TryCloudNeuralVietnameseOcr(picDoc.Image);
+                }
+
+                // Tầng 2: Nếu máy không có kết nối mạng, chuyển sang Windows WinRT OCR cục bộ
+                if (string.IsNullOrWhiteSpace(recognizedText))
                 {
                     lblStatus.Text = "  Đang chạy bộ máy Windows WinRT OCR cục bộ...";
                     Application.DoEvents();
                     recognizedText = TryLocalWindowsOcr(picDoc.Image);
                 }
 
-                if (!string.IsNullOrEmpty(recognizedText))
+                if (!string.IsNullOrWhiteSpace(recognizedText))
                 {
                     string restored = RestoreVietnameseDiacritics(recognizedText);
                     if (appendTableMode && !string.IsNullOrEmpty(txtOcrResult.Text))
@@ -955,12 +1006,11 @@ $netStream.Close()
             }
         }
 
-        // Gọi AI Neural OCR Tiếng Việt (Engine 2 chuyên nhận diện tiếng Việt có dấu & cấu trúc bảng isTable=true)
+        // Gọi AI Neural OCR Tiếng Việt (OCREngine=2 + language=auto hỗ trợ đầy đủ tiếng Việt có dấu & cấu trúc bảng isTable=true)
         private string TryCloudNeuralVietnameseOcr(Image img)
         {
             try
             {
-                // Chuẩn hóa kích thước ảnh để không vượt quá giới hạn 1MB của API miễn phí
                 int maxDim = 1800;
                 int w = img.Width, h = img.Height;
                 if (w > maxDim || h > maxDim)
@@ -988,7 +1038,7 @@ $netStream.Close()
                     NameValueCollection form = new NameValueCollection();
                     form["apikey"] = "helloworld";
                     form["base64Image"] = b64DataUrl;
-                    form["language"] = "vie";
+                    form["language"] = "auto";
                     form["OCREngine"] = "2";
                     form["isTable"] = "true";
                     form["scale"] = "true";
@@ -997,7 +1047,6 @@ $netStream.Close()
                     byte[] respBytes = wc.UploadValues("https://api.ocr.space/parse/image", "POST", form);
                     string json = Encoding.UTF8.GetString(respBytes);
 
-                    // Bóc tách toàn bộ trường "ParsedText":"..." từ JSON trả về
                     MatchCollection matches = Regex.Matches(json, "\"ParsedText\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
                     if (matches.Count > 0)
                     {
@@ -1021,12 +1070,11 @@ $netStream.Close()
         {
             try
             {
-                string tempImg = Path.Combine(Path.GetTempPath(), "vnocr_temp.png");
+                string tempImg = Path.Combine(Path.GetTempPath(), "vnocr_temp_" + Guid.NewGuid().ToString("N") + ".png");
                 img.Save(tempImg, ImageFormat.Png);
 
                 string psScript = @"
 Add-Type -AssemblyName System.Runtime.WindowsRuntime
-$null = [Windows.Storage.StorageFile, Windows.Storage, ContentType = WindowsRuntime]
 $null = [Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType = WindowsRuntime]
 $null = [Windows.Graphics.Imaging.BitmapDecoder, Windows.Foundation, ContentType = WindowsRuntime]
 function Await($WinRtTask, $ResultType) {
@@ -1036,8 +1084,8 @@ function Await($WinRtTask, $ResultType) {
     $netTask.Wait(-1) | Out-Null
     $netTask.Result
 }
-$file = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync('" + tempImg.Replace("'", "''") + @"')) ([Windows.Storage.StorageFile])
-$stream = Await ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
+$inFileStream = [System.IO.File]::OpenRead('" + tempImg.Replace("'", "''") + @"')
+$stream = [System.IO.WindowsRuntimeStreamExtensions]::AsRandomAccessStream($inFileStream)
 $decoder = Await ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
 $bitmap = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
 $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages()
@@ -1046,6 +1094,7 @@ $result = Await ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult]
 foreach ($line in $result.Lines) {
     Write-Output $line.Text
 }
+$inFileStream.Close()
 ";
                 ProcessStartInfo psi = new ProcessStartInfo
                 {
@@ -1064,6 +1113,7 @@ foreach ($line in $result.Lines) {
                     p.StandardInput.Close();
                     string output = p.StandardOutput.ReadToEnd().Trim();
                     p.WaitForExit(10000);
+                    try { if (File.Exists(tempImg)) File.Delete(tempImg); } catch { }
                     return output;
                 }
             }
