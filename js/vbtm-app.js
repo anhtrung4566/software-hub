@@ -17,7 +17,7 @@ const VBTM_TEMPLATES = {
     docDate: '2026-11-11',
     docType: '',
     docSubject: 'V/v triển khai ứng dụng chuẩn hóa thể thức văn bản và số hóa hồ sơ hành chính tại địa phương',
-    docBody: `Thực hiện Kế hoạch cải cách hành chính và chuyển đổi số năm 2026, Ủy ban nhân dân phường triển khai bộ công cụ chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư.\n\n1. Các bộ phận chuyên môn, công chức thuộc Ủy ban nhân dân phường thực hiện rà soát, chuẩn hóa toàn bộ văn bản dự thảo trước khi trình ký ban hành; bảo đảm đúng quy định về khổ giấy A4, lề trang, phông chữ Times New Roman, cỡ chữ và thể thức trình bày.\n\n2. Đẩy mạnh số hóa hồ sơ, tài liệu lưu trữ và ứng dụng công cụ kiểm tra lỗi chính tả tiếng Việt ngoại tuyến (Offline 100%) nhằm nâng cao chất lượng ban hành văn bản và bảo đảm an toàn thông tin nội bộ.\n\nỦy ban nhân dân phường đề nghị các bộ phận, cán bộ, công chức nghiêm túc triển khai thực hiện./.`,
+    docBody: `Kính gửi: Các bộ phận chuyên môn, cán bộ, công chức thuộc Ủy ban nhân dân phường.\n\nThực hiện Kế hoạch cải cách hành chính và chuyển đổi số năm 2026, Ủy ban nhân dân phường triển khai bộ công cụ chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư.\n\n1. Các bộ phận chuyên môn, công chức thuộc Ủy ban nhân dân phường thực hiện rà soát, chuẩn hóa toàn bộ văn bản dự thảo trước khi trình ký ban hành; bảo đảm đúng quy định về khổ giấy A4, lề trang, phông chữ Times New Roman, cỡ chữ và thể thức trình bày.\n\n2. Đẩy mạnh số hóa hồ sơ, tài liệu lưu trữ và ứng dụng công cụ kiểm tra lỗi chính tả tiếng Việt ngoại tuyến (Offline 100%) nhằm nâng cao chất lượng ban hành văn bản và bảo đảm an toàn thông tin nội bộ.\n\nỦy ban nhân dân phường đề nghị các bộ phận, cán bộ, công chức nghiêm túc triển khai thực hiện./.`,
     recipients: `- Như trên;\n- Thường trực Đảng ủy, HĐND phường (để b/c);\n- Chủ tịch, các PCT UBND phường;\n- UBMTTQ và các đoàn thể phường;\n- Các tổ dân phố;\n- Lưu: VT, VP.`,
     signerTitle: 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH',
     signerName: 'Nguyễn Văn An'
@@ -31,7 +31,7 @@ const VBTM_TEMPLATES = {
     docDate: '2026-11-11',
     docType: 'BÁO CÁO',
     docSubject: 'Kết quả thực hiện công tác cải cách hành chính, văn thư lưu trữ và chuyển đổi số trên địa bàn phường năm 2026',
-    docBody: `Thực hiện Kế hoạch công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường báo cáo kết quả triển khai công tác chuẩn hóa văn bản và số hóa hồ sơ trên địa bàn phường như sau:\n\nI. KẾT QUẢ ĐẠT ĐƯỢC\n1. Công tác ban hành văn bản: 100% văn bản hành chính của Hội đồng nhân dân và Ủy ban nhân dân phường được chuẩn hóa đồng bộ theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\n\n2. Công tác số hóa hồ sơ: Đã ứng dụng phần mềm VBTM Pro và VietNamOCR 3.2 Pro phục vụ rà soát lỗi chính tả tiếng Việt, tạo mã QR quản lý hồ sơ và bóc tách dữ liệu bảng biểu sang Word, Excel nhanh chóng, chính xác.\n\nII. PHƯƠNG HƯỚNG, NHIỆM VỤ TRONG THỜI GIAN TỚI\nTiếp tục duy trì nền nếp công tác văn thư, lưu trữ và nâng cao hiệu quả giải quyết thủ tục hành chính phục vụ nhân dân tại Bộ phận Tiếp nhận và Trả kết quả phường./.`,
+    docBody: `Thực hiện Kế hoạch công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường báo cáo kết quả triển khai công tác chuẩn hóa văn bản và số hóa hồ sơ trên địa bàn phường như sau:\n\nI. KẾT QUẢ ĐẠT ĐƯỢC\n1. Công tác ban hành văn bản: 100% văn bản hành chính của Hội đồng nhân dân và Ủy ban nhân dân phường được chuẩn hóa đồng bộ theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ.\n\n2. Công tác số hóa hồ sơ: Đã ứng dụng phần mềm VBTM Pro 2.2.4 và VietNamOCR 3.2 Pro phục vụ rà soát lỗi chính tả tiếng Việt, tạo mã QR quản lý hồ sơ và bóc tách dữ liệu bảng biểu sang Word, Excel nhanh chóng, chính xác.\n\nII. PHƯƠNG HƯỚNG, NHIỆM VỤ TRONG THỜI GIAN TỚI\nTiếp tục duy trì nền nếp công tác văn thư, lưu trữ và nâng cao hiệu quả giải quyết thủ tục hành chính phục vụ nhân dân tại Bộ phận Tiếp nhận và Trả kết quả phường./.`,
     recipients: `- UBND Quận (để b/c);\n- Phòng Nội vụ;\n- Thường trực Đảng ủy, HĐND phường;\n- CT, các PCT UBND phường;\n- Lưu: VT, VP.`,
     signerTitle: 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH',
     signerName: 'Nguyễn Văn An'
@@ -44,11 +44,123 @@ const VBTM_TEMPLATES = {
     location: 'Phường',
     docDate: '2026-11-11',
     docType: 'QUYẾT ĐỊNH',
-    docSubject: 'Về việc ban hành Quy chế quản lý, chuẩn hóa văn bản và số hóa hồ sơ tài liệu tại Ủy ban nhân dân phường',
-    docBody: `ỦY BAN NHÂN DÂN PHƯỜNG\n\nCăn cứ Luật Tổ chức chính quyền địa phương;\n\nCăn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\n\nTheo đề nghị của Công chức Văn phòng - Thống kê phường,\n\nQUYẾT ĐỊNH:\n\nĐiều 1. Ban hành kèm theo Quyết định này Quy chế ứng dụng phần mềm chuẩn hóa thể thức văn bản VBTM Pro và số hóa hồ sơ tài liệu VietNamOCR 3.2 Pro trong công tác văn thư, lưu trữ tại Ủy ban nhân dân phường.\n\nĐiều 2. Quyết định này có hiệu lực thi hành kể từ ngày ký.\n\nĐiều 3. Công chức Văn phòng - Thống kê và các cán bộ, công chức, bộ phận chuyên môn thuộc Ủy ban nhân dân phường chịu trách nhiệm thi hành Quyết định này./.`,
+    docSubject: 'Về việc thành lập Tổ công tác kiểm tra, rà soát công tác văn thư, lưu trữ và chuyển đổi số tại Ủy ban nhân dân phường',
+    docBody: `ỦY BAN NHÂN DÂN PHƯỜNG\n\nCăn cứ Luật Tổ chức chính quyền địa phương;\n\nCăn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\n\nTheo đề nghị của Công chức Văn phòng - Thống kê phường,\n\nQUYẾT ĐỊNH:\n\nĐiều 1. Thành lập Tổ công tác kiểm tra, rà soát công tác chuẩn hóa thể thức văn bản hành chính và lập hồ sơ điện tử tại Ủy ban nhân dân phường.\n\nĐiều 2. Tổ công tác có nhiệm vụ hướng dẫn, kiểm tra việc thực hiện quy chuẩn văn bản theo Nghị định số 30/2020/NĐ-CP và báo cáo Chủ tịch Ủy ban nhân dân phường kết quả thực hiện.\n\nĐiều 3. Quyết định này có hiệu lực thi hành kể từ ngày ký. Công chức Văn phòng - Thống kê và các ông, bà có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này./.`,
     recipients: `- Như Điều 3;\n- Thường trực Đảng ủy, HĐND phường (để b/c);\n- Chủ tịch, các PCT UBND phường;\n- Lưu: VT, VP.`,
     signerTitle: 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH',
     signerName: 'Nguyễn Văn An'
+  },
+  ubnd_quyetdinh_quyche: {
+    standard: 'nd30',
+    governingOrg: 'ỦY BAN NHÂN DÂN QUẬN',
+    issuingOrg: 'ỦY BAN NHÂN DÂN PHƯỜNG',
+    docNumber: '125/QĐ-UBND',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'QUYẾT ĐỊNH',
+    docSubject: 'Ban hành Quy chế công tác văn thư, lưu trữ và chuẩn hóa văn bản điện tử tại Ủy ban nhân dân phường',
+    docBody: `ỦY BAN NHÂN DÂN PHƯỜNG\n\nCăn cứ Luật Tổ chức chính quyền địa phương;\n\nCăn cứ Luật Lưu trữ và Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\n\nTheo đề nghị của Công chức Văn phòng - Thống kê phường,\n\nQUYẾT ĐỊNH:\n\nĐiều 1. Ban hành kèm theo Quyết định này Quy chế công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản hành chính tại Ủy ban nhân dân phường.\n\nĐiều 2. Quyết định này có hiệu lực thi hành kể từ ngày ký.\n\nĐiều 3. Công chức Văn phòng - Thống kê và các bộ phận chuyên môn, cán bộ, công chức thuộc Ủy ban nhân dân phường chịu trách nhiệm thi hành Quyết định này./.`,
+    recipients: `- Như Điều 3;\n- UBND Quận (để b/c);\n- Thường trực Đảng ủy, HĐND phường;\n- Lưu: VT, VP.`,
+    signerTitle: 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH',
+    signerName: 'Nguyễn Văn An'
+  },
+  ubnd_kehoach: {
+    standard: 'nd30',
+    governingOrg: 'ỦY BAN NHÂN DÂN QUẬN',
+    issuingOrg: 'ỦY BAN NHÂN DÂN PHƯỜNG',
+    docNumber: '92/KH-UBND',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'KẾ HOẠCH',
+    docSubject: 'Triển khai công tác cải cách hành chính, chuyển đổi số và chuẩn hóa văn bản trên địa bàn phường năm 2026',
+    docBody: `Thực hiện Kế hoạch của Ủy ban nhân dân quận về công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường ban hành Kế hoạch triển khai thực hiện cụ thể như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\n1. Mục đích: Bảo đảm 100% văn bản ban hành của Ủy ban nhân dân phường tuân thủ đúng quy định tại Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ.\n\n2. Yêu cầu: Gắn công tác chuẩn hóa văn bản với việc số hóa hồ sơ, giải quyết thủ tục hành chính nhanh gọn, chính xác.\n\nII. NỘI DUNG THỰC HIỆN\n1. Rà soát thể thức, kỹ thuật trình bày và chính tả tiếng Việt đối với toàn bộ dự thảo văn bản trước khi trình ký.\n\n2. Ứng dụng mã QR định danh văn bản và số hóa tài liệu lưu trữ tại Văn phòng Ủy ban nhân dân phường.\n\nIII. TỔ CHỨC THỰC HIỆN\nGiao Công chức Văn phòng - Thống kê chủ trì, phối hợp với các công chức chuyên môn triển khai thực hiện nghiêm túc Kế hoạch này./.`,
+    recipients: `- UBND Quận (để b/c);\n- Thường trực Đảng ủy, HĐND phường;\n- Chủ tịch, các PCT UBND phường;\n- Các bộ phận chuyên môn thuộc phường;\n- Lưu: VT, VP.`,
+    signerTitle: 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH',
+    signerName: 'Nguyễn Văn An'
+  },
+  ubnd_totrinh: {
+    standard: 'nd30',
+    governingOrg: 'ỦY BAN NHÂN DÂN QUẬN',
+    issuingOrg: 'ỦY BAN NHÂN DÂN PHƯỜNG',
+    docNumber: '64/TTr-UBND',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'TỜ TRÌNH',
+    docSubject: 'Về việc đề nghị phê duyệt phương án nâng cấp hạ tầng công nghệ thông tin và số hóa hồ sơ lưu trữ tại phường',
+    docBody: `Kính gửi: Ủy ban nhân dân quận.\n\nCăn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ về công tác văn thư;\n\nNhằm đáp ứng yêu cầu hiện đại hóa nền hành chính và số hóa hồ sơ tài liệu tại địa phương, Ủy ban nhân dân phường kính trình Ủy ban nhân dân quận xem xét, phê duyệt phương án triển khai phần mềm chuẩn hóa thể thức văn bản và số hóa tài liệu lưu trữ năm 2026.\n\nỦy ban nhân dân phường kính trình Ủy ban nhân dân quận xem xét, quyết định./.`,
+    recipients: `- Như trên;\n- Phòng Nội vụ, Phòng Tài chính - Kế hoạch;\n- Thường trực Đảng ủy, HĐND phường;\n- Lưu: VT, VP.`,
+    signerTitle: 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH',
+    signerName: 'Nguyễn Văn An'
+  },
+  ubnd_thongbao: {
+    standard: 'nd30',
+    governingOrg: 'ỦY BAN NHÂN DÂN QUẬN',
+    issuingOrg: 'ỦY BAN NHÂN DÂN PHƯỜNG',
+    docNumber: '168/TB-UBND',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'THÔNG BÁO',
+    docSubject: 'Kết luận của Chủ tịch Ủy ban nhân dân phường tại cuộc họp giao ban công tác cải cách hành chính tháng 11 năm 2026',
+    docBody: `Ngày 10 tháng 11 năm 2026, Chủ tịch Ủy ban nhân dân phường đã chủ trì cuộc họp giao ban đánh giá kết quả công tác cải cách hành chính và văn thư lưu trữ. Sau khi nghe báo cáo và ý kiến phát biểu của các bộ phận chuyên môn, Chủ tịch Ủy ban nhân dân phường kết luận như sau:\n\n1. Biểu dương bộ phận Văn phòng - Thống kê và các công chức chuyên môn đã thực hiện tốt việc chuẩn hóa thể thức văn bản theo Nghị định số 30/2020/NĐ-CP.\n\n2. Yêu cầu các bộ phận tiếp tục kiểm soát chặt chẽ chất lượng dự thảo văn bản, sử dụng tính năng soát lỗi chính tả và đính kèm mã QR xác thực trên toàn bộ văn bản ban hành.\n\nThừa lệnh Chủ tịch Ủy ban nhân dân phường, Văn phòng thông báo để các bộ phận, cá nhân biết và thực hiện./.`,
+    recipients: `- Thường trực Đảng ủy, HĐND phường (để b/c);\n- Chủ tịch, các PCT UBND phường;\n- Các công chức chuyên môn;\n- Các tổ dân phố;\n- Lưu: VT, VP.`,
+    signerTitle: 'TL. CHỦ TỊCH\nVĂN PHÒNG - THỐNG KÊ',
+    signerName: 'Lê Hoàng Nam'
+  },
+  hdnd_nghiquyet: {
+    standard: 'nd30',
+    governingOrg: '',
+    issuingOrg: 'HỘI ĐỒNG NHÂN DÂN PHƯỜNG',
+    docNumber: '18/NQ-HĐND',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'NGHỊ QUYẾT',
+    docSubject: 'Về nhiệm vụ phát triển kinh tế - xã hội, quốc phòng - an ninh và đẩy mạnh cải cách hành chính năm 2026',
+    docBody: `HỘI ĐỒNG NHÂN DÂN PHƯỜNG\nKHÓA XII, KỲ HỌP THỨ 10\n\nCăn cứ Luật Tổ chức chính quyền địa phương;\n\nXét Tờ trình của Ủy ban nhân dân phường và Báo cáo thẩm tra của các Ban Hội đồng nhân dân phường,\n\nQUYẾT NGHỊ:\n\nĐiều 1. Tán thành Báo cáo kết quả thực hiện nhiệm vụ phát triển kinh tế - xã hội, cải cách hành chính và chuyển đổi số trên địa bàn phường.\n\nĐiều 2. Giao Ủy ban nhân dân phường tổ chức triển khai thực hiện Nghị quyết này; đẩy mạnh chuẩn hóa văn bản theo Nghị định số 30/2020/NĐ-CP và nâng cao chất lượng phục vụ nhân dân.\n\nĐiều 3. Thường trực Hội đồng nhân dân, các Ban của Hội đồng nhân dân và đại biểu Hội đồng nhân dân phường giám sát việc thực hiện Nghị quyết này./.`,
+    recipients: `- Thường trực HĐND, UBND Quận (để b/c);\n- Thường trực Đảng ủy phường;\n- Thường trực HĐND, UBND, UBMTTQ phường;\n- Các đại biểu HĐND phường;\n- Lưu: VT.`,
+    signerTitle: 'CHỦ TỊCH',
+    signerName: 'Trần Minh Quân'
+  },
+  ubnd_bienban: {
+    standard: 'nd30',
+    governingOrg: 'ỦY BAN NHÂN DÂN QUẬN',
+    issuingOrg: 'ỦY BAN NHÂN DÂN PHƯỜNG',
+    docNumber: '09/BB-UBND',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'BIÊN BẢN',
+    docSubject: 'Họp rà soát, nghiệm thu kết quả chuẩn hóa văn bản và số hóa hồ sơ hành chính năm 2026',
+    docBody: `Hôm nay, vào lúc 08 giờ 00 phút ngày 11 tháng 11 năm 2026, tại Phòng họp Ủy ban nhân dân phường, chúng tôi gồm:\n\nI. THÀNH PHẦN THAM DỰ\n1. Ông Nguyễn Văn An - Chủ tịch Ủy ban nhân dân phường, Chủ trì.\n2. Ông Lê Hoàng Nam - Công chức Văn phòng - Thống kê, Thư ký.\n3. Cùng các công chức chuyên môn thuộc Ủy ban nhân dân phường.\n\nII. NỘI DUNG CUỘC HỌP\n1. Công chức Văn phòng - Thống kê báo cáo kết quả chuẩn hóa 100% văn bản theo Nghị định số 30/2020/NĐ-CP và số hóa tài liệu lưu trữ.\n2. Các thành viên dự họp thảo luận và thống nhất nghiệm thu kết quả thực hiện.\n\nCuộc họp kết thúc vào lúc 10 giờ 30 phút cùng ngày. Biên bản này được lập thành 02 bản có giá trị như nhau và đã được đọc lại cho mọi người cùng nghe./.`,
+    recipients: `- Thành phần dự họp;\n- Lưu: VT, VP.`,
+    signerTitle: 'CHỦ TRÌ CUỘC HỌP\nCHỦ TỊCH',
+    signerName: 'Nguyễn Văn An'
+  },
+  ubnd_giaymoi: {
+    standard: 'nd30',
+    governingOrg: 'ỦY BAN NHÂN DÂN QUẬN',
+    issuingOrg: 'ỦY BAN NHÂN DÂN PHƯỜNG',
+    docNumber: '210/GM-UBND',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'GIẤY MỜI',
+    docSubject: 'Họp triển khai công tác chuẩn hóa thể thức văn bản và tập huấn số hóa hồ sơ lưu trữ',
+    docBody: `Kính gửi: Các đồng chí cán bộ, công chức chuyên môn và Tổ trưởng các tổ dân phố thuộc phường.\n\nỦy ban nhân dân phường tổ chức hội nghị triển khai công tác chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP và hướng dẫn sử dụng phần mềm VBTM Pro 2.2.4.\n\n1. Thành phần: Lãnh đạo Ủy ban nhân dân phường, toàn thể cán bộ, công chức chuyên môn và Tổ trưởng các tổ dân phố.\n\n2. Thời gian: 08 giờ 00 phút, ngày 15 tháng 11 năm 2026.\n\n3. Địa điểm: Hội trường Ủy ban nhân dân phường.\n\nĐề nghị các đồng chí sắp xếp công việc tham dự đầy đủ, đúng giờ./.`,
+    recipients: `- Như trên;\n- Chủ tịch, các PCT UBND phường;\n- Lưu: VT, VP.`,
+    signerTitle: 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH',
+    signerName: 'Nguyễn Văn An'
+  },
+  danguy_congvan: {
+    standard: 'hd05',
+    governingOrg: 'QUẬN ỦY',
+    issuingOrg: 'ĐẢNG ỦY PHƯỜNG',
+    docNumber: '58-CV/ĐU',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: '',
+    docSubject: 'V/v quán triệt thực hiện thể thức văn bản của Đảng theo Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW',
+    docBody: `Kính gửi: Các chi bộ trực thuộc Đảng ủy phường.\n\nThực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường yêu cầu các chi bộ trực thuộc thực hiện nghiêm túc các nội dung sau:\n\n1. Thực hiện thống nhất phông chữ Times New Roman (bộ mã ký tự Unicode), cỡ chữ 14pt, định lề trang A4 (lề trên 20mm, lề dưới 20mm, lề trái 30mm, lề phải 15mm) đối với toàn bộ nghị quyết, báo cáo, chương trình, kế hoạch, biên bản sinh hoạt chi bộ.\n\n2. Tăng cường ứng dụng phần mềm chuẩn hóa thể thức và rà soát chính tả tiếng Việt ngoại tuyến để bảo đảm tính trang trọng, chính xác của văn kiện Đảng.\n\nĐề nghị cấp ủy các chi bộ trực thuộc nghiêm túc quán triệt và tổ chức thực hiện./.`,
+    recipients: `- Như trên,\n- Văn phòng Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- Lưu Văn phòng Đảng ủy.`,
+    signerTitle: 'T/M BAN THƯỜNG VỤ\nBÍ THƯ',
+    signerName: 'Trần Minh Quân'
   },
   danguy_baocao: {
     standard: 'hd05',
@@ -60,8 +172,64 @@ const VBTM_TEMPLATES = {
     docType: 'BÁO CÁO',
     docSubject: 'Tổng kết công tác xây dựng Đảng, cải cách hành chính trong Đảng và chuyển đổi số tại Đảng bộ phường năm 2026',
     docBody: `Thực hiện Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Đảng ủy phường báo cáo kết quả thực hiện công tác văn thư, lưu trữ và chuyển đổi số năm 2026 như sau:\n\nI. KẾT QUẢ THỰC HIỆN\n1. Toàn bộ hệ thống nghị quyết, quyết định, chương trình, kế hoạch, báo cáo và công văn của Đảng ủy phường và các chi bộ trực thuộc đều được chuẩn hóa đúng thể thức văn bản của Đảng.\n\n2. Việc ứng dụng bộ công cụ kiểm tra chính tả tiếng Việt và chuẩn hóa thể thức ngoại tuyến 100% giúp nâng cao chất lượng văn bản tham mưu của Văn phòng Đảng ủy, bảo đảm tuyệt đối an toàn thông tin nội bộ.\n\nII. NHIỆM VỤ TRỌNG TÂM THỜI GIAN TỚI\nTiếp tục đẩy mạnh số hóa hồ sơ đảng viên, văn kiện của Đảng ủy và hướng dẫn các chi bộ trực thuộc thực hiện đồng bộ, thống nhất./.`,
-    recipients: `- Ban Thường vụ Quận ủy (để b/c);\n- Văn phòng Quận ủy;\n- Các đồng chí Đảng ủy viên;\n- HĐND, UBND, UBMTTQ phường;\n- Các chi bộ trực thuộc;\n- Lưu Văn phòng Đảng ủy.`,
+    recipients: `- Ban Thường vụ Quận ủy (để b/c),\n- Văn phòng Quận ủy,\n- Các đồng chí Đảng ủy viên,\n- HĐND, UBND, UBMTTQ phường,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
     signerTitle: 'T/M ĐẢNG ỦY\nBÍ THƯ',
+    signerName: 'Trần Minh Quân'
+  },
+  danguy_nghiquyet: {
+    standard: 'hd05',
+    governingOrg: 'QUẬN ỦY',
+    issuingOrg: 'ĐẢNG ỦY PHƯỜNG',
+    docNumber: '15-NQ/ĐU',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'NGHỊ QUYẾT',
+    docSubject: 'Về tăng cường sự lãnh đạo của Đảng đối với công tác cải cách hành chính và chuyển đổi số trên địa bàn phường',
+    docBody: `Thực hiện Chương trình công tác toàn khóa của Ban Chấp hành Đảng bộ phường, sau khi thảo luận đề án của Ban Thường vụ Đảng ủy, Ban Chấp hành Đảng bộ phường quyết nghị:\n\nI. TÌNH HÌNH VÀ NGUYÊN NHÂN\nCông tác cải cách hành chính và chuyển đổi số tại Đảng bộ và chính quyền phường thời gian qua đạt nhiều kết quả quan trọng; chất lượng ban hành văn kiện, nghị quyết được chuẩn hóa đồng bộ.\n\nII. MỤC TIÊU, NHIỆM VỤ VÀ GIẢI PHÁP\n1. Phấn đấu 100% văn bản của Đảng ủy và các chi bộ trực thuộc được soạn thảo, thẩm định đúng quy định tại Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW.\n\n2. Giao Văn phòng Đảng ủy chủ trì, phối hợp với Ủy ban nhân dân phường hướng dẫn, kiểm tra việc thực hiện Nghị quyết này và định kỳ báo cáo Ban Thường vụ Đảng ủy./.`,
+    recipients: `- Ban Thường vụ Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- HĐND, UBND, UBMTTQ phường,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
+    signerTitle: 'T/M ĐẢNG ỦY\nBÍ THƯ',
+    signerName: 'Trần Minh Quân'
+  },
+  danguy_kehoach: {
+    standard: 'hd05',
+    governingOrg: 'QUẬN ỦY',
+    issuingOrg: 'ĐẢNG ỦY PHƯỜNG',
+    docNumber: '24-KH/ĐU',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'KẾ HOẠCH',
+    docSubject: 'Tập huấn nghiệp vụ công tác văn thư, lưu trữ và chuẩn hóa thể thức văn bản Đảng năm 2026',
+    docBody: `Căn cứ Hướng dẫn số 36-HD/VPTW của Văn phòng Trung ương Đảng về thể thức và kỹ thuật trình bày văn bản của Đảng, Ban Thường vụ Đảng ủy phường ban hành Kế hoạch tập huấn nghiệp vụ công tác văn thư cho cấp ủy các chi bộ trực thuộc như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\nNâng cao kỹ năng soạn thảo, chuẩn hóa thể thức nghị quyết, biên bản, báo cáo của các chi bộ trực thuộc Đảng ủy phường.\n\nII. NỘI DUNG VÀ THỜI GIAN\n1. Nội dung: Hướng dẫn quy chuẩn trình bày văn bản Đảng và thực hành phần mềm chuẩn hóa văn bản VBTM Pro 2.2.4.\n\n2. Thời gian: Hoàn thành trong tháng 11 năm 2026.\n\nIII. TỔ CHỨC THỰC HIỆN\nVăn phòng Đảng ủy chuẩn bị tài liệu, phần mềm và đôn đốc các chi bộ tham gia đầy đủ./.`,
+    recipients: `- Văn phòng Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
+    signerTitle: 'T/M BAN THƯỜNG VỤ\nPHÓ BÍ THƯ THƯỜNG TRỰC',
+    signerName: 'Phạm Thị Thanh Hoa'
+  },
+  danguy_chuongtrinh: {
+    standard: 'hd05',
+    governingOrg: 'QUẬN ỦY',
+    issuingOrg: 'ĐẢNG ỦY PHƯỜNG',
+    docNumber: '10-CTr/ĐU',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'CHƯƠNG TRÌNH',
+    docSubject: 'Công tác kiểm tra, giám sát của Ban Thường vụ Đảng ủy phường năm 2026',
+    docBody: `Căn cứ Điều lệ Đảng Cộng sản Việt Nam và Chương trình kiểm tra, giám sát của Quận ủy, Ban Thường vụ Đảng ủy phường xây dựng Chương trình công tác kiểm tra, giám sát năm 2026 như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\nChủ động phòng ngừa vi phạm, nâng cao năng lực lãnh đạo và sức chiến đấu của các tổ chức đảng trực thuộc.\n\nII. NỘI DUNG KIỂM TRA, GIÁM SÁT\n1. Giám sát việc thực hiện Quy chế làm việc, nền nếp sinh hoạt chi bộ và việc chấp hành thể thức văn bản của Đảng theo Hướng dẫn số 36-HD/VPTW.\n\n2. Kiểm tra việc thực hiện nhiệm vụ cải cách hành chính, chuyển đổi số gắn với trách nhiệm nêu gương của cán bộ, đảng viên.\n\nIII. TỔ CHỨC THỰC HIỆN\nỦy ban Kiểm tra Đảng ủy chủ trì tham mưu giúp Ban Thường vụ Đảng ủy tổ chức thực hiện Chương trình này./.`,
+    recipients: `- Ủy ban Kiểm tra Quận ủy (để b/c),\n- Các đồng chí Đảng ủy viên,\n- UBKT Đảng ủy phường,\n- Các chi bộ trực thuộc,\n- Lưu Văn phòng Đảng ủy.`,
+    signerTitle: 'T/M BAN THƯỜNG VỤ\nBÍ THƯ',
+    signerName: 'Trần Minh Quân'
+  },
+  danguy_quyetdinh: {
+    standard: 'hd05',
+    governingOrg: 'QUẬN ỦY',
+    issuingOrg: 'ĐẢNG ỦY PHƯỜNG',
+    docNumber: '35-QĐ/ĐU',
+    location: 'Phường',
+    docDate: '2026-11-11',
+    docType: 'QUYẾT ĐỊNH',
+    docSubject: 'Ban hành Quy chế quản lý, khai thác văn bản điện tử và lưu trữ hồ sơ tại Văn phòng Đảng ủy phường',
+    docBody: `Căn cứ Điều lệ Đảng Cộng sản Việt Nam;\n\nCăn cứ Hướng dẫn số 36-HD/VPTW và Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng;\n\nXét đề nghị của Văn phòng Đảng ủy phường,\n\nBAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH\n\nĐiều 1. Ban hành kèm theo Quyết định này Quy chế quản lý, chuẩn hóa thể thức văn bản của Đảng và lưu trữ hồ sơ điện tử tại Đảng bộ phường.\n\nĐiều 2. Văn phòng Đảng ủy, các ban xây dựng Đảng và các chi bộ trực thuộc chịu trách nhiệm thi hành Quyết định này.\n\nĐiều 3. Quyết định này có hiệu lực kể từ ngày ký./.`,
+    recipients: `- Văn phòng Quận ủy (để b/c),\n- Như Điều 2,\n- Các đồng chí Đảng ủy viên,\n- Lưu Văn phòng Đảng ủy.`,
+    signerTitle: 'T/M BAN THƯỜNG VỤ\nBÍ THƯ',
     signerName: 'Trần Minh Quân'
   }
 };
@@ -715,6 +883,8 @@ function loadTemplate(key) {
   preservedUploadedWordHtml = '';
   const tpl = VBTM_TEMPLATES[key];
   if (!tpl) return;
+  const sel = document.getElementById('vbtmTemplateSelect');
+  if (sel && sel.value !== key) sel.value = key;
   document.getElementById('vbtmStandard').value = tpl.standard;
   document.getElementById('vbtmGovOrg').value = tpl.governingOrg;
   document.getElementById('vbtmIssueOrg').value = tpl.issuingOrg;
@@ -743,6 +913,15 @@ function formatVietnameseDate(dateStr, location) {
   const dayStr = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
   const monthStr = (monthNum === 1 || monthNum === 2) ? `0${monthNum}` : `${monthNum}`;
   return `${location || 'Phường'}, ngày ${dayStr} tháng ${monthStr} năm ${year}`;
+}
+
+// Chuẩn hóa cách ghi ngày tháng trong văn bản theo Phụ lục I Nghị định 30/2020/NĐ-CP:
+// Ngày nhỏ hơn 10 và tháng 1, 2 phải thêm số 0 phía trước; tháng 3 đến tháng 12 không có số 0
+function normalizeVietnameseDateExpressions(text) {
+  return String(text || '')
+    .replace(/\bngày\s+([1-9])(?=\s+tháng\b)/gi, 'ngày 0$1')
+    .replace(/\btháng\s+([12])(?=\s+năm\b)/gi, 'tháng 0$1')
+    .replace(/\btháng\s+0([3-9])(?=\s+năm\b)/gi, 'tháng $1');
 }
 
 // Hàm sửa toàn bộ lỗi chính tả (535 cụm từ nhầm lẫn + 7.578 âm tiết Tiếng Việt chuẩn) trên một chuỗi văn bản
@@ -793,8 +972,8 @@ function standardizeAndFixEverything() {
     fixedSpells += fixedSubjObj.fixedCount;
   }
 
-  // 2. Xóa khoảng trắng thừa, chuẩn hóa dấu câu chuẩn Nghị định 30/2020/NĐ-CP
-  text = text
+  // 2. Xóa khoảng trắng thừa, chuẩn hóa dấu câu & cách viết ngày tháng chuẩn Nghị định 30/2020/NĐ-CP
+  text = normalizeVietnameseDateExpressions(text)
     .replace(/[ \t]+/g, ' ')
     .replace(/\s+([,.;:!?])/g, '$1')
     .replace(/([,.;:!?])([^\s\d/.)])/g, '$1 $2')
@@ -818,11 +997,12 @@ function standardizeAndFixEverything() {
   }
   bodyEl.value = result;
 
-  // 4. Đảm bảo có Nơi nhận Lưu: VT
+  // 4. Đảm bảo có Nơi nhận Lưu đúng quy định (NĐ30: "- Lưu: VT,..." | HD36/05: "- Lưu Văn phòng Đảng ủy.")
   const recEl = document.getElementById('vbtmRecipients');
+  const isPartyStd = document.getElementById('vbtmStandard')?.value === 'hd05';
   if (recEl && !/Lưu/i.test(recEl.value)) {
     const cur = recEl.value.trim();
-    recEl.value = (cur ? cur + '\n' : '') + '- Lưu: VT.';
+    recEl.value = (cur ? cur + '\n' : '') + (isPartyStd ? '- Lưu Văn phòng Đảng ủy.' : '- Lưu: VT, VP.');
   }
 
   updateQrCanvas();
@@ -1028,11 +1208,29 @@ function updateQrCanvas() {
   }
 }
 
+function formatBodyParagraphHtml(rawLine) {
+  const line = rawLine.trim();
+  const escaped = escapeHtml(line);
+  if (/^(QUYẾT ĐỊNH|QUYẾT NGHỊ|NGHỊ QUYẾT|BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN PHƯỜNG|HỘI ĐỒNG NHÂN DÂN PHƯỜNG)\s*:?$/i.test(line) ||
+      /^KHÓA\s+[IVX0-9]+/i.test(line)) {
+    return `<p style="text-align:center; text-indent:0; font-weight:bold; margin:6pt 0;">${escaped}</p>`;
+  }
+  if (/^[IVX]+\.\s+/i.test(line)) {
+    return `<p style="text-align:left; text-indent:0; font-weight:bold; margin:6pt 0 4pt 0;">${escaped}</p>`;
+  }
+  const dieuMatch = line.match(/^(Điều\s+\d+\.|Kính gửi\s*:)\s*(.*)$/i);
+  if (dieuMatch) {
+    return `<p style="text-align:justify; text-indent:1.27cm; margin:0 0 6pt 0;"><b>${escapeHtml(dieuMatch[1])}</b> ${escapeHtml(dieuMatch[2])}</p>`;
+  }
+  return `<p style="text-align:justify; text-indent:1.27cm; margin:0 0 6pt 0;">${escaped}</p>`;
+}
+
 function renderA4Preview() {
   const container = document.getElementById('a4PreviewPaper');
   if (!container) return;
 
   const standard = document.getElementById('vbtmStandard').value;
+  const isParty = standard === 'hd05';
   const govOrg = document.getElementById('vbtmGovOrg').value.trim();
   const issueOrg = document.getElementById('vbtmIssueOrg').value.trim();
   const docNum = document.getElementById('vbtmDocNum').value.trim();
@@ -1046,15 +1244,16 @@ function renderA4Preview() {
   const signerName = document.getElementById('vbtmSignerName').value.trim();
   const includeQr = document.getElementById('vbtmIncludeQr')?.checked;
 
-  const rightHeaderTop = standard === 'hd05' ? 'ĐẢNG CỘNG SẢN VIỆT NAM' : 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM';
-  const rightHeaderSub = standard === 'hd05' ? '' : 'Độc lập - Tự do - Hạnh phúc';
-  const numberLabel = `Số: ${docNum}`;
+  const rightHeaderTop = isParty ? 'ĐẢNG CỘNG SẢN VIỆT NAM' : 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM';
+  const rightHeaderSub = isParty ? '' : 'Độc lập - Tự do - Hạnh phúc';
+  const cleanNum = docNum.replace(/^Số\s*:?\s*/i, '');
+  const numberLabel = isParty ? `Số ${cleanNum}` : `Số: ${cleanNum}`;
 
   const dateLine = formatVietnameseDate(docDate, location);
   const paragraphsHtml = docBody
     .split('\n')
     .filter(p => p.trim().length > 0)
-    .map(p => `<p>${escapeHtml(p)}</p>`)
+    .map(p => formatBodyParagraphHtml(p))
     .join('');
 
   const recipientsHtml = recipients
@@ -1064,50 +1263,65 @@ function renderA4Preview() {
     .join('');
 
   const signerTitleHtml = signerTitle
-    .split('\n')
-    .map(s => `<div>${escapeHtml(s)}</div>`)
+    .split(/\n|\s+-\s+/)
+    .filter(s => s.trim().length > 0)
+    .map(s => `<div>${escapeHtml(s.trim())}</div>`)
     .join('');
 
   const qrCanvas = document.getElementById('vbtmQrCanvas');
   const qrDataUrl = (includeQr && qrCanvas) ? qrCanvas.toDataURL('image/png') : '';
 
+  const leftSeparatorHtml = isParty
+    ? `<div style="font-size: 13pt; font-weight: bold; line-height: 1; margin: 2px 0;">*</div>`
+    : `<span class="a4-line-sep" style="width: 38%;"></span>`;
+
+  const congVanSubjectHtml = (!docType && docSubject)
+    ? `<div style="font-size: 12pt; margin-top: 4px; ${isParty ? 'font-style: italic;' : ''}">${escapeHtml(docSubject)}</div>`
+    : '';
+
+  const noiNhanHeaderHtml = isParty
+    ? `<div style="font-size: 12pt; font-style: italic; text-decoration: underline;">Nơi nhận:</div>`
+    : `<div style="font-size: 12pt; font-weight: bold; font-style: italic;">Nơi nhận:</div>`;
+
+  const noiNhanListFontSize = isParty ? '12pt' : '11pt';
+
   container.innerHTML = `
     <table class="a4-header-table">
       <tr>
-        <td style="width: 44%;">
-          ${govOrg ? `<div style="font-size: 12pt; text-transform: uppercase;">${escapeHtml(govOrg)}</div>` : ''}
-          <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">${escapeHtml(issueOrg)}</div>
-          <span class="a4-line-sep" style="width: 38%;"></span>
-          <div style="font-size: 12.5pt; margin-top: 8px;">${escapeHtml(numberLabel)}</div>
-          ${!docType && docSubject ? `<div style="font-size: 11.5pt; margin-top: 4px;">${escapeHtml(docSubject)}</div>` : ''}
+        <td style="width: 44%; text-align: center; vertical-align: top;">
+          ${govOrg ? `<div style="font-size: ${isParty ? '13.5pt' : '12.5pt'}; text-transform: uppercase;">${escapeHtml(govOrg)}</div>` : ''}
+          <div style="font-size: ${isParty ? '13.5pt' : '12.5pt'}; font-weight: bold; text-transform: uppercase;">${escapeHtml(issueOrg)}</div>
+          ${leftSeparatorHtml}
+          <div style="font-size: ${isParty ? '13.5pt' : '13pt'}; margin-top: 6px;">${escapeHtml(numberLabel)}</div>
+          ${congVanSubjectHtml}
         </td>
-        <td style="width: 56%;">
-          <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">${rightHeaderTop}</div>
-          ${rightHeaderSub ? `<div style="font-size: 13pt; font-weight: bold;">${rightHeaderSub}</div>` : ''}
-          <span class="a4-line-sep" style="width: ${standard === 'hd05' ? '55%' : '48%'};"></span>
-          <div style="font-size: 12.5pt; font-style: italic; margin-top: 10px;">${escapeHtml(dateLine)}</div>
+        <td style="width: 56%; text-align: center; vertical-align: top;">
+          <div style="font-size: ${isParty ? '14pt' : '12.5pt'}; font-weight: bold; text-transform: uppercase;">${rightHeaderTop}</div>
+          ${rightHeaderSub ? `<div style="font-size: 13.5pt; font-weight: bold;">${rightHeaderSub}</div>` : ''}
+          <span class="a4-line-sep" style="width: ${isParty ? '58%' : '52%'};"></span>
+          <div style="font-size: 13.5pt; font-style: italic; margin-top: 8px;">${escapeHtml(dateLine)}</div>
         </td>
       </tr>
     </table>
 
-    ${docType ? `<div class="a4-doc-title">${escapeHtml(docType)}</div>` : ''}
-    ${docType && docSubject ? `<div class="a4-doc-subject">${escapeHtml(docSubject)}<span class="a4-line-sep" style="width: 28%; margin-top: 5px;"></span></div>` : ''}
+    ${docType ? `<div class="a4-doc-title" style="font-size: 14pt; font-weight: bold; text-align: center; margin-top: 14pt; margin-bottom: 4pt;">${escapeHtml(docType)}</div>` : ''}
+    ${docType && docSubject ? `<div class="a4-doc-subject" style="font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 14pt;">${escapeHtml(docSubject)}<span class="a4-line-sep" style="width: 32%; margin-top: 5px;"></span></div>` : ''}
 
-    <div class="a4-doc-body">
+    <div class="a4-doc-body" style="margin-top: ${docType ? '4pt' : '12pt'};">
       ${paragraphsHtml}
     </div>
 
-    <table class="a4-footer-table">
+    <table class="a4-footer-table" style="margin-top: 16pt; width: 100%;">
       <tr>
-        <td style="width: 50%; vertical-align: top; text-align: left; font-size: 11pt;">
-          <div style="font-weight: bold; font-style: italic;">Nơi nhận:</div>
-          <div style="line-height: 1.35;">${recipientsHtml}</div>
+        <td style="width: 50%; vertical-align: top; text-align: left; font-size: ${noiNhanListFontSize};">
+          ${noiNhanHeaderHtml}
+          <div style="line-height: 1.35; font-size: ${noiNhanListFontSize};">${recipientsHtml}</div>
           ${qrDataUrl ? `<div style="margin-top: 10px;"><img src="${qrDataUrl}" alt="QR" style="width: 74px; height: 74px; border: 1px solid #ddd; padding: 2px;"/><div style="font-size: 8.5pt; color: #555;">Mã QR xác thực VBTM</div></div>` : ''}
         </td>
         <td style="width: 50%; vertical-align: top; text-align: center;">
-          <div style="font-weight: bold; font-size: 12.5pt; text-transform: uppercase;">${signerTitleHtml}</div>
+          <div style="font-weight: bold; font-size: 13.5pt; text-transform: uppercase; line-height: 1.35;">${signerTitleHtml}</div>
           <div style="height: 68px;"></div>
-          <div style="font-weight: bold; font-size: 13pt;">${escapeHtml(signerName)}</div>
+          <div style="font-weight: bold; font-size: 14pt;">${escapeHtml(signerName)}</div>
         </td>
       </tr>
     </table>
@@ -1125,32 +1339,54 @@ function exportWordDocument() {
     xmlns="http://www.w3.org/TR/REC-html40">
   <head>
     <meta charset="utf-8">
-    <title>Van Ban Chuan Hoa ND30</title>
+    <title>Van Ban Chuan Hoa ND30 & HD36</title>
+    <!--[if gte mso 9]><xml>
+      <w:WordDocument>
+        <w:View>Print</w:View>
+        <w:Zoom>100</w:Zoom>
+        <w:DoNotOptimizeForBrowser/>
+      </w:WordDocument>
+    </xml><![endif]-->
     <style>
       @page Section1 {
         size: 21.0cm 29.7cm;
         margin: 2.0cm 1.5cm 2.0cm 3.0cm;
-        mso-header-margin: 1.2cm;
-        mso-footer-margin: 1.2cm;
+        mso-header-margin: 1.0cm;
+        mso-footer-margin: 1.0cm;
+        mso-title-page: yes;
+        mso-header: h1;
+        mso-first-header: fh1;
       }
       div.Section1 { page: Section1; }
+      p.MsoHeader, li.MsoHeader, div.MsoHeader {
+        margin: 0cm;
+        text-align: center;
+        font-size: 13.0pt;
+        font-family: "Times New Roman", serif;
+      }
       body {
         font-family: "Times New Roman", serif;
         font-size: 14pt;
-        line-height: 1.45;
+        line-height: 1.38;
         color: #000000;
       }
       table { width: 100%; border-collapse: collapse; border: none; }
       td { vertical-align: top; text-align: center; font-family: "Times New Roman", serif; }
       p { margin: 0 0 6pt 0; text-indent: 1.27cm; text-align: justify; font-size: 14pt; }
       .a4-doc-title { text-align: center; font-weight: bold; font-size: 14pt; text-transform: uppercase; margin-top: 16pt; margin-bottom: 4pt; }
-      .a4-doc-subject { text-align: center; font-weight: bold; font-size: 13.5pt; margin-bottom: 14pt; }
+      .a4-doc-subject { text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 14pt; }
       .a4-line-sep { display: block; border-bottom: 1px solid #000; margin: 4px auto; }
     </style>
   </head>
   <body>
     <div class="Section1">
       ${previewEl.innerHTML}
+      <div style="mso-element:header" id="fh1"><p class="MsoHeader">&nbsp;</p></div>
+      <div style="mso-element:header" id="h1">
+        <p class="MsoHeader" align="center" style="text-align:center;font-size:13pt;font-family:'Times New Roman',serif;">
+          <!--[if supportFields]><span style='mso-element:field-begin'></span> PAGE <span style='mso-element:field-separator'></span><![endif]-->2<!--[if supportFields]><span style='mso-element:field-end'></span><![endif]-->
+        </p>
+      </div>
     </div>
   </body>
   </html>`;
