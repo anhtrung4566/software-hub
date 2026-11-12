@@ -1071,8 +1071,8 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
         {
             using (OpenFileDialog ofd = new OpenFileDialog
             {
-                Title = "Chọn tệp văn bản Word (.docx, .doc) hoặc Text (.txt) để chuẩn hóa",
-                Filter = "Word & Text Files (*.docx;*.doc;*.txt)|*.docx;*.doc;*.txt|All Files (*.*)|*.*"
+                Title = "Chọn tệp văn bản Word (.docx, .doc), PDF (.pdf) hoặc Text (.txt) để chuẩn hóa",
+                Filter = "Word, PDF & Text Files (*.docx;*.doc;*.pdf;*.txt)|*.docx;*.doc;*.pdf;*.txt|All Files (*.*)|*.*"
             })
             {
                 if (ofd.ShowDialog() != DialogResult.OK) return;
@@ -1082,7 +1082,37 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
                     string ext = Path.GetExtension(ofd.FileName).ToLowerInvariant();
                     string extractedText = "";
 
-                    if (ext == ".docx")
+                    if (ext == ".pdf")
+                    {
+                        string outTxt = Path.Combine(Path.GetTempPath(), "vbtm_pdf_txt_" + Guid.NewGuid().ToString("N") + ".txt");
+                        string gsExe = @"C:\Program Files\PDF24\gs\bin\gswin64c.exe";
+                        try
+                        {
+                            if (File.Exists(gsExe))
+                            {
+                                ProcessStartInfo gsTxtPsi = new ProcessStartInfo
+                                {
+                                    FileName = gsExe,
+                                    Arguments = string.Format("-dNOPAUSE -dBATCH -dSAFER -q -sDEVICE=txtwrite \"-sOutputFile={0}\" \"{1}\"", outTxt, ofd.FileName),
+                                    UseShellExecute = false,
+                                    CreateNoWindow = true
+                                };
+                                using (Process gp = Process.Start(gsTxtPsi))
+                                {
+                                    gp.WaitForExit(8000);
+                                }
+                                if (File.Exists(outTxt))
+                                {
+                                    extractedText = File.ReadAllText(outTxt, Encoding.UTF8);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            try { if (File.Exists(outTxt)) File.Delete(outTxt); } catch { }
+                        }
+                    }
+                    else if (ext == ".docx")
                     {
                         string tempZip = Path.Combine(Path.GetTempPath(), "vbtm_docx_" + Guid.NewGuid().ToString("N") + ".zip");
                         string tempExtractDir = Path.Combine(Path.GetTempPath(), "vbtm_docx_dir_" + Guid.NewGuid().ToString("N"));
