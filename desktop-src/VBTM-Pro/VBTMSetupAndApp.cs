@@ -981,8 +981,93 @@ namespace VBTMProSuite
             }
         }
 
+        private bool isPreservedPdfMode = false;
+
+        private string BuildLayoutPreservedPdfWordHtml(string rawText)
+        {
+            StringBuilder sb = new StringBuilder();
+            string[] pages = (rawText ?? "").Split('\f');
+            for (int pIdx = 0; pIdx < pages.Length; pIdx++)
+            {
+                string pageContent = pages[pIdx];
+                if (string.IsNullOrWhiteSpace(pageContent)) continue;
+                if (pIdx > 0) sb.Append("<br clear='all' style='page-break-before:always'/>");
+
+                string[] lines = pageContent.Replace("\r\n", "\n").Split('\n');
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string rawLine = lines[i];
+                    if (string.IsNullOrWhiteSpace(rawLine)) continue;
+                    int leadingSpaces = 0;
+                    while (leadingSpaces < rawLine.Length && rawLine[leadingSpaces] == ' ') leadingSpaces++;
+                    string trimmed = rawLine.Trim();
+
+                    Match twoColMatch = Regex.Match(trimmed, @"^(.+?)(?:\t+|\s{5,})(.+)$");
+                    if (twoColMatch.Success)
+                    {
+                        string leftCol = twoColMatch.Groups[1].Value.Trim();
+                        string rightCol = twoColMatch.Groups[2].Value.Trim();
+                        bool isRecipientLeft = Regex.IsMatch(leftCol, @"^(Nơi nhận|-|\+)", RegexOptions.IgnoreCase);
+                        string leftAlign = isRecipientLeft ? "left" : "center";
+                        bool boldLeft = (leftCol == leftCol.ToUpperInvariant() && leftCol != leftCol.ToLowerInvariant()) || leftCol.StartsWith("Nơi nhận", StringComparison.OrdinalIgnoreCase);
+                        bool boldRight = (rightCol == rightCol.ToUpperInvariant() && rightCol != rightCol.ToLowerInvariant()) || rightCol.IndexOf("Độc lập", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                        sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:2pt 0;'><tr>");
+                        sb.AppendFormat("<td style='width:45%;vertical-align:top;border:none;text-align:{0};font-size:13pt;'>{1}</td>",
+                            leftAlign,
+                            boldLeft ? "<b>" + System.Security.SecurityElement.Escape(leftCol) + "</b>" : System.Security.SecurityElement.Escape(leftCol));
+                        sb.AppendFormat("<td style='width:55%;vertical-align:top;border:none;text-align:center;font-size:13pt;'>{0}</td>",
+                            boldRight ? "<b>" + System.Security.SecurityElement.Escape(rightCol) + "</b>" : System.Security.SecurityElement.Escape(rightCol));
+                        sb.Append("</tr></table>");
+                        continue;
+                    }
+
+                    if (leadingSpaces >= 28)
+                    {
+                        bool isBoldRight = (trimmed == trimmed.ToUpperInvariant() && trimmed != trimmed.ToLowerInvariant()) || trimmed.IndexOf("Độc lập", StringComparison.OrdinalIgnoreCase) >= 0;
+                        sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:2pt 0;'><tr>");
+                        sb.Append("<td style='width:45%;border:none;'></td>");
+                        sb.AppendFormat("<td style='width:55%;vertical-align:top;border:none;text-align:center;font-size:13pt;'>{0}</td>",
+                            isBoldRight ? "<b>" + System.Security.SecurityElement.Escape(trimmed) + "</b>" : System.Security.SecurityElement.Escape(trimmed));
+                        sb.Append("</tr></table>");
+                        continue;
+                    }
+
+                    bool isCenteredTitle = (leadingSpaces >= 10 && leadingSpaces < 28 && trimmed.Length < 68) ||
+                        Regex.IsMatch(trimmed, @"^(CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*-\s*Tự do\s*-\s*Hạnh phúc|ĐẢNG CỘNG SẢN VIỆT NAM|BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|QUYẾT ĐỊNH\s*:)$", RegexOptions.IgnoreCase);
+                    if (isCenteredTitle)
+                    {
+                        sb.AppendFormat("<p style='text-align:center;font-weight:bold;margin:4pt 0;font-size:13.5pt;'>{0}</p>",
+                            System.Security.SecurityElement.Escape(trimmed));
+                        continue;
+                    }
+
+                    string indentCss = leadingSpaces >= 2 ? "text-indent:1.27cm;" : "";
+                    sb.AppendFormat("<p style='text-align:justify;{0}margin:0 0 5pt 0;line-height:1.38;font-size:13.5pt;'>{1}</p>",
+                        indentCss,
+                        System.Security.SecurityElement.Escape(trimmed));
+                }
+            }
+            return sb.ToString();
+        }
+
         private void WriteWordDocFile(string filePath)
         {
+            if (isPreservedPdfMode)
+            {
+                string preservedHtml = @"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'>
+<style>
+@page Section1 { size:21.0cm 29.7cm; margin:2.0cm 1.5cm 2.0cm 3.0cm; }
+div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:13.5pt; color:#000; line-height:1.38; }
+table { width:100%; border-collapse:collapse; }
+td, p { font-family:'Times New Roman',serif; }
+</style></head>
+<body><div class='Section1'>" + BuildLayoutPreservedPdfWordHtml(txtBody.Text) + @"</div></body></html>";
+                File.WriteAllText(filePath, preservedHtml, new UTF8Encoding(true));
+                return;
+            }
+
             StringBuilder sbBody = new StringBuilder();
             foreach (string line in txtBody.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
@@ -1154,23 +1239,29 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
                         }
                     }
 
-                    extractedText = Regex.Replace(extractedText ?? "", @"(\r?\n){3,}", "\r\n\r\n").Trim();
-                    if (string.IsNullOrWhiteSpace(extractedText))
+                    if (ext == ".pdf")
                     {
-                        MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp đã chọn!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        if (string.IsNullOrWhiteSpace(extractedText))
+                        {
+                            MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp PDF đã chọn!", "VBTM Pro 4.0 Ultimate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        isPreservedPdfMode = true;
+                        txtBody.Text = extractedText.TrimEnd();
+                        lblStatus.Text = "  ✓ Đã đọc tệp PDF giữ nguyên 100% thể thức và nội dung gốc: " + Path.GetFileName(ofd.FileName);
                         return;
                     }
 
-                    if (extractedText.IndexOf("ĐẢNG CỘNG SẢN VIỆT NAM", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        extractedText.IndexOf("ĐẢNG ỦY", StringComparison.OrdinalIgnoreCase) >= 0)
+                    isPreservedPdfMode = false;
+                    extractedText = Regex.Replace(extractedText ?? "", @"(\r?\n){3,}", "\r\n\r\n").Trim();
+                    if (string.IsNullOrWhiteSpace(extractedText))
                     {
-                        txtGovOrg.Text = "QUẬN ỦY";
-                        txtIssueOrg.Text = "ĐẢNG ỦY PHƯỜNG";
+                        MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp đã chọn!", "VBTM Pro 4.0 Ultimate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
                     }
 
                     txtBody.Text = extractedText;
-                    StandardizeAndFixAll();
-                    lblStatus.Text = "  ✓ Đã đọc và chuẩn hóa tệp: " + Path.GetFileName(ofd.FileName);
+                    lblStatus.Text = "  ✓ Đã đọc tệp giữ nguyên nội dung gốc: " + Path.GetFileName(ofd.FileName);
                 }
                 catch (Exception ex)
                 {
