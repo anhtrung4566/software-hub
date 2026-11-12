@@ -110,14 +110,37 @@
             <span class="win-dot yellow"></span>
             <span class="win-dot green"></span>
           </div>
-          <span style="font-weight: 800; font-size: 1rem;">VBTM Pro 2.2.4 · Chuẩn Hóa Văn Bản Đảng Ủy &amp; UBND Phường (Hỗ Trợ Nạp File .DOCX)</span>
+          <span style="font-weight: 800; font-size: 1rem;">VBTM Pro 2.2.4 · Chuẩn Hóa Văn Bản Đảng Ủy &amp; UBND Phường (Đầy Đủ 16 Mẫu Chuẩn Quy Định)</span>
         </div>
 
-        <div class="studio-tabs">
-          <button type="button" class="studio-tab active" onclick="loadTemplate('ubnd_congvan')">Công Văn UBND Phường</button>
-          <button type="button" class="studio-tab" onclick="loadTemplate('ubnd_baocao')">Báo Cáo UBND Phường</button>
-          <button type="button" class="studio-tab" onclick="loadTemplate('ubnd_quyetdinh')">Quyết Định UBND Phường</button>
-          <button type="button" class="studio-tab" onclick="loadTemplate('danguy_baocao')">Văn Bản Đảng Ủy Phường</button>
+        <div class="studio-tabs" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="studio-tab active" onclick="loadTemplate('ubnd_congvan')">Công Văn UBND</button>
+          <button type="button" class="studio-tab" onclick="loadTemplate('ubnd_baocao')">Báo Cáo UBND</button>
+          <button type="button" class="studio-tab" onclick="loadTemplate('ubnd_quyetdinh')">Quyết Định UBND</button>
+          <button type="button" class="studio-tab" onclick="loadTemplate('ubnd_kehoach')">Kế Hoạch / Tờ Trình</button>
+          <button type="button" class="studio-tab" onclick="loadTemplate('danguy_baocao')">Văn Bản Đảng Ủy</button>
+          <select id="vbtmTemplateSelect" class="glass-select" onchange="loadTemplate(this.value)" style="width: auto; min-width: 225px; padding: 6px 12px; font-size: 0.82rem; border-radius: 999px; height: 34px;">
+            <optgroup label="I. Khối HĐND &amp; UBND Phường (Nghị định 30/2020/NĐ-CP)">
+              <option value="ubnd_congvan">1. Công văn UBND Phường</option>
+              <option value="ubnd_baocao">2. Báo cáo UBND Phường</option>
+              <option value="ubnd_quyetdinh">3. Quyết định (cá biệt) UBND Phường</option>
+              <option value="ubnd_quyetdinh_quyche">4. Quyết định (ban hành Quy chế) UBND</option>
+              <option value="ubnd_kehoach">5. Kế hoạch UBND Phường</option>
+              <option value="ubnd_totrinh">6. Tờ trình UBND Phường</option>
+              <option value="ubnd_thongbao">7. Thông báo UBND Phường</option>
+              <option value="hdnd_nghiquyet">8. Nghị quyết HĐND Phường</option>
+              <option value="ubnd_bienban">9. Biên bản họp UBND Phường</option>
+              <option value="ubnd_giaymoi">10. Giấy mời họp UBND Phường</option>
+            </optgroup>
+            <optgroup label="II. Khối Đảng Ủy &amp; Chi Bộ Phường (Hướng dẫn 36 &amp; 05-HD/VPTW)">
+              <option value="danguy_congvan">11. Công văn Đảng ủy Phường</option>
+              <option value="danguy_baocao">12. Báo cáo Đảng ủy Phường</option>
+              <option value="danguy_nghiquyet">13. Nghị quyết Đảng ủy / Chi bộ Phường</option>
+              <option value="danguy_kehoach">14. Kế hoạch Đảng ủy Phường</option>
+              <option value="danguy_chuongtrinh">15. Chương trình công tác Đảng ủy</option>
+              <option value="danguy_quyetdinh">16. Quyết định của Đảng ủy Phường</option>
+            </optgroup>
+          </select>
         </div>
       </div>
 
@@ -276,7 +299,7 @@
             <li>Trong phần mềm: Bấm <strong>"Mở File Word (.docx / .doc)"</strong> để nạp văn bản cần chuẩn hóa, bấm <strong>"1. Chuẩn Hóa &amp; Sửa Chính Tả AI"</strong>, sau đó bấm <strong>"2. Chuẩn Hóa Word Đang Mở"</strong> hoặc <strong>"3. Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
           </ol>
           <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
-            Mã chuẩn SHA256: <code id="sha256Code">f7a103b1b8d3699b86ec088d1f2d78f6d69646b3f1a1a59b7d1b559ae4a74474</code>
+            Mã chuẩn SHA256: <code id="sha256Code">750121a7eda2f22287d819e6abb52c24349e1fb1f9e1141c6ed66b7e926167c8</code>
           </div>
         </div>
       </div>
