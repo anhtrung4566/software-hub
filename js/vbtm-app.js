@@ -245,6 +245,253 @@ if (window.pdfjsLib) {
   }
 }
 
+let preservedUploadedWordHtml = '';
+let preservedUploadedFileName = '';
+
+function finalizeVbtmSegment(seg) {
+  const text = seg.runs.map(r => r.str).join('');
+  const html = seg.runs.map(r => {
+    let h = escapeHtml(r.str);
+    if (r.isBold) h = `<b>${h}</b>`;
+    if (r.isItalic) h = `<i>${h}</i>`;
+    return h;
+  }).join('');
+  return {
+    x: seg.x,
+    endX: seg.endX,
+    centerX: (seg.x + seg.endX) / 2,
+    fontSize: seg.fontSize,
+    isBold: seg.isBold,
+    isItalic: seg.isItalic,
+    text,
+    html
+  };
+}
+
+function reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport) {
+  const pageW = viewport.width || 595.28;
+  const styles = textContent?.styles || {};
+  const runs = [];
+
+  for (const it of rawItems) {
+    if (!it.str || !it.str.trim()) continue;
+    const tx = it.transform || [12, 0, 0, 12, 0, 0];
+    const x = tx[4] || 0;
+    const y = tx[5] || 0;
+    const rawSize = Math.hypot(tx[0] || 0, tx[1] || 0) || Math.abs(tx[3]) || 13;
+    const fontSize = Math.min(26, Math.max(8.5, Math.round(rawSize * 2) / 2));
+    const w = it.width > 0 ? it.width : (it.str.length * fontSize * 0.48);
+
+    let fontDescriptor = String(it.fontName || '');
+    if (styles[it.fontName]?.fontFamily) fontDescriptor += ' ' + styles[it.fontName].fontFamily;
+    try {
+      if (page && page.commonObjs && page.commonObjs.has(it.fontName)) {
+        const fontObj = page.commonObjs.get(it.fontName);
+        if (fontObj && fontObj.name) fontDescriptor += ' ' + fontObj.name;
+      }
+    } catch (e) {}
+
+    const isBold = /bold|bd|black|heavy|demi|-b\b/i.test(fontDescriptor);
+    const isItalic = /italic|ital|oblique|-i\b/i.test(fontDescriptor) || (Math.abs(tx[2] || 0) > 0.12);
+
+    runs.push({ str: it.str, x, y, w, endX: x + w, fontSize, isBold, isItalic });
+  }
+
+  if (runs.length === 0) return { pageHtml: '', pagePlainText: '' };
+
+  runs.sort((a, b) => (Math.abs(b.y - a.y) > 3.8 ? b.y - a.y : a.x - b.x));
+
+  const rawLines = [];
+  for (const r of runs) {
+    const tol = Math.max(3.8, r.fontSize * 0.34);
+    let matchedLine = null;
+    for (let i = rawLines.length - 1; i >= Math.max(0, rawLines.length - 3); i--) {
+      if (Math.abs(rawLines[i].y - r.y) <= tol) {
+        matchedLine = rawLines[i];
+        break;
+      }
+    }
+    if (matchedLine) {
+      matchedLine.items.push(r);
+      matchedLine.y = (matchedLine.y * (matchedLine.items.length - 1) + r.y) / matchedLine.items.length;
+    } else {
+      rawLines.push({ y: r.y, items: [r] });
+    }
+  }
+  rawLines.sort((a, b) => b.y - a.y);
+
+  let minPageX = pageW;
+  let maxPageX = 0;
+
+  const lines = rawLines.map(lineObj => {
+    const items = lineObj.items.sort((a, b) => a.x - b.x);
+    const segments = [];
+    let curSeg = null;
+    for (const item of items) {
+      if (item.x < minPageX) minPageX = item.x;
+      if (item.endX > maxPageX) maxPageX = item.endX;
+      if (!curSeg) {
+        curSeg = {
+          x: item.x,
+          endX: item.endX,
+          fontSize: item.fontSize,
+          isBold: item.isBold,
+          isItalic: item.isItalic,
+          runs: [{ str: item.str, isBold: item.isBold, isItalic: item.isItalic, fontSize: item.fontSize }]
+        };
+      } else {
+        const gap = item.x - curSeg.endX;
+        if (gap > Math.max(22, item.fontSize * 1.65)) {
+          segments.push(finalizeVbtmSegment(curSeg));
+          curSeg = {
+            x: item.x,
+            endX: item.endX,
+            fontSize: item.fontSize,
+            isBold: item.isBold,
+            isItalic: item.isItalic,
+            runs: [{ str: item.str, isBold: item.isBold, isItalic: item.isItalic, fontSize: item.fontSize }]
+          };
+        } else {
+          const needSpace = gap > 1.1 && !/\s$/.test(curSeg.runs[curSeg.runs.length - 1].str) && !/^\s/.test(item.str);
+          curSeg.runs.push({
+            str: (needSpace ? ' ' : '') + item.str,
+            isBold: item.isBold,
+            isItalic: item.isItalic,
+            fontSize: item.fontSize
+          });
+          curSeg.endX = Math.max(curSeg.endX, item.endX);
+          if (item.fontSize > curSeg.fontSize) curSeg.fontSize = item.fontSize;
+          if (item.isBold) curSeg.isBold = true;
+          if (item.isItalic) curSeg.isItalic = true;
+        }
+      }
+    }
+    if (curSeg) segments.push(finalizeVbtmSegment(curSeg));
+    return {
+      y: lineObj.y,
+      segments,
+      x: segments[0]?.x || 0,
+      endX: segments[segments.length - 1]?.endX || 0,
+      fontSize: segments[0]?.fontSize || 13.5,
+      plainText: segments.map(s => s.text).join('\t')
+    };
+  }).filter(l => l.segments.length > 0);
+
+  if (minPageX > pageW * 0.35) minPageX = 72;
+  if (maxPageX < pageW * 0.65) maxPageX = pageW - 54;
+  const pageCenterX = (minPageX + maxPageX) / 2;
+
+  const classified = lines.map((line, idx) => {
+    const segs = line.segments;
+    if (segs.length === 2 && segs[0].x < pageW * 0.45 && segs[1].x >= pageW * 0.38) {
+      return { type: 'TWO_COL', leftSeg: segs[0], rightSeg: segs[1], line, idx };
+    }
+    if (segs.length >= 3) return { type: 'TABLE_ROW', cells: segs, line, idx };
+    if (segs.length === 1) {
+      const s = segs[0];
+      if (s.x >= pageW * 0.43) return { type: 'TWO_COL', leftSeg: null, rightSeg: s, line, idx };
+      const isNearTopOrBottom = idx <= 7 || idx >= lines.length - 14;
+      if (s.endX <= pageW * 0.47 && isNearTopOrBottom && (/^(Số\s*:|Nơi nhận|-|\+|•)/i.test(s.text.trim()) || idx <= 5)) {
+        return { type: 'TWO_COL', leftSeg: s, rightSeg: null, line, idx };
+      }
+      const isCenteredCoords = (Math.abs(s.centerX - pageCenterX) <= 44 || Math.abs(s.centerX - pageW / 2) <= 44) && s.x > minPageX + 20 && s.endX < maxPageX - 20;
+      const isDocHeadingTitle = /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|CÔNG VĂN|QUYẾT ĐỊNH\s*:)$/i.test(s.text.trim());
+      if (isCenteredCoords || isDocHeadingTitle) return { type: 'CENTER', seg: s, line, idx };
+      return { type: 'BODY', seg: s, line, idx };
+    }
+    return { type: 'TABLE_ROW', cells: segs, line, idx };
+  });
+
+  const htmlBlocks = [];
+  let i = 0;
+  while (i < classified.length) {
+    const item = classified[i];
+    if (item.type === 'TWO_COL') {
+      const leftLines = [];
+      const rightLines = [];
+      const startIdx = i;
+      while (i < classified.length && classified[i].type === 'TWO_COL') {
+        if (classified[i].leftSeg) leftLines.push(classified[i].leftSeg);
+        if (classified[i].rightSeg) rightLines.push(classified[i].rightSeg);
+        i++;
+      }
+      const isHeaderZone = startIdx <= 5;
+      const isRecipientLeft = leftLines.some(s => /^(Nơi nhận|-|\+)/i.test(s.text.trim()));
+      const leftAlign = (isHeaderZone && !isRecipientLeft) ? 'center' : (isRecipientLeft ? 'left' : 'center');
+      const leftHtml = leftLines.map(s => `<div style="font-size:${s.fontSize}pt; margin:1.5pt 0; line-height:1.3;">${s.html}</div>`).join('');
+      const rightHtml = rightLines.map(s => `<div style="font-size:${s.fontSize}pt; margin:1.5pt 0; line-height:1.3;">${s.html}</div>`).join('');
+      htmlBlocks.push(`
+        <table style="width:100%; border-collapse:collapse; border:none; margin:4pt 0;">
+          <tr>
+            <td style="width:45%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:${leftAlign};">${leftHtml}</td>
+            <td style="width:55%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${rightHtml}</td>
+          </tr>
+        </table>
+      `);
+      continue;
+    }
+    if (item.type === 'TABLE_ROW') {
+      const tableRows = [];
+      while (i < classified.length && classified[i].type === 'TABLE_ROW') {
+        tableRows.push(classified[i].cells);
+        i++;
+      }
+      const maxCols = Math.max(...tableRows.map(r => r.length));
+      const trsHtml = tableRows.map(row => {
+        const tds = Array.from({ length: maxCols }, (_, cIdx) => {
+          const cell = row[cIdx];
+          return `<td style="border:1px solid #000; padding:4pt 6pt; vertical-align:top; font-size:${cell ? cell.fontSize : 12}pt;">${cell ? cell.html : ''}</td>`;
+        }).join('');
+        return `<tr>${tds}</tr>`;
+      }).join('');
+      htmlBlocks.push(`<table style="width:100%; border-collapse:collapse; margin:6pt 0;"><tbody>${trsHtml}</tbody></table>`);
+      continue;
+    }
+    if (item.type === 'CENTER') {
+      const s = item.seg;
+      htmlBlocks.push(`<p style="text-align:center; text-indent:0; margin:3pt 0; line-height:1.35; font-size:${s.fontSize}pt;">${s.html}</p>`);
+      i++;
+      continue;
+    }
+    if (item.type === 'BODY') {
+      const firstSeg = item.seg;
+      const isIndented = firstSeg.x > minPageX + 12;
+      let mergedHtml = firstSeg.html;
+      let prevLine = item.line;
+      let prevSeg = firstSeg;
+      i++;
+      while (i < classified.length && classified[i].type === 'BODY') {
+        const nextItem = classified[i];
+        const nextSeg = nextItem.seg;
+        const nextLine = nextItem.line;
+        const verticalGap = prevLine.y - nextLine.y;
+        const prevReachedRightMargin = prevSeg.endX >= maxPageX - 52;
+        const prevEndedSentenceStop = /[:;]$|\.\s*\/\.\s*$/.test(prevSeg.text.trim());
+        const nextIsIndented = nextSeg.x > minPageX + 12;
+        const nextStartsNewItem = /^([-+•]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Căn cứ\s+|Nơi nhận)/i.test(nextSeg.text.trim());
+        const normalLineSpacing = verticalGap > 0 && verticalGap <= prevSeg.fontSize * 1.85;
+        if (prevReachedRightMargin && !prevEndedSentenceStop && !nextIsIndented && !nextStartsNewItem && normalLineSpacing) {
+          mergedHtml += ' ' + nextSeg.html;
+          prevLine = nextLine;
+          prevSeg = nextSeg;
+          i++;
+        } else {
+          break;
+        }
+      }
+      const indentStyle = isIndented ? 'text-indent: 1.27cm;' : 'text-indent: 0;';
+      htmlBlocks.push(`<p style="text-align:justify; ${indentStyle} margin:0 0 5pt 0; line-height:1.38; font-size:${firstSeg.fontSize}pt;">${mergedHtml}</p>`);
+      continue;
+    }
+    i++;
+  }
+
+  return {
+    pageHtml: htmlBlocks.join('\n'),
+    pagePlainText: lines.map(l => l.plainText).join('\n')
+  };
+}
+
 async function extractTextFromPdfInVbtm(file) {
   if (!window.pdfjsLib) {
     throw new Error('Thư viện đọc PDF đang tải, vui lòng thử lại.');
@@ -264,48 +511,27 @@ async function extractTextFromPdfInVbtm(file) {
     }).promise;
   }
 
+  const allPagesHtml = [];
   const allPagesText = [];
   for (let p = 1; p <= pdfDoc.numPages; p++) {
     const page = await pdfDoc.getPage(p);
+    const viewport1x = page.getViewport({ scale: 1.0 });
+    const viewportRender = page.getViewport({ scale: 2.0 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewportRender.width;
+    canvas.height = viewportRender.height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport: viewportRender }).promise;
+
     const textContent = await page.getTextContent();
-    const items = (textContent?.items || []).filter(it => (it.str || '').trim().length > 0);
-    if (items.length > 0) {
-      const mapped = items.map(it => ({
-        str: it.str,
-        x: it.transform ? it.transform[4] : 0,
-        y: it.transform ? it.transform[5] : 0
-      }));
-      mapped.sort((a, b) => {
-        if (Math.abs(b.y - a.y) > 4.5) return b.y - a.y;
-        return a.x - b.x;
-      });
-      const lines = [];
-      let curLine = [];
-      let curY = null;
-      mapped.forEach(item => {
-        if (curY === null || Math.abs(item.y - curY) <= 4.5) {
-          curLine.push(item);
-          if (curY === null) curY = item.y;
-        } else {
-          lines.push(curLine.sort((a, b) => a.x - b.x).map(i => i.str.trim()).join(' '));
-          curLine = [item];
-          curY = item.y;
-        }
-      });
-      if (curLine.length > 0) {
-        lines.push(curLine.sort((a, b) => a.x - b.x).map(i => i.str.trim()).join(' '));
-      }
-      allPagesText.push(lines.join('\n'));
+    const rawItems = (textContent?.items || []).filter(it => typeof it.str === 'string' && it.str.length > 0);
+    if (rawItems.filter(it => it.str.trim().length > 0).length >= 2) {
+      const { pageHtml, pagePlainText } = reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport1x);
+      allPagesHtml.push(pageHtml);
+      allPagesText.push(pagePlainText);
     } else {
-      // Nếu là trang PDF scan ảnh, tự động render trang ra ảnh và gọi AI Neural OCR Tiếng Việt
-      const viewport = page.getViewport({ scale: 2.0 });
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      await page.render({ canvasContext: ctx, viewport }).promise;
       const b64 = canvas.toDataURL('image/jpeg', 0.92);
       const fd = new FormData();
       fd.append('apikey', 'helloworld');
@@ -316,10 +542,13 @@ async function extractTextFromPdfInVbtm(file) {
       const resp = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: fd });
       const json = await resp.json();
       if (json?.ParsedResults?.[0]?.ParsedText) {
-        allPagesText.push(json.ParsedResults[0].ParsedText.trim());
+        const ocrTxt = json.ParsedResults[0].ParsedText.trim();
+        allPagesText.push(ocrTxt);
+        allPagesHtml.push(ocrTxt.split('\n').filter(Boolean).map(l => `<p style="text-align:justify; text-indent:1.27cm; margin:0 0 5pt 0;">${escapeHtml(l)}</p>`).join('\n'));
       }
     }
   }
+  preservedUploadedWordHtml = allPagesHtml.map((h, i) => i === 0 ? h : `<div style="page-break-before:always; margin-top:16pt;">${h}</div>`).join('\n');
   return allPagesText.join('\n\n');
 }
 
@@ -334,13 +563,38 @@ function setupWordFileUpload() {
       const isPdf = ext === 'pdf' || file.type === 'application/pdf';
       let rawText = '';
 
+      preservedUploadedWordHtml = '';
+      preservedUploadedFileName = file.name.replace(/\.[^.]+$/, '');
+
       if (isPdf) {
-        if (window.showToast) window.showToast(`Đang đọc tệp PDF "${file.name}" để chuẩn hóa thể thức...`);
+        if (window.showToast) window.showToast(`Đang đọc tệp PDF "${file.name}" giữ nguyên 100% thể thức gốc...`);
         rawText = await extractTextFromPdfInVbtm(file);
+        const previewEl = document.getElementById('a4PreviewPaper');
+        if (previewEl && preservedUploadedWordHtml) {
+          previewEl.innerHTML = preservedUploadedWordHtml;
+        }
+        document.getElementById('vbtmDocBody').value = rawText;
+        runSpellAndFormatCheck();
+        if (window.showToast) {
+          window.showToast(`Đã tải tệp PDF "${file.name}" giữ nguyên 100% thể thức và nội dung gốc! Bấm "Xuất File Word" để tải về.`);
+        }
+        return;
       } else if (ext === 'docx' && window.mammoth) {
         const arrayBuffer = await file.arrayBuffer();
-        const result = await window.mammoth.extractRawText({ arrayBuffer });
-        rawText = result.value || '';
+        const htmlResult = await window.mammoth.convertToHtml({ arrayBuffer });
+        const textResult = await window.mammoth.extractRawText({ arrayBuffer });
+        rawText = textResult.value || '';
+        preservedUploadedWordHtml = htmlResult.value || '';
+        const previewEl = document.getElementById('a4PreviewPaper');
+        if (previewEl && preservedUploadedWordHtml) {
+          previewEl.innerHTML = preservedUploadedWordHtml;
+        }
+        document.getElementById('vbtmDocBody').value = rawText;
+        runSpellAndFormatCheck();
+        if (window.showToast) {
+          window.showToast(`Đã nạp tệp Word "${file.name}" giữ nguyên thể thức gốc!`);
+        }
+        return;
       } else {
         const textContent = await file.text();
         if (/<html|<body|<p|<div|<w:/i.test(textContent)) {
@@ -458,6 +712,7 @@ function parseUploadedDocumentAndStandardize(rawText, fileName) {
 }
 
 function loadTemplate(key) {
+  preservedUploadedWordHtml = '';
   const tpl = VBTM_TEMPLATES[key];
   if (!tpl) return;
   document.getElementById('vbtmStandard').value = tpl.standard;
@@ -863,7 +1118,7 @@ function exportWordDocument() {
   const previewEl = document.getElementById('a4PreviewPaper');
   if (!previewEl) return;
 
-  const docNum = (document.getElementById('vbtmDocNum')?.value || 'VanBan').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const docNum = preservedUploadedFileName || (document.getElementById('vbtmDocNum')?.value || 'VanBan').replace(/[^a-zA-Z0-9_-]/g, '_');
 
   const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
     xmlns:w="urn:schemas-microsoft-com:office:word"
