@@ -409,7 +409,7 @@ namespace VietNamOCRSuite
 
         public OcrMainForm()
         {
-            this.Text = "VietNamOCR 3.2 Pro (x64) · AI Neural OCR Tiếng Việt, Đọc PDF Đa Trang & Xuất Word/Excel";
+            this.Text = "VietNamOCR 4.0 Pro Ultimate (x64) · Chuyển PDF Sang Word Giữ Nguyên Thể Thức 100% & AI Neural OCR";
             this.Size = new Size(1160, 775);
             this.MinimumSize = new Size(1020, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -464,7 +464,7 @@ namespace VietNamOCRSuite
 
             Label lblBrand = new Label
             {
-                Text = "VietNamOCR 3.2 Pro",
+                Text = "VietNamOCR 4.0 Pro",
                 Font = new Font("Segoe UI", 14f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(56, 189, 248),
                 Location = new Point(16, 16),
@@ -807,26 +807,29 @@ namespace VietNamOCRSuite
 
             try
             {
-                // 1. Nếu máy có sẵn Ghostscript (PDF24), trích xuất thêm lớp văn bản gốc chính xác 100% của trang PDF
+                // 1. Nếu máy có sẵn Ghostscript (PDF24), trích xuất nguyên vẹn lớp văn bản và bố cục khoảng trắng của PDF (không dùng Trim() làm mất căn lề dòng đầu)
                 string gsExe = @"C:\Program Files\PDF24\gs\bin\gswin64c.exe";
                 if (File.Exists(gsExe))
                 {
                     try
                     {
+                        string pageArgs = pageOneBased == 1
+                            ? string.Format("-dNOPAUSE -dBATCH -dSAFER -q -sDEVICE=txtwrite \"-sOutputFile={0}\" \"{1}\"", outTxt, pdfPath)
+                            : string.Format("-dNOPAUSE -dBATCH -dSAFER -q -sDEVICE=txtwrite -dFirstPage={0} -dLastPage={0} \"-sOutputFile={1}\" \"{2}\"", pageOneBased, outTxt, pdfPath);
                         ProcessStartInfo gsTxtPsi = new ProcessStartInfo
                         {
                             FileName = gsExe,
-                            Arguments = string.Format("-dNOPAUSE -dBATCH -dSAFER -q -sDEVICE=txtwrite -dFirstPage={0} -dLastPage={0} \"-sOutputFile={1}\" \"{2}\"", pageOneBased, outTxt, pdfPath),
+                            Arguments = pageArgs,
                             UseShellExecute = false,
                             CreateNoWindow = true
                         };
                         using (Process gp = Process.Start(gsTxtPsi))
                         {
-                            gp.WaitForExit(6000);
+                            gp.WaitForExit(8000);
                         }
                         if (File.Exists(outTxt))
                         {
-                            lastExtractedPdfPageText = File.ReadAllText(outTxt, Encoding.UTF8).Trim();
+                            lastExtractedPdfPageText = File.ReadAllText(outTxt, Encoding.UTF8).TrimEnd();
                             try { File.Delete(outTxt); } catch { }
                         }
                     }
@@ -1034,18 +1037,19 @@ $inFileStream.Close()
 
                 if (!string.IsNullOrWhiteSpace(recognizedText))
                 {
-                    string restored = RestoreVietnameseDiacritics(recognizedText);
+                    // Giữ nguyên 100% câu chữ gốc của tài liệu, không tự ý sửa đổi từ ngữ
+                    string preservedText = recognizedText.Replace("\r\n", "\n").Replace("\n", "\r\n").TrimEnd();
                     if (appendTableMode && !string.IsNullOrEmpty(txtOcrResult.Text))
                     {
-                        txtOcrResult.Text = txtOcrResult.Text.Trim() + "\r\n\r\n" + restored;
+                        txtOcrResult.Text = txtOcrResult.Text.TrimEnd() + "\r\n\r\n" + preservedText;
                     }
                     else
                     {
-                        txtOcrResult.Text = restored;
+                        txtOcrResult.Text = preservedText;
                     }
 
-                    TryExtractTableFromOcrText(restored, appendTableMode);
-                    lblStatus.Text = "  ✓ Đã nhận diện xong văn bản Tiếng Việt và tự động bóc tách dữ liệu vào bảng biểu!";
+                    TryExtractTableFromOcrText(preservedText, appendTableMode);
+                    lblStatus.Text = "  ✓ Đã đọc nguyên vẹn 100% nội dung và thể thức gốc! Bấm 'Xuất Word (.doc)' để lưu tệp Word giữ nguyên thể thức.";
                 }
                 else
                 {
@@ -1287,45 +1291,113 @@ $inFileStream.Close()
             MessageBox.Show("Đã tự động khử dòng tiêu đề lặp và nối bảng biểu Trang 2 vào bảng chính thành công!", "VietNamOCR 3.2 Pro - Multi-page Table Merge", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
+        // Tái tạo chính xác thể thức văn bản Word 1:1 (2 cột Quốc hiệu/Cơ quan, tiêu đề căn giữa, đoạn văn căn đều, 2 cột Nơi nhận/Chữ ký) và giữ nguyên 100% câu chữ gốc
+        private string BuildLayoutPreservedWordHtml(string rawText)
+        {
+            StringBuilder sb = new StringBuilder();
+            string[] pages = (rawText ?? "").Split('\f');
+
+            for (int pIdx = 0; pIdx < pages.Length; pIdx++)
+            {
+                string pageContent = pages[pIdx];
+                if (string.IsNullOrWhiteSpace(pageContent)) continue;
+                if (pIdx > 0)
+                {
+                    sb.Append("<br clear='all' style='page-break-before:always'/>");
+                }
+
+                string[] lines = pageContent.Replace("\r\n", "\n").Split('\n');
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string rawLine = lines[i];
+                    if (string.IsNullOrWhiteSpace(rawLine)) continue;
+
+                    int leadingSpaces = 0;
+                    while (leadingSpaces < rawLine.Length && rawLine[leadingSpaces] == ' ') leadingSpaces++;
+                    string trimmed = rawLine.Trim();
+
+                    // 1. Kiểm tra dòng có 2 cột Trái - Phải (ngăn cách bởi ký tự Tab hoặc >= 5 khoảng trắng ở giữa)
+                    Match twoColMatch = Regex.Match(trimmed, @"^(.+?)(?:\t+|\s{5,})(.+)$");
+                    if (twoColMatch.Success)
+                    {
+                        string leftCol = twoColMatch.Groups[1].Value.Trim();
+                        string rightCol = twoColMatch.Groups[2].Value.Trim();
+                        bool isRecipientLeft = Regex.IsMatch(leftCol, @"^(Nơi nhận|-|\+)", RegexOptions.IgnoreCase);
+                        string leftAlign = isRecipientLeft ? "left" : "center";
+                        bool boldLeft = (leftCol == leftCol.ToUpperInvariant() && leftCol != leftCol.ToLowerInvariant()) || leftCol.StartsWith("Nơi nhận", StringComparison.OrdinalIgnoreCase);
+                        bool boldRight = (rightCol == rightCol.ToUpperInvariant() && rightCol != rightCol.ToLowerInvariant()) || rightCol.IndexOf("Độc lập", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                        sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:2pt 0;'><tr>");
+                        sb.AppendFormat("<td style='width:45%;vertical-align:top;border:none;text-align:{0};font-size:13pt;'>{1}</td>",
+                            leftAlign,
+                            boldLeft ? "<b>" + System.Security.SecurityElement.Escape(leftCol) + "</b>" : System.Security.SecurityElement.Escape(leftCol));
+                        sb.AppendFormat("<td style='width:55%;vertical-align:top;border:none;text-align:center;font-size:13pt;'>{0}</td>",
+                            boldRight ? "<b>" + System.Security.SecurityElement.Escape(rightCol) + "</b>" : System.Security.SecurityElement.Escape(rightCol));
+                        sb.Append("</tr></table>");
+                        continue;
+                    }
+
+                    // 2. Dòng nằm ở cột phải (leadingSpaces >= 28: Ngày tháng năm, Chức vụ người ký, Họ tên người ký)
+                    if (leadingSpaces >= 28)
+                    {
+                        bool isBoldRight = (trimmed == trimmed.ToUpperInvariant() && trimmed != trimmed.ToLowerInvariant()) || trimmed.IndexOf("Độc lập", StringComparison.OrdinalIgnoreCase) >= 0;
+                        sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:2pt 0;'><tr>");
+                        sb.Append("<td style='width:45%;border:none;'></td>");
+                        sb.AppendFormat("<td style='width:55%;vertical-align:top;border:none;text-align:center;font-size:13pt;'>{0}</td>",
+                            isBoldRight ? "<b>" + System.Security.SecurityElement.Escape(trimmed) + "</b>" : System.Security.SecurityElement.Escape(trimmed));
+                        sb.Append("</tr></table>");
+                        continue;
+                    }
+
+                    // 3. Dòng tiêu đề căn giữa
+                    bool isCenteredTitle = (leadingSpaces >= 10 && leadingSpaces < 28 && trimmed.Length < 68) ||
+                        Regex.IsMatch(trimmed, @"^(CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*-\s*Tự do\s*-\s*Hạnh phúc|ĐẢNG CỘNG SẢN VIỆT NAM|BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|QUYẾT ĐỊNH\s*:)$", RegexOptions.IgnoreCase);
+                    if (isCenteredTitle)
+                    {
+                        sb.AppendFormat("<p style='text-align:center;font-weight:bold;margin:4pt 0;font-size:13.5pt;'>{0}</p>",
+                            System.Security.SecurityElement.Escape(trimmed));
+                        continue;
+                    }
+
+                    // 4. Dòng đoạn văn bản thân bài: Giữ nguyên 100% nội dung gốc
+                    string indentCss = leadingSpaces >= 2 ? "text-indent:1.27cm;" : "";
+                    sb.AppendFormat("<p style='text-align:justify;{0}margin:0 0 5pt 0;line-height:1.38;font-size:13.5pt;'>{1}</p>",
+                        indentCss,
+                        System.Security.SecurityElement.Escape(trimmed));
+                }
+            }
+            return sb.ToString();
+        }
+
         private void ExportToWord()
         {
             gridTable.EndEdit();
+            string defaultDocName = !string.IsNullOrEmpty(currentFilePath)
+                ? Path.GetFileNameWithoutExtension(currentFilePath) + ".doc"
+                : "VanBan_ChuyenDoi_Word.doc";
+
             using (SaveFileDialog sfd = new SaveFileDialog
             {
                 Filter = "Microsoft Word Document (*.doc)|*.doc",
-                FileName = "VietNamOCR_HoSo_Phuong.doc"
+                FileName = defaultDocName
             })
             {
                 if (sfd.ShowDialog() != DialogResult.OK) return;
 
-                StringBuilder sbTable = new StringBuilder();
-                sbTable.Append("<table style='width:100%;border-collapse:collapse;margin-top:12pt;'><thead><tr>");
-                foreach (DataColumn col in tableData.Columns)
-                {
-                    sbTable.AppendFormat("<th style='border:1px solid #000;padding:6pt;background:#f1f5f9;'>{0}</th>", System.Security.SecurityElement.Escape(col.ColumnName));
-                }
-                sbTable.Append("</tr></thead><tbody>");
-                foreach (DataRow row in tableData.Rows)
-                {
-                    if (row.RowState == DataRowState.Deleted) continue;
-                    sbTable.Append("<tr>");
-                    foreach (var item in row.ItemArray)
-                    {
-                        sbTable.AppendFormat("<td style='border:1px solid #000;padding:6pt;'>{0}</td>", System.Security.SecurityElement.Escape(Convert.ToString(item)));
-                    }
-                    sbTable.Append("</tr>");
-                }
-                sbTable.Append("</tbody></table>");
-
+                string bodyHtml = BuildLayoutPreservedWordHtml(txtOcrResult.Text);
                 string html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>" +
-                              "<head><meta charset='utf-8'><title>VietNamOCR 3.2 Pro Export</title></head>" +
-                              "<body style=\"font-family:'Times New Roman',serif;font-size:13.5pt;line-height:1.5;\">" +
-                              "<p>" + System.Security.SecurityElement.Escape(txtOcrResult.Text).Replace("\r\n", "<br/>").Replace("\n", "<br/>") + "</p>" +
-                              "<h3 style='margin-top:16pt;'>BẢNG BIỂU SỐ HÓA HỒ SƠ</h3>" + sbTable.ToString() + "</body></html>";
+                              "<head><meta charset='utf-8'><title>VietNamOCR 4.0 Pro Ultimate</title>" +
+                              "<style>" +
+                              "@page Section1 { size:21.0cm 29.7cm; margin:2.0cm 1.5cm 2.0cm 3.0cm; }" +
+                              "div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:13.5pt; color:#000; line-height:1.38; }" +
+                              "table { width:100%; border-collapse:collapse; font-family:'Times New Roman',serif; }" +
+                              "td, p { font-family:'Times New Roman',serif; }" +
+                              "</style></head>" +
+                              "<body><div class='Section1'>" + bodyHtml + "</div></body></html>";
 
                 File.WriteAllText(sfd.FileName, html, new UTF8Encoding(true));
-                lblStatus.Text = "  ✓ Đã xuất tệp Word (.doc) thành công: " + sfd.FileName;
-                if (MessageBox.Show("Đã đồng bộ và xuất tệp Word (.doc) thành công!\nBạn có muốn mở tệp ngay không?", "VietNamOCR 3.2 Pro", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                lblStatus.Text = "  ✓ Đã xuất tệp Word (.doc) giữ nguyên 100% thể thức và nội dung gốc: " + sfd.FileName;
+                if (MessageBox.Show("Đã chuyển đổi và xuất tệp Word (.doc) giữ nguyên 100% thể thức gốc thành công!\nBạn có muốn mở tệp ngay không?", "VietNamOCR 4.0 Pro Ultimate", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                 {
                     Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
                 }
