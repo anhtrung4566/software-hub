@@ -415,43 +415,83 @@ namespace VBTMProSuite
 
         private static readonly string[,] SpellRules = new string[,]
         {
-            { @"\bbổ xung\b", "bổ sung", "Sai phụ âm x/s ('bổ sung')" },
-            { @"\bsử lý\b", "xử lý", "Sai phụ âm s/x ('xử lý')" },
-            { @"\bxử dụng\b", "sử dụng", "Sai phụ âm x/s ('sử dụng')" },
-            { @"\bchính sác\b", "chính xác", "Sai phụ âm s/x ('chính xác')" },
-            { @"\bkiểm xoát\b", "kiểm soát", "Sai phụ âm x/s ('kiểm soát')" },
-            { @"\bchiển khai\b", "triển khai", "Sai phụ âm ch/tr ('triển khai')" },
-            { @"\bchủ chương\b", "chủ trương", "Sai phụ âm ch/tr ('chủ trương')" },
-            { @"\bkế hoạc\b", "kế hoạch", "Thiếu âm cuối ('kế hoạch')" },
-            { @"\bngiêm túc\b", "nghiêm túc", "Sai quy tắc ng/ngh ('nghiêm túc')" },
-            { @"\bhổ trợ\b", "hỗ trợ", "Sai dấu hỏi/ngã ('hỗ trợ')" },
-            { @"\btiêu chuẫn\b", "tiêu chuẩn", "Sai dấu hỏi/ngã ('tiêu chuẩn')" },
-            { @"\bkhẩn chương\b", "khẩn trương", "Sai phụ âm ch/tr ('khẩn trương')" },
-            { @"\bsát nhập\b", "sáp nhập", "Từ chuẩn hành chính ('sáp nhập')" },
-            { @"\bxáng suốt\b", "sáng suốt", "Sai phụ âm x/s ('sáng suốt')" },
-            { @"\bgiử gìn\b", "giữ gìn", "Sai dấu hỏi/ngã ('giữ gìn')" },
-            { @"\bvửng chắc\b", "vững chắc", "Sai dấu hỏi/ngã ('vững chắc')" },
-            { @"\bchặc chẽ\b", "chặt chẽ", "Sai âm cuối c/t ('chặt chẽ')" },
-            { @"\bsâu xát\b", "sâu sát", "Sai phụ âm x/s ('sâu sát')" },
-            { @"\bquan chọng\b", "quan trọng", "Sai phụ âm ch/tr ('quan trọng')" },
-            { @"\bchách nhiệm\b", "trách nhiệm", "Sai phụ âm ch/tr ('trách nhiệm')" },
-            { @"\btrực chách\b", "trực trách", "Sai phụ âm ch/tr ('trực trách')" },
-            { @"\bphát chiển\b", "phát triển", "Sai phụ âm ch/tr ('phát triển')" },
-            { @"\btập chung\b", "tập trung", "Sai phụ âm ch/tr ('tập trung')" },
-            { @"\btuyên chuyền\b", "tuyên truyền", "Sai phụ âm ch/tr ('tuyên truyền')" },
-            { @"\brà xoát\b", "rà soát", "Sai phụ âm x/s ('rà soát')" },
-            { @"\bxắp xếp\b", "sắp xếp", "Sai phụ âm x/s ('sắp xếp')" },
-            { @"\bsắp sếp\b", "sắp xếp", "Sai phụ âm s/x ('sắp xếp')" },
-            { @"\bsuất sắc\b", "xuất sắc", "Sai phụ âm s/x ('xuất sắc')" },
-            { @"\bsản suất\b", "sản xuất", "Sai phụ âm s/x ('sản xuất')" },
-            { @"\bngân xách\b", "ngân sách", "Sai phụ âm x/s ('ngân sách')" },
-            { @"\bdanh xách\b", "danh sách", "Sai phụ âm x/s ('danh sách')" },
-            { @"\bchính xách\b", "chính sách", "Sai phụ âm x/s ('chính sách')" },
-            { @"\bkỷ thuật\b", "kỹ thuật", "Sai dấu hỏi/ngã ('kỹ thuật')" },
-            { @"\blỉnh vực\b", "lĩnh vực", "Sai dấu hỏi/ngã ('lĩnh vực')" },
-            { @"\bmẩu mực\b", "mẫu mực", "Sai dấu hỏi/ngã ('mẫu mực')" },
-            { @"\bhướng dẩn\b", "hướng dẫn", "Sai dấu hỏi/ngã ('hướng dẫn')" }
+            { "bổ xung", "bổ sung", "Sai phụ âm x/s ('bổ sung')" },
+            { "sử lý", "xử lý", "Sai phụ âm s/x ('xử lý')" },
+            { "xử dụng", "sử dụng", "Sai phụ âm x/s ('sử dụng')" },
+            { "chính sác", "chính xác", "Sai phụ âm s/x ('chính xác')" },
+            { "kiểm xoát", "kiểm soát", "Sai phụ âm x/s ('kiểm soát')" },
+            { "rà xoát", "rà soát", "Sai phụ âm x/s ('rà soát')" },
+            { "chiển khai", "triển khai", "Sai phụ âm ch/tr ('triển khai')" },
+            { "chủ chương", "chủ trương", "Sai phụ âm ch/tr ('chủ trương')" },
+            { "khẩn chương", "khẩn trương", "Sai phụ âm ch/tr ('khẩn trương')" },
+            { "kế hoạc", "kế hoạch", "Thiếu âm cuối ('kế hoạch')" },
+            { "ngiêm túc", "nghiêm túc", "Sai quy tắc ng/ngh ('nghiêm túc')" },
+            { "ngành ngề", "ngành nghề", "Sai quy tắc ng/ngh ('ngành nghề')" },
+            { "hổ trợ", "hỗ trợ", "Sai dấu hỏi/ngã ('hỗ trợ')" },
+            { "tiêu chuẫn", "tiêu chuẩn", "Sai dấu hỏi/ngã ('tiêu chuẩn')" },
+            { "chuẫn hóa", "chuẩn hóa", "Sai dấu hỏi/ngã ('chuẩn hóa')" },
+            { "chuẫn bị", "chuẩn bị", "Sai dấu hỏi/ngã ('chuẩn bị')" },
+            { "sát nhập", "sáp nhập", "Từ chuẩn hành chính ('sáp nhập')" },
+            { "xác nhập", "sáp nhập", "Từ chuẩn hành chính ('sáp nhập')" },
+            { "xáng suốt", "sáng suốt", "Sai phụ âm x/s ('sáng suốt')" },
+            { "sáng xuốt", "sáng suốt", "Sai phụ âm x/s ('sáng suốt')" },
+            { "giử gìn", "giữ gìn", "Sai dấu hỏi/ngã ('giữ gìn')" },
+            { "vửng chắc", "vững chắc", "Sai dấu hỏi/ngã ('vững chắc')" },
+            { "chặc chẽ", "chặt chẽ", "Sai âm cuối c/t ('chặt chẽ')" },
+            { "chặt chẻ", "chặt chẽ", "Sai dấu hỏi/ngã ('chặt chẽ')" },
+            { "sâu xát", "sâu sát", "Sai phụ âm x/s ('sâu sát')" },
+            { "quan chọng", "quan trọng", "Sai phụ âm ch/tr ('quan trọng')" },
+            { "chách nhiệm", "trách nhiệm", "Sai phụ âm ch/tr ('trách nhiệm')" },
+            { "trực chách", "trực trách", "Sai phụ âm ch/tr ('trực trách')" },
+            { "phát chiển", "phát triển", "Sai phụ âm ch/tr ('phát triển')" },
+            { "tập chung", "tập trung", "Sai phụ âm ch/tr ('tập trung')" },
+            { "tuyên chuyền", "tuyên truyền", "Sai phụ âm ch/tr ('tuyên truyền')" },
+            { "xắp xếp", "sắp xếp", "Sai phụ âm x/s ('sắp xếp')" },
+            { "sắp sếp", "sắp xếp", "Sai phụ âm s/x ('sắp xếp')" },
+            { "suất sắc", "xuất sắc", "Sai phụ âm s/x ('xuất sắc')" },
+            { "sản suất", "sản xuất", "Sai phụ âm s/x ('sản xuất')" },
+            { "năng xuất", "năng suất", "Sai phụ âm x/s ('năng suất')" },
+            { "đề suất", "đề xuất", "Sai phụ âm s/x ('đề xuất')" },
+            { "sơ xuất", "sơ suất", "Sai phụ âm x/s ('sơ suất')" },
+            { "ngân xách", "ngân sách", "Sai phụ âm x/s ('ngân sách')" },
+            { "danh xách", "danh sách", "Sai phụ âm x/s ('danh sách')" },
+            { "chính xách", "chính sách", "Sai phụ âm x/s ('chính sách')" },
+            { "kỷ thuật", "kỹ thuật", "Sai dấu hỏi/ngã ('kỹ thuật')" },
+            { "lỉnh vực", "lĩnh vực", "Sai dấu hỏi/ngã ('lĩnh vực')" },
+            { "mẩu mực", "mẫu mực", "Sai dấu hỏi/ngã ('mẫu mực')" },
+            { "hướng dẩn", "hướng dẫn", "Sai dấu hỏi/ngã ('hướng dẫn')" },
+            { "tỏ chức", "tổ chức", "Sai dấu hỏi/ổ ('tổ chức')" },
+            { "chuẩn đoán", "chẩn đoán", "Từ chuẩn xác là 'chẩn đoán'" },
+            { "thăm quan", "tham quan", "Từ chuẩn xác là 'tham quan'" },
+            { "vô hình chung", "vô hình trung", "Từ chuẩn xác là 'vô hình trung'" },
+            { "tựu chung", "tựu trung", "Từ chuẩn xác là 'tựu trung'" },
+            { "thẩm quyển", "thẩm quyền", "Sai dấu hỏi/huyền ('thẩm quyền')" },
+            { "chuyển đỗi", "chuyển đổi", "Sai dấu hỏi/ngã ('chuyển đổi')" },
+            { "sẳn sàng", "sẵn sàng", "Sai dấu hỏi/ngã ('sẵn sàng')" },
+            { "hoản", "hoãn", "Sai dấu hỏi/ngã ('hoãn')" },
+            { "triễn", "triển", "Sai dấu hỏi/ngã ('triển')" },
+            { "đươc", "được", "Thiếu dấu nặng ('được')" },
+            { "quyêt", "quyết", "Thiếu dấu sắc ('quyết')" },
+            { "duyêt", "duyệt", "Thiếu dấu nặng ('duyệt')" },
+            { "ngị quyết", "nghị quyết", "Sai quy tắc ng/ngh ('nghị quyết')" },
+            { "ngị định", "nghị định", "Sai quy tắc ng/ngh ('nghị định')" },
+            { "ngiên cứu", "nghiên cứu", "Sai quy tắc ng/ngh ('nghiên cứu')" }
         };
+
+        private static string CreateUnicodeWordRegex(string phrase)
+        {
+            return @"(?<!\w)" + Regex.Escape(phrase.Trim()) + @"(?!\w)";
+        }
+
+        private static string ApplyCasePattern(string matched, string replacement)
+        {
+            if (string.IsNullOrEmpty(matched) || string.IsNullOrEmpty(replacement)) return replacement;
+            if (matched == matched.ToUpper() && matched != matched.ToLower())
+                return replacement.ToUpper();
+            if (char.IsUpper(matched[0]))
+                return char.ToUpper(replacement[0]) + replacement.Substring(1);
+            return replacement;
+        }
 
         public MainStudioForm()
         {
@@ -765,19 +805,24 @@ namespace VBTMProSuite
         private void ScanIssuesOnly()
         {
             lstIssues.Items.Clear();
-            string content = txtBody.Text;
+            string content = txtBody.Text + " " + txtSubject.Text;
             for (int i = 0; i < SpellRules.GetLength(0); i++)
             {
-                if (Regex.IsMatch(content, SpellRules[i, 0], RegexOptions.IgnoreCase))
+                string pat = CreateUnicodeWordRegex(SpellRules[i, 0]);
+                if (Regex.IsMatch(content, pat, RegexOptions.IgnoreCase))
                 {
-                    lstIssues.Items.Add("[Chính tả AI] " + SpellRules[i, 2] + " -> '" + SpellRules[i, 1] + "'");
+                    lstIssues.Items.Add("[Chính tả AI] Phát hiện '" + SpellRules[i, 0] + "' -> Chuẩn: '" + SpellRules[i, 1] + "' (" + SpellRules[i, 2] + ")");
                 }
             }
-            if (Regex.IsMatch(content, @"\s+[,.;:!?]"))
+            if (Regex.IsMatch(content, @"(?<!\w)ng[ieêìíỉĩịèéẻẽẹềếểễệ]", RegexOptions.IgnoreCase))
+            {
+                lstIssues.Items.Add("[Ngữ âm AI] Phát hiện lỗi quy tắc ng/ngh đứng trước nguyên âm i, e, ê");
+            }
+            if (Regex.IsMatch(txtBody.Text, @"\s+[,.;:!?]"))
             {
                 lstIssues.Items.Add("[Thể thức NĐ30] Có khoảng trắng thừa trước dấu câu (, . ; : ! ?)");
             }
-            if (!content.Trim().EndsWith("./."))
+            if (!txtBody.Text.Trim().EndsWith("./."))
             {
                 lstIssues.Items.Add("[Thể thức NĐ30] Cuối văn bản thiếu ký hiệu kết thúc './.'");
             }
@@ -787,33 +832,55 @@ namespace VBTMProSuite
             }
         }
 
-        private void StandardizeAndFixAll()
+        private string FixAllVietnameseSpellingAndPunctuation(string rawInput, out int fixedCount)
         {
-            string raw = txtBody.Text;
-            int fixedCount = 0;
+            string raw = rawInput ?? "";
+            int count = 0;
             for (int i = 0; i < SpellRules.GetLength(0); i++)
             {
-                var matches = Regex.Matches(raw, SpellRules[i, 0], RegexOptions.IgnoreCase);
-                if (matches.Count > 0)
+                string pat = CreateUnicodeWordRegex(SpellRules[i, 0]);
+                string right = SpellRules[i, 1];
+                raw = Regex.Replace(raw, pat, m =>
                 {
-                    fixedCount += matches.Count;
-                    raw = Regex.Replace(raw, SpellRules[i, 0], SpellRules[i, 1], RegexOptions.IgnoreCase);
-                }
+                    count++;
+                    return ApplyCasePattern(m.Value, right);
+                }, RegexOptions.IgnoreCase);
             }
+
+            // Sửa quy tắc ngữ âm ng -> ngh trước i, e, ê
+            raw = Regex.Replace(raw, @"(?<!\w)(ng)([ieêìíỉĩịèéẻẽẹềếểễệ]\w*)", m =>
+            {
+                count++;
+                string prefix = char.IsUpper(m.Groups[1].Value[0]) ? "Ngh" : "ngh";
+                return prefix + m.Groups[2].Value;
+            }, RegexOptions.IgnoreCase);
 
             raw = Regex.Replace(raw, @"[ \t]+", " ");
             raw = Regex.Replace(raw, @"\s+([,.;:!?])", "$1");
-            raw = Regex.Replace(raw, @"([,.;:!?])([^\s\d/])", "$1 $2");
-            raw = raw.Trim();
+            raw = Regex.Replace(raw, @"([,.;:!?])([^\s\d/.)])", "$1 $2");
+            fixedCount = count;
+            return raw.Trim();
+        }
+
+        private void StandardizeAndFixAll()
+        {
+            int bodyFixed = 0, subjFixed = 0;
+            string raw = FixAllVietnameseSpellingAndPunctuation(txtBody.Text, out bodyFixed);
             if (raw.Length > 0 && !raw.EndsWith("./."))
             {
                 raw = raw.TrimEnd('.') + "./.";
             }
-
             txtBody.Text = raw;
+
+            if (txtSubject != null && !string.IsNullOrEmpty(txtSubject.Text))
+            {
+                txtSubject.Text = FixAllVietnameseSpellingAndPunctuation(txtSubject.Text, out subjFixed).TrimEnd('.');
+            }
+
+            int totalFixed = bodyFixed + subjFixed;
             ScanIssuesOnly();
-            lblStatus.Text = "  ✓ Đã chuẩn hóa thể thức Đảng ủy / UBND phường & tự động sửa " + fixedCount + " lỗi chính tả tiếng Việt!";
-            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ký hiệu kết thúc và tự động sửa " + fixedCount + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            lblStatus.Text = "  ✓ Đã chuẩn hóa thể thức Đảng ủy / UBND phường & tự động sửa " + totalFixed + " lỗi chính tả tiếng Việt!";
+            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ký hiệu kết thúc và tự động sửa " + totalFixed + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void FormatActiveWordDocument()
@@ -865,10 +932,44 @@ namespace VBTMProSuite
                 font.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, font, new object[] { "Times New Roman" });
                 font.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, font, new object[] { 14f });
 
+                // Đọc nội dung từ Word, tự động sửa toàn bộ lỗi chính tả & dấu câu trực tiếp trên từng đoạn văn của Word
+                int fixedInWord = 0;
+                try
+                {
+                    object paragraphs = doc.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, doc, null);
+                    int pCount = (int)paragraphs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, paragraphs, null);
+                    StringBuilder sbAll = new StringBuilder();
+                    for (int pIdx = 1; pIdx <= pCount; pIdx++)
+                    {
+                        object para = paragraphs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paragraphs, new object[] { pIdx });
+                        object pRange = para.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, para, null);
+                        string pText = Convert.ToString(pRange.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, pRange, null));
+                        if (!string.IsNullOrWhiteSpace(pText))
+                        {
+                            string cleanP = pText.TrimEnd('\r', '\a', '\n');
+                            int pFixed = 0;
+                            string fixedP = FixAllVietnameseSpellingAndPunctuation(cleanP, out pFixed);
+                            if (pFixed > 0 || fixedP != cleanP)
+                            {
+                                fixedInWord += pFixed;
+                                pRange.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, pRange, new object[] { fixedP + "\r" });
+                            }
+                            sbAll.AppendLine(fixedP);
+                        }
+                    }
+                    if (sbAll.Length > 0)
+                    {
+                        txtBody.Text = sbAll.ToString().Trim();
+                        ScanIssuesOnly();
+                    }
+                }
+                catch { }
+
                 MessageBox.Show(
                     "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo quy chuẩn Đảng ủy & UBND Phường:\n\n" +
                     "• Khổ giấy A4, Lề Trái 30mm - Phải 15mm - Trên 20mm - Dưới 20mm\n" +
-                    "• Phông chữ chuẩn: Times New Roman 14pt!",
+                    "• Phông chữ chuẩn: Times New Roman 14pt\n" +
+                    "• Tự động sửa " + fixedInWord + " lỗi chính tả & dấu câu trực tiếp trong Word!",
                     "VBTM Pro 2.2.4 - Word Automation",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
