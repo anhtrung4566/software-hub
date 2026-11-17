@@ -570,7 +570,7 @@ function buildRegulationFooterTableHtml(leftSegs, rightSegs, isParty) {
   // Theo Hướng dẫn 05-HD/VPTW: Từ "Nơi nhận:" cỡ chữ 14pt, kiểu chữ đứng, có gạch chân dưới từ "Nơi nhận", sau có dấu hai chấm (:)
   const noiNhanHeaderHtml = hasNoiNhanLabel
     ? (isParty
-        ? `<div style="font-size:14pt; font-style:normal; font-weight:normal; margin-bottom:2pt;"><span style="text-decoration:underline;">Nơi nhận</span>:</div>`
+        ? `<div style="font-size:14pt; font-style:normal; font-weight:normal; margin-bottom:2pt;"><u>Nơi nhận</u>:</div>`
         : `<div style="font-size:12pt; font-weight:bold; font-style:italic; margin-bottom:2pt;">Nơi nhận:</div>`)
     : '';
 
@@ -1654,7 +1654,7 @@ function renderA4Preview() {
   // Theo Hướng dẫn 05-HD/VPTW: Từ "Nơi nhận:" cỡ chữ 14pt, kiểu chữ đứng, có gạch chân dưới từ "Nơi nhận", sau có dấu hai chấm (:)
   // Theo Nghị định 30/2020/NĐ-CP: Từ "Nơi nhận:" cỡ chữ 12pt, in nghiêng, đậm
   const noiNhanHeaderHtml = isParty
-    ? `<div style="font-size: 14pt; font-style: normal; font-weight: normal;"><span style="text-decoration: underline;">Nơi nhận</span>:</div>`
+    ? `<div style="font-size: 14pt; font-style: normal; font-weight: normal;"><u>Nơi nhận</u>:</div>`
     : `<div style="font-size: 12pt; font-weight: bold; font-style: italic;">Nơi nhận:</div>`;
 
   const noiNhanListFontSize = isParty ? '12pt' : '11pt';
