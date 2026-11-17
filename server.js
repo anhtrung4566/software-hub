@@ -64,6 +64,8 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -104,8 +106,21 @@ const server = http.createServer((req, res) => {
     }
     if (req.method === 'POST') {
       let body = '';
-      req.on('data', chunk => { body += chunk; });
+      let tooLarge = false;
+      const MAX_BODY_SIZE = 2 * 1024 * 1024;
+      req.on('data', chunk => {
+        body += chunk;
+        if (body.length > MAX_BODY_SIZE) {
+          tooLarge = true;
+          req.destroy();
+        }
+      });
       req.on('end', () => {
+        if (tooLarge) {
+          res.writeHead(413, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ status: 'error', message: 'Payload too large' }));
+          return;
+        }
         try {
           const parsed = JSON.parse(body);
           if (Array.isArray(parsed)) {
@@ -122,10 +137,17 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  let filePath = path.join(ROOT_DIR, pathname === '/' ? 'index.html' : pathname);
-  if (!filePath.startsWith(ROOT_DIR)) {
-    res.writeHead(403);
-    res.end('Forbidden');
+  const rawPathname = req.url.split('?')[0];
+  if (rawPathname.includes('..') || pathname.includes('..') || pathname.includes('\0')) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('403 Forbidden');
+    return;
+  }
+
+  let filePath = path.resolve(ROOT_DIR, '.' + (pathname === '/' ? '/index.html' : pathname));
+  if (!filePath.startsWith(ROOT_DIR + path.sep) && filePath !== ROOT_DIR) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('403 Forbidden');
     return;
   }
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
@@ -143,6 +165,10 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(filePath).pipe(res);
 });
 
-server.listen(PORT, () => {
-  console.log(`Siêu App Văn Phòng Server running at http://localhost:${PORT}/`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`Siêu App Văn Phòng Server running at http://localhost:${PORT}/`);
+  });
+}
+
+module.exports = { server };
