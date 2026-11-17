@@ -478,7 +478,7 @@ function buildOcrFooterTableHtml(leftSegs, rightSegs, isParty) {
 
   const noiNhanHeaderHtml = hasNoiNhanLabel
     ? (isParty
-        ? `<div style="font-size:14pt; font-style:normal; font-weight:normal; margin-bottom:2pt;"><span style="text-decoration:underline;">Nơi nhận</span>:</div>`
+        ? `<div style="font-size:14pt; font-style:normal; font-weight:normal; margin-bottom:2pt;"><u>Nơi nhận</u>:</div>`
         : `<div style="font-size:12pt; font-weight:bold; font-style:italic; margin-bottom:2pt;">Nơi nhận:</div>`)
     : '';
 
