@@ -103,12 +103,12 @@ namespace VietNamOCRSuite
 
         public OcrSetupForm()
         {
-            this.Text = "Trình Cài Đặt VietNamOCR 3.2 Pro (x64 Setup)";
+            this.Text = "★ Trình Cài Đặt VietNamOCR 3.2 Pro (x64 Setup · Đảng Ủy & UBND Phường)";
             this.Size = new Size(650, 450);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(15, 23, 42);
+            this.BackColor = Color.FromArgb(95, 10, 14);
             this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5f);
 
@@ -121,23 +121,23 @@ namespace VietNamOCRSuite
             {
                 Dock = DockStyle.Top,
                 Height = 90,
-                BackColor = Color.FromArgb(30, 27, 75)
+                BackColor = Color.FromArgb(145, 18, 24)
             };
 
             Label lblTitle = new Label
             {
-                Text = "VietNamOCR 3.2 Pro (x64) · AI Neural OCR Tiếng Việt",
-                Font = new Font("Segoe UI", 15f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(56, 189, 248),
+                Text = "★ VietNamOCR 3.2 Pro (x64) · Chuyển PDF Sang Word & OCR Tiếng Việt",
+                Font = new Font("Segoe UI", 14f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(250, 204, 21),
                 AutoSize = true,
                 Location = new Point(22, 16)
             };
 
             Label lblSub = new Label
             {
-                Text = "Nhận diện chữ Tiếng Việt từ Ảnh & PDF nhiều trang thực tế, tự động bóc tách bảng biểu Word/Excel",
-                Font = new Font("Segoe UI", 9.2f),
-                ForeColor = Color.FromArgb(203, 213, 225),
+                Text = "Nhận diện chữ Tiếng Việt từ Ảnh & PDF nhiều trang, chuẩn thể thức Hướng dẫn 05-HD/VPTW & Nghị định 30",
+                Font = new Font("Segoe UI", 9.0f),
+                ForeColor = Color.FromArgb(254, 240, 138),
                 AutoSize = true,
                 Location = new Point(24, 50)
             };
@@ -156,7 +156,7 @@ namespace VietNamOCRSuite
                 Text = "Thư mục cài đặt (Không yêu cầu quyền Administrator):",
                 Location = new Point(24, 110),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(148, 163, 184)
+                ForeColor = Color.FromArgb(253, 224, 71)
             };
             this.Controls.Add(lblDir);
 
@@ -165,8 +165,8 @@ namespace VietNamOCRSuite
                 Text = defaultDir,
                 Location = new Point(24, 134),
                 Size = new Size(478, 28),
-                BackColor = Color.FromArgb(30, 41, 59),
-                ForeColor = Color.White,
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.FromArgb(254, 240, 138),
                 BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Consolas", 9.5f)
             };
@@ -177,7 +177,7 @@ namespace VietNamOCRSuite
                 Text = "Chọn...",
                 Location = new Point(512, 132),
                 Size = new Size(92, 28),
-                BackColor = Color.FromArgb(51, 65, 85),
+                BackColor = Color.FromArgb(185, 28, 28),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand
@@ -207,16 +207,16 @@ namespace VietNamOCRSuite
             {
                 Location = new Point(24, 212),
                 Size = new Size(580, 84),
-                BackColor = Color.FromArgb(22, 32, 50)
+                BackColor = Color.FromArgb(69, 10, 10)
             };
             Label lblInfo = new Label
             {
                 Text = "• Tích hợp AI Neural OCR Tiếng Việt (Engine 2) + Đọc trực tiếp tệp PDF nhiều trang (Windows.Data.Pdf)\r\n" +
-                       "• Tự động nhận diện dấu thanh Tiếng Việt, bóc tách & nối bảng biểu qua nhiều trang\r\n" +
+                       "• Tự động nối dòng đoạn văn & chuẩn hóa thể thức Hướng dẫn 05-HD/VPTW và Nghị định 30/2020/NĐ-CP\r\n" +
                        "• Đồng bộ chỉnh sửa trực tiếp vào tệp xuất Microsoft Word (.doc) & Excel (.xls)",
                 Location = new Point(12, 10),
                 Size = new Size(555, 64),
-                ForeColor = Color.FromArgb(148, 163, 184)
+                ForeColor = Color.FromArgb(254, 249, 195)
             };
             infoBox.Controls.Add(lblInfo);
             this.Controls.Add(infoBox);
@@ -226,7 +226,7 @@ namespace VietNamOCRSuite
                 Text = "Sẵn sàng cài đặt. Nhấn 'Cài Đặt Ngay' để bắt đầu.",
                 Location = new Point(24, 308),
                 AutoSize = true,
-                ForeColor = Color.FromArgb(56, 189, 248)
+                ForeColor = Color.FromArgb(250, 204, 21)
             };
             this.Controls.Add(lblStatus);
 
@@ -240,11 +240,11 @@ namespace VietNamOCRSuite
 
             btnInstall = new Button
             {
-                Text = "Cài Đặt Ngay",
+                Text = "★ Cài Đặt Ngay",
                 Location = new Point(434, 358),
                 Size = new Size(170, 36),
-                BackColor = Color.FromArgb(79, 70, 229),
-                ForeColor = Color.White,
+                BackColor = Color.FromArgb(234, 179, 8),
+                ForeColor = Color.FromArgb(69, 10, 10),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 10f, FontStyle.Bold),
                 Cursor = Cursors.Hand
@@ -454,29 +454,30 @@ namespace VietNamOCRSuite
 
         private void BuildMainUI()
         {
+            this.BackColor = Color.FromArgb(95, 10, 14);
             Panel topBar = new Panel
             {
                 Dock = DockStyle.Top,
                 Height = 64,
-                BackColor = Color.FromArgb(30, 27, 75),
+                BackColor = Color.FromArgb(145, 18, 24),
                 Padding = new Padding(16, 10, 16, 10)
             };
 
             Label lblBrand = new Label
             {
-                Text = "VietNamOCR 4.0 Pro",
-                Font = new Font("Segoe UI", 14f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(56, 189, 248),
-                Location = new Point(16, 16),
+                Text = "★ VietNamOCR 3.2 Pro",
+                Font = new Font("Segoe UI", 13.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(250, 204, 21),
+                Location = new Point(12, 16),
                 AutoSize = true
             };
             topBar.Controls.Add(lblBrand);
 
-            Button btnOpen = CreateBtn("📂 Chọn Ảnh / PDF", new Point(220, 14), new Size(155, 36), Color.FromArgb(79, 70, 229));
+            Button btnOpen = CreateBtn("📂 Chọn Ảnh / PDF", new Point(220, 14), new Size(155, 36), Color.FromArgb(185, 28, 28));
             btnOpen.Click += BtnOpen_Click;
             topBar.Controls.Add(btnOpen);
 
-            Button btnRotate = CreateBtn("↻ Xoay 90°", new Point(382, 14), new Size(108, 36), Color.FromArgb(51, 65, 85));
+            Button btnRotate = CreateBtn("↻ Xoay 90°", new Point(382, 14), new Size(108, 36), Color.FromArgb(153, 27, 27));
             btnRotate.Click += (s, e) =>
             {
                 if (picDoc.Image != null)
@@ -489,19 +490,20 @@ namespace VietNamOCRSuite
             };
             topBar.Controls.Add(btnRotate);
 
-            Button btnRunOcr = CreateBtn("⚡ Nhận Diện Tiếng Việt (OCR)", new Point(498, 14), new Size(218, 36), Color.FromArgb(2, 132, 199));
+            Button btnRunOcr = CreateBtn("⚡ Nhận Diện Tiếng Việt (OCR)", new Point(498, 14), new Size(218, 36), Color.FromArgb(202, 138, 4));
             btnRunOcr.Click += (s, e) => RunVietnameseOcr(false);
             topBar.Controls.Add(btnRunOcr);
 
-            Button btnMergePage = CreateBtn("+ OCR & Nối Bảng Tiếp", new Point(724, 14), new Size(172, 36), Color.FromArgb(14, 165, 233));
+            Button btnMergePage = CreateBtn("+ OCR & Nối Bảng Tiếp", new Point(724, 14), new Size(172, 36), Color.FromArgb(185, 28, 28));
             btnMergePage.Click += (s, e) => MergeNextPageTable();
             topBar.Controls.Add(btnMergePage);
 
-            Button btnWord = CreateBtn("Xuất Word (.doc)", new Point(904, 14), new Size(110, 36), Color.FromArgb(5, 150, 105));
+            Button btnWord = CreateBtn("Xuất Word (.doc)", new Point(904, 14), new Size(110, 36), Color.FromArgb(234, 179, 8));
+            btnWord.ForeColor = Color.FromArgb(69, 10, 10);
             btnWord.Click += (s, e) => ExportToWord();
             topBar.Controls.Add(btnWord);
 
-            Button btnExcel = CreateBtn("Xuất Excel (.xls)", new Point(1020, 14), new Size(110, 36), Color.FromArgb(16, 185, 129));
+            Button btnExcel = CreateBtn("Xuất Excel (.xls)", new Point(1020, 14), new Size(110, 36), Color.FromArgb(185, 28, 28));
             btnExcel.Click += (s, e) => ExportToExcel();
             topBar.Controls.Add(btnExcel);
 
@@ -509,16 +511,17 @@ namespace VietNamOCRSuite
             {
                 Dock = DockStyle.Bottom,
                 Height = 28,
-                Text = "  Trạng thái: Sẵn sàng nhận diện chữ Tiếng Việt (AI Neural OCR + Đọc PDF Đa Trang) | Đồng bộ trực tiếp sang Word & Excel",
-                BackColor = Color.FromArgb(30, 27, 75),
-                ForeColor = Color.FromArgb(148, 163, 184),
+                Text = "  ★ Trạng thái: Sẵn sàng nhận diện chữ Tiếng Việt & chuyển PDF sang Word chuẩn Hướng dẫn 05-HD/VPTW & Nghị định 30",
+                BackColor = Color.FromArgb(135, 15, 20),
+                ForeColor = Color.FromArgb(250, 204, 21),
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
             Panel mainArea = new Panel
             {
                 Dock = DockStyle.Fill,
-                AutoScroll = true
+                AutoScroll = true,
+                BackColor = Color.FromArgb(95, 10, 14)
             };
 
             this.Controls.Add(mainArea);
@@ -528,7 +531,7 @@ namespace VietNamOCRSuite
             GroupBox grpImg = new GroupBox
             {
                 Text = " 1. Hình Ảnh / Trang PDF Thực Tế (Hỗ trợ Ctrl+V dán ảnh chụp màn hình) ",
-                ForeColor = Color.FromArgb(56, 189, 248),
+                ForeColor = Color.FromArgb(250, 204, 21),
                 Location = new Point(16, 12),
                 Size = new Size(495, 622)
             };
@@ -537,13 +540,13 @@ namespace VietNamOCRSuite
             {
                 Location = new Point(14, 28),
                 Size = new Size(467, 505),
-                BackColor = Color.FromArgb(9, 13, 22),
+                BackColor = Color.FromArgb(45, 5, 8),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle
             };
             grpImg.Controls.Add(picDoc);
 
-            btnPrevPdf = CreateBtn("◀ Trang trước", new Point(14, 540), new Size(120, 30), Color.FromArgb(51, 65, 85));
+            btnPrevPdf = CreateBtn("◀ Trang trước", new Point(14, 540), new Size(120, 30), Color.FromArgb(153, 27, 27));
             btnPrevPdf.Enabled = false;
             btnPrevPdf.Click += (s, e) => ChangePdfPage(-1);
             grpImg.Controls.Add(btnPrevPdf);
@@ -554,25 +557,25 @@ namespace VietNamOCRSuite
                 Location = new Point(142, 546),
                 Size = new Size(210, 22),
                 TextAlign = ContentAlignment.MiddleCenter,
-                ForeColor = Color.FromArgb(56, 189, 248),
+                ForeColor = Color.FromArgb(250, 204, 21),
                 Font = new Font("Segoe UI", 9f, FontStyle.Bold)
             };
             grpImg.Controls.Add(lblPdfPage);
 
-            btnNextPdf = CreateBtn("Trang sau ▶", new Point(361, 540), new Size(120, 30), Color.FromArgb(51, 65, 85));
+            btnNextPdf = CreateBtn("Trang sau ▶", new Point(361, 540), new Size(120, 30), Color.FromArgb(153, 27, 27));
             btnNextPdf.Enabled = false;
             btnNextPdf.Click += (s, e) => ChangePdfPage(1);
             grpImg.Controls.Add(btnNextPdf);
 
-            Button btnSample1 = CreateBtn("Hồ Sơ Phường Mẫu", new Point(14, 578), new Size(148, 34), Color.FromArgb(51, 65, 85));
+            Button btnSample1 = CreateBtn("Hồ Sơ Phường Mẫu", new Point(14, 578), new Size(148, 34), Color.FromArgb(153, 27, 27));
             btnSample1.Click += (s, e) => LoadSampleDocumentImage(1);
             grpImg.Controls.Add(btnSample1);
 
-            Button btnEnhance = CreateBtn("Làm Rõ Chữ Scan Mờ", new Point(170, 578), new Size(155, 34), Color.FromArgb(30, 64, 175));
+            Button btnEnhance = CreateBtn("Làm Rõ Chữ Scan Mờ", new Point(170, 578), new Size(155, 34), Color.FromArgb(202, 138, 4));
             btnEnhance.Click += (s, e) => EnhanceScannedImage();
             grpImg.Controls.Add(btnEnhance);
 
-            Button btnPaste = CreateBtn("Dán Ảnh (Ctrl+V)", new Point(333, 578), new Size(148, 34), Color.FromArgb(51, 65, 85));
+            Button btnPaste = CreateBtn("Dán Ảnh (Ctrl+V)", new Point(333, 578), new Size(148, 34), Color.FromArgb(153, 27, 27));
             btnPaste.Click += (s, e) =>
             {
                 if (Clipboard.ContainsImage())
@@ -598,7 +601,7 @@ namespace VietNamOCRSuite
             GroupBox grpText = new GroupBox
             {
                 Text = " 2. Văn Bản Tiếng Việt Nhận Diện (Chỉnh sửa & đồng bộ trực tiếp vào Word) ",
-                ForeColor = Color.FromArgb(56, 189, 248),
+                ForeColor = Color.FromArgb(250, 204, 21),
                 Location = new Point(525, 12),
                 Size = new Size(598, 275)
             };
@@ -619,7 +622,7 @@ namespace VietNamOCRSuite
             GroupBox grpGrid = new GroupBox
             {
                 Text = " 3. Bảng Biểu Bóc Tách & Nối Đa Trang (Chỉnh sửa trực tiếp đồng bộ sang Word & Excel) ",
-                ForeColor = Color.FromArgb(56, 189, 248),
+                ForeColor = Color.FromArgb(250, 204, 21),
                 Location = new Point(525, 298),
                 Size = new Size(598, 336)
             };
@@ -1291,79 +1294,301 @@ $inFileStream.Close()
             MessageBox.Show("Đã tự động khử dòng tiêu đề lặp và nối bảng biểu Trang 2 vào bảng chính thành công!", "VietNamOCR 3.2 Pro - Multi-page Table Merge", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        // Tái tạo chính xác thể thức văn bản Word 1:1 (2 cột Quốc hiệu/Cơ quan, tiêu đề căn giữa, đoạn văn căn đều, 2 cột Nơi nhận/Chữ ký) và giữ nguyên 100% câu chữ gốc
+        private static bool DetectIsPartyDocInOcrText(string text)
+        {
+            string u = (text ?? "").ToUpperInvariant();
+            return u.Contains("ĐẢNG CỘNG SẢN VIỆT NAM") ||
+                   u.Contains("ĐẢNG ỦY") ||
+                   u.Contains("ĐẢNG BỘ") ||
+                   u.Contains("QUẬN ỦY") ||
+                   u.Contains("HUYỆN ỦY") ||
+                   u.Contains("THÀNH ỦY") ||
+                   u.Contains("TỈNH ỦY") ||
+                   u.Contains("CHI BỘ") ||
+                   u.Contains("BAN THƯỜNG VỤ") ||
+                   u.Contains("BAN CHẤP HÀNH") ||
+                   u.Contains("VPTW") ||
+                   Regex.IsMatch(u, @"\bSỐ\s*:?\s*\d+\s*-\s*[A-ZĐ]+\/(ĐU|CB|QU|HU|TU|TW)\b") ||
+                   Regex.IsMatch(u, @"(-|\/)(ĐU|CB)\b");
+        }
+
+        // Tái tạo chính xác thể thức văn bản Word 1:1 chuẩn Hướng dẫn 05-HD/VPTW & Nghị định 30/2020/NĐ-CP
         private string BuildLayoutPreservedWordHtml(string rawText)
         {
             StringBuilder sb = new StringBuilder();
+            bool isPartyDoc = DetectIsPartyDocInOcrText(rawText);
             string[] pages = (rawText ?? "").Split('\f');
 
             for (int pIdx = 0; pIdx < pages.Length; pIdx++)
             {
                 string pageContent = pages[pIdx];
                 if (string.IsNullOrWhiteSpace(pageContent)) continue;
-                if (pIdx > 0)
-                {
-                    sb.Append("<br clear='all' style='page-break-before:always'/>");
-                }
+                if (pIdx > 0) sb.Append("<br clear='all' style='page-break-before:always'/>");
 
-                string[] lines = pageContent.Replace("\r\n", "\n").Split('\n');
-                for (int i = 0; i < lines.Length; i++)
+                string[] rawLines = pageContent.Replace("\r\n", "\n").Split('\n');
+                List<string> lines = new List<string>();
+                foreach (string rl in rawLines)
+                {
+                    if (!string.IsNullOrWhiteSpace(rl)) lines.Add(rl);
+                }
+                if (lines.Count == 0) continue;
+
+                List<string> headerLeft = new List<string>();
+                List<string> headerRight = new List<string>();
+                List<string> footerLeft = new List<string>();
+                List<string> footerRight = new List<string>();
+                List<string> bodyLines = new List<string>();
+
+                string state = pIdx == 0 ? "HEADER" : "BODY";
+                for (int i = 0; i < lines.Count; i++)
                 {
                     string rawLine = lines[i];
-                    if (string.IsNullOrWhiteSpace(rawLine)) continue;
-
                     int leadingSpaces = 0;
                     while (leadingSpaces < rawLine.Length && rawLine[leadingSpaces] == ' ') leadingSpaces++;
                     string trimmed = rawLine.Trim();
+                    if (Regex.IsMatch(trimmed, @"^[-_*—–=]{2,}$")) continue;
 
-                    // 1. Kiểm tra dòng có 2 cột Trái - Phải (ngăn cách bởi ký tự Tab hoặc >= 5 khoảng trắng ở giữa)
-                    Match twoColMatch = Regex.Match(trimmed, @"^(.+?)(?:\t+|\s{5,})(.+)$");
-                    if (twoColMatch.Success)
+                    if (state == "HEADER")
                     {
-                        string leftCol = twoColMatch.Groups[1].Value.Trim();
-                        string rightCol = twoColMatch.Groups[2].Value.Trim();
-                        bool isRecipientLeft = Regex.IsMatch(leftCol, @"^(Nơi nhận|-|\+)", RegexOptions.IgnoreCase);
-                        string leftAlign = isRecipientLeft ? "left" : "center";
-                        bool boldLeft = (leftCol == leftCol.ToUpperInvariant() && leftCol != leftCol.ToLowerInvariant()) || leftCol.StartsWith("Nơi nhận", StringComparison.OrdinalIgnoreCase);
-                        bool boldRight = (rightCol == rightCol.ToUpperInvariant() && rightCol != rightCol.ToLowerInvariant()) || rightCol.IndexOf("Độc lập", StringComparison.OrdinalIgnoreCase) >= 0;
+                        Match twoCol = Regex.Match(trimmed, @"^(.+?)(?:\t+|\s{4,})(.+)$");
+                        if (twoCol.Success && i <= 8)
+                        {
+                            headerLeft.Add(twoCol.Groups[1].Value.Trim());
+                            headerRight.Add(twoCol.Groups[2].Value.Trim());
+                            continue;
+                        }
+                        if (i <= 8 && Regex.IsMatch(trimmed, @"^(ĐẢNG CỘNG SẢN VIỆT NAM|CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*-\s*Tự do)", RegexOptions.IgnoreCase))
+                        {
+                            headerRight.Add(trimmed);
+                            continue;
+                        }
+                        if (i <= 8 && Regex.IsMatch(trimmed, @"\b(ngày|tháng|năm)\b", RegexOptions.IgnoreCase) && !trimmed.StartsWith("Hôm nay", StringComparison.OrdinalIgnoreCase))
+                        {
+                            headerRight.Add(trimmed);
+                            continue;
+                        }
+                        if (i <= 7 && Regex.IsMatch(trimmed, @"^(QUẬN ỦY|HUYỆN ỦY|THÀNH ỦY|TỈNH ỦY|ĐẢNG ỦY|ĐẢNG BỘ|CHI BỘ|BAN CHẤP HÀNH|BAN THƯỜNG VỤ|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN|Số\b|Số\s*:|V\/v\b|Về việc\b)", RegexOptions.IgnoreCase))
+                        {
+                            headerLeft.Add(trimmed);
+                            continue;
+                        }
+                        state = "BODY";
+                    }
 
-                        sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:2pt 0;'><tr>");
-                        sb.AppendFormat("<td style='width:45%;vertical-align:top;border:none;text-align:{0};font-size:13pt;'>{1}</td>",
-                            leftAlign,
-                            boldLeft ? "<b>" + System.Security.SecurityElement.Escape(leftCol) + "</b>" : System.Security.SecurityElement.Escape(leftCol));
-                        sb.AppendFormat("<td style='width:55%;vertical-align:top;border:none;text-align:center;font-size:13pt;'>{0}</td>",
-                            boldRight ? "<b>" + System.Security.SecurityElement.Escape(rightCol) + "</b>" : System.Security.SecurityElement.Escape(rightCol));
-                        sb.Append("</tr></table>");
+                    if (state == "BODY")
+                    {
+                        if (Regex.IsMatch(trimmed, @"^Nơi nhận\b", RegexOptions.IgnoreCase) ||
+                            Regex.IsMatch(trimmed, @"\b(T\/M\s+ĐẢNG\s+ỦY|T\/M\s+BAN\s+THƯỜNG\s+VỤ|TM\.\s+ỦY\s+BAN|KT\.\s+CHỦ\s+TỊCH|TL\.\s+CHỦ\s+TỊCH)\b", RegexOptions.IgnoreCase))
+                        {
+                            state = "FOOTER";
+                        }
+                    }
+
+                    if (state == "FOOTER")
+                    {
+                        Match twoCol = Regex.Match(trimmed, @"^(.+?)(?:\t+|\s{4,})(.+)$");
+                        if (twoCol.Success)
+                        {
+                            footerLeft.Add(twoCol.Groups[1].Value.Trim());
+                            footerRight.Add(twoCol.Groups[2].Value.Trim());
+                        }
+                        else if (Regex.IsMatch(trimmed, @"^(Nơi nhận|-|\+|•|Lưu\b)", RegexOptions.IgnoreCase))
+                        {
+                            footerLeft.Add(trimmed);
+                        }
+                        else if (leadingSpaces >= 20 || (trimmed == trimmed.ToUpperInvariant() && trimmed != trimmed.ToLowerInvariant()) || footerRight.Count > 0)
+                        {
+                            footerRight.Add(trimmed);
+                        }
+                        else
+                        {
+                            footerLeft.Add(trimmed);
+                        }
                         continue;
                     }
 
-                    // 2. Dòng nằm ở cột phải (leadingSpaces >= 28: Ngày tháng năm, Chức vụ người ký, Họ tên người ký)
-                    if (leadingSpaces >= 28)
+                    bodyLines.Add(trimmed);
+                }
+
+                if (headerLeft.Count > 0 || headerRight.Count > 0)
+                {
+                    List<string> agencies = new List<string>();
+                    string numLine = "";
+                    List<string> subjLeft = new List<string>();
+                    foreach (string hl in headerLeft)
                     {
-                        bool isBoldRight = (trimmed == trimmed.ToUpperInvariant() && trimmed != trimmed.ToLowerInvariant()) || trimmed.IndexOf("Độc lập", StringComparison.OrdinalIgnoreCase) >= 0;
-                        sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:2pt 0;'><tr>");
-                        sb.Append("<td style='width:45%;border:none;'></td>");
-                        sb.AppendFormat("<td style='width:55%;vertical-align:top;border:none;text-align:center;font-size:13pt;'>{0}</td>",
-                            isBoldRight ? "<b>" + System.Security.SecurityElement.Escape(trimmed) + "</b>" : System.Security.SecurityElement.Escape(trimmed));
-                        sb.Append("</tr></table>");
+                        if (string.IsNullOrEmpty(numLine) && Regex.IsMatch(hl, @"^(Số\b|Số\s*:)", RegexOptions.IgnoreCase))
+                        {
+                            string cNum = Regex.Replace(hl, @"^Số\s*:?\s*", "", RegexOptions.IgnoreCase).Trim();
+                            numLine = isPartyDoc ? ("Số " + cNum) : ("Số: " + cNum);
+                        }
+                        else if (!string.IsNullOrEmpty(numLine) || Regex.IsMatch(hl, @"^(V\/v|Về việc)\b", RegexOptions.IgnoreCase))
+                        {
+                            subjLeft.Add(hl);
+                        }
+                        else
+                        {
+                            agencies.Add(hl);
+                        }
+                    }
+
+                    StringBuilder sbLeft = new StringBuilder();
+                    string agSize = isPartyDoc ? "14pt" : "12.5pt";
+                    if (agencies.Count >= 2)
+                    {
+                        sbLeft.AppendFormat("<div style='font-size:{0};text-transform:uppercase;'>{1}</div>", agSize, System.Security.SecurityElement.Escape(agencies[0]));
+                        for (int k = 1; k < agencies.Count; k++)
+                        {
+                            sbLeft.AppendFormat("<div style='font-size:{0};font-weight:bold;text-transform:uppercase;'>{1}</div>", agSize, System.Security.SecurityElement.Escape(agencies[k]));
+                        }
+                    }
+                    else if (agencies.Count == 1)
+                    {
+                        sbLeft.AppendFormat("<div style='font-size:{0};font-weight:bold;text-transform:uppercase;'>{1}</div>", agSize, System.Security.SecurityElement.Escape(agencies[0]));
+                    }
+                    if (agencies.Count > 0)
+                    {
+                        sbLeft.Append(isPartyDoc
+                            ? "<div style='font-size:14pt;font-weight:bold;line-height:1;margin:2pt 0;'>*</div>"
+                            : "<hr style='width:38%;border:0;border-top:1px solid #000;'/>");
+                    }
+                    if (!string.IsNullOrEmpty(numLine))
+                    {
+                        sbLeft.AppendFormat("<div style='font-size:{0};margin-top:4pt;'>{1}</div>", isPartyDoc ? "14pt" : "13pt", System.Security.SecurityElement.Escape(numLine));
+                    }
+                    if (subjLeft.Count > 0)
+                    {
+                        sbLeft.AppendFormat("<div style='font-size:12pt;margin-top:3pt;'>{0}</div>", System.Security.SecurityElement.Escape(string.Join(" ", subjLeft.ToArray())));
+                    }
+
+                    StringBuilder sbRight = new StringBuilder();
+                    string dateLine = "";
+                    foreach (string hr in headerRight)
+                    {
+                        if (Regex.IsMatch(hr, @"\b(ngày|tháng|năm)\b", RegexOptions.IgnoreCase))
+                            dateLine = hr;
+                    }
+                    if (isPartyDoc)
+                    {
+                        sbRight.Append("<div style='font-size:15pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>");
+                        sbRight.Append("<hr style='width:58%;border:0;border-top:1px solid #000;'/>");
+                    }
+                    else
+                    {
+                        sbRight.Append("<div style='font-size:12.5pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>");
+                        sbRight.Append("<div style='font-size:13.5pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>");
+                        sbRight.Append("<hr style='width:52%;border:0;border-top:1px solid #000;'/>");
+                    }
+                    if (!string.IsNullOrEmpty(dateLine))
+                    {
+                        sbRight.AppendFormat("<div style='font-size:{0};font-style:italic;margin-top:6pt;'>{1}</div>", isPartyDoc ? "14pt" : "13.5pt", System.Security.SecurityElement.Escape(dateLine));
+                    }
+
+                    sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:0 0 8pt 0;'><tr>");
+                    sb.AppendFormat("<td style='width:44%;vertical-align:top;border:none;text-align:center;'>{0}</td>", sbLeft.ToString());
+                    sb.AppendFormat("<td style='width:56%;vertical-align:top;border:none;text-align:center;'>{0}</td>", sbRight.ToString());
+                    sb.Append("</tr></table>");
+                }
+
+                int bIdx = 0;
+                while (bIdx < bodyLines.Count)
+                {
+                    string l = bodyLines[bIdx];
+                    if (bIdx <= 3 && Regex.IsMatch(l, @"^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN)$", RegexOptions.IgnoreCase))
+                    {
+                        sb.AppendFormat("<p style='text-align:center;text-indent:0;font-weight:bold;font-size:{0};margin:12pt 0 4pt 0;'>{1}</p>",
+                            isPartyDoc ? "15pt" : "14pt",
+                            System.Security.SecurityElement.Escape(l));
+                        bIdx++;
+                        if (bIdx < bodyLines.Count && !Regex.IsMatch(bodyLines[bIdx], @"^(Căn cứ|Thực hiện|Kính gửi|I\.|1\.|Điều\s+1)", RegexOptions.IgnoreCase))
+                        {
+                            sb.AppendFormat("<p style='text-align:center;text-indent:0;font-weight:bold;font-size:14pt;margin:0 0 4pt 0;'>{0}</p>",
+                                System.Security.SecurityElement.Escape(bodyLines[bIdx]));
+                            sb.Append("<hr style='width:32%;border:0;border-top:1px solid #000;margin-bottom:12pt;'/>");
+                            bIdx++;
+                        }
                         continue;
                     }
 
-                    // 3. Dòng tiêu đề căn giữa
-                    bool isCenteredTitle = (leadingSpaces >= 10 && leadingSpaces < 28 && trimmed.Length < 68) ||
-                        Regex.IsMatch(trimmed, @"^(CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*-\s*Tự do\s*-\s*Hạnh phúc|ĐẢNG CỘNG SẢN VIỆT NAM|BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|QUYẾT ĐỊNH\s*:)$", RegexOptions.IgnoreCase);
-                    if (isCenteredTitle)
+                    string merged = l;
+                    bIdx++;
+                    while (bIdx < bodyLines.Count)
                     {
-                        sb.AppendFormat("<p style='text-align:center;font-weight:bold;margin:4pt 0;font-size:13.5pt;'>{0}</p>",
-                            System.Security.SecurityElement.Escape(trimmed));
-                        continue;
+                        string nxt = bodyLines[bIdx];
+                        bool endedStop = Regex.IsMatch(merged, @"[.:;!?]$|\.\s*\/\.\s*$");
+                        bool startsNew = Regex.IsMatch(nxt, @"^([-+•*]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Khoản\s+\d+|Căn cứ\s+|Xét\s+|Theo đề nghị|Kính gửi|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)", RegexOptions.IgnoreCase);
+                        if (!endedStop && !startsNew)
+                        {
+                            merged += " " + nxt;
+                            bIdx++;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
 
-                    // 4. Dòng đoạn văn bản thân bài: Giữ nguyên 100% nội dung gốc
-                    string indentCss = leadingSpaces >= 2 ? "text-indent:1.27cm;" : "";
-                    sb.AppendFormat("<p style='text-align:justify;{0}margin:0 0 5pt 0;line-height:1.38;font-size:13.5pt;'>{1}</p>",
-                        indentCss,
-                        System.Security.SecurityElement.Escape(trimmed));
+                    string esc = System.Security.SecurityElement.Escape(merged);
+                    if (Regex.IsMatch(merged, @"^(QUYẾT ĐỊNH|QUYẾT NGHỊ|NGHỊ QUYẾT|BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN PHƯỜNG|HỘI ĐỒNG NHÂN DÂN PHƯỜNG)\s*:?$", RegexOptions.IgnoreCase))
+                    {
+                        sb.AppendFormat("<p style='text-indent:0;text-align:center;font-weight:bold;margin:6pt 0;font-size:14pt;'>{0}</p>", esc);
+                    }
+                    else if (Regex.IsMatch(merged, @"^[IVX]+\.\s+", RegexOptions.IgnoreCase))
+                    {
+                        sb.AppendFormat("<p style='text-indent:0;text-align:left;font-weight:bold;margin:6pt 0 4pt 0;font-size:14pt;'>{0}</p>", esc);
+                    }
+                    else
+                    {
+                        Match dm = Regex.Match(merged, @"^(Điều\s+\d+\.|Kính gửi\s*:)\s*(.*)$", RegexOptions.IgnoreCase);
+                        if (dm.Success)
+                        {
+                            sb.AppendFormat("<p style='text-indent:1.27cm;text-align:justify;margin:0 0 6pt 0;line-height:1.38;font-size:14pt;'><b>{0}</b> {1}</p>",
+                                System.Security.SecurityElement.Escape(dm.Groups[1].Value),
+                                System.Security.SecurityElement.Escape(dm.Groups[2].Value));
+                        }
+                        else
+                        {
+                            sb.AppendFormat("<p style='text-indent:1.27cm;text-align:justify;margin:0 0 6pt 0;line-height:1.38;font-size:14pt;'>{0}</p>", esc);
+                        }
+                    }
+                }
+
+                if (footerLeft.Count > 0 || footerRight.Count > 0)
+                {
+                    StringBuilder sbFLeft = new StringBuilder();
+                    sbFLeft.Append(isPartyDoc
+                        ? "<div style='font-size:14pt;font-style:normal;font-weight:normal;'><u>Nơi nhận</u>:</div>"
+                        : "<div style='font-size:12pt;font-weight:bold;font-style:italic;'>Nơi nhận:</div>");
+                    string recSize = isPartyDoc ? "12pt" : "11pt";
+                    foreach (string fl in footerLeft)
+                    {
+                        if (Regex.IsMatch(fl, @"^Nơi nhận\s*:?$", RegexOptions.IgnoreCase)) continue;
+                        string cleanItem = Regex.Replace(fl, @"^Nơi nhận\s*:\s*", "", RegexOptions.IgnoreCase).Trim();
+                        if (!string.IsNullOrEmpty(cleanItem))
+                        {
+                            sbFLeft.AppendFormat("<div style='font-size:{0};line-height:1.35;text-align:left;'>{1}</div>", recSize, System.Security.SecurityElement.Escape(cleanItem));
+                        }
+                    }
+
+                    StringBuilder sbFRight = new StringBuilder();
+                    for (int k = 0; k < footerRight.Count; k++)
+                    {
+                        string fr = footerRight[k];
+                        if (k == footerRight.Count - 1 && footerRight.Count >= 2)
+                        {
+                            sbFRight.Append("<br/><br/><br/>");
+                            sbFRight.AppendFormat("<div style='font-size:14pt;font-weight:bold;'>{0}</div>", System.Security.SecurityElement.Escape(fr));
+                        }
+                        else
+                        {
+                            sbFRight.AppendFormat("<div style='font-size:{0};font-weight:bold;text-transform:uppercase;'>{1}</div>", isPartyDoc ? "14pt" : "13.5pt", System.Security.SecurityElement.Escape(fr));
+                        }
+                    }
+
+                    sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin-top:16pt;'><tr>");
+                    sb.AppendFormat("<td style='width:50%;vertical-align:top;border:none;text-align:left;'>{0}</td>", sbFLeft.ToString());
+                    sb.AppendFormat("<td style='width:50%;vertical-align:top;border:none;text-align:center;'>{0}</td>", sbFRight.ToString());
+                    sb.Append("</tr></table>");
                 }
             }
             return sb.ToString();
@@ -1386,14 +1611,19 @@ $inFileStream.Close()
 
                 string bodyHtml = BuildLayoutPreservedWordHtml(txtOcrResult.Text);
                 string html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>" +
-                              "<head><meta charset='utf-8'><title>VietNamOCR 4.0 Pro Ultimate</title>" +
+                              "<head><meta charset='utf-8'><title>VietNamOCR 3.2 Pro Ultimate</title>" +
+                              "<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->" +
                               "<style>" +
-                              "@page Section1 { size:21.0cm 29.7cm; margin:2.0cm 1.5cm 2.0cm 3.0cm; }" +
-                              "div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:13.5pt; color:#000; line-height:1.38; }" +
+                              "@page Section1 { size:21.0cm 29.7cm; margin:2.0cm 1.5cm 2.0cm 3.0cm; mso-header-margin:1.0cm; mso-footer-margin:1.0cm; mso-title-page:yes; mso-header:h1; mso-first-header:fh1; }" +
+                              "div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:14pt; color:#000; line-height:1.38; }" +
+                              "p.MsoHeader, li.MsoHeader, div.MsoHeader { margin:0cm; text-align:center; font-size:13pt; font-family:'Times New Roman',serif; }" +
                               "table { width:100%; border-collapse:collapse; font-family:'Times New Roman',serif; }" +
                               "td, p { font-family:'Times New Roman',serif; }" +
                               "</style></head>" +
-                              "<body><div class='Section1'>" + bodyHtml + "</div></body></html>";
+                              "<body><div class='Section1'>" + bodyHtml +
+                              "<div style='mso-element:header' id='fh1'><p class='MsoHeader'>&nbsp;</p></div>" +
+                              "<div style='mso-element:header' id='h1'><p class='MsoHeader' align='center' style='text-align:center;font-size:13pt;font-family:\"Times New Roman\",serif;'><!--[if supportFields]><span style='mso-element:field-begin'></span> PAGE <span style='mso-element:field-separator'></span><![endif]-->2<!--[if supportFields]><span style='mso-element:field-end'></span><![endif]--></p></div>" +
+                              "</div></body></html>";
 
                 File.WriteAllText(sfd.FileName, html, new UTF8Encoding(true));
                 lblStatus.Text = "  ✓ Đã xuất tệp Word (.doc) giữ nguyên 100% thể thức và nội dung gốc: " + sfd.FileName;
