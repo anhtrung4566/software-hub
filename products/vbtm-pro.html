@@ -28,22 +28,22 @@
     <nav class="glass-nav">
       <a href="../index.html" class="brand-wrapper">
         <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ffffff" stroke-width="2.2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-            <path d="M2 17l10 5 10-5"></path>
-            <path d="M2 12l10 5 10-5"></path>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#facc15">
+            <polygon points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.7 5.8,21 7,14.1 2,9.3 8.9,8.3"/>
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">Software Hub</span>
-          <span class="brand-sub"><span class="status-indicator-dot"></span>VBTM Pro 4.0 Ultimate</span>
+          <span class="brand-title">Siêu App Văn Phòng</span>
+          <span class="brand-sub"><span class="status-indicator-dot"></span>VBTM Pro 2.2.4 Ultimate</span>
         </div>
       </a>
 
       <div class="nav-center">
-        <a href="../index.html#productsSection" class="nav-link active">Phần Mềm</a>
-        <a href="#liveStudio" class="nav-link">Dùng Trực Tuyến</a>
-        <a href="./vietnam-ocr.html" class="nav-link">VietNamOCR 4.0 Pro</a>
+        <a href="../index.html#productsSection" class="nav-link">Kho Phần Mềm</a>
+        <a href="./vbtm-pro.html" class="nav-link active">VBTM Pro</a>
+        <a href="./vietnam-ocr.html" class="nav-link">VietNamOCR Pro</a>
+        <a href="./trinh-chay-su-kien.html" class="nav-link">Sự Kiện Play</a>
+        <a href="../admin.html" class="nav-link">Quản Trị</a>
       </div>
 
       <div class="nav-actions">
@@ -63,8 +63,8 @@
 
       <div class="detail-header-flex">
         <div class="detail-app-info">
-          <div class="detail-app-icon" style="background: linear-gradient(145deg, #0ea5e9 0%, #2563eb 50%, #1e1b4b 100%)">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="11" y="9" width="34" height="46" rx="5" fill="#ffffff"/><line x1="17" y1="18" x2="32" y2="18" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="24" x2="39" y2="24" stroke="#64748b" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="30" x2="35" y2="30" stroke="#64748b" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="36" x2="28" y2="36" stroke="#64748b" stroke-width="2" stroke-linecap="round"/><circle cx="44" cy="43" r="13" fill="#0ea5e9" stroke="#ffffff" stroke-width="2"/><path d="M38 43.5L42 47.5L50 39" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div class="detail-app-icon" style="background: linear-gradient(145deg, #dc2626 0%, #b91c1c 55%, #7f1d1d 100%); border: 2px solid #facc15;">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="11" y="9" width="34" height="46" rx="5" fill="#fffbeb" stroke="#facc15" stroke-width="2"/><line x1="17" y1="18" x2="32" y2="18" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="24" x2="39" y2="24" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="30" x2="35" y2="30" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/><circle cx="44" cy="43" r="13" fill="#facc15" stroke="#991b1b" stroke-width="2"/><path d="M38 43.5L42 47.5L50 39" stroke="#7f1d1d" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <div class="detail-app-titles">
             <h1>VBTM Pro 4.0 Ultimate</h1>
@@ -147,7 +147,7 @@
       <div class="studio-body" id="vbtmStudioApp">
         <div class="toolbar-actions">
           <input type="file" id="vbtmWordFileInput" accept=".docx,.doc,.pdf,.txt,application/pdf" style="display: none;">
-          <button type="button" class="btn-tool primary" onclick="document.getElementById('vbtmWordFileInput').click()" style="background: linear-gradient(135deg, #4f46e5, #2563eb);">
+          <button type="button" class="btn-tool primary" onclick="document.getElementById('vbtmWordFileInput').click()">
             <span>📂 Tải File Word (.docx) / PDF Lên Để Chuẩn Hóa</span>
           </button>
 
@@ -299,7 +299,7 @@
             <li>Trong phần mềm: Bấm <strong>"Mở File Word (.docx / .doc)"</strong> để nạp văn bản cần chuẩn hóa, bấm <strong>"1. Chuẩn Hóa &amp; Sửa Chính Tả AI"</strong>, sau đó bấm <strong>"2. Chuẩn Hóa Word Đang Mở"</strong> hoặc <strong>"3. Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
           </ol>
           <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
-            Mã chuẩn SHA256: <code id="sha256Code">206871c54d24faf7924410265d531cb1cf02a1f78dd7fdfff4c886fbb6893acb</code>
+            Mã chuẩn SHA256: <code id="sha256Code">e0dae440bd7b973ae8610d1214d2f9d7a15b6dd725ccba46c134063a5e8adf99</code>
           </div>
         </div>
       </div>
