@@ -328,20 +328,208 @@ async function changePdfPage(delta) {
 }
 
 // ============================================================================
-// THUẬT TOÁN TÁI TẠO BỐ CỤC TỌA ĐỘ 1:1 TỪ TRANG PDF SANG WORD (GIỮ NGUYÊN 100%)
+// THUẬT TOÁN TÁI TẠO BỐ CỤC TỌA ĐỘ 1:1 & CHUẨN HÓA THỂ THỨC TỪ PDF SANG WORD
+// (Đúng chuẩn Hướng dẫn số 05-HD/VPTW của VPTW Đảng & Nghị định 30/2020/NĐ-CP)
 // ============================================================================
+function detectIsPartyDocInOcr(text) {
+  const u = String(text || '').toUpperCase();
+  return (
+    u.includes('ĐẢNG CỘNG SẢN VIỆT NAM') ||
+    u.includes('ĐẢNG ỦY') ||
+    u.includes('ĐẢNG BỘ') ||
+    u.includes('QUẬN ỦY') ||
+    u.includes('HUYỆN ỦY') ||
+    u.includes('THỊ ỦY') ||
+    u.includes('THÀNH ỦY') ||
+    u.includes('TỈNH ỦY') ||
+    u.includes('CHI BỘ') ||
+    u.includes('BAN THƯỜNG VỤ') ||
+    u.includes('BAN CHẤP HÀNH') ||
+    u.includes('VPTW') ||
+    /\bSỐ\s*:?\s*\d+\s*-\s*[A-ZĐ]+\/(ĐU|CB|QU|HU|TU|TW)\b/i.test(u) ||
+    /-(ĐU|CB)\b/i.test(u) ||
+    /\/(ĐU|CB)\b/i.test(u)
+  );
+}
+
+function formatOcrBodyParagraphHtml(rawLine) {
+  const line = String(rawLine || '').trim();
+  const escaped = escapeHtml(line);
+  if (/^(QUYẾT ĐỊNH|QUYẾT NGHỊ|NGHỊ QUYẾT|BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN PHƯỜNG|HỘI ĐỒNG NHÂN DÂN PHƯỜNG)\s*:?$/i.test(line) ||
+      /^KHÓA\s+[IVX0-9]+/i.test(line)) {
+    return `<p style="text-align:center; text-indent:0; font-weight:bold; margin:6pt 0; font-size:14pt;">${escaped}</p>`;
+  }
+  if (/^[IVX]+\.\s+/i.test(line)) {
+    return `<p style="text-align:left; text-indent:0; font-weight:bold; margin:6pt 0 4pt 0; font-size:14pt;">${escaped}</p>`;
+  }
+  const dieuMatch = line.match(/^(Điều\s+\d+\.|Kính gửi\s*:)\s*(.*)$/i);
+  if (dieuMatch) {
+    return `<p style="text-align:justify; text-indent:1.27cm; margin:0 0 6pt 0; line-height:1.38; font-size:14pt;"><b>${escapeHtml(dieuMatch[1])}</b> ${escapeHtml(dieuMatch[2])}</p>`;
+  }
+  return `<p style="text-align:justify; text-indent:1.27cm; margin:0 0 6pt 0; line-height:1.38; font-size:14pt;">${escaped}</p>`;
+}
+
+function buildOcrHeaderTableHtml(leftSegs, rightSegs, isParty) {
+  const cleanLeft = leftSegs
+    .map(s => (typeof s === 'string' ? s : s.text).trim())
+    .filter(t => t && !/^[-_*—–=]+$/.test(t));
+  const cleanRight = rightSegs
+    .map(s => (typeof s === 'string' ? s : s.text).trim())
+    .filter(t => t && !/^[-_*—–=]+$/.test(t));
+
+  const agencyLines = [];
+  let numLine = '';
+  const subjLeftLines = [];
+
+  for (const l of cleanLeft) {
+    if (!numLine && /^(Số\b|Số\s*:)/i.test(l)) {
+      const cleanNum = l.replace(/^Số\s*:?\s*/i, '').trim();
+      numLine = isParty ? `Số ${cleanNum}` : `Số: ${cleanNum}`;
+    } else if (numLine || /^(V\/v|Về việc)\b/i.test(l)) {
+      subjLeftLines.push(l);
+    } else {
+      agencyLines.push(l);
+    }
+  }
+
+  let leftCellHtml = '';
+  if (agencyLines.length >= 2) {
+    leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '12.5pt'}; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(agencyLines[0])}</div>`;
+    for (let k = 1; k < agencyLines.length; k++) {
+      leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '12.5pt'}; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(agencyLines[k])}</div>`;
+    }
+  } else if (agencyLines.length === 1) {
+    leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '12.5pt'}; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(agencyLines[0])}</div>`;
+  }
+
+  if (agencyLines.length > 0) {
+    leftCellHtml += isParty
+      ? `<div style="font-size:14pt; font-weight:bold; line-height:1; margin:2pt 0;">*</div>`
+      : `<hr style="width:38%; border:0; border-top:1px solid #000; margin:2pt auto 6pt auto;"/>`;
+  }
+
+  if (numLine) {
+    leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '13pt'}; margin-top:4pt; line-height:1.3;">${escapeHtml(numLine)}</div>`;
+  }
+  if (subjLeftLines.length > 0) {
+    leftCellHtml += `<div style="font-size:12pt; margin-top:3pt; line-height:1.3;">${escapeHtml(subjLeftLines.join(' '))}</div>`;
+  }
+
+  let rightCellHtml = '';
+  let dateLine = '';
+  const mottoLines = [];
+
+  for (const r of cleanRight) {
+    if (/\b(ngày|tháng|năm)\b/i.test(r)) {
+      dateLine = r;
+    } else {
+      mottoLines.push(r);
+    }
+  }
+
+  if (isParty) {
+    const partyTitle = mottoLines.find(m => /ĐẢNG CỘNG SẢN/i.test(m)) || 'ĐẢNG CỘNG SẢN VIỆT NAM';
+    rightCellHtml += `<div style="font-size:15pt; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(partyTitle)}</div>`;
+    rightCellHtml += `<hr style="width:58%; border:0; border-top:1px solid #000; margin:2pt auto 6pt auto;"/>`;
+  } else {
+    const qh = mottoLines[0] || 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM';
+    const tn = mottoLines[1] || 'Độc lập - Tự do - Hạnh phúc';
+    rightCellHtml += `<div style="font-size:12.5pt; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(qh)}</div>`;
+    rightCellHtml += `<div style="font-size:13.5pt; font-weight:bold; margin:0; line-height:1.3;">${escapeHtml(tn)}</div>`;
+    rightCellHtml += `<hr style="width:52%; border:0; border-top:1px solid #000; margin:2pt auto 6pt auto;"/>`;
+  }
+
+  if (dateLine) {
+    rightCellHtml += `<div style="font-size:${isParty ? '14pt' : '13.5pt'}; font-style:italic; margin-top:6pt; line-height:1.3;">${escapeHtml(dateLine)}</div>`;
+  }
+
+  return `
+    <table style="width:100%; border-collapse:collapse; border:none; margin:0 0 8pt 0;">
+      <tr>
+        <td style="width:44%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:center;">${leftCellHtml}</td>
+        <td style="width:56%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${rightCellHtml}</td>
+      </tr>
+    </table>
+  `;
+}
+
+function buildOcrFooterTableHtml(leftSegs, rightSegs, isParty) {
+  const cleanLeft = leftSegs
+    .map(s => (typeof s === 'string' ? s : s.text).trim())
+    .filter(Boolean);
+  const cleanRight = rightSegs
+    .map(s => (typeof s === 'string' ? s : s.text).trim())
+    .filter(Boolean);
+
+  const recipientItems = [];
+  let hasNoiNhanLabel = false;
+  for (const l of cleanLeft) {
+    if (/^Nơi nhận\s*:?$/i.test(l)) {
+      hasNoiNhanLabel = true;
+    } else if (/^Nơi nhận\s*:\s*(.+)$/i.test(l)) {
+      hasNoiNhanLabel = true;
+      const m = l.match(/^Nơi nhận\s*:\s*(.+)$/i);
+      if (m && m[1]) recipientItems.push(m[1].trim());
+    } else {
+      recipientItems.push(l);
+    }
+  }
+  if (recipientItems.length > 0) hasNoiNhanLabel = true;
+
+  const noiNhanHeaderHtml = hasNoiNhanLabel
+    ? (isParty
+        ? `<div style="font-size:14pt; font-style:normal; font-weight:normal; margin-bottom:2pt;"><span style="text-decoration:underline;">Nơi nhận</span>:</div>`
+        : `<div style="font-size:12pt; font-weight:bold; font-style:italic; margin-bottom:2pt;">Nơi nhận:</div>`)
+    : '';
+
+  const recFontSize = isParty ? '12pt' : '11pt';
+  const recListHtml = recipientItems
+    .map(item => `<div style="font-size:${recFontSize}; line-height:1.35; text-align:left;">${escapeHtml(item)}</div>`)
+    .join('');
+
+  const authorityLines = [];
+  let signerName = '';
+  for (let k = 0; k < cleanRight.length; k++) {
+    const r = cleanRight[k];
+    const isAllUpper = (r === r.toUpperCase() && r !== r.toLowerCase()) || /^(T\/M|TM\.|KT\.|TL\.|TUQ\.|Q\.|BÍ THƯ|PHÓ BÍ THƯ|CHỦ TỊCH|PHÓ CHỦ TỊCH|TRƯỞNG BAN|CHÁNH VĂN PHÒNG|VĂN PHÒNG)/i.test(r);
+    if (isAllUpper && (k < cleanRight.length - 1 || cleanRight.length === 1)) {
+      authorityLines.push(r);
+    } else if (k === cleanRight.length - 1) {
+      signerName = r;
+    } else {
+      authorityLines.push(r);
+    }
+  }
+
+  const authFontSize = isParty ? '14pt' : '13.5pt';
+  const authHtml = authorityLines
+    .map(a => `<div style="font-size:${authFontSize}; font-weight:bold; text-transform:uppercase; line-height:1.35;">${escapeHtml(a)}</div>`)
+    .join('');
+  const nameHtml = signerName
+    ? `<div style="height:56pt;"></div><div style="font-size:14pt; font-weight:bold; line-height:1.35;">${escapeHtml(signerName)}</div>`
+    : '';
+
+  return `
+    <table style="width:100%; border-collapse:collapse; border:none; margin-top:14pt;">
+      <tr>
+        <td style="width:50%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:left;">${noiNhanHeaderHtml}${recListHtml}</td>
+        <td style="width:50%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${authHtml}${nameHtml}</td>
+      </tr>
+    </table>
+  `;
+}
+
 function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
   const pageW = viewport.width || 595.28;
   const styles = textContent?.styles || {};
-
-  // 1. Trích xuất từng phần tử văn bản kèm tọa độ X, Y, kích thước chữ, In đậm (Bold), In nghiêng (Italic)
   const runs = [];
+
   for (const it of rawItems) {
     if (!it.str || !it.str.trim()) continue;
     const tx = it.transform || [12, 0, 0, 12, 0, 0];
     const x = tx[4] || 0;
     const y = tx[5] || 0;
-    const rawSize = Math.hypot(tx[0] || 0, tx[1] || 0) || Math.abs(tx[3]) || 13;
+    const rawSize = Math.hypot(tx[0] || 0, tx[1] || 0) || Math.abs(tx[3]) || 13.5;
     const fontSize = Math.min(26, Math.max(8.5, Math.round(rawSize * 2) / 2));
     const w = it.width > 0 ? it.width : (it.str.length * fontSize * 0.48);
 
@@ -361,27 +549,14 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
     const isBold = /bold|bd|black|heavy|demi|-b\b/i.test(fontDescriptor);
     const isItalic = /italic|ital|oblique|-i\b/i.test(fontDescriptor) || (Math.abs(tx[2] || 0) > 0.12);
 
-    runs.push({
-      str: it.str,
-      x,
-      y,
-      w,
-      endX: x + w,
-      fontSize,
-      isBold,
-      isItalic
-    });
+    runs.push({ str: it.str, x, y, w, endX: x + w, fontSize, isBold, isItalic });
   }
 
   if (runs.length === 0) {
     return { pageHtml: '', pagePlainText: '' };
   }
 
-  // 2. Gom các phần tử có cùng tọa độ Y (trên cùng 1 dòng ngang)
-  runs.sort((a, b) => {
-    if (Math.abs(b.y - a.y) > 3.8) return b.y - a.y;
-    return a.x - b.x;
-  });
+  runs.sort((a, b) => (Math.abs(b.y - a.y) > 3.8 ? b.y - a.y : a.x - b.x));
 
   const rawLines = [];
   for (const r of runs) {
@@ -403,7 +578,6 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
 
   rawLines.sort((a, b) => b.y - a.y);
 
-  // 3. Trong mỗi dòng, sắp xếp từ trái sang phải và chia thành các Cụm Cột (Segments) dựa theo khoảng cách X
   let minPageX = pageW;
   let maxPageX = 0;
 
@@ -439,7 +613,6 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
             runs: [{ str: item.str, isBold: item.isBold, isItalic: item.isItalic, fontSize: item.fontSize }]
           };
         } else {
-          // Cùng một cụm từ: nếu gap > 1.1pt thì nối bằng 1 dấu cách, ngược lại nối liền (kerning trong 1 từ)
           const needSpace = gap > 1.1 && !/\s$/.test(curSeg.runs[curSeg.runs.length - 1].str) && !/^\s/.test(item.str);
           curSeg.runs.push({
             str: (needSpace ? ' ' : '') + item.str,
@@ -461,7 +634,7 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
       segments,
       x: segments[0]?.x || 0,
       endX: segments[segments.length - 1]?.endX || 0,
-      fontSize: segments[0]?.fontSize || 13.5,
+      fontSize: segments[0]?.fontSize || 14,
       plainText: segments.map(s => s.text).join('\t')
     };
   }).filter(l => l.segments.length > 0);
@@ -470,50 +643,64 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
   if (maxPageX < pageW * 0.65) maxPageX = pageW - 54;
   const pageCenterX = (minPageX + maxPageX) / 2;
 
-  // 4. Phân loại từng dòng để dựng lại đúng bố cục 2 cột (Quốc hiệu/Cơ quan, Nơi nhận/Chữ ký), Bảng biểu, Tiêu đề căn giữa và Đoạn văn
+  const fullPageText = lines.map(l => l.plainText).join('\n');
+  const isPartyDoc = detectIsPartyDocInOcr(fullPageText);
+
+  let inFooterZone = false;
   const classified = lines.map((line, idx) => {
     const segs = line.segments;
-    // Kiểm tra dòng chia 2 cột Trái - Phải (VD: Quốc hiệu bên phải + Cơ quan bên trái, hoặc Nơi nhận bên trái + Người ký bên phải)
-    if (segs.length === 2 && segs[0].x < pageW * 0.45 && segs[1].x >= pageW * 0.38) {
+    const lineTextTrim = line.plainText.trim();
+
+    if (idx >= 3 && (/^Nơi nhận\b/i.test(lineTextTrim) || /\b(T\/M\s+ĐẢNG\s+ỦY|T\/M\s+BAN\s+THƯỜNG\s+VỤ|TM\.\s+ỦY\s+BAN|KT\.\s+CHỦ\s+TỊCH|TL\.\s+CHỦ\s+TỊCH|Q\.\s+CHỦ\s+TỊCH)\b/i.test(lineTextTrim))) {
+      inFooterZone = true;
+    }
+
+    if (inFooterZone) {
+      if (segs.length >= 2) {
+        return { type: 'FOOTER_COL', leftSeg: segs[0], rightSeg: segs.slice(1).map(s => s.text).join(' '), line, idx };
+      }
+      const s = segs[0];
+      if (s.x >= pageW * 0.42) {
+        return { type: 'FOOTER_COL', leftSeg: null, rightSeg: s, line, idx };
+      }
+      return { type: 'FOOTER_COL', leftSeg: s, rightSeg: null, line, idx };
+    }
+
+    if (segs.length === 2 && segs[0].x < pageW * 0.46 && segs[1].x >= pageW * 0.36) {
       return { type: 'TWO_COL', leftSeg: segs[0], rightSeg: segs[1], line, idx };
     }
-    // Kiểm tra dòng có >= 3 cột (Bảng biểu dữ liệu)
     if (segs.length >= 3) {
       return { type: 'TABLE_ROW', cells: segs, line, idx };
     }
-    // Dòng có 1 cụm duy nhất
     if (segs.length === 1) {
       const s = segs[0];
-      // Nếu nằm hẳn sang nửa bên phải trang (VD: Ngày tháng năm, Chức vụ người ký, Họ tên người ký, Độc lập - Tự do - Hạnh phúc)
+      const txt = s.text.trim();
+      const isDocHeadingTitle = /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN|CÔNG VĂN|QUYẾT ĐỊNH\s*:|QUYẾT NGHỊ\s*:|BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH)$/i.test(txt);
+      if (isDocHeadingTitle) {
+        return { type: 'CENTER', seg: s, line, idx };
+      }
       if (s.x >= pageW * 0.43) {
         return { type: 'TWO_COL', leftSeg: null, rightSeg: s, line, idx };
       }
-      // Nếu nằm gọn ở cột trái (< 46% trang) và ở vùng đầu văn bản (Quốc hiệu/Cơ quan) hoặc cuối văn bản (Nơi nhận)
-      const isNearTopOrBottom = idx <= 7 || idx >= lines.length - 14;
-      if (s.endX <= pageW * 0.47 && isNearTopOrBottom && (/^(Số\s*:|Nơi nhận|-|\+|•)/i.test(s.text.trim()) || idx <= 5)) {
+      if (idx <= 7 && s.endX <= pageW * 0.50 && (/^(Số\b|Số\s*:|V\/v\b|Về việc\b|\*|--)/i.test(txt) || idx <= 4)) {
         return { type: 'TWO_COL', leftSeg: s, rightSeg: null, line, idx };
       }
-      // Kiểm tra dòng căn giữa trang (Tiêu đề văn bản, Tên loại văn bản, Trích yếu...)
       const distFromCenter = Math.abs(s.centerX - pageCenterX);
       const distFromPageMid = Math.abs(s.centerX - (pageW / 2));
-      const isCenteredCoords = (distFromCenter <= 44 || distFromPageMid <= 44) && (s.x > minPageX + 20) && (s.endX < maxPageX - 20);
-      const isDocHeadingTitle = /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|CÔNG VĂN|QUYẾT ĐỊNH\s*:)$/i.test(s.text.trim());
-      if (isCenteredCoords || isDocHeadingTitle) {
+      const isCenteredCoords = (distFromCenter <= 44 || distFromPageMid <= 44) && (s.x > minPageX + 18) && (s.endX < maxPageX - 18);
+      if (isCenteredCoords) {
         return { type: 'CENTER', seg: s, line, idx };
       }
       return { type: 'BODY', seg: s, line, idx };
     }
-    // Dòng 2 cụm nhưng không phải 2 cột Trái-Phải -> xem là hàng bảng 2 cột
     return { type: 'TABLE_ROW', cells: segs, line, idx };
   });
 
-  // 5. Kết xuất ra mã HTML chuẩn Microsoft Word (giữ nguyên 100% nội dung gốc)
   const htmlBlocks = [];
   let i = 0;
   while (i < classified.length) {
     const item = classified[i];
 
-    // Nhóm các dòng 2 cột liên tiếp thành bảng bố cục 2 cột không viền chuẩn Word
     if (item.type === 'TWO_COL') {
       const leftLines = [];
       const rightLines = [];
@@ -523,32 +710,26 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
         if (classified[i].rightSeg) rightLines.push(classified[i].rightSeg);
         i++;
       }
-      const isHeaderZone = startIdx <= 5;
-      const isRecipientLeft = leftLines.some(s => /^(Nơi nhận|-|\+)/i.test(s.text.trim()));
-      const leftAlign = (isHeaderZone && !isRecipientLeft) ? 'center' : (isRecipientLeft ? 'left' : 'center');
-
-      const leftHtml = leftLines.map(s => {
-        const txt = s.text.trim();
-        // Nếu là dòng gạch ngang phân cách có sẵn trong PDF thì giữ nguyên
-        return `<div style="font-size:${s.fontSize}pt; margin: 1.5pt 0; line-height: 1.3;">${s.html}</div>`;
-      }).join('');
-
-      const rightHtml = rightLines.map(s => {
-        return `<div style="font-size:${s.fontSize}pt; margin: 1.5pt 0; line-height: 1.3;">${s.html}</div>`;
-      }).join('');
-
-      htmlBlocks.push(`
-        <table style="width:100%; border-collapse:collapse; border:none; margin: 4pt 0;">
-          <tr>
-            <td style="width:45%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:${leftAlign};">${leftHtml}</td>
-            <td style="width:55%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${rightHtml}</td>
-          </tr>
-        </table>
-      `);
+      if (startIdx <= 6) {
+        htmlBlocks.push(buildOcrHeaderTableHtml(leftLines, rightLines, isPartyDoc));
+      } else {
+        htmlBlocks.push(buildOcrFooterTableHtml(leftLines, rightLines, isPartyDoc));
+      }
       continue;
     }
 
-    // Nhóm các dòng bảng dữ liệu liên tiếp
+    if (item.type === 'FOOTER_COL') {
+      const leftLines = [];
+      const rightLines = [];
+      while (i < classified.length && (classified[i].type === 'FOOTER_COL' || classified[i].type === 'TWO_COL')) {
+        if (classified[i].leftSeg) leftLines.push(classified[i].leftSeg);
+        if (classified[i].rightSeg) rightLines.push(classified[i].rightSeg);
+        i++;
+      }
+      htmlBlocks.push(buildOcrFooterTableHtml(leftLines, rightLines, isPartyDoc));
+      continue;
+    }
+
     if (item.type === 'TABLE_ROW') {
       const tableRows = [];
       while (i < classified.length && classified[i].type === 'TABLE_ROW') {
@@ -559,7 +740,7 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
       const trsHtml = tableRows.map(row => {
         const tds = Array.from({ length: maxCols }, (_, cIdx) => {
           const cell = row[cIdx];
-          return `<td style="border:1px solid #000; padding:4pt 6pt; vertical-align:top; font-size:${cell ? cell.fontSize : 12}pt;">${cell ? cell.html : ''}</td>`;
+          return `<td style="border:1px solid #000; padding:4pt 6pt; vertical-align:top; font-size:13pt;">${cell ? cell.html : ''}</td>`;
         }).join('');
         return `<tr>${tds}</tr>`;
       }).join('');
@@ -567,19 +748,41 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
       continue;
     }
 
-    // Dòng căn giữa (Tiêu đề, Tên loại văn bản, Trích yếu...)
     if (item.type === 'CENTER') {
       const s = item.seg;
-      htmlBlocks.push(`<p style="text-align:center; margin: 3pt 0; line-height: 1.35; font-size:${s.fontSize}pt;">${s.html}</p>`);
+      const txt = s.text.trim();
+      const isDocType = /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN)$/i.test(txt);
+      if (isDocType) {
+        const titleSize = isPartyDoc ? '15pt' : '14pt';
+        htmlBlocks.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:12pt 0 4pt 0; line-height:1.35; font-size:${titleSize}; text-transform:uppercase;">${escapeHtml(txt)}</p>`);
+        i++;
+        const subjParts = [];
+        while (i < classified.length && classified[i].type === 'CENTER') {
+          const nextTxt = classified[i].seg.text.trim();
+          if (/^[-_*—–=]+$/.test(nextTxt)) {
+            i++;
+            break;
+          }
+          if (/^(QUYẾT ĐỊNH\s*:|QUYẾT NGHỊ\s*:|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)/i.test(nextTxt)) {
+            break;
+          }
+          subjParts.push(nextTxt);
+          i++;
+        }
+        if (subjParts.length > 0) {
+          htmlBlocks.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 4pt 0; line-height:1.35; font-size:14pt;">${escapeHtml(subjParts.join(' '))}</p>`);
+          htmlBlocks.push(`<hr style="width:32%; border:0; border-top:1px solid #000; margin:2pt auto 12pt auto;"/>`);
+        }
+        continue;
+      }
+      htmlBlocks.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:4pt 0; line-height:1.35; font-size:14pt;">${escapeHtml(txt)}</p>`);
       i++;
       continue;
     }
 
-    // Dòng đoạn văn bản thân bài (Tự động nối các dòng bị ngắt xuống hàng trong cùng 1 đoạn văn để căn đều 2 bên chuẩn Word)
     if (item.type === 'BODY') {
       const firstSeg = item.seg;
-      const isIndented = firstSeg.x > minPageX + 12;
-      let mergedHtml = firstSeg.html;
+      let mergedText = firstSeg.text.trim();
       let prevLine = item.line;
       let prevSeg = firstSeg;
       i++;
@@ -588,16 +791,15 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
         const nextItem = classified[i];
         const nextSeg = nextItem.seg;
         const nextLine = nextItem.line;
+        const nextTxt = nextSeg.text.trim();
         const verticalGap = prevLine.y - nextLine.y;
 
-        const prevReachedRightMargin = prevSeg.endX >= maxPageX - 52;
-        const prevEndedSentenceStop = /[:;]$|\.\s*\/\.\s*$/.test(prevSeg.text.trim());
-        const nextIsIndented = nextSeg.x > minPageX + 12;
-        const nextStartsNewItem = /^([-+•]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Căn cứ\s+|Nơi nhận)/i.test(nextSeg.text.trim());
-        const normalLineSpacing = verticalGap > 0 && verticalGap <= prevSeg.fontSize * 1.85;
+        const prevEndedSentenceStop = /[.:;!?]$|\.\s*\/\.\s*$/.test(mergedText);
+        const nextStartsNewSection = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Khoản\s+\d+|Căn cứ\s+|Xét\s+|Theo đề nghị|Kính gửi|Nơi nhận|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)/i.test(nextTxt);
+        const normalLineSpacing = verticalGap > 0 && verticalGap <= prevSeg.fontSize * 2.1;
 
-        if (prevReachedRightMargin && !prevEndedSentenceStop && !nextIsIndented && !nextStartsNewItem && normalLineSpacing) {
-          mergedHtml += ' ' + nextSeg.html;
+        if (!prevEndedSentenceStop && !nextStartsNewSection && normalLineSpacing) {
+          mergedText += ' ' + nextTxt;
           prevLine = nextLine;
           prevSeg = nextSeg;
           i++;
@@ -606,8 +808,7 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport) {
         }
       }
 
-      const indentStyle = isIndented ? 'text-indent: 1.27cm;' : '';
-      htmlBlocks.push(`<p style="text-align:justify; ${indentStyle} margin: 0 0 5pt 0; line-height: 1.38; font-size:${firstSeg.fontSize}pt;">${mergedHtml}</p>`);
+      htmlBlocks.push(formatOcrBodyParagraphHtml(mergedText));
       continue;
     }
 
@@ -642,57 +843,120 @@ function finalizeSegment(seg) {
 
 // ============================================================================
 // TÁI TẠO BỐ CỤC CHUẨN TỪ VĂN BẢN OCR (KHI TẢI ẢNH CHỤP / PDF SCAN THUẦN ẢNH)
-// GIỮ NGUYÊN 100% CÂU CHỮ, KHÔNG TỰ Ý SỬA ĐỔI NỘI DUNG
+// GIỮ NGUYÊN CÂU CHỮ, ĐỒNG THỜI DỰNG CHUẨN THỂ THỨC HƯỚNG DẪN 05-HD/VPTW & NĐ 30
 // ============================================================================
 function reconstructExactLayoutFromPlainText(rawText) {
+  const isPartyDoc = detectIsPartyDocInOcr(rawText);
   const rawLines = String(rawText || '').replace(/\r\n/g, '\n').split('\n');
-  const htmlBlocks = [];
+  const nonEmptyLines = rawLines.map(l => l.trim()).filter(Boolean);
+  if (nonEmptyLines.length === 0) return '';
 
-  for (let i = 0; i < rawLines.length; i++) {
-    const rawLine = rawLines[i];
-    const trimmed = rawLine.trim();
-    if (!trimmed) continue;
+  const headerLeft = [];
+  const headerRight = [];
+  const footerLeft = [];
+  const footerRight = [];
+  const bodyLines = [];
 
-    // Nếu dòng có chứa Tab (\t) hoặc từ 6 khoảng trắng liên tiếp trở lên ở giữa -> Tách 2 cột Trái - Phải
-    const twoColMatch = trimmed.match(/^(.+?)(?:\t+|\s{6,})(.+)$/);
-    if (twoColMatch) {
-      const leftStr = twoColMatch[1].trim();
-      const rightStr = twoColMatch[2].trim();
-      const isBoldLeft = leftStr === leftStr.toUpperCase() && leftStr !== leftStr.toLowerCase();
-      const isBoldRight = rightStr === rightStr.toUpperCase() && rightStr !== rightStr.toLowerCase();
-      htmlBlocks.push(`
-        <table style="width:100%; border-collapse:collapse; border:none; margin:2pt 0;">
-          <tr>
-            <td style="width:45%; vertical-align:top; border:none; text-align:center; font-size:13pt;">${isBoldLeft ? `<b>${escapeHtml(leftStr)}</b>` : escapeHtml(leftStr)}</td>
-            <td style="width:55%; vertical-align:top; border:none; text-align:center; font-size:13pt;">${isBoldRight ? `<b>${escapeHtml(rightStr)}</b>` : escapeHtml(rightStr)}</td>
-          </tr>
-        </table>
-      `);
-      continue;
+  let state = 'HEADER';
+  for (let i = 0; i < nonEmptyLines.length; i++) {
+    const line = nonEmptyLines[i];
+    if (/^[-_*—–=]{2,}$/.test(line)) continue;
+
+    if (state === 'HEADER') {
+      const twoCol = line.match(/^(.+?)(?:\t+|\s{4,})(.+)$/);
+      if (twoCol && i <= 8) {
+        headerLeft.push(twoCol[1].trim());
+        headerRight.push(twoCol[2].trim());
+        continue;
+      }
+      if (i <= 8 && /^(ĐẢNG CỘNG SẢN VIỆT NAM|CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*-\s*Tự do)/i.test(line)) {
+        headerRight.push(line);
+        continue;
+      }
+      if (i <= 8 && /\bngày\s+\d+\s+tháng\s+\d+\s+năm\s+\d+/i.test(line) && !/^Hôm nay/i.test(line)) {
+        headerRight.push(line);
+        continue;
+      }
+      if (i <= 7 && (/^(QUẬN ỦY|HUYỆN ỦY|THÀNH ỦY|TỈNH ỦY|ĐẢNG ỦY|ĐẢNG BỘ|CHI BỘ|BAN CHẤP HÀNH|BAN THƯỜNG VỤ|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN|Số\b|Số\s*:)/i.test(line))) {
+        headerLeft.push(line);
+        continue;
+      }
+      state = 'BODY';
     }
 
-    // Dòng có dấu '|' phân cột bảng
-    if (trimmed.includes('|')) {
-      const cells = trimmed.split('|').map(c => c.trim()).filter(Boolean);
-      if (cells.length >= 2) {
-        const tds = cells.map(c => `<td style="border:1px solid #000; padding:4pt 6pt; font-size:12.5pt;">${escapeHtml(c)}</td>`).join('');
-        htmlBlocks.push(`<table style="width:100%; border-collapse:collapse; margin:2pt 0;"><tr>${tds}</tr></table>`);
-        continue;
+    if (state === 'BODY') {
+      if (/^Nơi nhận\b/i.test(line) || /\b(T\/M\s+ĐẢNG\s+ỦY|T\/M\s+BAN\s+THƯỜNG\s+VỤ|TM\.\s+ỦY\s+BAN|KT\.\s+CHỦ\s+TỊCH|TL\.\s+CHỦ\s+TỊCH)\b/i.test(line)) {
+        state = 'FOOTER';
       }
     }
 
-    // Kiểm tra dòng tiêu đề căn giữa
-    const isHeading = /^(CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*-\s*Tự do\s*-\s*Hạnh phúc|ĐẢNG CỘNG SẢN VIỆT NAM|BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|QUYẾT ĐỊNH\s*:)/i.test(trimmed);
-    if (isHeading) {
-      htmlBlocks.push(`<p style="text-align:center; font-weight:bold; margin:4pt 0; font-size:13.5pt;">${escapeHtml(trimmed)}</p>`);
+    if (state === 'FOOTER') {
+      const twoCol = line.match(/^(.+?)(?:\t+|\s{4,})(.+)$/);
+      if (twoCol) {
+        footerLeft.push(twoCol[1].trim());
+        footerRight.push(twoCol[2].trim());
+      } else if (/^(Nơi nhận|-|\+|•|Lưu\b)/i.test(line)) {
+        footerLeft.push(line);
+      } else {
+        footerRight.push(line);
+      }
       continue;
     }
 
-    // Dòng thông thường: Giữ nguyên toàn bộ câu chữ
-    htmlBlocks.push(`<p style="text-align:justify; text-indent:1.27cm; margin:0 0 5pt 0; line-height:1.38; font-size:13.5pt;">${escapeHtml(trimmed)}</p>`);
+    bodyLines.push(line);
   }
 
-  return htmlBlocks.join('\n');
+  const outHtml = [];
+  if (headerLeft.length > 0 || headerRight.length > 0) {
+    outHtml.push(buildOcrHeaderTableHtml(headerLeft, headerRight, isPartyDoc));
+  }
+
+  let bIdx = 0;
+  while (bIdx < bodyLines.length) {
+    const l = bodyLines[bIdx];
+    if (l.includes('|')) {
+      const cells = l.split('|').map(c => c.trim()).filter(Boolean);
+      if (cells.length >= 2) {
+        const tds = cells.map(c => `<td style="border:1px solid #000; padding:4pt 6pt; font-size:13pt;">${escapeHtml(c)}</td>`).join('');
+        outHtml.push(`<table style="width:100%; border-collapse:collapse; margin:2pt 0;"><tr>${tds}</tr></table>`);
+        bIdx++;
+        continue;
+      }
+    }
+    if (/^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN)$/i.test(l) && bIdx <= 3) {
+      const titleSize = isPartyDoc ? '15pt' : '14pt';
+      outHtml.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:12pt 0 4pt 0; font-size:${titleSize}; text-transform:uppercase;">${escapeHtml(l)}</p>`);
+      bIdx++;
+      if (bIdx < bodyLines.length && !/^(Căn cứ|Thực hiện|Kính gửi|I\.|1\.|Điều\s+1)/i.test(bodyLines[bIdx])) {
+        outHtml.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 4pt 0; font-size:14pt;">${escapeHtml(bodyLines[bIdx])}</p>`);
+        outHtml.push(`<hr style="width:32%; border:0; border-top:1px solid #000; margin:2pt auto 12pt auto;"/>`);
+        bIdx++;
+      }
+      continue;
+    }
+
+    let merged = l;
+    bIdx++;
+    while (bIdx < bodyLines.length) {
+      const nxt = bodyLines[bIdx];
+      if (nxt.includes('|')) break;
+      const endedStop = /[.:;!?]$|\.\s*\/\.\s*$/.test(merged);
+      const startsNew = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Khoản\s+\d+|Căn cứ\s+|Xét\s+|Theo đề nghị|Kính gửi|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)/i.test(nxt);
+      if (!endedStop && !startsNew) {
+        merged += ' ' + nxt;
+        bIdx++;
+      } else {
+        break;
+      }
+    }
+    outHtml.push(formatOcrBodyParagraphHtml(merged));
+  }
+
+  if (footerLeft.length > 0 || footerRight.length > 0) {
+    outHtml.push(buildOcrFooterTableHtml(footerLeft, footerRight, isPartyDoc));
+  }
+
+  return outHtml.join('\n');
 }
 
 // Tiền xử lý ảnh cho OCR
@@ -1212,11 +1476,32 @@ function exportOcrToWord() {
   <head>
     <meta charset="utf-8">
     <title>${escapeHtml(uploadedFileBaseName)}</title>
+    <!--[if gte mso 9]><xml>
+      <w:WordDocument>
+        <w:View>Print</w:View>
+        <w:Zoom>100</w:Zoom>
+        <w:DoNotOptimizeForBrowser/>
+      </w:WordDocument>
+    </xml><![endif]-->
     <style>
-      @page Section1 { size: 21.0cm 29.7cm; margin: 2.0cm 1.5cm 2.0cm 3.0cm; }
+      @page Section1 {
+        size: 21.0cm 29.7cm;
+        margin: 2.0cm 1.5cm 2.0cm 3.0cm;
+        mso-header-margin: 1.0cm;
+        mso-footer-margin: 1.0cm;
+        mso-title-page: yes;
+        mso-header: h1;
+        mso-first-header: fh1;
+      }
       div.Section1 { page: Section1; }
-      body { font-family: "Times New Roman", Times, serif; font-size: 13.5pt; color: #000000; line-height: 1.38; }
-      p { font-family: "Times New Roman", Times, serif; margin: 0 0 5pt 0; }
+      p.MsoHeader, li.MsoHeader, div.MsoHeader {
+        margin: 0cm;
+        text-align: center;
+        font-size: 13.0pt;
+        font-family: "Times New Roman", Times, serif;
+      }
+      body { font-family: "Times New Roman", Times, serif; font-size: 14pt; color: #000000; line-height: 1.38; }
+      p { font-family: "Times New Roman", Times, serif; margin: 0 0 6pt 0; font-size: 14pt; }
       table { width: 100%; border-collapse: collapse; font-family: "Times New Roman", Times, serif; }
       td, th { font-family: "Times New Roman", Times, serif; vertical-align: top; }
     </style>
@@ -1224,6 +1509,12 @@ function exportOcrToWord() {
   <body>
     <div class="Section1">
       ${bodyHtml}
+      <div style="mso-element:header" id="fh1"><p class="MsoHeader">&nbsp;</p></div>
+      <div style="mso-element:header" id="h1">
+        <p class="MsoHeader" align="center" style="text-align:center;font-size:13pt;font-family:'Times New Roman',serif;">
+          <!--[if supportFields]><span style='mso-element:field-begin'></span> PAGE <span style='mso-element:field-separator'></span><![endif]-->2<!--[if supportFields]><span style='mso-element:field-end'></span><![endif]-->
+        </p>
+      </div>
     </div>
   </body>
   </html>`;
