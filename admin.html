@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard · Quản Trị Hệ Thống Siêu App Văn Phòng</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+  <div class="ambient-mesh" aria-hidden="true">
+    <div class="ambient-blob blob-1"></div>
+    <div class="ambient-blob blob-2"></div>
+    <div class="ambient-blob blob-3"></div>
+    <div class="ambient-blob blob-4"></div>
+  </div>
+
+  <header class="site-header">
+    <nav class="glass-nav">
+      <a href="./index.html" class="brand-wrapper">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#facc15">
+            <polygon points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.7 5.8,21 7,14.1 2,9.3 8.9,8.3"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Siêu App Văn Phòng</span>
+          <span class="brand-sub"><span class="status-indicator-dot"></span>Trung Tâm Quản Trị Hệ Thống</span>
+        </div>
+      </a>
+
+      <div class="nav-center">
+        <a href="./index.html" class="nav-link">Trang Chủ</a>
+        <a href="./products/vbtm-pro.html" class="nav-link">VBTM Pro</a>
+        <a href="./products/vietnam-ocr.html" class="nav-link">VietNamOCR Pro</a>
+        <a href="./products/trinh-chay-su-kien.html" class="nav-link">Sự Kiện Play</a>
+        <a href="./admin.html" class="nav-link active">Quản Trị Admin</a>
+      </div>
+
+      <div class="nav-actions">
+        <button id="themeToggleBtn" class="glass-btn-icon" aria-label="Đổi giao diện"></button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="app-container" style="margin-top: 28px;">
+    <section class="studio-box">
+      <div class="studio-topbar">
+        <div class="studio-window-Title">
+          <div class="window-dots">
+            <span class="win-dot red"></span>
+            <span class="win-dot yellow"></span>
+            <span class="win-dot green"></span>
+          </div>
+          <span style="font-weight: 800;">ADMIN DASHBOARD · QUẢN LÝ DANH MỤC ỨNG DỤNG, PHIÊN BẢN &amp; THỐNG KÊ</span>
+        </div>
+
+        <div class="studio-tabs">
+          <button type="button" class="btn-tool primary" onclick="resetAdminForm()">➕ Thêm Ứng Dụng Mới</button>
+          <button type="button" class="btn-tool" onclick="exportProductsJson()">⬇ Xuất File products.json</button>
+          <button type="button" class="btn-tool success" onclick="restoreDefaultCatalog()">↺ Khôi Phục Mặc Định</button>
+        </div>
+      </div>
+
+      <div class="studio-body">
+        <!-- Thống kê thời gian thực -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:22px;">
+          <div class="spec-cell">
+            <div class="spec-name">Tổng Số Ứng Dụng</div>
+            <div class="spec-val" id="statTotalApps" style="font-size:1.5rem; color:var(--accent-color);">05</div>
+          </div>
+          <div class="spec-cell">
+            <div class="spec-name">Lượt Xem Hôm Nay</div>
+            <div class="spec-val" id="statTodayVisits" style="font-size:1.5rem; color:var(--accent-color);">358</div>
+          </div>
+          <div class="spec-cell">
+            <div class="spec-name">Lượt Tải Hôm Nay</div>
+            <div class="spec-val" id="statTodayDownloads" style="font-size:1.5rem; color:var(--accent-color);">142</div>
+          </div>
+          <div class="spec-cell">
+            <div class="spec-name">Tổng Lượt Tải Tháng 11</div>
+            <div class="spec-val" id="statMonthDownloads" style="font-size:1.5rem; color:var(--accent-color);">1,680</div>
+          </div>
+        </div>
+
+        <div class="studio-grid-2col">
+          <div class="studio-panel">
+            <div class="studio-panel-title">
+              <span id="adminFormTitle">1. Thêm / Chỉnh Sửa Ứng Dụng</span>
+              <span class="card-version">CRUD Đồng Bộ</span>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Mã định danh (ID)</label>
+                <input type="text" id="admId" class="glass-input" placeholder="VD: vbtm-pro">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tên ứng dụng</label>
+                <input type="text" id="admName" class="glass-input" placeholder="VD: VBTM Pro">
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Phiên bản</label>
+                <input type="text" id="admVersion" class="glass-input" placeholder="VD: 2.2.4">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Danh mục</label>
+                <select id="admCategory" class="glass-select">
+                  <option value="ai">Văn Bản &amp; AI Số Hóa</option>
+                  <option value="audio">Âm Thanh &amp; Hội Nghị</option>
+                  <option value="vpn">Mạng &amp; Bảo Mật</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Huy hiệu nổi bật (Badge)</label>
+                <input type="text" id="admBadge" class="glass-input" placeholder="VD: Đảng Ủy & UBND Phường">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nền tảng hỗ trợ</label>
+                <input type="text" id="admPlatform" class="glass-input" placeholder="VD: Windows 10/11 & Word">
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Tệp cài đặt / Liên kết tải</label>
+                <input type="text" id="admSetupFile" class="glass-input" placeholder="VD: VBTM-Setup-2.2.4.exe">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Trang chi tiết (URL)</label>
+                <input type="text" id="admPageUrl" class="glass-input" placeholder="VD: ./products/vbtm-pro.html">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Khẩu hiệu ngắn (Tagline)</label>
+              <input type="text" id="admTagline" class="glass-input" placeholder="Chuẩn hóa thể thức văn bản...">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Mô tả chi tiết ứng dụng</label>
+              <textarea id="admShortDesc" class="glass-textarea" rows="4"></textarea>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+              <button type="button" class="btn-tool primary" onclick="saveAdminApp()">💾 Lưu Ứng Dụng</button>
+              <button type="button" class="btn-tool" onclick="resetAdminForm()">Hủy / Làm Mới</button>
+            </div>
+          </div>
+
+          <div class="studio-panel">
+            <div class="studio-panel-title">
+              <span>2. Danh Sách Ứng Dụng Hiện Hành</span>
+              <span class="card-version">Nhấn Sửa hoặc Xóa</span>
+            </div>
+            <div id="adminAppsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="app-container">
+      <div class="footer-inner">
+        <div>
+          <span style="font-weight: 800; color: var(--accent-color);">Siêu App Văn Phòng · Trung Tâm Quản Trị</span>
+          <div class="footer-copy">&copy; 2026 Hệ Sinh Thái Phần Mềm Đảng Ủy &amp; UBND Phường.</div>
+        </div>
+        <div class="footer-links">
+          <a href="./index.html">Trang chủ</a>
+          <a href="./products/vbtm-pro.html">VBTM Pro</a>
+          <a href="./products/vietnam-ocr.html">VietNamOCR Pro</a>
+          <a href="./products/trinh-chay-su-kien.html">Sự Kiện Play</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./js/main.js"></script>
+  <script>
+    let adminProducts = [];
+
+    async function loadAdminCatalog() {
+      const saved = localStorage.getItem('moniter_custom_products');
+      if (saved) {
+        try {
+          adminProducts = JSON.parse(saved);
+        } catch (e) {}
+      }
+      if (!adminProducts || adminProducts.length === 0) {
+        try {
+          const res = await fetch('./data/products.json');
+          if (res.ok) adminProducts = await res.json();
+        } catch (e) {}
+      }
+      if (!adminProducts || adminProducts.length === 0) {
+        adminProducts = window.DEFAULT_PRODUCTS || [];
+      }
+      renderAdminList();
+    }
+
+    function renderAdminList() {
+      document.getElementById('statTotalApps').textContent = String(adminProducts.length).padStart(2, '0');
+      const container = document.getElementById('adminAppsList');
+      if (!container) return;
+      container.innerHTML = adminProducts.map((p, idx) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:14px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border);">
+          <div>
+            <div style="font-weight:800; color:var(--text-main);">${p.name} <span class="card-version">v${p.version}</span></div>
+            <div style="font-size:0.78rem; color:var(--text-secondary); margin-top:2px;">ID: <code>${p.id}</code> · Danh mục: <code>${p.category || 'ai'}</code></div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button type="button" class="btn-tool primary" style="padding:5px 10px; font-size:0.76rem;" onclick="editAdminApp(${idx})">Sửa</button>
+            <button type="button" class="btn-tool success" style="padding:5px 10px; font-size:0.76rem;" onclick="deleteAdminApp(${idx})">Xóa</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function editAdminApp(idx) {
+      const p = adminProducts[idx];
+      if (!p) return;
+      document.getElementById('admId').value = p.id || '';
+      document.getElementById('admName').value = p.name || '';
+      document.getElementById('admVersion').value = p.version || '';
+      document.getElementById('admCategory').value = p.category || 'ai';
+      document.getElementById('admBadge').value = p.badge || '';
+      document.getElementById('admPlatform').value = p.platform || '';
+      document.getElementById('admSetupFile').value = p.setupFile || '';
+      document.getElementById('admPageUrl').value = p.pageUrl || `./products/${p.id}.html`;
+      document.getElementById('admTagline').value = p.tagline || '';
+      document.getElementById('admShortDesc').value = p.shortDesc || '';
+      document.getElementById('adminFormTitle').textContent = `Đang Chỉnh Sửa: ${p.name}`;
+    }
+
+    function resetAdminForm() {
+      ['admId', 'admName', 'admVersion', 'admBadge', 'admPlatform', 'admSetupFile', 'admPageUrl', 'admTagline', 'admShortDesc'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.getElementById('adminFormTitle').textContent = '1. Thêm / Chỉnh Sửa Ứng Dụng';
+    }
+
+    async function saveAdminApp() {
+      const id = document.getElementById('admId').value.trim();
+      const name = document.getElementById('admName').value.trim();
+      if (!id || !name) {
+        if (window.showToast) window.showToast('Vui lòng nhập đầy đủ Mã ID và Tên ứng dụng!');
+        return;
+      }
+      const existingIdx = adminProducts.findIndex(x => x.id === id);
+      const item = {
+        id,
+        name,
+        version: document.getElementById('admVersion').value.trim() || '1.0.0',
+        category: document.getElementById('admCategory').value || 'ai',
+        badge: document.getElementById('admBadge').value.trim() || 'Chuẩn Văn Phòng',
+        platform: document.getElementById('admPlatform').value.trim() || 'Windows & Web',
+        setupFile: document.getElementById('admSetupFile').value.trim(),
+        pageUrl: document.getElementById('admPageUrl').value.trim() || `./products/${id}.html`,
+        tagline: document.getElementById('admTagline').value.trim(),
+        shortDesc: document.getElementById('admShortDesc').value.trim(),
+        iconColor: existingIdx >= 0 ? adminProducts[existingIdx].iconColor : 'linear-gradient(145deg, #dc2626 0%, #991b1b 100%)',
+        iconSvg: existingIdx >= 0 ? adminProducts[existingIdx].iconSvg : '<svg viewBox="0 0 64 64" fill="none"><rect x="12" y="10" width="40" height="44" rx="8" stroke="#facc15" stroke-width="3"/><polygon points="32,18 35,26 44,27 37,33 39,41 32,37 25,41 27,33 20,27 29,26" fill="#facc15"/></svg>'
+      };
+
+      if (existingIdx >= 0) {
+        adminProducts[existingIdx] = item;
+      } else {
+        adminProducts.push(item);
+      }
+
+      localStorage.setItem('moniter_custom_products', JSON.stringify(adminProducts));
+      try {
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(adminProducts)
+        });
+      } catch (e) {}
+
+      renderAdminList();
+      if (window.showToast) window.showToast(`Đã lưu ứng dụng "${name}" thành công!`);
+    }
+
+    function deleteAdminApp(idx) {
+      const removed = adminProducts.splice(idx, 1);
+      localStorage.setItem('moniter_custom_products', JSON.stringify(adminProducts));
+      renderAdminList();
+      if (window.showToast && removed[0]) window.showToast(`Đã xóa ứng dụng "${removed[0].name}"!`);
+    }
+
+    function restoreDefaultCatalog() {
+      localStorage.removeItem('moniter_custom_products');
+      adminProducts = [...(window.DEFAULT_PRODUCTS || [])];
+      renderAdminList();
+      if (window.showToast) window.showToast('Đã khôi phục danh mục ứng dụng mặc định!');
+    }
+
+    function exportProductsJson() {
+      const blob = new Blob([JSON.stringify(adminProducts, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'products.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      if (window.showToast) window.showToast('Đã xuất tệp cấu hình products.json!');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAdminCatalog);
+  </script>
+</body>
+</html>
