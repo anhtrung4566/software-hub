@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kho Phần Mềm Chuyên Dụng · VBTM Pro 4.0 Ultimate &amp; VietNamOCR 4.0 Pro Ultimate</title>
-  <meta name="description" content="Cổng phần mềm chuyên dụng phục vụ Đảng ủy và Ủy ban nhân dân phường: VBTM Pro 4.0 Ultimate và VietNamOCR 4.0 Pro Ultimate (Chuyển PDF sang Word giữ nguyên thể thức 100% &amp; AI Neural OCR).">
-  <meta property="og:title" content="Kho Phần Mềm Chuyên Dụng · VBTM Pro 4.0 &amp; VietNamOCR 4.0 Pro">
-  <meta property="og:description" content="Cổng ứng dụng chuẩn hóa thể thức văn bản hành chính Đảng ủy - UBND phường và số hóa tài liệu tiếng Việt ngoại tuyến.">
+  <title>Siêu App Văn Phòng · Đảng Ủy &amp; Ủy Ban Nhân Dân Phường (Chuẩn Hướng Dẫn 05-HD/VPTW &amp; Nghị Định 30)</title>
+  <meta name="description" content="Hệ sinh thái Siêu App Văn Phòng phục vụ Đảng ủy và Ủy ban nhân dân phường: VBTM Pro 2.2.4 (Chuẩn Hướng dẫn 05-HD/VPTW & Nghị định 30/2020/NĐ-CP), VietNamOCR 3.2 Pro, Sự Kiện Play, VietDub AI và MonVPN.">
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
-  <!-- Dynamic Ambient Mesh Background -->
+  <!-- Nền Đỏ - Vàng Cờ Đảng Trang Trọng -->
   <div class="ambient-mesh" aria-hidden="true">
     <div class="ambient-blob blob-1"></div>
     <div class="ambient-blob blob-2"></div>
@@ -19,218 +17,115 @@
     <div class="ambient-blob blob-4"></div>
   </div>
 
-  <!-- iOS Frosted Glass Sticky Header -->
+  <!-- Thanh Điều Hướng Kính Quang Học -->
   <header class="site-header">
     <nav class="glass-nav">
       <a href="./index.html" class="brand-wrapper">
         <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ffffff" stroke-width="2.2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-            <path d="M2 17l10 5 10-5"></path>
-            <path d="M2 12l10 5 10-5"></path>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#facc15">
+            <polygon points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.7 5.8,21 7,14.1 2,9.3 8.9,8.3"/>
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">Software Hub</span>
+          <span class="brand-title">Siêu App Văn Phòng</span>
           <span class="brand-sub"><span class="status-indicator-dot"></span>Đảng Ủy &amp; UBND Phường</span>
         </div>
       </a>
 
-      <!-- Menu: Chỉ gồm Phần mềm và 2 ứng dụng trực tiếp -->
       <div class="nav-center">
-        <a href="#productsSection" class="nav-link active">Phần Mềm</a>
-        <a href="./products/vbtm-pro.html" class="nav-link">VBTM Pro 4.0 Ultimate</a>
-        <a href="./products/vietnam-ocr.html" class="nav-link">VietNamOCR 4.0 Pro</a>
+        <a href="#productsSection" class="nav-link active">Kho Phần Mềm</a>
+        <a href="./products/vbtm-pro.html" class="nav-link">VBTM Pro 2.2.4</a>
+        <a href="./products/vietnam-ocr.html" class="nav-link">VietNamOCR Pro</a>
+        <a href="./products/trinh-chay-su-kien.html" class="nav-link">Sự Kiện Play</a>
+        <a href="./admin.html" class="nav-link">Quản Trị</a>
       </div>
 
       <div class="nav-actions">
-        <button id="themeToggleBtn" class="glass-btn-icon" aria-label="Đổi giao diện">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-        </button>
+        <button id="themeToggleBtn" class="glass-btn-icon" aria-label="Đổi giao diện"></button>
       </div>
     </nav>
   </header>
 
-  <!-- Main Content Shell -->
   <main class="app-container">
-    
-    <!-- Stats Banner -->
-    <section class="hero-section">
-      <div class="tech-stats-bar">
-        <div class="tech-stat-item">
-          <span class="tech-stat-val">02</span>
-          <span class="tech-stat-lbl">Ứng Dụng</span>
-        </div>
-        <div class="tech-stat-sep"></div>
-        <div class="tech-stat-item">
-          <span class="tech-stat-val">100%</span>
-          <span class="tech-stat-lbl">Offline / Nội Bộ</span>
-        </div>
-        <div class="tech-stat-sep"></div>
-        <div class="tech-stat-item">
-          <span class="tech-stat-val">A4</span>
-          <span class="tech-stat-lbl">Chuẩn NĐ30 &amp; Đảng Ủy</span>
-        </div>
-      </div>
-    </section>
 
-    <!-- Product Showcase Grid Section -->
-    <section id="productsSection" style="scroll-margin-top: 100px; margin-bottom: 50px;">
-      <div class="section-title-wrap">
-        <div>
-          <span class="section-micro-tag">CORE REPOSITORY</span>
-          <h2 class="section-heading">Danh Sách Phần Mềm</h2>
-          <p style="color: var(--text-muted); font-size: 0.92rem;">Bấm chọn ứng dụng để tải bộ cài đặt Windows (.exe) hoặc sử dụng trực tiếp ngay trên trình duyệt</p>
-        </div>
-      </div>
-
-      <!-- Products Grid -->
-      <div class="products-grid" id="productsGrid">
-        <!-- Card 1: VBTM Pro -->
-        <div class="product-card" id="card-vbtm-pro">
-          <div class="card-top">
-            <div class="card-icon-box" style="background: linear-gradient(145deg, #0ea5e9 0%, #2563eb 50%, #1e1b4b 100%)">
-              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="11" y="9" width="34" height="46" rx="5" fill="#ffffff"/><line x1="17" y1="18" x2="32" y2="18" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="24" x2="39" y2="24" stroke="#64748b" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="30" x2="35" y2="30" stroke="#64748b" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="36" x2="28" y2="36" stroke="#64748b" stroke-width="2" stroke-linecap="round"/><circle cx="44" cy="43" r="13" fill="#0ea5e9" stroke="#ffffff" stroke-width="2"/><path d="M38 43.5L42 47.5L50 39" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="card-badges">
-              <span class="badge-tag badge-featured">Đảng Ủy &amp; UBND Phường</span>
-              <span class="badge-tag badge-platform">Windows 10/11 &amp; Word</span>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="card-title">
-              <span>VBTM Pro</span>
-              <span class="card-version">v2.2.4</span>
-            </div>
-            <div class="card-tagline">Chuẩn Hóa Thể Thức Văn Bản, Tạo Mã QR Động &amp; Soát Lỗi Chính Tả AI Offline</div>
-            <div class="card-desc">Chuẩn hóa thể thức văn bản hành chính của Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP và văn bản của Đảng ủy phường theo Hướng dẫn số 05-HD/VPTW. Tích hợp tạo mã QR động và soát lỗi chính tả AI ngoại tuyến 100% cho Microsoft Word.</div>
-          </div>
-          <div class="card-actions">
-            <a href="./downloads/VBTM-Setup-2.2.4.exe" class="btn-glass-primary" download="VBTM-Setup-2.2.4.exe">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>Tải VBTM-Setup-2.2.4.exe</span>
-            </a>
-            <a href="./products/vbtm-pro.html" class="btn-glass-secondary">
-              <span>Mở Ứng Dụng &amp; Chi Tiết</span>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-            </a>
-          </div>
-        </div>
-
-        <!-- Card 2: VietNamOCR 3.2 Pro -->
-        <div class="product-card" id="card-vietnam-ocr">
-          <div class="card-top">
-            <div class="card-icon-box" style="background: linear-gradient(145deg, #6443ff 0%, #4a29db 50%, #281195 100%)">
-              <svg viewBox="10 16 108 96" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M37 25 h36 l20 20 v56 a6 6 0 0 1 -6 6 H37 a6 6 0 0 1 -6 -6 V31 a6 6 0 0 1 6 -6 z" fill="#ffffff"/><path d="M73 25 v16 a4 4 0 0 0 4 4 h16 z" fill="#cbd5e1"/><rect x="41" y="37" width="24" height="4" rx="2" fill="#64748b"/><rect x="41" y="46" width="45" height="3.5" rx="1.75" fill="#94a3b8"/><rect x="41" y="54" width="45" height="3.5" rx="1.75" fill="#94a3b8"/><rect x="41" y="62" width="45" height="3.5" rx="1.75" fill="#94a3b8"/><rect x="41" y="70" width="45" height="3.5" rx="1.75" fill="#94a3b8"/><line x1="15" y1="65" x2="113" y2="65" stroke="#00f5d4" stroke-width="4" stroke-linecap="round"/></svg>
-            </div>
-            <div class="card-badges">
-              <span class="badge-tag badge-featured">Số Hóa Hồ Sơ Phường</span>
-              <span class="badge-tag badge-platform">Windows 10/11 x64</span>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="card-title">
-              <span>VietNamOCR 3.2 Pro</span>
-              <span class="card-version">v3.2.0</span>
-            </div>
-            <div class="card-tagline">Số Hóa Tài Liệu Tiếng Việt Từ Ảnh &amp; PDF Scan Sang Word / Excel</div>
-            <div class="card-desc">Nhận diện chữ tiếng Việt từ hình ảnh và tài liệu PDF scan phục vụ lưu trữ hồ sơ Đảng ủy và UBND phường. Tự động sửa lỗi dấu, xoay trang, bóc tách &amp; nối bảng biểu đa trang và xuất trực tiếp sang Word (.doc) / Excel (.xls).</div>
-          </div>
-          <div class="card-actions">
-            <a href="./downloads/VietNamOCR-Setup-3.2.0-x64.exe" class="btn-glass-primary" download="VietNamOCR-Setup-3.2.0-x64.exe">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>Tải VietNamOCR-Setup-3.2.0-x64.exe</span>
-            </a>
-            <a href="./products/vietnam-ocr.html" class="btn-glass-secondary">
-              <span>Mở Ứng Dụng &amp; Chi Tiết</span>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- GIỚI THIỆU HỆ SINH THÁI -->
-    <section id="authorSection" style="margin-bottom: 50px; scroll-margin-top: 100px;">
-      <div class="detail-hero-box" style="margin-top: 0; padding: 28px;">
+    <!-- KHU VỰC GIỚI THIỆU TRUNG TÂM (ĐỎ - VÀNG CỜ ĐẢNG) -->
+    <section id="authorSection" style="margin-top: 26px; margin-bottom: 36px;">
+      <div class="detail-hero-box" style="margin: 0; padding: 28px; border: 1.5px solid rgba(250, 204, 21, 0.55);">
         <div class="detail-header-flex" style="align-items: center;">
           <div class="detail-app-info" style="gap: 20px;">
-            <div class="kths-crest-badge">
+            <div class="kths-crest-badge" style="background: radial-gradient(circle at 35% 30%, #dc2626 0%, #7f1d1d 100%); border: 2px solid #facc15;">
               <svg viewBox="0 0 64 64" width="52" height="52" fill="none">
-                <path d="M32 6L54 15V31C54 45.5 44.6 55.8 32 60C19.4 55.8 10 45.5 10 31V15L32 6Z" fill="#dc2626" stroke="#fbbf24" stroke-width="3"/>
-                <polygon points="32,16 35.8,24.2 44.8,25.3 38.1,31.5 39.9,40.4 32,35.9 24.1,40.4 25.9,31.5 19.2,25.3 28.2,24.2" fill="#fbbf24"/>
+                <path d="M32 6L54 15V31C54 45.5 44.6 55.8 32 60C19.4 55.8 10 45.5 10 31V15L32 6Z" fill="#b91c1c" stroke="#facc15" stroke-width="3"/>
+                <polygon points="32,15 36.2,24.2 46,25.4 38.8,32.1 40.7,41.8 32,37 23.3,41.8 25.2,32.1 18,25.4 27.8,24.2" fill="#facc15"/>
               </svg>
             </div>
             <div class="detail-app-titles">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <h2 class="author-name-title" style="font-size: 1.65rem; font-weight: 800; margin-bottom: 2px;">BỘ CÔNG CỤ HÀNH CHÍNH &amp; SỐ HÓA HỒ SƠ</h2>
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="#38bdf8" style="flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h1 class="author-name-title" style="font-size: 1.75rem; font-weight: 800; margin-bottom: 2px; color: #fef08a;">HỆ SINH THÁI SIÊU APP VĂN PHÒNG SỐ HÓA</h1>
+                <span class="card-version">05 Ứng Dụng Chuyên Dụng</span>
               </div>
-              <p style="color: var(--accent-color); font-weight: 700; font-size: 0.98rem; margin-bottom: 8px;">Phục Vụ Công Tác Văn Thư, Lưu Trữ Của Đảng Ủy Và Ủy Ban Nhân Dân Phường</p>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <span class="badge-tag badge-platform">Nghị Định 30/2020/NĐ-CP (UBND Phường)</span>
-                <span class="badge-tag badge-platform">Hướng Dẫn 05-HD/VPTW (Đảng Ủy Phường)</span>
-                <span class="badge-tag badge-platform">Bóc Tách Văn Bản &amp; Bảng Biểu OCR</span>
-                <span class="badge-tag badge-platform">Bộ Cài .EXE Windows Offline 100%</span>
+              <p style="color: var(--accent-color); font-weight: 700; font-size: 1rem; margin-bottom: 10px;">Phục Vụ Công Tác Văn Thư, Lưu Trữ, Số Hóa Hồ Sơ &amp; Điều Hành Hội Nghị Của Đảng Ủy Và Ủy Ban Nhân Dân Phường</p>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="badge-tag badge-featured">Hướng Dẫn 05-HD/VPTW (Văn Bản Đảng)</span>
+                <span class="badge-tag badge-featured">Nghị Định 30/2020/NĐ-CP (UBND Phường)</span>
+                <span class="badge-tag badge-platform">Chuyển PDF Sang Word Chuẩn Thể Thức 1:1</span>
+                <span class="badge-tag badge-platform">100% Offline &amp; Trực Tuyến</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </section>
 
-        <div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08);">
-          <p style="color: var(--text-secondary); font-size: 0.94rem; margin-bottom: 14px;">
-            Các ứng dụng được đóng gói thành bộ cài đặt Windows (<code>.exe</code>) chạy độc lập không cần quyền Administrator và tích hợp sẵn công cụ làm việc trực tiếp trên trình duyệt:
+    <!-- DANH SÁCH PHẦN MỀM & BỘ LỌC -->
+    <section id="productsSection" style="padding-top: 8px;">
+      <div class="section-title-wrap" style="margin-bottom: 16px;">
+        <div>
+          <h2 class="section-heading">Danh Sách Phần Mềm &amp; Công Cụ Văn Phòng</h2>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">
+            Chọn ứng dụng để sử dụng trực tiếp trên trình duyệt hoặc tải bộ cài đặt Windows (<code>.exe</code>) về máy tính
           </p>
-
-          <div class="author-apps-grid">
-            <a href="./products/vbtm-pro.html" class="author-app-tile">
-              <div class="tile-top">
-                <span class="tile-title">VBTM Pro (VBTM-Setup-2.2.4.exe)</span>
-                <span class="card-version">v2.2.4</span>
-              </div>
-              <p class="tile-desc">Chuẩn hóa thể thức văn bản của Đảng ủy và UBND phường theo Nghị định 30/2020/NĐ-CP và Hướng dẫn số 05-HD/VPTW, tạo mã QR động và soát lỗi chính tả AI ngoại tuyến cho Microsoft Word.</p>
-            </a>
-
-            <a href="./products/vietnam-ocr.html" class="author-app-tile">
-              <div class="tile-top">
-                <span class="tile-title">VietNamOCR 3.2 Pro (VietNamOCR-Setup-3.2.0-x64.exe)</span>
-                <span class="card-version">v3.2.0</span>
-              </div>
-              <p class="tile-desc">Số hóa hồ sơ, tài liệu tiếng Việt từ ảnh &amp; PDF scan sang Word (.doc) và Excel (.xls), sửa lỗi dấu và nối bảng biểu đa trang.</p>
-            </a>
-          </div>
         </div>
       </div>
+
+      <div class="filter-search-bar">
+        <div class="category-pills">
+          <button type="button" class="cat-pill active" onclick="filterProductsByCategory('all', this)">Tất Cả (05)</button>
+          <button type="button" class="cat-pill" onclick="filterProductsByCategory('ai', this)">Văn Bản, OCR &amp; AI Số Hóa</button>
+          <button type="button" class="cat-pill" onclick="filterProductsByCategory('audio', this)">Âm Thanh Hội Nghị &amp; Đại Hội</button>
+          <button type="button" class="cat-pill" onclick="filterProductsByCategory('vpn', this)">Mạng &amp; Bảo Mật</button>
+        </div>
+        <div style="min-width: 260px; flex: 0 1 320px;">
+          <input type="text" class="glass-input" placeholder="🔍 Tìm kiếm phần mềm, chức năng..." oninput="filterProductsBySearch(this.value)">
+        </div>
+      </div>
+
+      <div class="products-grid" id="productsGrid"></div>
     </section>
 
   </main>
 
-  <!-- iOS Frosted Glass Footer -->
+  <!-- Footer Kèm Bộ Đếm Thống Kê Thời Gian Thực -->
   <footer class="site-footer">
     <div class="app-container">
       <div class="footer-inner">
         <div>
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-            <span style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">Software Hub</span>
-            <span class="card-version">ĐẢNG ỦY &amp; UBND PHƯỜNG</span>
+            <span style="font-weight: 800; font-size: 1.1rem; color: var(--accent-color);">Siêu App Văn Phòng · Đảng Ủy &amp; UBND Phường</span>
+            <span class="card-version">v4.0 Ultimate</span>
           </div>
-          <div class="footer-copy">&copy; 2026 Kho Phần Mềm Chuyên Dụng · VBTM Pro 2.2.4 &amp; VietNamOCR 3.2 Pro.</div>
+          <div id="liveStatsCounter" style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 4px;"></div>
+          <div class="footer-copy">&copy; 2026 Kho Phần Mềm Văn Phòng Chuyên Dụng · Chuẩn Hướng Dẫn 05-HD/VPTW &amp; Nghị Định 30/2020/NĐ-CP.</div>
         </div>
 
         <div class="footer-links">
           <a href="#productsSection">Phần mềm</a>
-          <a href="./products/vbtm-pro.html">VBTM Pro 2.2.4</a>
-          <a href="./products/vietnam-ocr.html">VietNamOCR 3.2 Pro</a>
+          <a href="./products/vbtm-pro.html">VBTM Pro</a>
+          <a href="./products/vietnam-ocr.html">VietNamOCR Pro</a>
+          <a href="./products/trinh-chay-su-kien.html">Sự Kiện Play</a>
+          <a href="./products/vietdub.html">VietDub AI</a>
+          <a href="./products/monvpn-pc.html">MonVPN</a>
+          <a href="./admin.html">Quản trị</a>
         </div>
       </div>
     </div>
