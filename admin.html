@@ -31,9 +31,8 @@
 
       <div class="nav-center">
         <a href="./index.html" class="nav-link">Trang Chủ</a>
-        <a href="./products/vbtm-pro.html" class="nav-link">VBTM Pro</a>
-        <a href="./products/vietnam-ocr.html" class="nav-link">VietNamOCR Pro</a>
-        <a href="./products/trinh-chay-su-kien.html" class="nav-link">Sự Kiện Play</a>
+        <a href="./products/vbtm-pro.html" class="nav-link">VBTM Pro 2.2.4</a>
+        <a href="./products/vietnam-ocr.html" class="nav-link">VietNamOCR 3.2 Pro</a>
         <a href="./admin.html" class="nav-link active">Quản Trị Admin</a>
       </div>
 
@@ -67,7 +66,7 @@
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:22px;">
           <div class="spec-cell">
             <div class="spec-name">Tổng Số Ứng Dụng</div>
-            <div class="spec-val" id="statTotalApps" style="font-size:1.5rem; color:var(--accent-color);">05</div>
+            <div class="spec-val" id="statTotalApps" style="font-size:1.5rem; color:var(--accent-color);">02</div>
           </div>
           <div class="spec-cell">
             <div class="spec-name">Lượt Xem Hôm Nay</div>
@@ -175,9 +174,8 @@
         </div>
         <div class="footer-links">
           <a href="./index.html">Trang chủ</a>
-          <a href="./products/vbtm-pro.html">VBTM Pro</a>
-          <a href="./products/vietnam-ocr.html">VietNamOCR Pro</a>
-          <a href="./products/trinh-chay-su-kien.html">Sự Kiện Play</a>
+          <a href="./products/vbtm-pro.html">VBTM Pro 2.2.4</a>
+          <a href="./products/vietnam-ocr.html">VietNamOCR 3.2 Pro</a>
         </div>
       </div>
     </div>
@@ -186,12 +184,14 @@
   <script src="./js/main.js"></script>
   <script>
     let adminProducts = [];
+    const ADMIN_REMOVED_IDS = new Set(['trinh-chay-su-kien', 'vietdub', 'monvpn-pc']);
 
     async function loadAdminCatalog() {
       const saved = localStorage.getItem('moniter_custom_products');
       if (saved) {
         try {
-          adminProducts = JSON.parse(saved);
+          adminProducts = JSON.parse(saved).filter(p => !ADMIN_REMOVED_IDS.has(p.id));
+          localStorage.setItem('moniter_custom_products', JSON.stringify(adminProducts));
         } catch (e) {}
       }
       if (!adminProducts || adminProducts.length === 0) {
