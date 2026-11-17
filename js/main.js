@@ -31,50 +31,10 @@ const DEFAULT_PRODUCTS = [
     shortDesc: "Nhận diện chữ Tiếng Việt từ ảnh và tài liệu PDF nhiều trang, tự động nối dòng đoạn văn và tái tạo chuẩn bảng 2 cột đầu/cuối trang theo Hướng dẫn 05-HD/VPTW & Nghị định 30/2020/NĐ-CP sang Word (.doc) và Excel (.xls).",
     iconColor: "linear-gradient(145deg, #b91c1c 0%, #991b1b 55%, #450a0a 100%)",
     iconSvg: `<svg viewBox="10 16 108 96" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M37 25 h36 l20 20 v56 a6 6 0 0 1 -6 6 H37 a6 6 0 0 1 -6 -6 V31 a6 6 0 0 1 6 -6 z" fill="#fffbeb"/><path d="M73 25 v16 a4 4 0 0 0 4 4 h16 z" fill="#fde047"/><rect x="41" y="37" width="24" height="4" rx="2" fill="#b91c1c"/><rect x="41" y="46" width="45" height="3.5" rx="1.75" fill="#7f1d1d"/><rect x="41" y="54" width="45" height="3.5" rx="1.75" fill="#7f1d1d"/><rect x="41" y="62" width="45" height="3.5" rx="1.75" fill="#7f1d1d"/><line x1="15" y1="65" x2="113" y2="65" stroke="#facc15" stroke-width="5" stroke-linecap="round"/></svg>`
-  },
-  {
-    id: "trinh-chay-su-kien",
-    name: "Sự Kiện Play",
-    version: "2.4.0",
-    category: "audio",
-    setupFile: "",
-    pageUrl: "./products/trinh-chay-su-kien.html",
-    badge: "Hội Nghị & Đại Hội Offline",
-    platform: "Web App & PWA Offline",
-    tagline: "Bàn Điều Hành Âm Thanh Hội Nghị, Đại Hội Đảng Bộ, Lễ Chào Cờ & Trao Thưởng",
-    shortDesc: "Bàn điều khiển âm thanh sự kiện trực quan hoạt động ngoại tuyến 100%: tích hợp Quốc ca, Quốc tế ca, Tiếng vỗ tay, Nhạc trao thưởng, phím tắt 1-6, hạ âm nhanh khi MC phát biểu và nạp nhạc riêng lưu vào IndexedDB.",
-    iconColor: "linear-gradient(145deg, #dc2626 0%, #991b1b 100%)",
-    iconSvg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="24" stroke="#facc15" stroke-width="3.5"/><polygon points="26,20 46,32 26,44" fill="#facc15"/></svg>`
-  },
-  {
-    id: "vietdub",
-    name: "VietDub AI Studio",
-    version: "1.0.44",
-    category: "ai",
-    setupFile: "",
-    pageUrl: "./products/vietdub.html",
-    badge: "AI Thuyết Minh",
-    platform: "Web Studio & Android",
-    tagline: "Thuyết Minh Giọng Đọc AI Tiếng Việt Tự Nhiên & Dịch Phụ Đề Video (.SRT/.VTT)",
-    shortDesc: "Công cụ nạp tệp phụ đề (.SRT/.VTT) hoặc kịch bản tư liệu để tự động đọc thuyết minh Tiếng Việt đồng bộ thời gian thực, tự động hạ âm lượng gốc (Ducking 5%) và xuất tệp phụ đề chuẩn.",
-    iconColor: "linear-gradient(145deg, #b91c1c 0%, #7f1d1d 100%)",
-    iconSvg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="14" width="44" height="36" rx="8" stroke="#facc15" stroke-width="3.5"/><path d="M26 24L40 32L26 40V24Z" fill="#facc15"/></svg>`
-  },
-  {
-    id: "monvpn-pc",
-    name: "MonVPN & Kiểm Định Mạng",
-    version: "1.0.2",
-    category: "vpn",
-    setupFile: "",
-    pageUrl: "./products/monvpn-pc.html",
-    badge: "Bảo Mật Đường Truyền",
-    platform: "Windows 10/11 & Web",
-    tagline: "Đo Độ Trễ Đường Truyền Thực Tế (Ping/Latency) & Khởi Tạo Cấu Hình Mạng An Toàn",
-    shortDesc: "Kiểm tra thời gian phản hồi thực tế tới các cụm máy chủ trong nước và quốc tế, cấu hình DNS chống mã độc và xuất tệp cấu hình kết nối bảo mật WireGuard (.conf) cho văn phòng.",
-    iconColor: "linear-gradient(145deg, #991b1b 0%, #450a0a 100%)",
-    iconSvg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M32 8L52 16V30C52 44 43.2 53.8 32 58C20.8 53.8 12 44 12 30V16L32 8Z" stroke="#facc15" stroke-width="3.5"/><path d="M24 32L30 38L41 26" stroke="#facc15" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
   }
 ];
+
+const REMOVED_APP_IDS = new Set(['trinh-chay-su-kien', 'vietdub', 'monvpn-pc']);
 
 window.DEFAULT_PRODUCTS = DEFAULT_PRODUCTS;
 
@@ -141,7 +101,8 @@ async function loadProductsGrid() {
   const customSaved = localStorage.getItem('moniter_custom_products');
   if (customSaved) {
     try {
-      const parsed = JSON.parse(customSaved);
+      const parsed = JSON.parse(customSaved).filter(p => !REMOVED_APP_IDS.has(p.id));
+      localStorage.setItem('moniter_custom_products', JSON.stringify(parsed));
       if (Array.isArray(parsed) && parsed.length > 0) {
         allProductsCatalog = parsed;
       }
@@ -150,7 +111,7 @@ async function loadProductsGrid() {
     try {
       const res = await fetch('./data/products.json');
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()).filter(p => !REMOVED_APP_IDS.has(p.id));
         if (Array.isArray(data) && data.length > 0) {
           allProductsCatalog = data;
         }
