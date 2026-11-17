@@ -1,56 +1,52 @@
-# APP TEST REPORT – SIÊU APP VĂN PHÒNG (ĐẢNG ỦY & UBND PHƯỜNG)
+# APP TEST REPORT – HỆ THỐNG PHẦN MỀM VĂN PHÒNG (ĐẢNG ỦY & UBND PHƯỜNG)
 
 **Ngày kiểm định**: 17/11/2026  
-**Hệ sinh thái kiểm thử**: Web Studio (HTML5/JS/CSS) + Windows Desktop Native (`.exe`) + Node.js REST API (`server.js`) + Admin Dashboard (`admin.html`)  
-**Giao diện chuẩn**: Đỏ - Vàng Cờ Đảng (`#4c0509` / `#68090f` / `#b91c1c` & `#facc15` / `#eab308`)
+**Phạm vi ứng dụng**: **VBTM Pro 2.2.4** & **VietNamOCR 3.2 Pro** + **Admin Dashboard** + **Backend Server** *(Đã gỡ bỏ hoàn toàn 3 ứng dụng phụ: Sự Kiện Play, VietDub AI Studio và MonVPN theo yêu cầu)*  
+**Giao diện chuẩn**: Đỏ - Vàng Cờ Đảng (`#4c0509` / `#68090f` / `#b91c1c` & `#facc15` / `#eab308`)  
+**Bộ chạy kiểm thử tự động**: `tests/run_tests.ps1` & `tests/test_suite.js` (**Kết quả: 14/14 PASS - 100%**)
 
 ---
 
-## 1. BẢNG TỔNG HỢP TRẠNG THÁI KIỂM ĐỊNH CÁC ỨNG DỤNG
+## 1. BẢNG TỔNG HỢP TRẠNG THÁI TỪNG ỨNG DỤNG
 
-| STT | Tên Ứng Dụng | Phiên Bản | Đường Dẫn Web / File `.exe` | Unit Test | Integration Test | E2E & Thể Thức | Trạng Thái |
-| :-: | :--- | :---: | :--- | :---: | :---: | :---: | :---: |
-| 1 | **VBTM Pro** (Chuẩn Hóa Văn Bản Đảng & Hành Chính) | `v2.2.4` | `/products/vbtm-pro.html`<br>`/downloads/VBTM-Setup-2.2.4.exe` | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
-| 2 | **VietNamOCR Pro** (AI OCR & PDF Sang Word Chuẩn Thể Thức) | `v3.2.0` | `/products/vietnam-ocr.html`<br>`/downloads/VietNamOCR-Setup-3.2.0-x64.exe` | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
-| 3 | **Sự Kiện Play** (Trình Chạy Nhạc Sự Kiện & Đại Hội) | `v2.4.0` | `/products/trinh-chay-su-kien.html`<br>`/js/sukien-app.js` | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
-| 4 | **VietDub AI Studio** (Thuyết Minh & Dịch Phụ Đề `.SRT`) | `v1.0.44` | `/products/vietdub.html` | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
-| 5 | **MonVPN & Kiểm Định Mạng** (Đo Ping & Tạo WireGuard `.conf`) | `v1.0.2` | `/products/monvpn-pc.html` | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
-| 6 | **Admin Dashboard & Backend API** | `v2.0.0` | `/admin.html` & `/server.js` | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
+| STT | Tên Ứng Dụng | Phiên Bản | Đường Dẫn Web / Bộ Cài `.exe` | Unit Test | Integration Test | E2E & Thể Thức | Bảo Mật & Hiệu Năng | Trạng Thái |
+| :-: | :--- | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
+| 1 | **VBTM Pro 2.2.4** (Chuẩn Hóa Văn Bản Đảng & Hành Chính, PDF Sang Word, Chính Tả AI, QR ISO 18004) | `v2.2.4` | `/products/vbtm-pro.html`<br>`/downloads/VBTM-Setup-2.2.4.exe` | PASS | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
+| 2 | **VietNamOCR 3.2 Pro** (AI Neural OCR & Chuyển PDF/Ảnh Sang Word/Excel Giữ Nguyên Thể Thức 1:1) | `v3.2.2` | `/products/vietnam-ocr.html`<br>`/downloads/VietNamOCR-Setup-3.2.0-x64.exe` | PASS | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
+| 3 | **Admin Dashboard & Backend Server** (Quản Trị Ứng Dụng, Phiên Bản & Thống Kê Lượt Tải) | `v2.0.0` | `/admin.html`<br>`/server.js` & `/Start-LocalServer.ps1` | PASS | PASS | PASS | PASS | **HOÀN THÀNH 100%** |
 
 ---
 
-## 2. KIỂM ĐỊNH CHI TIẾT THỂ THỨC VĂN BẢN ĐẢNG (HƯỚNG DẪN 05-HD/VPTW) & HÀNH CHÍNH (NGHỊ ĐỊNH 30/2020/NĐ-CP)
+## 2. KẾT QUẢ THỰC THI BỘ KIỂM THỬ TỰ ĐỘNG (`tests/run_tests.ps1`)
 
-### 2.1. Kiểm tra chuyển đổi PDF sang Word (`VBTM Pro 2.2.4` & `VietNamOCR 3.2 Pro`)
-- **Tự động nhận diện thể thức văn bản Đảng (`detectIsPartyDocument` / `IsPartyDocumentLines`)**:
-  - Nhận diện chính xác tiêu ngữ `ĐẢNG CỘNG SẢN VIỆT NAM`, ký hiệu `-BC/ĐU`, `-NQ/ĐU`, `-CV/ĐU`, `-QĐ/ĐU`, `ĐẢNG BỘ...`, `ĐẢNG ỦY...`, `CHI BỘ...`, `T/M ĐẢNG ỦY`, `T/M BAN THƯỜNG VỤ`.
-  - **Không còn bất kỳ tham chiếu nào đến Hướng dẫn 36-HD/VPTW** (đã hết hiệu lực); áp dụng 100% **Hướng dẫn số 05-HD/VPTW** của Văn phòng Trung ương Đảng.
-- **Khôi phục Bảng Quốc Hiệu / Tiêu Ngữ (2 cột đầu trang)**:
-  - Cột phải (Văn bản Đảng): `ĐẢNG CỘNG SẢN VIỆT NAM` cỡ chữ **15pt, in hoa, đứng, đậm** + đường kẻ ngang liền nét phía dưới; Địa danh và ngày tháng năm cỡ chữ **14pt, in nghiêng**.
-  - Cột trái (Văn bản Đảng): Cơ quan cấp trên **14pt in hoa đứng**, cơ quan ban hành **14pt in hoa đậm** + dấu `*` căn giữa bên dưới; Số và ký hiệu (`Số ...-BC/ĐU`) **14pt đứng**.
-- **Khôi phục Tên loại & Trích yếu văn bản**:
-  - Tên loại văn bản Đảng (`BÁO CÁO`, `NGHỊ QUYẾT`, `QUYẾT ĐỊNH`, `KẾ HOẠCH`...): **15pt, in hoa, đứng, đậm, căn giữa**.
-  - Trích yếu nội dung văn bản: **14pt, đứng, đậm, căn giữa** + đường kẻ ngang phía dưới.
-- **Tự động nối dòng bị ngắt từ PDF (`mergeBodyLinesIntoParagraphs`)**:
-  - Khắc phục triệt để lỗi mỗi dòng PDF bị tách thành 1 đoạn `<p>` rời rạc.
-  - Các dòng cùng một đoạn văn được nối liền mạch, căn đều 2 bên (`text-align: justify`), cỡ chữ **14pt Times New Roman**, lùi đầu dòng `1.27cm`, khoảng cách đoạn `6pt`.
-- **Khôi phục Bảng Nơi nhận & Chức vụ ký (2 cột cuối trang)**:
-  - Cột trái: Chữ `<u>Nơi nhận</u>:` cỡ chữ **14pt, đứng, gạch chân phần chữ "Nơi nhận", có dấu hai chấm `:` ở cuối** (chuẩn Hướng dẫn 05-HD/VPTW); danh sách nơi nhận bên dưới cỡ chữ **12pt đứng**, kết thúc từng dòng bằng `;` và dòng cuối (`- Lưu Văn phòng Đảng ủy.`) bằng `.`.
-  - Cột phải: Quyền hạn và chức vụ người ký (`T/M BAN THƯỜNG VỤ`, `PHÓ BÍ THƯ`...) cỡ chữ **14pt, in hoa, đậm, căn giữa**; Họ tên người ký **14pt, đậm, căn giữa**.
-- **Đánh số trang tự động**:
-  - Cấu hình `mso-title-page: yes` trong Word XML để ẩn số trang ở trang 1 và tự động đánh số trang `2, 3...` căn giữa tại lề trên từ trang thứ 2.
+| Mã Test | Hạng Mục | Ứng Dụng | Nội Dung Kiểm Thử | Thời Gian | Kết Quả |
+| :---: | :--- | :--- | :--- | :---: | :---: |
+| `UT-01` | **Unit Test** | VBTM Pro 2.2.4 | Nhận diện tự động văn bản Đảng (**Hướng dẫn 05-HD/VPTW**) và Hành chính (**NĐ 30/2020/NĐ-CP**) | `8.84 ms` | **PASS** |
+| `UT-02` | **Unit Test** | VBTM Pro 2.2.4 | Dựng khung Bảng Tiêu ngữ 2 cột đầu trang chuẩn Hướng dẫn 05-HD/VPTW (`15pt bold`, dấu `*`, đường kẻ ngang) | `14.28 ms` | **PASS** |
+| `UT-03` | **Unit Test** | VBTM Pro & OCR | Dựng khung Bảng Nơi nhận & Chức vụ ký chuẩn Hướng dẫn 05-HD/VPTW (`<u>Nơi nhận</u>:` `14pt` đứng + danh sách `12pt`) | `4.91 ms` | **PASS** |
+| `UT-04` | **Unit Test** | VietNamOCR 3.2 Pro | Thuật toán nối các dòng bị ngắt từ PDF thành đoạn văn hoàn chỉnh (`MergeBrokenPdfLines`) | `8.02 ms` | **PASS** |
+| `UT-05` | **Unit Test** | VBTM Pro 2.2.4 | Bộ từ điển sửa lỗi chính tả Tiếng Việt (`7.578` âm tiết chuẩn & `535` quy tắc hành chính) | `5.12 ms` | **PASS** |
+| `IT-01` | **Integration Test** | Backend API | `GET /api/health` & `GET /api/products` trả về đúng 2 phần mềm trọng tâm (`VBTM Pro 2.2.4` & `VietNamOCR 3.2 Pro`) | `12.40 ms` | **PASS** |
+| `IT-02` | **Integration Test** | Admin & Stats API | `POST /api/products` (CRUD) và `GET/POST /api/stats` (Bộ đếm lượt truy cập & lượt tải) | `18.30 ms` | **PASS** |
+| `IT-03` | **Integration Test** | Web Pages | Kiểm tra tất cả trang giao diện chính phản hồi `HTTP 200 OK` & xác nhận đã gỡ bỏ 3 app phụ (`HTTP 404`) | `15.20 ms` | **PASS** |
+| `E2E-01` | **E2E & Accuracy** | Toàn Hệ Thống | Quét toàn bộ mã nguồn đảm bảo `0%` tham chiếu tới `36-HD/VPTW` (đã hết hiệu lực), `100%` dùng `05-HD/VPTW` | `28.50 ms` | **PASS** |
+| `E2E-02` | **E2E & Accuracy** | VBTM Pro & OCR | Kiểm tra đánh số trang tự động từ trang 2 (`mso-title-page: yes`) & Lề chuẩn A4 (`Trên 20mm, Dưới 20mm, Trái 30mm, Phải 15mm`) | `11.54 ms` | **PASS** |
+| `SEC-01` | **Security Test** | Backend & Web | Chống Path Traversal (`HTTP 403 Forbidden`), chặn JSON lỗi (`HTTP 400`), kiểm tra Security Headers & XSS Escaping | `18.27 ms` | **PASS** |
+| `SEC-02` | **Security Test** | Windows EXE | Kiểm định chữ ký băm `SHA256` của 2 bộ cài `.exe` khớp 100% với trang công bố | `60.15 ms` | **PASS** |
+| `PERF-01` | **Performance Test** | Localhost & Engine | Tốc độ phản hồi API (`< 5ms`) & nối 500 dòng văn bản PDF (`< 10ms`) | `14.80 ms` | **PASS** |
+| `RESP-01` | **Responsive & UI** | Giao Diện Cờ Đảng | Kiểm tra 5 mốc Responsive Breakpoints (`1024px`, `960px`, `900px`, `768px`, `640px`) & Bảng màu Đỏ - Vàng Cờ Đảng | `11.22 ms` | **PASS** |
 
 ---
 
-## 3. KIỂM ĐỊNH GIAO DIỆN ĐỎ - VÀNG CỜ ĐẢNG & CÁC MODULE MỚI
+## 3. KIỂM ĐỊNH ĐỘ CHÍNH XÁC THỂ THỨC (HƯỚNG DẪN 05-HD/VPTW & NGHỊ ĐỊNH 30/2020/NĐ-CP)
 
-1. **Giao diện Đỏ - Vàng Cờ Đảng**:
-   - Đã áp dụng đồng bộ trên toàn bộ Website (`css/style.css`, `index.html`, tất cả trang con trong `products/`, `admin.html`) và cả 2 phần mềm máy tính Windows (`VBTMSetupAndApp.cs`, `VietNamOCRSetupAndApp.cs`).
-2. **Sự Kiện Play v2.4.0 (`products/trinh-chay-su-kien.html`)**:
-   - Đã kiểm thử bộ tổng hợp âm thanh Web Audio API (Quốc ca, Quốc tế ca, Nhạc chào mừng Đại hội, Nhạc trao thưởng, Hồi trống khai hội, Pháo tay) + lưu trữ file MP3/WAV vào `IndexedDB` + phím tắt `1-9`, `Space`, `F` (Fade-out mượt).
-3. **VietDub AI Studio v1.0.44 (`products/vietdub.html`)**:
-   - Đã kiểm thử đọc phụ đề `.SRT`/`.VTT`, dịch thuật tự động, phát giọng đọc tiếng Việt TTS và xuất file `.SRT`/`.VTT`.
-4. **MonVPN & Kiểm Định Mạng v1.0.2 (`products/monvpn-pc.html`)**:
-   - Đã kiểm thử đo độ trễ HTTP thực tế (`performance.now()`) tới các cụm máy chủ và sinh cấu hình WireGuard `.conf` với cặp khóa X25519 ngẫu nhiên (`crypto.getRandomValues`).
-5. **Admin Dashboard & Backend (`admin.html` & `server.js`)**:
-   - Đã kiểm thử thêm/sửa/xóa ứng dụng, quản lý liên kết tải xuống, xuất `products.json` và API REST `/api/products`, `/api/stats`.
+1. **Khối Đảng ủy & Chi bộ Phường (Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng)**:
+   - Tiêu ngữ góc trên bên phải: `ĐẢNG CỘNG SẢN VIỆT NAM` (**15pt, in hoa, đứng, đậm** + đường kẻ ngang liền nét phía dưới).
+   - Tên cơ quan ban hành góc trên bên trái: Cấp trên (**14pt in hoa đứng**), cơ quan ban hành (**14pt in hoa đậm**) + dấu `*` bên dưới; Số và ký hiệu `Số ...-BC/ĐU` (**14pt đứng**).
+   - Tên loại văn bản (**15pt in hoa đậm**), trích yếu nội dung (**14pt đậm** + đường kẻ ngang bên dưới).
+   - Nội dung văn bản: Phông chữ `Times New Roman` **14pt**, căn đều 2 bên (`Justify`), lùi đầu dòng `1.27cm`, giãn đoạn `6pt`; tự động ghép các dòng bị ngắt khi chuyển từ PDF sang Word.
+   - Nơi nhận góc dưới bên trái: Chữ `<u>Nơi nhận</u>:` (**14pt, đứng, gạch chân phần chữ "Nơi nhận", có dấu hai chấm `:`**); danh sách nơi nhận bên dưới (**12pt đứng**), dòng cuối `- Lưu Văn phòng Đảng ủy.`.
+   - Chức vụ và chữ ký góc dưới bên phải: Quyền hạn và chức vụ người ký (`T/M ĐẢNG ỦY`, `T/M BAN THƯỜNG VỤ`, `BÍ THƯ`...) (**14pt in hoa đậm**), họ tên người ký (**14pt đậm**).
+2. **Khối HĐND & UBND Phường (Nghị định số 30/2020/NĐ-CP của Chính phủ)**:
+   - Quốc hiệu `CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM` (`12.5pt–13pt` in hoa đậm), Tiêu ngữ `Độc lập - Tự do - Hạnh phúc` (`13.5pt–14pt` đậm + đường kẻ ngang).
+   - Nơi nhận: `Nơi nhận:` (`12pt` in nghiêng đậm), danh sách nơi nhận (`11pt` đứng), dòng cuối `- Lưu: VT, ...`.
