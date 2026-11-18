@@ -1,11 +1,11 @@
-﻿===================================================================
+===================================================================
 BỘ CÀI ĐẶT VIETNAMOCR 3.2 PRO (x64 WINDOWS NATIVE EXE - OFFLINE 100%)
 Số hóa hồ sơ tiếng Việt từ Ảnh & PDF Scan phục vụ Đảng ủy và UBND Phường,
 Nối bảng biểu đa trang và Xuất trực tiếp sang Word (.doc) & Excel (.xls)
 ===================================================================
 
 1. CÁCH CÀI ĐẶT & SỬ DỤNG:
-   - Nháy đúp chuột vào tệp: VietNamOCR-Setup-3.2.0-x64.exe
+   - Nháy đúp chuột vào tệp: VietNamOCR-Setup-3.5.0-x64.exe
    - Nhấn nút "Cài Đặt Ngay" để tự động cài vào máy và tạo biểu tượng
-     "VietNamOCR 3.2 Pro" ngoài màn hình Desktop (Không cần quyền Admin).
+     "VietNamOCR 3.5 Pro" ngoài màn hình Desktop (Không cần quyền Admin).
    - Hoặc nhấn "Chạy Ngay (Không Cần Cài)" để mở phần mềm ngay lập tức.
