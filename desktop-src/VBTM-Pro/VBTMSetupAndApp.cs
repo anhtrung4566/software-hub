@@ -1450,16 +1450,16 @@ namespace VBTMProSuite
                     if (agencies.Count > 0)
                     {
                         sbLeft.Append(isPartyDoc
-                            ? "<div style='font-size:14pt;font-weight:bold;line-height:1;margin:2pt 0;'>*</div>"
-                            : "<hr style='width:38%;border:0;border-top:1px solid #000;'/>");
+                            ? "<p align='center' style='margin:1pt 0 2pt 0;text-indent:0;text-align:center;font-size:14pt;font-weight:bold;line-height:1;'>*</p>"
+                            : "<p align='center' style='margin:1pt 0 3pt 0;text-indent:0;text-align:center;font-size:9pt;line-height:1;'>────────────</p>");
                     }
                     if (!string.IsNullOrEmpty(numLine))
                     {
-                        sbLeft.AppendFormat("<div style='font-size:{0};margin-top:4pt;'>{1}</div>", isPartyDoc ? "14pt" : "13pt", System.Security.SecurityElement.Escape(numLine));
+                        sbLeft.AppendFormat("<p align='center' style='margin:2pt 0 0 0;text-indent:0;text-align:center;font-size:{0};'>{1}</p>", isPartyDoc ? "14pt" : "13pt", System.Security.SecurityElement.Escape(numLine));
                     }
                     if (subjLeft.Count > 0)
                     {
-                        sbLeft.AppendFormat("<div style='font-size:12pt;margin-top:3pt;'>{0}</div>", System.Security.SecurityElement.Escape(string.Join(" ", subjLeft.ToArray())));
+                        sbLeft.AppendFormat("<p align='center' style='margin:3pt 0 0 0;text-indent:0;text-align:center;font-size:12pt;'>{0}</p>", System.Security.SecurityElement.Escape(string.Join(" ", subjLeft.ToArray())));
                     }
 
                     StringBuilder sbRight = new StringBuilder();
@@ -1471,23 +1471,21 @@ namespace VBTMProSuite
                     }
                     if (isPartyDoc)
                     {
-                        sbRight.Append("<div style='font-size:15pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>");
-                        sbRight.Append("<hr style='width:58%;border:0;border-top:1px solid #000;'/>");
+                        sbRight.Append("<p align='center' style='margin:0;text-indent:0;text-align:center;font-size:15pt;font-weight:bold;'><span style='border-bottom:1pt solid #000000;padding-bottom:1pt;'>ĐẢNG CỘNG SẢN VIỆT NAM</span></p>");
                     }
                     else
                     {
-                        sbRight.Append("<div style='font-size:12.5pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>");
-                        sbRight.Append("<div style='font-size:13.5pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>");
-                        sbRight.Append("<hr style='width:52%;border:0;border-top:1px solid #000;'/>");
+                        sbRight.Append("<p align='center' style='margin:0;text-indent:0;text-align:center;font-size:12.5pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>");
+                        sbRight.Append("<p align='center' style='margin:0;text-indent:0;text-align:center;font-size:13.5pt;font-weight:bold;'><span style='border-bottom:1pt solid #000000;padding-bottom:1pt;'>Độc lập - Tự do - Hạnh phúc</span></p>");
                     }
                     if (!string.IsNullOrEmpty(dateLine))
                     {
-                        sbRight.AppendFormat("<div style='font-size:{0};font-style:italic;margin-top:6pt;'>{1}</div>", isPartyDoc ? "14pt" : "13.5pt", System.Security.SecurityElement.Escape(dateLine));
+                        sbRight.AppendFormat("<p align='center' style='margin:6pt 0 0 0;text-indent:0;text-align:center;font-size:{0};font-style:italic;'>{1}</p>", isPartyDoc ? "14pt" : "13.5pt", System.Security.SecurityElement.Escape(dateLine));
                     }
 
-                    sb.Append("<table style='width:100%;border-collapse:collapse;border:none;margin:0 0 8pt 0;'><tr>");
-                    sb.AppendFormat("<td style='width:44%;vertical-align:top;border:none;text-align:center;'>{0}</td>", sbLeft.ToString());
-                    sb.AppendFormat("<td style='width:56%;vertical-align:top;border:none;text-align:center;'>{0}</td>", sbRight.ToString());
+                    sb.Append("<table width='100%' cellpadding='0' cellspacing='0' border='0' style='width:100%;border-collapse:collapse;border:none;mso-table-lspace:0pt;mso-table-rspace:0pt;margin:0 0 10pt 0;'><tr>");
+                    sb.AppendFormat("<td width='44%' valign='top' align='center' style='width:44%;vertical-align:top;border:none;text-align:center;'>{0}</td>", sbLeft.ToString());
+                    sb.AppendFormat("<td width='56%' valign='top' align='center' style='width:56%;vertical-align:top;border:none;text-align:center;'>{0}</td>", sbRight.ToString());
                     sb.Append("</tr></table>");
                 }
 
@@ -1504,9 +1502,9 @@ namespace VBTMProSuite
                         bIdx++;
                         if (bIdx < bodyLines.Count && !Regex.IsMatch(bodyLines[bIdx], @"^(Căn cứ|Thực hiện|Kính gửi|I\.|1\.|Điều\s+1)", RegexOptions.IgnoreCase))
                         {
-                            sb.AppendFormat("<p style='text-align:center;text-indent:0;font-weight:bold;font-size:14pt;margin:0 0 4pt 0;'>{0}</p>",
+                            sb.AppendFormat("<p align='center' style='text-align:center;text-indent:0;font-weight:bold;font-size:14pt;margin:0 0 2pt 0;'>{0}</p>",
                                 System.Security.SecurityElement.Escape(bodyLines[bIdx]));
-                            sb.Append("<hr style='width:32%;border:0;border-top:1px solid #000;margin-bottom:12pt;'/>");
+                            sb.Append("<p align='center' style='text-align:center;text-indent:0;font-size:10pt;margin:0 0 10pt 0;line-height:1;'>──────────────</p>");
                             bIdx++;
                         }
                         continue;
@@ -1618,6 +1616,7 @@ div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:14p
 p.MsoHeader, li.MsoHeader, div.MsoHeader { margin:0cm; text-align:center; font-size:13pt; font-family:'Times New Roman',serif; }
 table { width:100%; border-collapse:collapse; }
 td, p { font-family:'Times New Roman',serif; }
+td p { margin:0; text-indent:0; }
 </style></head>
 <body><div class='Section1'>" + BuildLayoutPreservedPdfWordHtml(txtBody.Text) + @"
 <div style='mso-element:header' id='fh1'><p class='MsoHeader'>&nbsp;</p></div>
