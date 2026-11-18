@@ -376,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupWordFileUpload();
   updateQrCanvas();
   renderA4Preview();
+  updateVbtmLiveStats();
 });
 
 function bindVbtmEvents() {
@@ -462,10 +463,10 @@ function detectIsPartyDocument(text) {
 function buildRegulationHeaderTableHtml(leftSegs, rightSegs, isParty) {
   const cleanLeft = leftSegs
     .map(s => (typeof s === 'string' ? s : s.text).trim())
-    .filter(t => t && !/^[-_*—–=]+$/.test(t));
+    .filter(t => t && !/^[-_*—–=─]+$/.test(t));
   const cleanRight = rightSegs
     .map(s => (typeof s === 'string' ? s : s.text).trim())
-    .filter(t => t && !/^[-_*—–=]+$/.test(t));
+    .filter(t => t && !/^[-_*—–=─]+$/.test(t));
 
   const agencyLines = [];
   let numLine = '';
@@ -484,25 +485,25 @@ function buildRegulationHeaderTableHtml(leftSegs, rightSegs, isParty) {
 
   let leftCellHtml = '';
   if (agencyLines.length >= 2) {
-    leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '12.5pt'}; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(agencyLines[0])}</div>`;
+    leftCellHtml += `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:${isParty ? '14pt' : '12.5pt'}; font-weight:normal; text-transform:uppercase; line-height:1.25;">${escapeHtml(agencyLines[0])}</p>`;
     for (let k = 1; k < agencyLines.length; k++) {
-      leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '12.5pt'}; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(agencyLines[k])}</div>`;
+      leftCellHtml += `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:${isParty ? '14pt' : '12.5pt'}; font-weight:bold; text-transform:uppercase; line-height:1.25;">${escapeHtml(agencyLines[k])}</p>`;
     }
   } else if (agencyLines.length === 1) {
-    leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '12.5pt'}; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(agencyLines[0])}</div>`;
+    leftCellHtml += `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:${isParty ? '14pt' : '12.5pt'}; font-weight:bold; text-transform:uppercase; line-height:1.25;">${escapeHtml(agencyLines[0])}</p>`;
   }
 
   if (agencyLines.length > 0) {
     leftCellHtml += isParty
-      ? `<div style="font-size:14pt; font-weight:bold; line-height:1; margin:2pt 0;">*</div>`
-      : `<hr style="width:38%; border:0; border-top:1px solid #000; margin:2pt auto 6pt auto;"/>`;
+      ? `<p align="center" style="margin:1pt 0 2pt 0; text-indent:0; text-align:center; font-size:14pt; font-weight:bold; line-height:1;">*</p>`
+      : `<p align="center" style="margin:1pt 0 3pt 0; text-indent:0; text-align:center; font-size:9pt; line-height:1;">────────────</p>`;
   }
 
   if (numLine) {
-    leftCellHtml += `<div style="font-size:${isParty ? '14pt' : '13pt'}; margin-top:4pt; line-height:1.3;">${escapeHtml(numLine)}</div>`;
+    leftCellHtml += `<p align="center" style="margin:2pt 0 0 0; text-indent:0; text-align:center; font-size:${isParty ? '14pt' : '13pt'}; font-weight:normal; line-height:1.25;">${escapeHtml(numLine)}</p>`;
   }
   if (subjLeftLines.length > 0) {
-    leftCellHtml += `<div style="font-size:12pt; margin-top:3pt; line-height:1.3;">${escapeHtml(subjLeftLines.join(' '))}</div>`;
+    leftCellHtml += `<p align="center" style="margin:3pt 0 0 0; text-indent:0; text-align:center; font-size:12pt; font-weight:normal; line-height:1.25;">${escapeHtml(subjLeftLines.join(' '))}</p>`;
   }
 
   let rightCellHtml = '';
@@ -519,25 +520,23 @@ function buildRegulationHeaderTableHtml(leftSegs, rightSegs, isParty) {
 
   if (isParty) {
     const partyTitle = mottoLines.find(m => /ĐẢNG CỘNG SẢN/i.test(m)) || 'ĐẢNG CỘNG SẢN VIỆT NAM';
-    rightCellHtml += `<div style="font-size:15pt; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(partyTitle)}</div>`;
-    rightCellHtml += `<hr style="width:58%; border:0; border-top:1px solid #000; margin:2pt auto 6pt auto;"/>`;
+    rightCellHtml += `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:15pt; font-weight:bold; text-transform:uppercase; line-height:1.25;"><span style="border-bottom:1pt solid #000000; padding-bottom:1pt;">${escapeHtml(partyTitle)}</span></p>`;
   } else {
     const qh = mottoLines[0] || 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM';
     const tn = mottoLines[1] || 'Độc lập - Tự do - Hạnh phúc';
-    rightCellHtml += `<div style="font-size:12.5pt; font-weight:bold; text-transform:uppercase; margin:0; line-height:1.3;">${escapeHtml(qh)}</div>`;
-    rightCellHtml += `<div style="font-size:13.5pt; font-weight:bold; margin:0; line-height:1.3;">${escapeHtml(tn)}</div>`;
-    rightCellHtml += `<hr style="width:52%; border:0; border-top:1px solid #000; margin:2pt auto 6pt auto;"/>`;
+    rightCellHtml += `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:12.5pt; font-weight:bold; text-transform:uppercase; line-height:1.25;">${escapeHtml(qh)}</p>`;
+    rightCellHtml += `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:13.5pt; font-weight:bold; line-height:1.3;"><span style="border-bottom:1pt solid #000000; padding-bottom:1pt;">${escapeHtml(tn)}</span></p>`;
   }
 
   if (dateLine) {
-    rightCellHtml += `<div style="font-size:${isParty ? '14pt' : '13.5pt'}; font-style:italic; margin-top:6pt; line-height:1.3;">${escapeHtml(dateLine)}</div>`;
+    rightCellHtml += `<p align="center" style="margin:6pt 0 0 0; text-indent:0; text-align:center; font-size:${isParty ? '14pt' : '13.5pt'}; font-style:italic; font-weight:normal; line-height:1.25;">${escapeHtml(dateLine)}</p>`;
   }
 
   return `
-    <table style="width:100%; border-collapse:collapse; border:none; margin:0 0 8pt 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; border:none; mso-table-lspace:0pt; mso-table-rspace:0pt; margin:0 0 10pt 0;">
       <tr>
-        <td style="width:44%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:center;">${leftCellHtml}</td>
-        <td style="width:56%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${rightCellHtml}</td>
+        <td width="44%" valign="top" align="center" style="width:44%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:center;">${leftCellHtml}</td>
+        <td width="56%" valign="top" align="center" style="width:56%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${rightCellHtml}</td>
       </tr>
     </table>
   `;
@@ -570,20 +569,20 @@ function buildRegulationFooterTableHtml(leftSegs, rightSegs, isParty) {
   // Theo Hướng dẫn 05-HD/VPTW: Từ "Nơi nhận:" cỡ chữ 14pt, kiểu chữ đứng, có gạch chân dưới từ "Nơi nhận", sau có dấu hai chấm (:)
   const noiNhanHeaderHtml = hasNoiNhanLabel
     ? (isParty
-        ? `<div style="font-size:14pt; font-style:normal; font-weight:normal; margin-bottom:2pt;"><u>Nơi nhận</u>:</div>`
-        : `<div style="font-size:12pt; font-weight:bold; font-style:italic; margin-bottom:2pt;">Nơi nhận:</div>`)
+        ? `<p align="left" style="margin:0 0 2pt 0; text-indent:0; text-align:left; font-size:14pt; font-style:normal; font-weight:normal; line-height:1.25;"><u>Nơi nhận</u>:</p>`
+        : `<p align="left" style="margin:0 0 2pt 0; text-indent:0; text-align:left; font-size:12pt; font-weight:bold; font-style:italic; line-height:1.25;">Nơi nhận:</p>`)
     : '';
 
   const recFontSize = isParty ? '12pt' : '11pt';
   const recListHtml = recipientItems
-    .map(item => `<div style="font-size:${recFontSize}; line-height:1.35; text-align:left;">${escapeHtml(item)}</div>`)
+    .map(item => `<p align="left" style="margin:0; text-indent:0; text-align:left; font-size:${recFontSize}; line-height:1.3;">${escapeHtml(item)}</p>`)
     .join('');
 
   const authorityLines = [];
   let signerName = '';
   for (let k = 0; k < cleanRight.length; k++) {
     const r = cleanRight[k];
-    const isAllUpper = (r === r.toUpperCase() && r !== r.toLowerCase()) || /^(T\/M|TM\.|KT\.|TL\.|TUQ\.|Q\.|BÍ THƯ|PHÓ BÍ THƯ|CHỦ TỊCH|PHÓ CHỦ TỊCH|TRƯỞNG BAN|CHÁNH VĂN PHÒNG|VĂN PHÒNG)/i.test(r);
+    const isAllUpper = (r === r.toUpperCase() && r !== r.toLowerCase()) || /^(T\/M|TM\.|KT\.|TL\.|TUQ\.|Q\.|BÍ THƯ|PHÓ BÍ THƯ|CHỦ TỊCH|PHÓ CHỦ TỊCH|TRƯỞNG BAN|CHÁNH VĂN PHÒNG|VĂN PHÒNG|CHỦ TRÌ)/i.test(r);
     if (isAllUpper && (k < cleanRight.length - 1 || cleanRight.length === 1)) {
       authorityLines.push(r);
     } else if (k === cleanRight.length - 1) {
@@ -595,24 +594,38 @@ function buildRegulationFooterTableHtml(leftSegs, rightSegs, isParty) {
 
   const authFontSize = isParty ? '14pt' : '13.5pt';
   const authHtml = authorityLines
-    .map(a => `<div style="font-size:${authFontSize}; font-weight:bold; text-transform:uppercase; line-height:1.35;">${escapeHtml(a)}</div>`)
+    .map(a => `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:${authFontSize}; font-weight:bold; text-transform:uppercase; line-height:1.3;">${escapeHtml(a)}</p>`)
     .join('');
   const nameHtml = signerName
-    ? `<div style="height:56pt;"></div><div style="font-size:14pt; font-weight:bold; line-height:1.35;">${escapeHtml(signerName)}</div>`
+    ? `<p align="center" style="margin:44pt 0 0 0; mso-margin-top-alt:44pt; text-indent:0; text-align:center; font-size:14pt; font-weight:bold; line-height:1.3;">${escapeHtml(signerName)}</p>`
     : '';
 
   return `
-    <table style="width:100%; border-collapse:collapse; border:none; margin-top:14pt;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; border:none; mso-table-lspace:0pt; mso-table-rspace:0pt; margin:14pt 0 0 0;">
       <tr>
-        <td style="width:50%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:left;">${noiNhanHeaderHtml}${recListHtml}</td>
-        <td style="width:50%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${authHtml}${nameHtml}</td>
+        <td width="50%" valign="top" align="left" style="width:50%; vertical-align:top; border:none; padding:0 6pt 0 0; text-align:left;">${noiNhanHeaderHtml}${recListHtml}</td>
+        <td width="50%" valign="top" align="center" style="width:50%; vertical-align:top; border:none; padding:0 0 0 6pt; text-align:center;">${authHtml}${nameHtml}</td>
       </tr>
     </table>
   `;
 }
 
-function reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport) {
-  const pageW = viewport.width || 595.28;
+function joinVbtmPdfRunsText(itemsArr) {
+  if (!itemsArr || itemsArr.length === 0) return '';
+  let out = itemsArr[0].str;
+  let prevEndX = itemsArr[0].endX;
+  for (let i = 1; i < itemsArr.length; i++) {
+    const it = itemsArr[i];
+    const gap = it.x - prevEndX;
+    const needSpace = gap > 1.0 && !/\s$/.test(out) && !/^\s/.test(it.str);
+    out += (needSpace ? ' ' : '') + it.str;
+    prevEndX = Math.max(prevEndX, it.endX);
+  }
+  return out.replace(/\s+/g, ' ').trim();
+}
+
+function reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport, pageNumber = 1) {
+  const pageW = viewport?.width || 595.28;
   const styles = textContent?.styles || {};
   const runs = [];
 
@@ -642,13 +655,13 @@ function reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport
 
   if (runs.length === 0) return { pageHtml: '', pagePlainText: '' };
 
-  runs.sort((a, b) => (Math.abs(b.y - a.y) > 3.8 ? b.y - a.y : a.x - b.x));
+  runs.sort((a, b) => b.y - a.y);
 
   const rawLines = [];
   for (const r of runs) {
-    const tol = Math.max(3.8, r.fontSize * 0.34);
+    const tol = Math.max(4.5, r.fontSize * 0.42);
     let matchedLine = null;
-    for (let i = rawLines.length - 1; i >= Math.max(0, rawLines.length - 3); i--) {
+    for (let i = rawLines.length - 1; i >= Math.max(0, rawLines.length - 4); i--) {
       if (Math.abs(rawLines[i].y - r.y) <= tol) {
         matchedLine = rawLines[i];
         break;
@@ -663,222 +676,243 @@ function reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport
   }
   rawLines.sort((a, b) => b.y - a.y);
 
-  let minPageX = pageW;
-  let maxPageX = 0;
+  let minBodyX = pageW;
+  let maxBodyX = 0;
 
-  const lines = rawLines.map(lineObj => {
+  const parsedLines = rawLines.map(lineObj => {
     const items = lineObj.items.sort((a, b) => a.x - b.x);
-    const segments = [];
-    let curSeg = null;
-    for (const item of items) {
-      if (item.x < minPageX) minPageX = item.x;
-      if (item.endX > maxPageX) maxPageX = item.endX;
-      if (!curSeg) {
-        curSeg = {
-          x: item.x,
-          endX: item.endX,
-          fontSize: item.fontSize,
-          isBold: item.isBold,
-          isItalic: item.isItalic,
-          runs: [{ str: item.str, isBold: item.isBold, isItalic: item.isItalic, fontSize: item.fontSize }]
-        };
-      } else {
-        const gap = item.x - curSeg.endX;
-        if (gap > Math.max(22, item.fontSize * 1.65)) {
-          segments.push(finalizeVbtmSegment(curSeg));
-          curSeg = {
-            x: item.x,
-            endX: item.endX,
-            fontSize: item.fontSize,
-            isBold: item.isBold,
-            isItalic: item.isItalic,
-            runs: [{ str: item.str, isBold: item.isBold, isItalic: item.isItalic, fontSize: item.fontSize }]
-          };
-        } else {
-          const needSpace = gap > 1.1 && !/\s$/.test(curSeg.runs[curSeg.runs.length - 1].str) && !/^\s/.test(item.str);
-          curSeg.runs.push({
-            str: (needSpace ? ' ' : '') + item.str,
-            isBold: item.isBold,
-            isItalic: item.isItalic,
-            fontSize: item.fontSize
-          });
-          curSeg.endX = Math.max(curSeg.endX, item.endX);
-          if (item.fontSize > curSeg.fontSize) curSeg.fontSize = item.fontSize;
-          if (item.isBold) curSeg.isBold = true;
-          if (item.isItalic) curSeg.isItalic = true;
+    const fullText = joinVbtmPdfRunsText(items);
+    const x = items[0].x;
+    const endX = items[items.length - 1].endX;
+    if (x < minBodyX) minBodyX = x;
+    if (endX > maxBodyX) maxBodyX = endX;
+
+    let splitIdx = -1;
+    let bestGap = 0;
+    for (let k = 1; k < items.length; k++) {
+      const prevEnd = items[k - 1].endX;
+      const curStart = items[k].x;
+      const gap = curStart - prevEnd;
+      if (gap >= 16 && prevEnd <= pageW * 0.54 && curStart >= pageW * 0.36) {
+        if (gap > bestGap) {
+          bestGap = gap;
+          splitIdx = k;
         }
       }
     }
-    if (curSeg) segments.push(finalizeVbtmSegment(curSeg));
+
+    let hasTwoCols = false;
+    let leftText = '';
+    let rightText = '';
+    const isRightSideOnly = (splitIdx === -1) && (x >= pageW * 0.42);
+
+    if (splitIdx !== -1) {
+      hasTwoCols = true;
+      leftText = joinVbtmPdfRunsText(items.slice(0, splitIdx));
+      rightText = joinVbtmPdfRunsText(items.slice(splitIdx));
+    } else if (isRightSideOnly) {
+      rightText = fullText;
+    } else {
+      leftText = fullText;
+    }
+
     return {
       y: lineObj.y,
-      segments,
-      x: segments[0]?.x || 0,
-      endX: segments[segments.length - 1]?.endX || 0,
-      fontSize: segments[0]?.fontSize || 14,
-      plainText: segments.map(s => s.text).join('\t')
+      x,
+      endX,
+      centerX: (x + endX) / 2,
+      fontSize: Math.max(...items.map(it => it.fontSize)),
+      isBold: items.some(it => it.isBold),
+      isItalic: items.some(it => it.isItalic),
+      fullText,
+      hasTwoCols,
+      isRightSideOnly,
+      leftText,
+      rightText,
+      plainText: hasTwoCols ? `${leftText}\t${rightText}` : fullText
     };
-  }).filter(l => l.segments.length > 0);
+  }).filter(l => l.fullText.length > 0);
 
-  if (minPageX > pageW * 0.35) minPageX = 72;
-  if (maxPageX < pageW * 0.65) maxPageX = pageW - 54;
-  const pageCenterX = (minPageX + maxPageX) / 2;
+  const lines = parsedLines.filter((l, idx) => {
+    if ((idx === 0 || idx === parsedLines.length - 1) && /^(?:Trang\s*)?[-–—]?\s*\d{1,3}\s*[-–—]?$/i.test(l.fullText)) {
+      return false;
+    }
+    return true;
+  });
+
+  if (lines.length === 0) return { pageHtml: '', pagePlainText: '' };
+
+  if (minBodyX > pageW * 0.35) minBodyX = 72;
+  if (maxBodyX < pageW * 0.65) maxBodyX = pageW - 54;
+  const pageMidX = (minBodyX + maxBodyX) / 2;
 
   const fullPageText = lines.map(l => l.plainText).join('\n');
   const isPartyDoc = detectIsPartyDocument(fullPageText);
 
-  let inFooterZone = false;
-  const classified = lines.map((line, idx) => {
-    const segs = line.segments;
-    const lineTextTrim = line.plainText.trim();
-
-    if (idx >= 3 && (/^Nơi nhận\b/i.test(lineTextTrim) || /\b(T\/M\s+ĐẢNG\s+ỦY|T\/M\s+BAN\s+THƯỜNG\s+VỤ|TM\.\s+ỦY\s+BAN|KT\.\s+CHỦ\s+TỊCH|TL\.\s+CHỦ\s+TỊCH|Q\.\s+CHỦ\s+TỊCH)\b/i.test(lineTextTrim))) {
-      inFooterZone = true;
-    }
-
-    if (inFooterZone) {
-      if (segs.length >= 2) {
-        return { type: 'FOOTER_COL', leftSeg: segs[0], rightSeg: segs.slice(1).map(s => s.text).join(' '), line, idx };
-      }
-      const s = segs[0];
-      if (s.x >= pageW * 0.42) {
-        return { type: 'FOOTER_COL', leftSeg: null, rightSeg: s, line, idx };
-      }
-      return { type: 'FOOTER_COL', leftSeg: s, rightSeg: null, line, idx };
-    }
-
-    if (segs.length === 2 && segs[0].x < pageW * 0.46 && segs[1].x >= pageW * 0.36) {
-      return { type: 'TWO_COL', leftSeg: segs[0], rightSeg: segs[1], line, idx };
-    }
-    if (segs.length >= 3) return { type: 'TABLE_ROW', cells: segs, line, idx };
-    if (segs.length === 1) {
-      const s = segs[0];
-      const txt = s.text.trim();
-      const isDocHeadingTitle = /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN|CÔNG VĂN|QUYẾT ĐỊNH\s*:|QUYẾT NGHỊ\s*:|BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH)$/i.test(txt);
-      if (isDocHeadingTitle) return { type: 'CENTER', seg: s, line, idx };
-
-      if (s.x >= pageW * 0.43) return { type: 'TWO_COL', leftSeg: null, rightSeg: s, line, idx };
-      if (idx <= 7 && s.endX <= pageW * 0.50 && (/^(Số\b|Số\s*:|V\/v\b|Về việc\b|\*|--)/i.test(txt) || idx <= 4)) {
-        return { type: 'TWO_COL', leftSeg: s, rightSeg: null, line, idx };
-      }
-      const isCenteredCoords = (Math.abs(s.centerX - pageCenterX) <= 44 || Math.abs(s.centerX - pageW / 2) <= 44) && s.x > minPageX + 18 && s.endX < maxPageX - 18;
-      if (isCenteredCoords) return { type: 'CENTER', seg: s, line, idx };
-      return { type: 'BODY', seg: s, line, idx };
-    }
-    return { type: 'TABLE_ROW', cells: segs, line, idx };
-  });
-
   const htmlBlocks = [];
-  let i = 0;
-  while (i < classified.length) {
-    const item = classified[i];
-    if (item.type === 'TWO_COL') {
-      const leftLines = [];
-      const rightLines = [];
-      const startIdx = i;
-      while (i < classified.length && classified[i].type === 'TWO_COL') {
-        if (classified[i].leftSeg) leftLines.push(classified[i].leftSeg);
-        if (classified[i].rightSeg) rightLines.push(classified[i].rightSeg);
-        i++;
-      }
-      if (startIdx <= 6) {
-        htmlBlocks.push(buildRegulationHeaderTableHtml(leftLines, rightLines, isPartyDoc));
-      } else {
-        htmlBlocks.push(buildRegulationFooterTableHtml(leftLines, rightLines, isPartyDoc));
-      }
-      continue;
-    }
+  let idx = 0;
 
-    if (item.type === 'FOOTER_COL') {
-      const leftLines = [];
-      const rightLines = [];
-      while (i < classified.length && (classified[i].type === 'FOOTER_COL' || classified[i].type === 'TWO_COL')) {
-        if (classified[i].leftSeg) leftLines.push(classified[i].leftSeg);
-        if (classified[i].rightSeg) rightLines.push(classified[i].rightSeg);
-        i++;
-      }
-      htmlBlocks.push(buildRegulationFooterTableHtml(leftLines, rightLines, isPartyDoc));
-      continue;
-    }
+  const topSample = lines.slice(0, 8).map(l => l.fullText).join('\n');
+  const hasRegulationHeader = (pageNumber === 1) && (
+    /(ĐẢNG CỘNG SẢN VIỆT NAM|CỘNG HÒA XÃ HỘI|Độc lập\s*-\s*Tự do|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN|ĐẢNG ỦY|ĐẢNG BỘ|QUẬN ỦY|HUYỆN ỦY|THỊ ỦY|THÀNH ỦY|TỈNH ỦY|CHI BỘ|BAN CHẤP HÀNH|BAN THƯỜNG VỤ|\bSố\s*:?\s*\d+)/i.test(topSample)
+  );
 
-    if (item.type === 'TABLE_ROW') {
-      const tableRows = [];
-      while (i < classified.length && classified[i].type === 'TABLE_ROW') {
-        tableRows.push(classified[i].cells);
-        i++;
-      }
-      const maxCols = Math.max(...tableRows.map(r => r.length));
-      const trsHtml = tableRows.map(row => {
-        const tds = Array.from({ length: maxCols }, (_, cIdx) => {
-          const cell = row[cIdx];
-          return `<td style="border:1px solid #000; padding:4pt 6pt; vertical-align:top; font-size:13pt;">${cell ? cell.html : ''}</td>`;
-        }).join('');
-        return `<tr>${tds}</tr>`;
-      }).join('');
-      htmlBlocks.push(`<table style="width:100%; border-collapse:collapse; margin:6pt 0;"><tbody>${trsHtml}</tbody></table>`);
-      continue;
-    }
-
-    if (item.type === 'CENTER') {
-      const s = item.seg;
-      const txt = s.text.trim();
-      const isDocType = /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN)$/i.test(txt);
-      if (isDocType) {
-        const titleSize = isPartyDoc ? '15pt' : '14pt';
-        htmlBlocks.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:12pt 0 4pt 0; line-height:1.35; font-size:${titleSize}; text-transform:uppercase;">${escapeHtml(txt)}</p>`);
-        i++;
-        const subjParts = [];
-        while (i < classified.length && classified[i].type === 'CENTER') {
-          const nextTxt = classified[i].seg.text.trim();
-          if (/^[-_*—–=]+$/.test(nextTxt)) {
-            i++;
-            break;
-          }
-          if (/^(QUYẾT ĐỊNH\s*:|QUYẾT NGHỊ\s*:|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)/i.test(nextTxt)) {
-            break;
-          }
-          subjParts.push(nextTxt);
-          i++;
-        }
-        if (subjParts.length > 0) {
-          htmlBlocks.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 4pt 0; line-height:1.35; font-size:14pt;">${escapeHtml(subjParts.join(' '))}</p>`);
-          htmlBlocks.push(`<hr style="width:32%; border:0; border-top:1px solid #000; margin:2pt auto 12pt auto;"/>`);
-        }
+  if (hasRegulationHeader) {
+    const headerLeft = [];
+    const headerRight = [];
+    while (idx < lines.length && idx <= 9) {
+      const ln = lines[idx];
+      const txt = ln.fullText.trim();
+      if (/^[-_*—–=─]{2,}$/.test(txt) && !ln.hasTwoCols) {
+        idx++;
         continue;
       }
-      htmlBlocks.push(`<p style="text-align:center; text-indent:0; font-weight:bold; margin:4pt 0; line-height:1.35; font-size:14pt;">${escapeHtml(txt)}</p>`);
-      i++;
-      continue;
-    }
+      if (!ln.hasTwoCols && /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN|ĐỀ ÁN|PHƯƠNG ÁN)$/i.test(txt)) {
+        break;
+      }
+      if (!ln.hasTwoCols && /^(Kính gửi\s*:|Căn cứ\s+|Thực hiện\s+|Hôm nay\b|Xét đề nghị|Theo đề nghị|I\.\s+|1\.\s+|Điều\s+1\b)/i.test(txt)) {
+        break;
+      }
+      if (idx >= 2 && !ln.hasTwoCols && !ln.isRightSideOnly && ln.endX > pageW * 0.56 && !/^(Số\b|Số\s*:|V\/v\b|Về việc\b)/i.test(txt)) {
+        break;
+      }
 
-    if (item.type === 'BODY') {
-      const firstSeg = item.seg;
-      let mergedText = firstSeg.text.trim();
-      let prevLine = item.line;
-      let prevSeg = firstSeg;
-      i++;
-      while (i < classified.length && classified[i].type === 'BODY') {
-        const nextItem = classified[i];
-        const nextSeg = nextItem.seg;
-        const nextLine = nextItem.line;
-        const nextTxt = nextSeg.text.trim();
-        const verticalGap = prevLine.y - nextLine.y;
-        const prevEndedSentenceStop = /[.:;!?]$|\.\s*\/\.\s*$/.test(mergedText);
-        const nextStartsNewSection = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Khoản\s+\d+|Căn cứ\s+|Xét\s+|Theo đề nghị|Kính gửi|Nơi nhận|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)/i.test(nextTxt);
-        const normalLineSpacing = verticalGap > 0 && verticalGap <= prevSeg.fontSize * 2.1;
-        if (!prevEndedSentenceStop && !nextStartsNewSection && normalLineSpacing) {
-          mergedText += ' ' + nextTxt;
-          prevLine = nextLine;
-          prevSeg = nextSeg;
-          i++;
+      if (ln.hasTwoCols) {
+        if (ln.leftText) headerLeft.push(ln.leftText);
+        if (ln.rightText) headerRight.push(ln.rightText);
+      } else if (ln.isRightSideOnly || /^(ĐẢNG CỘNG SẢN VIỆT NAM|CỘNG HÒA XÃ HỘI|Độc lập\s*-\s*Tự do)/i.test(txt) || /\bngày\s+\d+\s+tháng\s+\d+\s+năm\s+\d+/i.test(txt)) {
+        headerRight.push(txt);
+      } else {
+        headerLeft.push(txt);
+      }
+      idx++;
+    }
+    if (headerLeft.length > 0 || headerRight.length > 0) {
+      htmlBlocks.push(buildRegulationHeaderTableHtml(headerLeft, headerRight, isPartyDoc));
+    }
+  }
+
+  while (idx < lines.length && /^[-_*—–=─]{2,}$/.test(lines[idx].fullText.trim())) {
+    idx++;
+  }
+
+  if (pageNumber === 1 && idx < lines.length) {
+    const titleCandidate = lines[idx].fullText.trim();
+    if (/^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN|ĐỀ ÁN|PHƯƠNG ÁN)$/i.test(titleCandidate)) {
+      const titleSize = isPartyDoc ? '15pt' : '14pt';
+      htmlBlocks.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:12pt 0 3pt 0; line-height:1.3; font-size:${titleSize}; text-transform:uppercase;">${escapeHtml(titleCandidate)}</p>`);
+      idx++;
+
+      const subjParts = [];
+      while (idx < lines.length && subjParts.length < 4) {
+        const subLn = lines[idx];
+        const subTxt = subLn.fullText.trim();
+        if (/^[-_*—–=─]{2,}$/.test(subTxt) || subTxt === '*') {
+          idx++;
+          break;
+        }
+        if (/^(Kính gửi\s*:|Căn cứ\b|Thực hiện\b|Hôm nay\b|Sau khi\b|Xét\b|Theo đề nghị\b|I\.\s+|1\.\s+|Điều\s+1\b|BAN THƯỜNG VỤ|ĐẢNG ỦY\s+.*QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN\s+.*QUYẾT ĐỊNH|HỘI ĐỒNG NHÂN DÂN)/i.test(subTxt)) {
+          break;
+        }
+        const isCenteredLine = (subLn.x > minBodyX + 14 && subLn.endX < maxBodyX - 14 && Math.abs(subLn.centerX - pageMidX) <= 55);
+        if (subjParts.length === 0 || subLn.isBold || isCenteredLine) {
+          subjParts.push(subTxt);
+          idx++;
         } else {
           break;
         }
       }
-      htmlBlocks.push(formatBodyParagraphHtml(mergedText));
+
+      if (subjParts.length > 0) {
+        htmlBlocks.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 2pt 0; line-height:1.3; font-size:14pt;">${escapeHtml(subjParts.join(' '))}</p>`);
+        htmlBlocks.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:normal; margin:0 0 10pt 0; line-height:1; font-size:10pt;">──────────────</p>`);
+      }
+    }
+  }
+
+  let footerStartIdx = lines.length;
+  for (let k = idx; k < lines.length; k++) {
+    const ln = lines[k];
+    const txt = ln.fullText.trim();
+    const isNearBottom = k >= Math.floor(lines.length * 0.45);
+    if (/^Nơi nhận\s*:?/i.test(txt) || /^Nơi nhận\s*:/i.test(ln.leftText || '')) {
+      footerStartIdx = k;
+      break;
+    }
+    if (isNearBottom && /\b(T\/M\s+ĐẢNG\s+ỦY|T\/M\s+BAN\s+THƯỜNG\s+VỤ|T\/M\s+BAN\s+CHẤP\s+HÀNH|T\/M\s+CHI\s+BỘ|TM\.\s+ỦY\s+BAN|TM\.\s+HỘI\s+ĐỒNG|KT\.\s+CHỦ\s+TỊCH|KT\.\s+BÍ\s+THƯ|TL\.\s+CHỦ\s+TỊCH|TL\.\s+BÍ\s+THƯ|TUQ\.\s+CHỦ\s+TỊCH|Q\.\s+CHỦ\s+TỊCH)\b/i.test(txt)) {
+      footerStartIdx = k;
+      break;
+    }
+    if (k >= Math.floor(lines.length * 0.65) && ln.isRightSideOnly && /^(BÍ THƯ|PHÓ BÍ THƯ|PHÓ BÍ THƯ THƯỜNG TRỰC|CHỦ TỊCH|PHÓ CHỦ TỊCH|CHỦ TRÌ CUỘC HỌP)$/i.test(txt)) {
+      footerStartIdx = k;
+      break;
+    }
+  }
+
+  let bIdx = idx;
+  while (bIdx < footerStartIdx) {
+    const curLn = lines[bIdx];
+    const curTxt = curLn.fullText.trim();
+    if (/^[-_*—–=─]{3,}$/.test(curTxt)) {
+      bIdx++;
       continue;
     }
-    i++;
+
+    let mergedText = curTxt;
+    let prevLn = curLn;
+    bIdx++;
+
+    while (bIdx < footerStartIdx) {
+      const nxtLn = lines[bIdx];
+      const nxtTxt = nxtLn.fullText.trim();
+      if (/^[-_*—–=─]{3,}$/.test(nxtTxt)) {
+        bIdx++;
+        break;
+      }
+
+      const verticalGap = prevLn.y - nxtLn.y;
+      const prevEndedStop = /[.:;!?]$|\.\s*\/\.\s*$/.test(mergedText);
+      const prevIsHeading = /^([IVXLCDM]+\.|PHẦN\s+[IVX0-9]+|CHƯƠNG\s+[IVX0-9]+|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN PHƯỜNG QUYẾT ĐỊNH)/i.test(mergedText);
+      const nextStartsNewBlock = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVXLCDM]+\.|Điều\s+\d+|Khoản\s+\d+|Phần\s+[IVX0-9]+|Chương\s+[IVX0-9]+|Căn cứ\b|Xét\b|Theo đề nghị\b|Thực hiện\b|Kính gửi\b|Hôm nay\b|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN)/i.test(nxtTxt);
+      const nextIsIndentedNewPara = (nxtLn.x > minBodyX + 18) && (prevLn.endX < maxBodyX - 45 || prevEndedStop);
+      const normalLineSpacing = verticalGap > 0 && verticalGap <= prevLn.fontSize * 2.05;
+
+      if (!prevEndedStop && !prevIsHeading && !nextStartsNewBlock && !nextIsIndentedNewPara && normalLineSpacing) {
+        mergedText += ' ' + nxtTxt;
+        prevLn = nxtLn;
+        bIdx++;
+      } else {
+        break;
+      }
+    }
+
+    htmlBlocks.push(formatBodyParagraphHtml(mergedText));
+  }
+
+  if (footerStartIdx < lines.length) {
+    const footerLeft = [];
+    const footerRight = [];
+    for (let fIdx = footerStartIdx; fIdx < lines.length; fIdx++) {
+      const fln = lines[fIdx];
+      const ftxt = fln.fullText.trim();
+      if (/^[-_*—–=─]{3,}$/.test(ftxt)) continue;
+
+      if (fln.hasTwoCols) {
+        if (fln.leftText) footerLeft.push(fln.leftText);
+        if (fln.rightText) footerRight.push(fln.rightText);
+      } else if (fln.isRightSideOnly || /^(T\/M\b|TM\.|KT\.|TL\.|TUQ\.|Q\.|BÍ THƯ|PHÓ BÍ THƯ|CHỦ TỊCH|PHÓ CHỦ TỊCH|TRƯỞNG BAN|CHÁNH VĂN PHÒNG|CHỦ TRÌ)/i.test(ftxt)) {
+        footerRight.push(ftxt);
+      } else if (/^(Nơi nhận|-|\+|•|Lưu\b|Như trên|Như Điều)/i.test(ftxt)) {
+        footerLeft.push(ftxt);
+      } else if (footerRight.length > 0 && footerLeft.some(l => /Lưu/i.test(l))) {
+        footerRight.push(ftxt);
+      } else {
+        footerLeft.push(ftxt);
+      }
+    }
+    if (footerLeft.length > 0 || footerRight.length > 0) {
+      htmlBlocks.push(buildRegulationFooterTableHtml(footerLeft, footerRight, isPartyDoc));
+    }
   }
 
   return {
@@ -1028,7 +1062,7 @@ async function extractTextFromPdfInVbtm(file) {
     const textContent = await page.getTextContent();
     const rawItems = (textContent?.items || []).filter(it => typeof it.str === 'string' && it.str.length > 0);
     if (rawItems.filter(it => it.str.trim().length > 0).length >= 2) {
-      const { pageHtml, pagePlainText } = reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport1x);
+      const { pageHtml, pagePlainText } = reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport1x, p);
       allPagesHtml.push(pageHtml);
       allPagesText.push(pagePlainText);
     } else {
@@ -1273,6 +1307,7 @@ function loadTemplate(key) {
   updateQrCanvas();
   renderA4Preview();
   runSpellAndFormatCheck();
+  updateVbtmLiveStats();
 }
 
 function formatVietnameseDate(dateStr, location) {
@@ -1380,6 +1415,7 @@ function standardizeAndFixEverything() {
   updateQrCanvas();
   renderA4Preview();
   runSpellAndFormatCheck();
+  updateVbtmLiveStats();
 
   if (window.showToast) {
     window.showToast(`✓ Đã chuẩn hóa thể thức A4 & tự động sửa ${fixedSpells} lỗi chính tả Tiếng Việt!`);
@@ -1745,8 +1781,9 @@ function exportWordDocument() {
         color: #000000;
       }
       table { width: 100%; border-collapse: collapse; border: none; }
-      td { vertical-align: top; text-align: center; font-family: "Times New Roman", serif; }
-      p { margin: 0 0 6pt 0; text-indent: 1.27cm; text-align: justify; font-size: 14pt; }
+      td { vertical-align: top; font-family: "Times New Roman", serif; }
+      td p { margin: 0; text-indent: 0; }
+      p { margin: 0 0 6pt 0; font-size: 14pt; }
       .a4-doc-title { text-align: center; font-weight: bold; font-size: 14pt; text-transform: uppercase; margin-top: 16pt; margin-bottom: 4pt; }
       .a4-doc-subject { text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 14pt; }
       .a4-line-sep { display: block; border-bottom: 1px solid #000; margin: 4px auto; }
@@ -1801,6 +1838,36 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function updateVbtmLiveStats() {
+  const el = document.getElementById('vbtmLiveStatsBadge');
+  if (!el) return;
+  const body = (document.getElementById('vbtmDocBody')?.value || '').trim();
+  const words = body ? body.split(/\s+/).length : 0;
+  const paras = body ? body.split(/\n+/).filter(l => l.trim()).length : 0;
+  const std = document.getElementById('vbtmStandard')?.value === 'hd05' ? 'Chuẩn Đảng (05-HD/VPTW)' : 'Chuẩn Hành chính (NĐ 30)';
+  el.textContent = `${std} · ${words} từ · ${paras} đoạn`;
+}
+
+function printVbtmA4Document() {
+  const previewEl = document.getElementById('a4PreviewPaper');
+  if (!previewEl) return;
+  const w = window.open('', '_blank', 'width=900,height=1000');
+  if (!w) {
+    if (window.showToast) window.showToast('Vui lòng cho phép mở cửa sổ Pop-up để In / Xuất PDF!');
+    return;
+  }
+  w.document.write(`<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>In Văn Bản Chuẩn A4</title>
+  <style>
+    @page { size: A4; margin: 20mm 15mm 20mm 30mm; }
+    body { font-family: "Times New Roman", serif; font-size: 14pt; color: #000; line-height: 1.38; margin: 0; }
+    table { width: 100%; border-collapse: collapse; }
+    td p { margin: 0; text-indent: 0; }
+    p { margin: 0 0 6pt 0; }
+  </style></head><body>${previewEl.innerHTML}</body></html>`);
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 250);
+}
+
 window.loadTemplate = loadTemplate;
 window.standardizeTextContent = standardizeTextContent;
 window.standardizeAndFixEverything = standardizeAndFixEverything;
@@ -1809,4 +1876,6 @@ window.fixSingleIssue = fixSingleIssue;
 window.fixAllIssues = fixAllIssues;
 window.insertSampleTypos = insertSampleTypos;
 window.exportWordDocument = exportWordDocument;
+window.printVbtmA4Document = printVbtmA4Document;
+window.updateVbtmLiveStats = updateVbtmLiveStats;
 window.downloadQrPng = downloadQrPng;
