@@ -1,10 +1,10 @@
 [
   {
     "id": "vbtm-pro",
-    "name": "VBTM Pro 2.2.4",
-    "version": "2.2.4",
+    "name": "VBTM Pro 2.5.0",
+    "version": "2.5.0",
     "category": "ai",
-    "setupFile": "VBTM-Setup-2.2.4.exe",
+    "setupFile": "VBTM-Setup-2.5.0.exe",
     "pageUrl": "./products/vbtm-pro.html",
     "badge": "Đảng Ủy & UBND Phường",
     "platform": "Windows 10/11 & Word",
@@ -15,10 +15,10 @@
   },
   {
     "id": "vietnam-ocr",
-    "name": "VietNamOCR 3.2 Pro",
-    "version": "3.2.2",
+    "name": "VietNamOCR 3.5 Pro",
+    "version": "3.5.0",
     "category": "ai",
-    "setupFile": "VietNamOCR-Setup-3.2.0-x64.exe",
+    "setupFile": "VietNamOCR-Setup-3.5.0-x64.exe",
     "pageUrl": "./products/vietnam-ocr.html",
     "badge": "Giữ Nguyên Thể Thức 1:1",
     "platform": "Windows 10/11 x64",
