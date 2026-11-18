@@ -18,8 +18,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Bo cong cu Chuan Hoa The Thuc Van Ban Nghi dinh 30, Van ban Dang, Tao QR & Soat Loi Chinh Ta AI Offline cho Microsoft Word")]
 [assembly: AssemblyCompany("Software Hub")]
 [assembly: AssemblyProduct("VBTM Pro 2.5.0")]
-[assembly: AssemblyVersion("2.2.4.0")]
-[assembly: AssemblyFileVersion("2.2.4.0")]
+[assembly: AssemblyVersion("2.5.0.0")]
+[assembly: AssemblyFileVersion("2.5.0.0")]
 
 namespace VBTMProSuite
 {
@@ -72,6 +72,9 @@ namespace VBTMProSuite
 
                 string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.5.0.lnk");
                 if (File.Exists(startMenuLnk)) File.Delete(startMenuLnk);
+
+                string wordAddinPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Word", "STARTUP", "VBTM_Pro_Addin.dotm");
+                if (File.Exists(wordAddinPath)) File.Delete(wordAddinPath);
 
                 Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\VBTMPro", false);
                 MessageBox.Show("Đã gỡ cài đặt VBTM Pro 2.5.0 sạch sẽ khỏi hệ thống!", "Gỡ Cài Đặt - VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -279,10 +282,12 @@ namespace VBTMProSuite
                 }
 
                 progressBar.Value = 55;
+                bool wordIntegrated = false;
                 if (chkWordMacroExport.Checked)
                 {
-                    string basPath = Path.Combine(installDir, "VBTM_Word_Addin.bas");
-                    File.WriteAllText(basPath, GetWordVbaMacroCode(), Encoding.UTF8);
+                    lblStatus.Text = "Đang tích hợp Ribbon Tab & Macro chuẩn 05-HD/VPTW trực tiếp vào Microsoft Word...";
+                    Application.DoEvents();
+                    wordIntegrated = WordAddinInstaller.InstallWordRibbonAddin(installDir, targetExePath);
                 }
 
                 string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.5.0.lnk");
@@ -315,7 +320,10 @@ namespace VBTMProSuite
                 MessageBox.Show(
                     "Đã cài đặt thành công VBTM Pro 2.5.0!\n\n" +
                     "• Thư mục cài đặt: " + installDir + "\n" +
-                    "• Lối tắt Desktop: VBTM Pro 2.5.0\n\n" +
+                    "• Lối tắt Desktop: VBTM Pro 2.5.0\n" +
+                    (wordIntegrated
+                        ? "• Tích hợp Word: ĐÃ CÀI SẴN Tab Ribbon 'VBTM Pro 2.5 (05-HD & ND30)' trực tiếp trong Microsoft Word!\n\n"
+                        : "• Tệp Macro Word: " + Path.Combine(installDir, "VBTM_Word_Addin.bas") + "\n\n") +
                     "Nhấn OK để mở phần mềm ngay.",
                     "Cài Đặt Thành Công - VBTM Pro 2.5.0",
                     MessageBoxButtons.OK,
@@ -349,7 +357,7 @@ namespace VBTMProSuite
                     if (key != null)
                     {
                         key.SetValue("DisplayName", "VBTM Chuẩn Hóa Văn Bản Đảng Ủy & UBND Phường (VBTM Pro 2.5.0)");
-                        key.SetValue("DisplayVersion", "2.2.4");
+                        key.SetValue("DisplayVersion", "2.5.0");
                         key.SetValue("Publisher", "Software Hub");
                         key.SetValue("InstallLocation", installDir);
                         key.SetValue("DisplayIcon", exePath);
@@ -382,21 +390,290 @@ namespace VBTMProSuite
 
         private string GetWordVbaMacroCode()
         {
-            return "Attribute VB_Name = \"VBTM_Pro_ND30\"\r\n" +
-                   "Sub ChuanHoaVanBan_NghiDinh30()\r\n" +
-                   "    On Error Resume Next\r\n" +
-                   "    With ActiveDocument.PageSetup\r\n" +
-                   "        .TopMargin = CentimetersToPoints(2)\r\n" +
-                   "        .BottomMargin = CentimetersToPoints(2)\r\n" +
-                   "        .LeftMargin = CentimetersToPoints(3)\r\n" +
-                   "        .RightMargin = CentimetersToPoints(1.5)\r\n" +
-                   "    End With\r\n" +
-                   "    With ActiveDocument.Content.Font\r\n" +
-                   "        .Name = \"Times New Roman\"\r\n" +
-                   "        .Size = 14\r\n" +
-                   "    End With\r\n" +
-                   "    MsgBox \"Da chuan hoa van ban theo Nghi dinh 30/2020/ND-CP & Quy chuan Dang uy - UBND Phuong!\", vbInformation, \"VBTM Pro 2.5.0\"\r\n" +
-                   "End Sub\r\n";
+            return WordAddinInstaller.GetWordVbaMacroCode();
+        }
+    }
+
+    // =========================================================================
+    // 1B. BỘ TÍCH HỢP TRỰC TIẾP VÀO MICROSOFT WORD (STARTUP .DOTM + RIBBON TAB)
+    // =========================================================================
+    public static class WordAddinInstaller
+    {
+        public static string GetWordVbaMacroCode()
+        {
+            return
+                "Attribute VB_Name = \"VBTM_Pro_HD05_ND30\"\r\n" +
+                "Sub Ribbon_ChuanHoaTuDong(ByVal control As Object)\r\n" +
+                "    ChuanHoaVanBan_TuDong\r\n" +
+                "End Sub\r\n" +
+                "Sub Ribbon_HuongDan05(ByVal control As Object)\r\n" +
+                "    ChuanHoaVanBan_HuongDan05\r\n" +
+                "End Sub\r\n" +
+                "Sub Ribbon_NghiDinh30(ByVal control As Object)\r\n" +
+                "    ChuanHoaVanBan_NghiDinh30\r\n" +
+                "End Sub\r\n" +
+                "Sub Ribbon_MoVBTM(ByVal control As Object)\r\n" +
+                "    On Error Resume Next\r\n" +
+                "    Dim p As String\r\n" +
+                "    p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"\r\n" +
+                "    If Dir(p) <> \"\" Then\r\n" +
+                "        Shell \"\"\"\" & p & \"\"\" --app\", vbNormalFocus\r\n" +
+                "    Else\r\n" +
+                "        MsgBox \"Khong tim thay VBTM-Pro.exe tai: \" & p, vbExclamation, \"VBTM Pro 2.5.0\"\r\n" +
+                "    End If\r\n" +
+                "End Sub\r\n" +
+                "Sub ChuanHoaVanBan_TuDong()\r\n" +
+                "    On Error Resume Next\r\n" +
+                "    If ActiveDocument Is Nothing Then Exit Sub\r\n" +
+                "    Dim docText As String\r\n" +
+                "    docText = UCase(ActiveDocument.Content.Text)\r\n" +
+                "    If InStr(docText, \"ĐẢNG CỘNG SẢN\") > 0 Or InStr(docText, \"ĐẢNG ỦY\") > 0 Or InStr(docText, \"CHI BỘ\") > 0 Or InStr(docText, \"-BC/ĐU\") > 0 Or InStr(docText, \"-NQ/ĐU\") > 0 Or InStr(docText, \"-CV/ĐU\") > 0 Then\r\n" +
+                "        ChuanHoaVanBan_HuongDan05\r\n" +
+                "    Else\r\n" +
+                "        ChuanHoaVanBan_NghiDinh30\r\n" +
+                "    End If\r\n" +
+                "End Sub\r\n" +
+                "Sub ChuanHoaVanBan_HuongDan05()\r\n" +
+                "    On Error Resume Next\r\n" +
+                "    If ActiveDocument Is Nothing Then Exit Sub\r\n" +
+                "    With ActiveDocument.PageSetup\r\n" +
+                "        .PaperSize = wdPaperA4\r\n" +
+                "        .TopMargin = CentimetersToPoints(2)\r\n" +
+                "        .BottomMargin = CentimetersToPoints(2)\r\n" +
+                "        .LeftMargin = CentimetersToPoints(3)\r\n" +
+                "        .RightMargin = CentimetersToPoints(1.5)\r\n" +
+                "        .DifferentFirstPageHeaderFooter = True\r\n" +
+                "    End With\r\n" +
+                "    ActiveDocument.Content.Font.Name = \"Times New Roman\"\r\n" +
+                "    Dim hdr As HeaderFooter\r\n" +
+                "    Set hdr = ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary)\r\n" +
+                "    hdr.Range.Text = \"\"\r\n" +
+                "    hdr.PageNumbers.Add PageNumberAlignment:=wdAlignPageNumberCenter, FirstPage:=False\r\n" +
+                "    hdr.Range.Font.Name = \"Times New Roman\"\r\n" +
+                "    hdr.Range.Font.Size = 13\r\n" +
+                "    Dim p As Paragraph\r\n" +
+                "    For Each p In ActiveDocument.Paragraphs\r\n" +
+                "        If p.Range.Tables.Count = 0 Then\r\n" +
+                "            Dim t As String\r\n" +
+                "            t = Trim(Replace(Replace(p.Range.Text, vbCr, \"\"), Chr(7), \"\"))\r\n" +
+                "            If Len(t) > 0 Then\r\n" +
+                "                p.Range.Font.Name = \"Times New Roman\"\r\n" +
+                "                If t = \"BÁO CÁO\" Or t = \"NGHỊ QUYẾT\" Or t = \"QUYẾT ĐỊNH\" Or t = \"KẾ HOẠCH\" Or t = \"CHƯƠNG TRÌNH\" Or t = \"TỜ TRÌNH\" Or t = \"THÔNG BÁO\" Then\r\n" +
+                "                    p.Range.Font.Size = 15\r\n" +
+                "                    p.Range.Font.Bold = True\r\n" +
+                "                    p.Alignment = wdAlignParagraphCenter\r\n" +
+                "                    p.FirstLineIndent = 0\r\n" +
+                "                Else\r\n" +
+                "                    p.Range.Font.Size = 14\r\n" +
+                "                    p.Format.SpaceAfter = 6\r\n" +
+                "                    p.Format.LineSpacingRule = wdLineSpaceMultiple\r\n" +
+                "                    p.Format.LineSpacing = LinesToPoints(1.15)\r\n" +
+                "                    If p.Alignment <> wdAlignParagraphCenter Then\r\n" +
+                "                        p.Alignment = wdAlignParagraphJustify\r\n" +
+                "                        p.FirstLineIndent = CentimetersToPoints(1.27)\r\n" +
+                "                    End If\r\n" +
+                "                End If\r\n" +
+                "            End If\r\n" +
+                "        End If\r\n" +
+                "    Next p\r\n" +
+                "    If ActiveDocument.Tables.Count >= 1 Then\r\n" +
+                "        Dim tblTop As Table\r\n" +
+                "        Set tblTop = ActiveDocument.Tables(1)\r\n" +
+                "        If tblTop.Columns.Count >= 2 Then\r\n" +
+                "            tblTop.Cell(1, 1).Range.Font.Name = \"Times New Roman\"\r\n" +
+                "            tblTop.Cell(1, 1).Range.Font.Size = 14\r\n" +
+                "            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\"\r\n" +
+                "            tblTop.Cell(1, 2).Range.Font.Size = 15\r\n" +
+                "            Dim pTop As Paragraph\r\n" +
+                "            For Each pTop In tblTop.Cell(1, 2).Range.Paragraphs\r\n" +
+                "                If InStr(LCase(pTop.Range.Text), \"ngày\") > 0 Then\r\n" +
+                "                    pTop.Range.Font.Size = 14\r\n" +
+                "                    pTop.Range.Font.Italic = True\r\n" +
+                "                    pTop.Range.Font.Bold = False\r\n" +
+                "                End If\r\n" +
+                "            Next pTop\r\n" +
+                "        End If\r\n" +
+                "    End If\r\n" +
+                "    If ActiveDocument.Tables.Count >= 2 Then\r\n" +
+                "        Dim tblBot As Table\r\n" +
+                "        Set tblBot = ActiveDocument.Tables(ActiveDocument.Tables.Count)\r\n" +
+                "        If tblBot.Columns.Count >= 2 Then\r\n" +
+                "            Dim pRec As Paragraph\r\n" +
+                "            For Each pRec In tblBot.Cell(1, 1).Range.Paragraphs\r\n" +
+                "                pRec.Range.Font.Name = \"Times New Roman\"\r\n" +
+                "                pRec.Range.Font.Italic = False\r\n" +
+                "                If InStr(LCase(pRec.Range.Text), \"nơi nhận\") > 0 Then\r\n" +
+                "                    pRec.Range.Font.Size = 14\r\n" +
+                "                    pRec.Range.Font.Bold = False\r\n" +
+                "                    pRec.Range.Font.Underline = wdUnderlineSingle\r\n" +
+                "                Else\r\n" +
+                "                    pRec.Range.Font.Size = 12\r\n" +
+                "                End If\r\n" +
+                "            Next pRec\r\n" +
+                "            tblBot.Cell(1, 2).Range.Font.Name = \"Times New Roman\"\r\n" +
+                "            tblBot.Cell(1, 2).Range.Font.Size = 14\r\n" +
+                "            tblBot.Cell(1, 2).Range.Font.Bold = True\r\n" +
+                "        End If\r\n" +
+                "    End If\r\n" +
+                "    MsgBox \"Đã tự động chuẩn hóa văn bản Word đúng chuẩn Hướng dẫn số 05-HD/VPTW!\", vbInformation, \"VBTM Pro 2.5.0\"\r\n" +
+                "End Sub\r\n" +
+                "Sub ChuanHoaVanBan_NghiDinh30()\r\n" +
+                "    On Error Resume Next\r\n" +
+                "    If ActiveDocument Is Nothing Then Exit Sub\r\n" +
+                "    With ActiveDocument.PageSetup\r\n" +
+                "        .PaperSize = wdPaperA4\r\n" +
+                "        .TopMargin = CentimetersToPoints(2)\r\n" +
+                "        .BottomMargin = CentimetersToPoints(2)\r\n" +
+                "        .LeftMargin = CentimetersToPoints(3)\r\n" +
+                "        .RightMargin = CentimetersToPoints(1.5)\r\n" +
+                "        .DifferentFirstPageHeaderFooter = True\r\n" +
+                "    End With\r\n" +
+                "    ActiveDocument.Content.Font.Name = \"Times New Roman\"\r\n" +
+                "    Dim p As Paragraph\r\n" +
+                "    For Each p In ActiveDocument.Paragraphs\r\n" +
+                "        If p.Range.Tables.Count = 0 Then\r\n" +
+                "            p.Range.Font.Size = 14\r\n" +
+                "            p.Format.SpaceAfter = 6\r\n" +
+                "            p.Format.LineSpacingRule = wdLineSpaceMultiple\r\n" +
+                "            p.Format.LineSpacing = LinesToPoints(1.15)\r\n" +
+                "        End If\r\n" +
+                "    Next p\r\n" +
+                "    MsgBox \"Đã chuẩn hóa văn bản Word theo Nghị định số 30/2020/NĐ-CP!\", vbInformation, \"VBTM Pro 2.5.0\"\r\n" +
+                "End Sub\r\n";
+        }
+
+        public static bool InstallWordRibbonAddin(string installDir, string exePath)
+        {
+            try
+            {
+                Directory.CreateDirectory(installDir);
+                string basPath = Path.Combine(installDir, "VBTM_Word_Addin.bas");
+                File.WriteAllText(basPath, GetWordVbaMacroCode(), new UTF8Encoding(false));
+
+                string startupDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Microsoft", "Word", "STARTUP"
+                );
+                Directory.CreateDirectory(startupDir);
+                string dotmPath = Path.Combine(startupDir, "VBTM_Pro_Addin.dotm");
+
+                // 1. Cấp quyền AccessVBOM & Trusted Location trong Registry HKCU (không cần Admin)
+                string[] officeVers = new[] { "16.0", "15.0", "14.0" };
+                foreach (string ver in officeVers)
+                {
+                    try
+                    {
+                        using (RegistryKey secKey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Office\" + ver + @"\Word\Security"))
+                        {
+                            if (secKey != null) secKey.SetValue("AccessVBOM", 1, RegistryValueKind.DWord);
+                        }
+                        using (RegistryKey tlKey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Office\" + ver + @"\Word\Security\Trusted Locations\VBTMProStartup"))
+                        {
+                            if (tlKey != null)
+                            {
+                                tlKey.SetValue("Path", startupDir + "\\");
+                                tlKey.SetValue("AllowSubfolders", 1, RegistryValueKind.DWord);
+                                tlKey.SetValue("Description", "VBTM Pro 2.5.0 Word Startup Add-in");
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // 2. Tạo tệp VBTM_Pro_Addin.dotm bằng Word COM Automation và nạp Macro VBA
+                Type wordType = Type.GetTypeFromProgID("Word.Application");
+                if (wordType == null) return false;
+
+                object wordApp = Activator.CreateInstance(wordType);
+                try
+                {
+                    wordType.InvokeMember("Visible", BindingFlags.SetProperty, null, wordApp, new object[] { false });
+                    try { wordType.InvokeMember("DisplayAlerts", BindingFlags.SetProperty, null, wordApp, new object[] { 0 }); } catch { }
+
+                    object docs = wordType.InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
+                    object doc = docs.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, docs, null);
+                    try
+                    {
+                        object vbProj = doc.GetType().InvokeMember("VBProject", BindingFlags.GetProperty, null, doc, null);
+                        object vbComps = vbProj.GetType().InvokeMember("VBComponents", BindingFlags.GetProperty, null, vbProj, null);
+                        vbComps.GetType().InvokeMember("Import", BindingFlags.InvokeMethod, null, vbComps, new object[] { basPath });
+
+                        if (File.Exists(dotmPath)) File.Delete(dotmPath);
+                        // 13 = wdFormatXMLTemplateMacroEnabled (.dotm)
+                        doc.GetType().InvokeMember("SaveAs2", BindingFlags.InvokeMethod, null, doc, new object[] { dotmPath, 13 });
+                    }
+                    finally
+                    {
+                        try { doc.GetType().InvokeMember("Close", BindingFlags.InvokeMethod, null, doc, new object[] { false }); } catch { }
+                    }
+                }
+                finally
+                {
+                    try { wordType.InvokeMember("Quit", BindingFlags.InvokeMethod, null, wordApp, new object[] { false }); } catch { }
+                }
+
+                // 3. Nhúng trực tiếp Custom Ribbon Tab "VBTM Pro 2.5 (05-HD & ND30)" vào bên trong .dotm
+                if (File.Exists(dotmPath))
+                {
+                    InjectRibbonUiIntoDotm(dotmPath);
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static void InjectRibbonUiIntoDotm(string dotmPath)
+        {
+            string ribbonXml =
+                "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
+                "<ribbon><tabs>" +
+                "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 2.5 (05-HD &amp; ND30)\">" +
+                "<group id=\"grpVbtmFormat\" label=\"Chuẩn Hóa Thể Thức Tự Động\">" +
+                "<button id=\"btnVbtmAuto\" label=\"Chuẩn Hóa Tự Động\" size=\"large\" imageMso=\"ReviewTrackChanges\" onAction=\"Ribbon_ChuanHoaTuDong\" supertip=\"Tự động nhận diện văn bản Đảng (05-HD/VPTW) hoặc Hành chính (NĐ 30/2020/NĐ-CP) và chuẩn hóa trực tiếp tài liệu Word đang mở.\"/>" +
+                "<button id=\"btnVbtmHd05\" label=\"Chuẩn Đảng (05-HD/VPTW)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_HuongDan05\" supertip=\"Chuẩn hóa trực tiếp theo Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng.\"/>" +
+                "<button id=\"btnVbtmNd30\" label=\"Chuẩn Hành Chính (NĐ 30)\" size=\"large\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\" supertip=\"Chuẩn hóa trực tiếp theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\"/>" +
+                "</group>" +
+                "<group id=\"grpVbtmStudio\" label=\"Công Cụ Mở Rộng\">" +
+                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (QR &amp; AI)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI, tạo mã QR và chuyển PDF sang Word.\"/>" +
+                "</group>" +
+                "</tab></tabs></ribbon></customUI>";
+
+            using (ZipArchive zip = ZipFile.Open(dotmPath, ZipArchiveMode.Update))
+            {
+                ZipArchiveEntry oldUi = zip.GetEntry("customUI/customUI14.xml");
+                if (oldUi != null) oldUi.Delete();
+
+                ZipArchiveEntry uiEntry = zip.CreateEntry("customUI/customUI14.xml");
+                using (StreamWriter sw = new StreamWriter(uiEntry.Open(), new UTF8Encoding(false)))
+                {
+                    sw.Write(ribbonXml);
+                }
+
+                ZipArchiveEntry relsEntry = zip.GetEntry("_rels/.rels");
+                if (relsEntry != null)
+                {
+                    string relsXml;
+                    using (StreamReader sr = new StreamReader(relsEntry.Open(), Encoding.UTF8))
+                    {
+                        relsXml = sr.ReadToEnd();
+                    }
+                    if (!relsXml.Contains("customUI/customUI14.xml"))
+                    {
+                        string newRel = "<Relationship Id=\"rIdVbtmCustomUI\" Type=\"http://schemas.microsoft.com/office/2007/relationships/ui/extensibility\" Target=\"customUI/customUI14.xml\"/></Relationships>";
+                        relsXml = relsXml.Replace("</Relationships>", newRel);
+                        relsEntry.Delete();
+                        ZipArchiveEntry updatedRels = zip.CreateEntry("_rels/.rels");
+                        using (StreamWriter sw = new StreamWriter(updatedRels.Open(), new UTF8Encoding(false)))
+                        {
+                            sw.Write(relsXml);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -635,22 +912,38 @@ namespace VBTMProSuite
             cboTemplate.SelectedIndexChanged += (s, e) => LoadTemplate(cboTemplate.SelectedIndex);
             topBar.Controls.Add(cboTemplate);
 
-            Button btnOpenFile = CreateBtn("📂 Mở File (.docx/.pdf)", new Point(396, 14), new Size(162, 36), Color.FromArgb(185, 28, 28));
+            Button btnOpenFile = CreateBtn("📂 Mở File (.docx/.pdf)", new Point(392, 14), new Size(148, 36), Color.FromArgb(185, 28, 28));
             btnOpenFile.Click += (s, e) => OpenWordOrTextFileFromDisk();
             topBar.Controls.Add(btnOpenFile);
 
-            Button btnStd = CreateBtn("1. Chuẩn Hóa & Sửa Lỗi AI", new Point(564, 14), new Size(182, 36), Color.FromArgb(202, 138, 4));
+            Button btnStd = CreateBtn("1. Chuẩn Hóa & Sửa Lỗi", new Point(544, 14), new Size(148, 36), Color.FromArgb(202, 138, 4));
             btnStd.Click += (s, e) => StandardizeAndFixAll();
             topBar.Controls.Add(btnStd);
 
-            Button btnWordLive = CreateBtn("2. Chuẩn Hóa Word Đang Mở", new Point(752, 14), new Size(184, 36), Color.FromArgb(185, 28, 28));
+            Button btnWordLive = CreateBtn("2. Sửa Word Đang Mở", new Point(696, 14), new Size(148, 36), Color.FromArgb(185, 28, 28));
             btnWordLive.Click += (s, e) => FormatActiveWordDocument();
             topBar.Controls.Add(btnWordLive);
 
-            Button btnExportDoc = CreateBtn("3. Xuất Word (.doc A4)", new Point(942, 14), new Size(162, 36), Color.FromArgb(234, 179, 8));
+            Button btnExportDoc = CreateBtn("3. Xuất Word (.doc)", new Point(848, 14), new Size(134, 36), Color.FromArgb(234, 179, 8));
             btnExportDoc.ForeColor = Color.FromArgb(69, 10, 10);
             btnExportDoc.Click += (s, e) => ExportAndOpenWordDoc();
             topBar.Controls.Add(btnExportDoc);
+
+            Button btnPinWord = CreateBtn("📌 Tích Hợp Word", new Point(986, 14), new Size(124, 36), Color.FromArgb(127, 29, 29));
+            btnPinWord.Click += (s, e) =>
+            {
+                string instDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "VBTM-Pro");
+                bool ok = WordAddinInstaller.InstallWordRibbonAddin(instDir, Application.ExecutablePath);
+                MessageBox.Show(
+                    ok
+                        ? "Đã tích hợp thành công Tab Ribbon 'VBTM Pro 2.5 (05-HD & ND30)' trực tiếp vào Microsoft Word!\nHãy mở lại Microsoft Word để sử dụng ngay trên thanh công cụ."
+                        : "Không tìm thấy Microsoft Word hoặc Word đang khóa tệp mẫu. Hãy đóng tất cả cửa sổ Word rồi thử lại!",
+                    "Tích Hợp Trực Tiếp Vào Word - VBTM Pro 2.5.0",
+                    MessageBoxButtons.OK,
+                    ok ? MessageBoxIcon.Information : MessageBoxIcon.Warning
+                );
+            };
+            topBar.Controls.Add(btnPinWord);
 
             Panel mainArea = new Panel
             {
