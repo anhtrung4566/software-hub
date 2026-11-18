@@ -599,8 +599,8 @@ namespace VBTMProSuite
                         vbComps.GetType().InvokeMember("Import", BindingFlags.InvokeMethod, null, vbComps, new object[] { basPath });
 
                         if (File.Exists(dotmPath)) File.Delete(dotmPath);
-                        // 13 = wdFormatXMLTemplateMacroEnabled (.dotm)
-                        doc.GetType().InvokeMember("SaveAs2", BindingFlags.InvokeMethod, null, doc, new object[] { dotmPath, 13 });
+                        // 15 = wdFormatXMLTemplateMacroEnabled (.dotm)
+                        doc.GetType().InvokeMember("SaveAs2", BindingFlags.InvokeMethod, null, doc, new object[] { dotmPath, 15 });
                     }
                     finally
                     {
@@ -970,7 +970,28 @@ namespace VBTMProSuite
                             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                             "Programs", "VBTM-Pro"
                         );
-                        if (!File.Exists(startupDotm))
+                        bool needInstall = !File.Exists(startupDotm);
+                        if (!needInstall)
+                        {
+                            try
+                            {
+                                using (ZipArchive z = ZipFile.OpenRead(startupDotm))
+                                {
+                                    ZipArchiveEntry ct = z.GetEntry("[Content_Types].xml");
+                                    if (ct == null) needInstall = true;
+                                    else
+                                    {
+                                        using (StreamReader sr = new StreamReader(ct.Open(), Encoding.UTF8))
+                                        {
+                                            if (!sr.ReadToEnd().Contains("template.macroEnabledTemplate"))
+                                                needInstall = true;
+                                        }
+                                    }
+                                }
+                            }
+                            catch { needInstall = true; }
+                        }
+                        if (needInstall)
                         {
                             Directory.CreateDirectory(instDir);
                             string exeDst = Path.Combine(instDir, "VBTM-Pro.exe");
