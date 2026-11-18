@@ -13,10 +13,10 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("VietNamOCR 3.2 Pro - AI Neural OCR Tieng Viet & Doc PDF Da Trang")]
+[assembly: AssemblyTitle("VietNamOCR 3.5 Pro - AI Neural OCR Tieng Viet & Doc PDF Da Trang")]
 [assembly: AssemblyDescription("Ung dung AI Neural OCR nhan dien chu tieng Viet tu hinh anh & PDF scan phuc vu luu tru ho so Dang uy va UBND Phuong")]
 [assembly: AssemblyCompany("Software Hub")]
-[assembly: AssemblyProduct("VietNamOCR 3.2 Pro")]
+[assembly: AssemblyProduct("VietNamOCR 3.5 Pro")]
 [assembly: AssemblyVersion("3.2.0.0")]
 [assembly: AssemblyFileVersion("3.2.0.0")]
 
@@ -72,18 +72,18 @@ namespace VietNamOCRSuite
         {
             try
             {
-                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VietNamOCR 3.2 Pro.lnk");
+                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VietNamOCR 3.5 Pro.lnk");
                 if (File.Exists(desktopLnk)) File.Delete(desktopLnk);
 
-                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VietNamOCR 3.2 Pro.lnk");
+                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VietNamOCR 3.5 Pro.lnk");
                 if (File.Exists(startMenuLnk)) File.Delete(startMenuLnk);
 
                 Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\VietNamOCRPro", false);
-                MessageBox.Show("Đã gỡ cài đặt VietNamOCR 3.2 Pro thành công khỏi máy tính!", "Gỡ Cài Đặt VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Đã gỡ cài đặt VietNamOCR 3.5 Pro thành công khỏi máy tính!", "Gỡ Cài Đặt VietNamOCR 3.5 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Thông báo gỡ cài đặt: " + ex.Message, "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Thông báo gỡ cài đặt: " + ex.Message, "VietNamOCR 3.5 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
     }
@@ -103,7 +103,7 @@ namespace VietNamOCRSuite
 
         public OcrSetupForm()
         {
-            this.Text = "★ Trình Cài Đặt VietNamOCR 3.2 Pro (x64 Setup · Đảng Ủy & UBND Phường)";
+            this.Text = "★ Trình Cài Đặt VietNamOCR 3.5 Pro (x64 Setup · Đảng Ủy & UBND Phường)";
             this.Size = new Size(650, 450);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -126,7 +126,7 @@ namespace VietNamOCRSuite
 
             Label lblTitle = new Label
             {
-                Text = "★ VietNamOCR 3.2 Pro (x64) · Chuyển PDF Sang Word & OCR Tiếng Việt",
+                Text = "★ VietNamOCR 3.5 Pro (x64) · Chuyển PDF Sang Word & OCR Tiếng Việt",
                 Font = new Font("Segoe UI", 14f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(250, 204, 21),
                 AutoSize = true,
@@ -195,7 +195,7 @@ namespace VietNamOCRSuite
 
             chkDesktopShortcut = new CheckBox
             {
-                Text = "Tạo biểu tượng VietNamOCR 3.2 Pro ngoài màn hình Desktop & Start Menu",
+                Text = "Tạo biểu tượng VietNamOCR 3.5 Pro ngoài màn hình Desktop & Start Menu",
                 Checked = true,
                 Location = new Point(24, 176),
                 AutoSize = true,
@@ -291,7 +291,7 @@ namespace VietNamOCRSuite
             {
                 string installDir = txtInstallDir.Text.Trim();
                 progressBar.Value = 30;
-                lblStatus.Text = "Đang sao chép bộ máy nhận diện VietNamOCR 3.2 Pro...";
+                lblStatus.Text = "Đang sao chép bộ máy nhận diện VietNamOCR 3.5 Pro...";
                 Application.DoEvents();
 
                 Directory.CreateDirectory(installDir);
@@ -306,8 +306,8 @@ namespace VietNamOCRSuite
                     try { File.Copy(Application.ExecutablePath, altExePath, true); } catch { }
                 }
 
-                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VietNamOCR 3.2 Pro.lnk");
-                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VietNamOCR 3.2 Pro.lnk");
+                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VietNamOCR 3.5 Pro.lnk");
+                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VietNamOCR 3.5 Pro.lnk");
                 string uninstallBat = Path.Combine(installDir, "Go_Cai_Dat_VietNamOCR.bat");
                 File.WriteAllText(uninstallBat,
                     "@echo off\r\n" +
@@ -316,24 +316,24 @@ namespace VietNamOCRSuite
                 progressBar.Value = 75;
                 if (chkDesktopShortcut.Checked)
                 {
-                    CreateShortcut(desktopLnk, targetExePath, "--app", "VietNamOCR 3.2 Pro - AI Neural OCR Tieng Viet");
-                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VietNamOCR 3.2 Pro - AI Neural OCR Tieng Viet");
+                    CreateShortcut(desktopLnk, targetExePath, "--app", "VietNamOCR 3.5 Pro - AI Neural OCR Tieng Viet");
+                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VietNamOCR 3.5 Pro - AI Neural OCR Tieng Viet");
                 }
 
                 RegisterUninstaller(installDir, targetExePath);
 
                 progressBar.Value = 100;
-                lblStatus.Text = "✓ Cài đặt VietNamOCR 3.2 Pro hoàn tất thành công!";
+                lblStatus.Text = "✓ Cài đặt VietNamOCR 3.5 Pro hoàn tất thành công!";
                 isInstalled = true;
                 btnInstall.Text = "Hoàn Tất & Mở Ứng Dụng";
                 btnInstall.BackColor = Color.FromArgb(16, 185, 129);
 
                 MessageBox.Show(
-                    "Đã cài đặt thành công VietNamOCR 3.2 Pro vào máy tính!\n\n" +
+                    "Đã cài đặt thành công VietNamOCR 3.5 Pro vào máy tính!\n\n" +
                     "• Thư mục: " + installDir + "\n" +
-                    "• Biểu tượng Desktop: VietNamOCR 3.2 Pro\n\n" +
-                    "Nhấn OK để khởi chạy phần mềm VietNamOCR 3.2 Pro ngay.",
-                    "Cài Đặt Thành Công - VietNamOCR 3.2 Pro",
+                    "• Biểu tượng Desktop: VietNamOCR 3.5 Pro\n\n" +
+                    "Nhấn OK để khởi chạy phần mềm VietNamOCR 3.5 Pro ngay.",
+                    "Cài Đặt Thành Công - VietNamOCR 3.5 Pro",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
                 );
@@ -354,7 +354,7 @@ namespace VietNamOCRSuite
                 {
                     if (key != null)
                     {
-                        key.SetValue("DisplayName", "VietNamOCR 3.2 Pro (x64) - Số Hóa Hồ Sơ Tiếng Việt");
+                        key.SetValue("DisplayName", "VietNamOCR 3.5 Pro (x64) - Số Hóa Hồ Sơ Tiếng Việt");
                         key.SetValue("DisplayVersion", "3.2.0");
                         key.SetValue("Publisher", "Software Hub");
                         key.SetValue("DisplayIcon", exePath);
@@ -409,7 +409,7 @@ namespace VietNamOCRSuite
 
         public OcrMainForm()
         {
-            this.Text = "VietNamOCR 4.0 Pro Ultimate (x64) · Chuyển PDF Sang Word Giữ Nguyên Thể Thức 100% & AI Neural OCR";
+            this.Text = "VietNamOCR 3.5 Pro (x64) · Chuyển PDF Sang Word Giữ Nguyên Thể Thức 100% & AI Neural OCR";
             this.Size = new Size(1160, 775);
             this.MinimumSize = new Size(1020, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -465,7 +465,7 @@ namespace VietNamOCRSuite
 
             Label lblBrand = new Label
             {
-                Text = "★ VietNamOCR 3.2 Pro",
+                Text = "★ VietNamOCR 3.5 Pro",
                 Font = new Font("Segoe UI", 13.5f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(250, 204, 21),
                 Location = new Point(12, 16),
@@ -591,7 +591,7 @@ namespace VietNamOCRSuite
                 }
                 else
                 {
-                    MessageBox.Show("Trong Clipboard hiện chưa có ảnh. Hãy chụp màn hình (Win + Shift + S) hoặc Copy ảnh rồi thử lại!", "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Trong Clipboard hiện chưa có ảnh. Hãy chụp màn hình (Win + Shift + S) hoặc Copy ảnh rồi thử lại!", "VietNamOCR 3.5 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             };
             grpImg.Controls.Add(btnPaste);
@@ -771,7 +771,7 @@ namespace VietNamOCRSuite
                     else
                     {
                         lblStatus.Text = "  ⚠ Không thể kết xuất trang PDF: " + Path.GetFileName(filePath);
-                        MessageBox.Show("Không thể kết xuất tệp PDF đã chọn. Vui lòng kiểm tra tệp PDF không bị đặt mật khẩu bảo vệ.", "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Không thể kết xuất tệp PDF đã chọn. Vui lòng kiểm tra tệp PDF không bị đặt mật khẩu bảo vệ.", "VietNamOCR 3.5 Pro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
                 else
@@ -793,7 +793,7 @@ namespace VietNamOCRSuite
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Không thể đọc tệp đã chọn: " + ex.Message, "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Không thể đọc tệp đã chọn: " + ex.Message, "VietNamOCR 3.5 Pro", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -937,7 +937,7 @@ $inFileStream.Close()
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết xuất trang PDF: " + ex.Message, "VietNamOCR 3.2 Pro");
+                MessageBox.Show("Lỗi kết xuất trang PDF: " + ex.Message, "VietNamOCR 3.5 Pro");
             }
             finally
             {
@@ -1282,7 +1282,7 @@ $inFileStream.Close()
                 {
                     UpdatePdfButtons();
                     RunVietnameseOcr(true);
-                    MessageBox.Show("Đã tự động nhận diện Trang " + currentPdfPageIndex + " của tệp PDF và nối tiếp vào bảng biểu!", "VietNamOCR 3.2 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Đã tự động nhận diện Trang " + currentPdfPageIndex + " của tệp PDF và nối tiếp vào bảng biểu!", "VietNamOCR 3.5 Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 return;
             }
@@ -1291,7 +1291,7 @@ $inFileStream.Close()
             tableData.Rows.Add("05", "168/TB-UBND", "15/11/2026", "Thông báo lịch tiếp công dân và giải quyết thủ tục hành chính tại phường", "UBND Phường");
             LoadSampleDocumentImage(2);
             lblStatus.Text = "  ✓ Đã tự động bỏ tiêu đề lặp và nối thêm dữ liệu bảng biểu từ Trang 2 (Tổng: " + tableData.Rows.Count + " hàng)!";
-            MessageBox.Show("Đã tự động khử dòng tiêu đề lặp và nối bảng biểu Trang 2 vào bảng chính thành công!", "VietNamOCR 3.2 Pro - Multi-page Table Merge", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Đã tự động khử dòng tiêu đề lặp và nối bảng biểu Trang 2 vào bảng chính thành công!", "VietNamOCR 3.5 Pro - Multi-page Table Merge", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private static bool DetectIsPartyDocInOcrText(string text)
@@ -1609,7 +1609,7 @@ $inFileStream.Close()
 
                 string bodyHtml = BuildLayoutPreservedWordHtml(txtOcrResult.Text);
                 string html = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>" +
-                              "<head><meta charset='utf-8'><title>VietNamOCR 3.2 Pro Ultimate</title>" +
+                              "<head><meta charset='utf-8'><title>VietNamOCR 3.5 Pro Ultimate</title>" +
                               "<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->" +
                               "<style>" +
                               "@page Section1 { size:21.0cm 29.7cm; margin:2.0cm 1.5cm 2.0cm 3.0cm; mso-header-margin:1.0cm; mso-footer-margin:1.0cm; mso-title-page:yes; mso-header:h1; mso-first-header:fh1; }" +
@@ -1626,7 +1626,7 @@ $inFileStream.Close()
 
                 File.WriteAllText(sfd.FileName, html, new UTF8Encoding(true));
                 lblStatus.Text = "  ✓ Đã xuất tệp Word (.doc) giữ nguyên 100% thể thức và nội dung gốc: " + sfd.FileName;
-                if (MessageBox.Show("Đã chuyển đổi và xuất tệp Word (.doc) giữ nguyên 100% thể thức gốc thành công!\nBạn có muốn mở tệp ngay không?", "VietNamOCR 4.0 Pro Ultimate", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                if (MessageBox.Show("Đã chuyển đổi và xuất tệp Word (.doc) giữ nguyên 100% thể thức gốc thành công!\nBạn có muốn mở tệp ngay không?", "VietNamOCR 3.5 Pro", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                 {
                     Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
                 }
@@ -1666,7 +1666,7 @@ $inFileStream.Close()
 
                 File.WriteAllText(sfd.FileName, sb.ToString(), new UTF8Encoding(true));
                 lblStatus.Text = "  ✓ Đã xuất tệp Excel (.xls) thành công: " + sfd.FileName;
-                if (MessageBox.Show("Đã đồng bộ và xuất tệp Excel (.xls) thành công!\nBạn có muốn mở tệp ngay không?", "VietNamOCR 3.2 Pro", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                if (MessageBox.Show("Đã đồng bộ và xuất tệp Excel (.xls) thành công!\nBạn có muốn mở tệp ngay không?", "VietNamOCR 3.5 Pro", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                 {
                     Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
                 }
