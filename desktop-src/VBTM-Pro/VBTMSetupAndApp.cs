@@ -399,147 +399,360 @@ namespace VBTMProSuite
     // =========================================================================
     public static class WordAddinInstaller
     {
+        private static string VbaStr(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "\"\"";
+            StringBuilder sb = new StringBuilder();
+            bool inQuotes = false;
+            foreach (char c in s)
+            {
+                if (c >= 32 && c < 127 && c != '"')
+                {
+                    if (!inQuotes)
+                    {
+                        if (sb.Length > 0) sb.Append(" & ");
+                        sb.Append('"');
+                        inQuotes = true;
+                    }
+                    sb.Append(c);
+                }
+                else
+                {
+                    if (inQuotes)
+                    {
+                        sb.Append('"');
+                        inQuotes = false;
+                    }
+                    if (sb.Length > 0) sb.Append(" & ");
+                    sb.Append("ChrW(").Append((int)c).Append(")");
+                }
+            }
+            if (inQuotes) sb.Append('"');
+            return sb.ToString();
+        }
+
         public static string GetWordVbaMacroCode()
         {
-            return
-                "Attribute VB_Name = \"VBTM_Pro_HD05_ND30\"\r\n" +
-                "Sub Ribbon_ChuanHoaTuDong(ByVal control As Object)\r\n" +
-                "    ChuanHoaVanBan_TuDong\r\n" +
-                "End Sub\r\n" +
-                "Sub Ribbon_HuongDan05(ByVal control As Object)\r\n" +
-                "    ChuanHoaVanBan_HuongDan05\r\n" +
-                "End Sub\r\n" +
-                "Sub Ribbon_NghiDinh30(ByVal control As Object)\r\n" +
-                "    ChuanHoaVanBan_NghiDinh30\r\n" +
-                "End Sub\r\n" +
-                "Sub Ribbon_MoVBTM(ByVal control As Object)\r\n" +
-                "    On Error Resume Next\r\n" +
-                "    Dim p As String\r\n" +
-                "    p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"\r\n" +
-                "    If Dir(p) <> \"\" Then\r\n" +
-                "        Shell \"\"\"\" & p & \"\"\" --app\", vbNormalFocus\r\n" +
-                "    Else\r\n" +
-                "        MsgBox \"Khong tim thay VBTM-Pro.exe tai: \" & p, vbExclamation, \"VBTM Pro 2.5.0\"\r\n" +
-                "    End If\r\n" +
-                "End Sub\r\n" +
-                "Sub ChuanHoaVanBan_TuDong()\r\n" +
-                "    On Error Resume Next\r\n" +
-                "    If ActiveDocument Is Nothing Then Exit Sub\r\n" +
-                "    Dim docText As String\r\n" +
-                "    docText = UCase(ActiveDocument.Content.Text)\r\n" +
-                "    If InStr(docText, \"ĐẢNG CỘNG SẢN\") > 0 Or InStr(docText, \"ĐẢNG ỦY\") > 0 Or InStr(docText, \"CHI BỘ\") > 0 Or InStr(docText, \"-BC/ĐU\") > 0 Or InStr(docText, \"-NQ/ĐU\") > 0 Or InStr(docText, \"-CV/ĐU\") > 0 Then\r\n" +
-                "        ChuanHoaVanBan_HuongDan05\r\n" +
-                "    Else\r\n" +
-                "        ChuanHoaVanBan_NghiDinh30\r\n" +
-                "    End If\r\n" +
-                "End Sub\r\n" +
-                "Sub ChuanHoaVanBan_HuongDan05()\r\n" +
-                "    On Error Resume Next\r\n" +
-                "    If ActiveDocument Is Nothing Then Exit Sub\r\n" +
-                "    With ActiveDocument.PageSetup\r\n" +
-                "        .PaperSize = wdPaperA4\r\n" +
-                "        .TopMargin = CentimetersToPoints(2)\r\n" +
-                "        .BottomMargin = CentimetersToPoints(2)\r\n" +
-                "        .LeftMargin = CentimetersToPoints(3)\r\n" +
-                "        .RightMargin = CentimetersToPoints(1.5)\r\n" +
-                "        .DifferentFirstPageHeaderFooter = True\r\n" +
-                "    End With\r\n" +
-                "    ActiveDocument.Content.Font.Name = \"Times New Roman\"\r\n" +
-                "    Dim hdr As HeaderFooter\r\n" +
-                "    Set hdr = ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary)\r\n" +
-                "    hdr.Range.Text = \"\"\r\n" +
-                "    hdr.PageNumbers.Add PageNumberAlignment:=wdAlignPageNumberCenter, FirstPage:=False\r\n" +
-                "    hdr.Range.Font.Name = \"Times New Roman\"\r\n" +
-                "    hdr.Range.Font.Size = 13\r\n" +
-                "    Dim p As Paragraph\r\n" +
-                "    For Each p In ActiveDocument.Paragraphs\r\n" +
-                "        If p.Range.Tables.Count = 0 Then\r\n" +
-                "            Dim t As String\r\n" +
-                "            t = Trim(Replace(Replace(p.Range.Text, vbCr, \"\"), Chr(7), \"\"))\r\n" +
-                "            If Len(t) > 0 Then\r\n" +
-                "                p.Range.Font.Name = \"Times New Roman\"\r\n" +
-                "                If t = \"BÁO CÁO\" Or t = \"NGHỊ QUYẾT\" Or t = \"QUYẾT ĐỊNH\" Or t = \"KẾ HOẠCH\" Or t = \"CHƯƠNG TRÌNH\" Or t = \"TỜ TRÌNH\" Or t = \"THÔNG BÁO\" Then\r\n" +
-                "                    p.Range.Font.Size = 15\r\n" +
-                "                    p.Range.Font.Bold = True\r\n" +
-                "                    p.Alignment = wdAlignParagraphCenter\r\n" +
-                "                    p.FirstLineIndent = 0\r\n" +
-                "                Else\r\n" +
-                "                    p.Range.Font.Size = 14\r\n" +
-                "                    p.Format.SpaceAfter = 6\r\n" +
-                "                    p.Format.LineSpacingRule = wdLineSpaceMultiple\r\n" +
-                "                    p.Format.LineSpacing = LinesToPoints(1.15)\r\n" +
-                "                    If p.Alignment <> wdAlignParagraphCenter Then\r\n" +
-                "                        p.Alignment = wdAlignParagraphJustify\r\n" +
-                "                        p.FirstLineIndent = CentimetersToPoints(1.27)\r\n" +
-                "                    End If\r\n" +
-                "                End If\r\n" +
-                "            End If\r\n" +
-                "        End If\r\n" +
-                "    Next p\r\n" +
-                "    If ActiveDocument.Tables.Count >= 1 Then\r\n" +
-                "        Dim tblTop As Table\r\n" +
-                "        Set tblTop = ActiveDocument.Tables(1)\r\n" +
-                "        If tblTop.Columns.Count >= 2 Then\r\n" +
-                "            tblTop.Cell(1, 1).Range.Font.Name = \"Times New Roman\"\r\n" +
-                "            tblTop.Cell(1, 1).Range.Font.Size = 14\r\n" +
-                "            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\"\r\n" +
-                "            tblTop.Cell(1, 2).Range.Font.Size = 15\r\n" +
-                "            Dim pTop As Paragraph\r\n" +
-                "            For Each pTop In tblTop.Cell(1, 2).Range.Paragraphs\r\n" +
-                "                If InStr(LCase(pTop.Range.Text), \"ngày\") > 0 Then\r\n" +
-                "                    pTop.Range.Font.Size = 14\r\n" +
-                "                    pTop.Range.Font.Italic = True\r\n" +
-                "                    pTop.Range.Font.Bold = False\r\n" +
-                "                End If\r\n" +
-                "            Next pTop\r\n" +
-                "        End If\r\n" +
-                "    End If\r\n" +
-                "    If ActiveDocument.Tables.Count >= 2 Then\r\n" +
-                "        Dim tblBot As Table\r\n" +
-                "        Set tblBot = ActiveDocument.Tables(ActiveDocument.Tables.Count)\r\n" +
-                "        If tblBot.Columns.Count >= 2 Then\r\n" +
-                "            Dim pRec As Paragraph\r\n" +
-                "            For Each pRec In tblBot.Cell(1, 1).Range.Paragraphs\r\n" +
-                "                pRec.Range.Font.Name = \"Times New Roman\"\r\n" +
-                "                pRec.Range.Font.Italic = False\r\n" +
-                "                If InStr(LCase(pRec.Range.Text), \"nơi nhận\") > 0 Then\r\n" +
-                "                    pRec.Range.Font.Size = 14\r\n" +
-                "                    pRec.Range.Font.Bold = False\r\n" +
-                "                    pRec.Range.Font.Underline = wdUnderlineSingle\r\n" +
-                "                Else\r\n" +
-                "                    pRec.Range.Font.Size = 12\r\n" +
-                "                End If\r\n" +
-                "            Next pRec\r\n" +
-                "            tblBot.Cell(1, 2).Range.Font.Name = \"Times New Roman\"\r\n" +
-                "            tblBot.Cell(1, 2).Range.Font.Size = 14\r\n" +
-                "            tblBot.Cell(1, 2).Range.Font.Bold = True\r\n" +
-                "        End If\r\n" +
-                "    End If\r\n" +
-                "    MsgBox \"Đã tự động chuẩn hóa văn bản Word đúng chuẩn Hướng dẫn số 05-HD/VPTW!\", vbInformation, \"VBTM Pro 2.5.0\"\r\n" +
-                "End Sub\r\n" +
-                "Sub ChuanHoaVanBan_NghiDinh30()\r\n" +
-                "    On Error Resume Next\r\n" +
-                "    If ActiveDocument Is Nothing Then Exit Sub\r\n" +
-                "    With ActiveDocument.PageSetup\r\n" +
-                "        .PaperSize = wdPaperA4\r\n" +
-                "        .TopMargin = CentimetersToPoints(2)\r\n" +
-                "        .BottomMargin = CentimetersToPoints(2)\r\n" +
-                "        .LeftMargin = CentimetersToPoints(3)\r\n" +
-                "        .RightMargin = CentimetersToPoints(1.5)\r\n" +
-                "        .DifferentFirstPageHeaderFooter = True\r\n" +
-                "    End With\r\n" +
-                "    ActiveDocument.Content.Font.Name = \"Times New Roman\"\r\n" +
-                "    Dim p As Paragraph\r\n" +
-                "    For Each p In ActiveDocument.Paragraphs\r\n" +
-                "        If p.Range.Tables.Count = 0 Then\r\n" +
-                "            p.Range.Font.Size = 14\r\n" +
-                "            p.Format.SpaceAfter = 6\r\n" +
-                "            p.Format.LineSpacingRule = wdLineSpaceMultiple\r\n" +
-                "            p.Format.LineSpacing = LinesToPoints(1.15)\r\n" +
-                "        End If\r\n" +
-                "    Next p\r\n" +
-                "    MsgBox \"Đã chuẩn hóa văn bản Word theo Nghị định số 30/2020/NĐ-CP!\", vbInformation, \"VBTM Pro 2.5.0\"\r\n" +
-                "End Sub\r\n";
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Attribute VB_Name = \"VBTM_Pro_HD05_ND30\"");
+            sb.AppendLine("Option Explicit");
+            sb.AppendLine("");
+            // Ribbon callbacks
+            sb.AppendLine("Sub Ribbon_ChuanHoaTuDong(ByVal control As Object): ChuanHoaVanBan_TuDong: End Sub");
+            sb.AppendLine("Sub Ribbon_HuongDan05(ByVal control As Object): ChuanHoaVanBan_HuongDan05: End Sub");
+            sb.AppendLine("Sub Ribbon_NghiDinh30(ByVal control As Object): ChuanHoaVanBan_NghiDinh30: End Sub");
+            sb.AppendLine("Sub Ribbon_ChenMauDang05(ByVal control As Object): ChenMauVanBan_Dang05: End Sub");
+            sb.AppendLine("Sub Ribbon_ChenMauUBND30(ByVal control As Object): ChenMauVanBan_UBND30: End Sub");
+            sb.AppendLine("Sub Ribbon_SuaChinhTa(ByVal control As Object): SuaChinhTaVaDauCau_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_NoiDongPDF(ByVal control As Object): NoiDongPDFBiNgat_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
+            sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
+            sb.AppendLine("Sub Ribbon_MoVBTM(ByVal control As Object)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim p As String");
+            sb.AppendLine("    p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then");
+            sb.AppendLine("        Shell \"\"\"\" & p & \"\"\" --app\", vbNormalFocus");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        MsgBox " + VbaStr("Không tìm thấy VBTM-Pro.exe tại: ") + " & p, vbExclamation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    End If");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 1. Căn lề A4 chuẩn 20-20-30-15mm
+            sb.AppendLine("Sub CanLeA4Chuan_Word(Optional ByVal showMsg As Boolean = False)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    With ActiveDocument.PageSetup");
+            sb.AppendLine("        .PaperSize = 7");
+            sb.AppendLine("        .TopMargin = CentimetersToPoints(2)");
+            sb.AppendLine("        .BottomMargin = CentimetersToPoints(2)");
+            sb.AppendLine("        .LeftMargin = CentimetersToPoints(3)");
+            sb.AppendLine("        .RightMargin = CentimetersToPoints(1.5)");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    If showMsg And Application.Visible Then MsgBox " + VbaStr("Đã căn lề chuẩn khổ A4 (Trên 20mm, Dưới 20mm, Trái 30mm, Phải 15mm)!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 2. Đánh số trang từ trang 2 ở Header (cỡ 13pt đứng, căn giữa)
+            sb.AppendLine("Sub DanhSoTrangTuTrang2_Word(Optional ByVal showMsg As Boolean = False)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    ActiveDocument.PageSetup.DifferentFirstPageHeaderFooter = True");
+            sb.AppendLine("    Dim hdr As HeaderFooter");
+            sb.AppendLine("    Set hdr = ActiveDocument.Sections(1).Headers(1)");
+            sb.AppendLine("    hdr.Range.Text = \"\"");
+            sb.AppendLine("    hdr.PageNumbers.Add PageNumberAlignment:=1, FirstPage:=False");
+            sb.AppendLine("    hdr.Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("    hdr.Range.Font.Size = 13");
+            sb.AppendLine("    hdr.Range.Font.Bold = False");
+            sb.AppendLine("    hdr.Range.Font.Italic = False");
+            sb.AppendLine("    If showMsg And Application.Visible Then MsgBox " + VbaStr("Đã bật đánh số trang tự động từ trang 2 (căn giữa lề trên, cỡ 13pt)!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 3. Tự động nhận diện Đảng (05-HD/VPTW) hay Hành chính (NĐ 30/2020/NĐ-CP)
+            sb.AppendLine("Sub ChuanHoaVanBan_TuDong()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim docText As String");
+            sb.AppendLine("    docText = UCase(ActiveDocument.Content.Text)");
+            sb.AppendLine("    If InStr(docText, " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Or InStr(docText, " + VbaStr("ĐẢNG ỦY") + ") > 0 Or InStr(docText, " + VbaStr("CHI BỘ") + ") > 0 Or InStr(docText, " + VbaStr("-BC/ĐU") + ") > 0 Or InStr(docText, " + VbaStr("-NQ/ĐU") + ") > 0 Or InStr(docText, " + VbaStr("-CV/ĐU") + ") > 0 Then");
+            sb.AppendLine("        ChuanHoaVanBan_HuongDan05");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        ChuanHoaVanBan_NghiDinh30");
+            sb.AppendLine("    End If");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 4. Chuẩn hóa văn bản Đảng theo Hướng dẫn 05-HD/VPTW
+            sb.AppendLine("Sub ChuanHoaVanBan_HuongDan05()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    CanLeA4Chuan_Word False");
+            sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
+            sb.AppendLine("    ActiveDocument.Content.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("    Dim p As Paragraph, t As String");
+            sb.AppendLine("    For Each p In ActiveDocument.Paragraphs");
+            sb.AppendLine("        If p.Range.Tables.Count = 0 Then");
+            sb.AppendLine("            t = Trim(Replace(Replace(p.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
+            sb.AppendLine("            If Len(t) > 0 Then");
+            sb.AppendLine("                p.Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("                If t = " + VbaStr("BÁO CÁO") + " Or t = " + VbaStr("NGHỊ QUYẾT") + " Or t = " + VbaStr("QUYẾT ĐỊNH") + " Or t = " + VbaStr("KẾ HOẠCH") + " Or t = " + VbaStr("CHƯƠNG TRÌNH") + " Or t = " + VbaStr("TỜ TRÌNH") + " Or t = " + VbaStr("THÔNG BÁO") + " Then");
+            sb.AppendLine("                    p.Range.Font.Size = 15");
+            sb.AppendLine("                    p.Range.Font.Bold = True");
+            sb.AppendLine("                    p.Alignment = 1");
+            sb.AppendLine("                    p.FirstLineIndent = 0");
+            sb.AppendLine("                Else");
+            sb.AppendLine("                    p.Range.Font.Size = 14");
+            sb.AppendLine("                    p.Format.SpaceAfter = 6");
+            sb.AppendLine("                    p.Format.LineSpacingRule = 5");
+            sb.AppendLine("                    p.Format.LineSpacing = LinesToPoints(1.15)");
+            sb.AppendLine("                    If p.Alignment <> 1 Then");
+            sb.AppendLine("                        p.Alignment = 3");
+            sb.AppendLine("                        p.FirstLineIndent = CentimetersToPoints(1.27)");
+            sb.AppendLine("                    End If");
+            sb.AppendLine("                End If");
+            sb.AppendLine("            End If");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    Next p");
+            sb.AppendLine("    If ActiveDocument.Tables.Count >= 1 Then");
+            sb.AppendLine("        Dim tblTop As Table");
+            sb.AppendLine("        Set tblTop = ActiveDocument.Tables(1)");
+            sb.AppendLine("        If tblTop.Columns.Count >= 2 Then");
+            sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Size = 14");
+            sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Size = 15");
+            sb.AppendLine("            Dim pTop As Paragraph");
+            sb.AppendLine("            For Each pTop In tblTop.Cell(1, 2).Range.Paragraphs");
+            sb.AppendLine("                If InStr(LCase(pTop.Range.Text), " + VbaStr("ngày") + ") > 0 Then");
+            sb.AppendLine("                    pTop.Range.Font.Size = 14");
+            sb.AppendLine("                    pTop.Range.Font.Italic = True");
+            sb.AppendLine("                    pTop.Range.Font.Bold = False");
+            sb.AppendLine("                End If");
+            sb.AppendLine("            Next pTop");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    If ActiveDocument.Tables.Count >= 2 Then");
+            sb.AppendLine("        Dim tblBot As Table");
+            sb.AppendLine("        Set tblBot = ActiveDocument.Tables(ActiveDocument.Tables.Count)");
+            sb.AppendLine("        If tblBot.Columns.Count >= 2 Then");
+            sb.AppendLine("            Dim pRec As Paragraph");
+            sb.AppendLine("            For Each pRec In tblBot.Cell(1, 1).Range.Paragraphs");
+            sb.AppendLine("                pRec.Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("                pRec.Range.Font.Italic = False");
+            sb.AppendLine("                pRec.Range.Font.Bold = False");
+            sb.AppendLine("                If InStr(LCase(pRec.Range.Text), " + VbaStr("nơi nhận") + ") > 0 Then");
+            sb.AppendLine("                    pRec.Range.Font.Size = 14");
+            sb.AppendLine("                    pRec.Range.Font.Underline = 1");
+            sb.AppendLine("                Else");
+            sb.AppendLine("                    pRec.Range.Font.Size = 12");
+            sb.AppendLine("                End If");
+            sb.AppendLine("            Next pRec");
+            sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Size = 14");
+            sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Bold = True");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã tự động chuẩn hóa văn bản Word đúng chuẩn Hướng dẫn số 05-HD/VPTW!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 5. Chuẩn hóa văn bản Hành chính theo Nghị định 30/2020/NĐ-CP
+            sb.AppendLine("Sub ChuanHoaVanBan_NghiDinh30()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    CanLeA4Chuan_Word False");
+            sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
+            sb.AppendLine("    ActiveDocument.Content.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("    Dim p As Paragraph");
+            sb.AppendLine("    For Each p In ActiveDocument.Paragraphs");
+            sb.AppendLine("        If p.Range.Tables.Count = 0 Then");
+            sb.AppendLine("            p.Range.Font.Size = 14");
+            sb.AppendLine("            p.Format.SpaceAfter = 6");
+            sb.AppendLine("            p.Format.LineSpacingRule = 5");
+            sb.AppendLine("            p.Format.LineSpacing = LinesToPoints(1.15)");
+            sb.AppendLine("            If p.Alignment <> 1 Then");
+            sb.AppendLine("                p.Alignment = 3");
+            sb.AppendLine("                p.FirstLineIndent = CentimetersToPoints(1.27)");
+            sb.AppendLine("            End If");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    Next p");
+            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã chuẩn hóa văn bản Word theo Nghị định số 30/2020/NĐ-CP!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 6. Chèn Mẫu Văn Bản Đảng Chuẩn Hướng dẫn 05-HD/VPTW trực tiếp vào Word
+            sb.AppendLine("Sub ChenMauVanBan_Dang05()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
+            sb.AppendLine("    CanLeA4Chuan_Word False");
+            sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
+            sb.AppendLine("    Dim rng As Range, tbl1 As Table, tbl2 As Table");
+            sb.AppendLine("    Set rng = ActiveDocument.Range(0, 0)");
+            sb.AppendLine("    Set tbl1 = ActiveDocument.Tables.Add(rng, 1, 2)");
+            sb.AppendLine("    tbl1.Borders.Enable = 0");
+            sb.AppendLine("    tbl1.Columns(1).PreferredWidth = CentimetersToPoints(7.2)");
+            sb.AppendLine("    tbl1.Columns(2).PreferredWidth = CentimetersToPoints(9.3)");
+            sb.AppendLine("    With tbl1.Cell(1, 1).Range");
+            sb.AppendLine("        .Text = " + VbaStr("QUẬN ỦY") + " & vbCr & " + VbaStr("ĐẢNG ỦY PHƯỜNG") + " & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
+            sb.AppendLine("        .Paragraphs(3).Range.Font.Bold = True");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    With tbl1.Cell(1, 2).Range");
+            sb.AppendLine("        .Text = " + VbaStr("ĐẢNG CỘNG SẢN VIỆT NAM") + " & vbCr & " + VbaStr("Phường, ngày 18 tháng 11 năm 2026"));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 15: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 1");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 6");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
+            sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("BÁO CÁO") + " & vbCr & " + VbaStr("Tổng kết công tác xây dựng Đảng năm 2026") + " & vbCr & " + VbaStr("Thực hiện Chương trình công tác năm 2026, Đảng ủy phường báo cáo kết quả thực hiện như sau:./.") + " & vbCr");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Size = 15: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Bold = True");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Bold = True");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Alignment = 3: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).FirstLineIndent = CentimetersToPoints(1.27): ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).SpaceAfter = 6");
+            sb.AppendLine("    Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
+            sb.AppendLine("    Set tbl2 = ActiveDocument.Tables.Add(pEnd, 1, 2)");
+            sb.AppendLine("    tbl2.Borders.Enable = 0");
+            sb.AppendLine("    With tbl2.Cell(1, 1).Range");
+            sb.AppendLine("        .Text = " + VbaStr("Nơi nhận:") + " & vbCr & " + VbaStr("- Ban Thường vụ Quận ủy (để b/c);") + " & vbCr & " + VbaStr("- Các chi bộ trực thuộc;") + " & vbCr & " + VbaStr("- Lưu Văn phòng Đảng ủy."));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 0: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 14: .Paragraphs(1).Range.Font.Underline = 1");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 12: .Paragraphs(3).Range.Font.Size = 12: .Paragraphs(4).Range.Font.Size = 12");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    With tbl2.Cell(1, 2).Range");
+            sb.AppendLine("        .Text = " + VbaStr("T/M ĐẢNG ỦY") + " & vbCr & " + VbaStr("BÍ THƯ") + " & vbCr & vbCr & vbCr & " + VbaStr("Trần Minh Quân"));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("    End With");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 7. Chèn Mẫu Văn Bản Hành Chính Nghị định 30/2020/NĐ-CP trực tiếp vào Word
+            sb.AppendLine("Sub ChenMauVanBan_UBND30()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
+            sb.AppendLine("    CanLeA4Chuan_Word False");
+            sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
+            sb.AppendLine("    Dim rng As Range, tbl1 As Table, tbl2 As Table");
+            sb.AppendLine("    Set rng = ActiveDocument.Range(0, 0)");
+            sb.AppendLine("    Set tbl1 = ActiveDocument.Tables.Add(rng, 1, 2)");
+            sb.AppendLine("    tbl1.Borders.Enable = 0");
+            sb.AppendLine("    tbl1.Columns(1).PreferredWidth = CentimetersToPoints(7.0)");
+            sb.AppendLine("    tbl1.Columns(2).PreferredWidth = CentimetersToPoints(9.5)");
+            sb.AppendLine("    With tbl1.Cell(1, 1).Range");
+            sb.AppendLine("        .Text = " + VbaStr("ỦY BAN NHÂN DÂN QUẬN") + " & vbCr & " + VbaStr("ỦY BAN NHÂN DÂN PHƯỜNG") + " & vbCr & " + VbaStr("Số: 01/UBND-VP"));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 12.5: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
+            sb.AppendLine("        .Paragraphs(3).Range.Font.Size = 13: .Paragraphs(3).SpaceBefore = 4");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    With tbl1.Cell(1, 2).Range");
+            sb.AppendLine("        .Text = " + VbaStr("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM") + " & vbCr & " + VbaStr("Độc lập - Tự do - Hạnh phúc") + " & vbCr & " + VbaStr("Phường, ngày 18 tháng 11 năm 2026"));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 12.5: .Paragraphs(1).Range.Font.Bold = True");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 13.5: .Paragraphs(2).Range.Font.Bold = True: .Paragraphs(2).Range.Font.Underline = 1");
+            sb.AppendLine("        .Paragraphs(3).Range.Font.Size = 13.5: .Paragraphs(3).Range.Font.Italic = True: .Paragraphs(3).SpaceBefore = 4");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
+            sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("Kính gửi: Các bộ phận chuyên môn thuộc Ủy ban nhân dân phường.") + " & vbCr & " + VbaStr("Thực hiện kế hoạch công tác năm 2026, Ủy ban nhân dân phường triển khai các nội dung sau:./.") + " & vbCr");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Alignment = 3: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).FirstLineIndent = CentimetersToPoints(1.27)");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Alignment = 3: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).FirstLineIndent = CentimetersToPoints(1.27): ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).SpaceAfter = 6");
+            sb.AppendLine("    Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
+            sb.AppendLine("    Set tbl2 = ActiveDocument.Tables.Add(pEnd, 1, 2)");
+            sb.AppendLine("    tbl2.Borders.Enable = 0");
+            sb.AppendLine("    With tbl2.Cell(1, 1).Range");
+            sb.AppendLine("        .Text = " + VbaStr("Nơi nhận:") + " & vbCr & " + VbaStr("- Như trên;") + " & vbCr & " + VbaStr("- Lưu: VT, VP."));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 0: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 12: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Italic = True");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 11: .Paragraphs(3).Range.Font.Size = 11");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    With tbl2.Cell(1, 2).Range");
+            sb.AppendLine("        .Text = " + VbaStr("TM. ỦY BAN NHÂN DÂN") + " & vbCr & " + VbaStr("CHỦ TỊCH") + " & vbCr & vbCr & vbCr & " + VbaStr("Nguyễn Văn An"));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("    End With");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 8. Sửa lỗi chính tả & dấu câu trực tiếp trên Word
+            sb.AppendLine("Sub SuaChinhTaVaDauCau_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim pairs As Variant, i As Long, rng As Range, fixCount As Long");
+            sb.AppendLine("    fixCount = 0");
+            sb.AppendLine("    pairs = Array( _");
+            string[,] quickRules = new string[,] {
+                { "bổ xung", "bổ sung" }, { "sử lý", "xử lý" }, { "xử dụng", "sử dụng" },
+                { "chính sác", "chính xác" }, { "kiểm xoát", "kiểm soát" }, { "ngiêm", "nghiêm" },
+                { "chuẫn", "chuẩn" }, { "kết qủa", "kết quả" }, { "hổ trợ", "hỗ trợ" },
+                { "kế hoạc", "kế hoạch" }, { "chủ chương", "chủ trương" }, { "khẩn chương", "khẩn trương" },
+                { "chiển khai", "triển khai" }, { "sắc sảo", "sắc sảo" }, { "dự thảo", "dự thảo" },
+                { " ,", "," }, { " .", "." }, { " ;", ";" }, { " :", ":" }, { "  ", " " }
+            };
+            for (int r = 0; r < quickRules.GetLength(0); r++)
+            {
+                string sep = (r < quickRules.GetLength(0) - 1) ? ", _" : ")";
+                sb.AppendLine("        " + VbaStr(quickRules[r, 0]) + ", " + VbaStr(quickRules[r, 1]) + sep);
+            }
+            sb.AppendLine("    For i = 0 To UBound(pairs) Step 2");
+            sb.AppendLine("        Set rng = ActiveDocument.Content");
+            sb.AppendLine("        With rng.Find");
+            sb.AppendLine("            .ClearFormatting: .Replacement.ClearFormatting");
+            sb.AppendLine("            .Text = pairs(i): .Replacement.Text = pairs(i + 1)");
+            sb.AppendLine("            .Forward = True: .Wrap = 1: .MatchCase = False: .MatchWholeWord = False");
+            sb.AppendLine("            Do While .Execute(Replace:=2): fixCount = fixCount + 1: Exit Do: Loop");
+            sb.AppendLine("        End With");
+            sb.AppendLine("    Next i");
+            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã rà soát và sửa lỗi chính tả, khoảng trắng, dấu câu trực tiếp trong Word!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 9. Nối các dòng bị ngắt khi copy/mở từ PDF sang Word
+            sb.AppendLine("Sub NoiDongPDFBiNgat_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim i As Long, p As Paragraph, pNext As Paragraph, t As String, tNext As String, lastCh As String, mergedCount As Long");
+            sb.AppendLine("    mergedCount = 0");
+            sb.AppendLine("    For i = ActiveDocument.Paragraphs.Count - 1 To 1 Step -1");
+            sb.AppendLine("        Set p = ActiveDocument.Paragraphs(i)");
+            sb.AppendLine("        Set pNext = ActiveDocument.Paragraphs(i + 1)");
+            sb.AppendLine("        If p.Range.Tables.Count = 0 And pNext.Range.Tables.Count = 0 Then");
+            sb.AppendLine("            t = Trim(Replace(p.Range.Text, vbCr, \"\"))");
+            sb.AppendLine("            tNext = Trim(Replace(pNext.Range.Text, vbCr, \"\"))");
+            sb.AppendLine("            If Len(t) > 25 And Len(tNext) > 0 Then");
+            sb.AppendLine("                lastCh = Right(t, 1)");
+            sb.AppendLine("                If lastCh <> \".\" And lastCh <> \":\" And lastCh <> \";\" And lastCh <> \"!\" And lastCh <> \"?\" Then");
+            sb.AppendLine("                    If Left(tNext, 1) <> \"-\" And Left(tNext, 1) <> \"+\" And Not IsNumeric(Left(tNext, 1)) Then");
+            sb.AppendLine("                        p.Range.SetRange p.Range.End - 1, p.Range.End");
+            sb.AppendLine("                        p.Range.Text = \" \"");
+            sb.AppendLine("                        mergedCount = mergedCount + 1");
+            sb.AppendLine("                    End If");
+            sb.AppendLine("                End If");
+            sb.AppendLine("            End If");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    Next i");
+            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã nối ") + " & mergedCount & " + VbaStr(" dòng bị ngắt từ PDF thành đoạn văn hoàn chỉnh!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            return sb.ToString();
         }
 
         public static bool InstallWordRibbonAddin(string installDir, string exePath)
@@ -632,13 +845,23 @@ namespace VBTMProSuite
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
                 "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 2.5 (05-HD &amp; ND30)\">" +
-                "<group id=\"grpVbtmFormat\" label=\"Chuẩn Hóa Thể Thức Tự Động\">" +
-                "<button id=\"btnVbtmAuto\" label=\"Chuẩn Hóa Tự Động\" size=\"large\" imageMso=\"ReviewTrackChanges\" onAction=\"Ribbon_ChuanHoaTuDong\" supertip=\"Tự động nhận diện văn bản Đảng (05-HD/VPTW) hoặc Hành chính (NĐ 30/2020/NĐ-CP) và chuẩn hóa trực tiếp tài liệu Word đang mở.\"/>" +
-                "<button id=\"btnVbtmHd05\" label=\"Chuẩn Đảng (05-HD/VPTW)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_HuongDan05\" supertip=\"Chuẩn hóa trực tiếp theo Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng.\"/>" +
-                "<button id=\"btnVbtmNd30\" label=\"Chuẩn Hành Chính (NĐ 30)\" size=\"large\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\" supertip=\"Chuẩn hóa trực tiếp theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\"/>" +
+                "<group id=\"grpVbtmTemplates\" label=\"1. Chèn Mẫu Chuẩn\">" +
+                "<button id=\"btnVbtmTplDang\" label=\"Chèn Mẫu Đảng (05-HD)\" size=\"large\" imageMso=\"FileNewBlogPost\" onAction=\"Ribbon_ChenMauDang05\" supertip=\"Chèn trực tiếp khung văn bản Đảng ủy / Chi bộ chuẩn Hướng dẫn số 05-HD/VPTW.\"/>" +
+                "<button id=\"btnVbtmTplUbnd\" label=\"Chèn Mẫu UBND (NĐ 30)\" size=\"large\" imageMso=\"FileCreateDocumentWorkspace\" onAction=\"Ribbon_ChenMauUBND30\" supertip=\"Chèn trực tiếp khung văn bản UBND Phường chuẩn Nghị định số 30/2020/NĐ-CP.\"/>" +
                 "</group>" +
-                "<group id=\"grpVbtmStudio\" label=\"Công Cụ Mở Rộng\">" +
-                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (QR &amp; AI)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI, tạo mã QR và chuyển PDF sang Word.\"/>" +
+                "<group id=\"grpVbtmFormat\" label=\"2. Chuẩn Hóa Thể Thức\">" +
+                "<button id=\"btnVbtmAuto\" label=\"Chuẩn Hóa Tự Động\" size=\"large\" imageMso=\"ReviewTrackChanges\" onAction=\"Ribbon_ChuanHoaTuDong\" supertip=\"Tự động nhận diện văn bản Đảng (05-HD/VPTW) hoặc Hành chính (NĐ 30) và chuẩn hóa toàn bộ văn bản đang mở.\"/>" +
+                "<button id=\"btnVbtmHd05\" label=\"Chuẩn Đảng (05-HD)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_HuongDan05\" supertip=\"Chuẩn hóa trực tiếp theo Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng.\"/>" +
+                "<button id=\"btnVbtmNd30\" label=\"Chuẩn NĐ 30/2020\" size=\"large\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\" supertip=\"Chuẩn hóa trực tiếp theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\"/>" +
+                "</group>" +
+                "<group id=\"grpVbtmTools\" label=\"3. Sửa Lỗi &amp; Trình Bày Nhanh\">" +
+                "<button id=\"btnVbtmSpell\" label=\"Sửa Chính Tả &amp; Dấu Câu\" size=\"large\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_SuaChinhTa\" supertip=\"Tự động sửa lỗi chính tả phổ biến, xóa khoảng trắng thừa trước dấu câu trực tiếp trong Word.\"/>" +
+                "<button id=\"btnVbtmMergePdf\" label=\"Nối Dòng PDF Bị Ngắt\" size=\"large\" imageMso=\"WrapText\" onAction=\"Ribbon_NoiDongPDF\" supertip=\"Ghép các dòng bị ngắt khi copy/mở từ PDF sang Word thành đoạn văn hoàn chỉnh.\"/>" +
+                "<button id=\"btnVbtmMargins\" label=\"Căn Lề A4 (30-15-20-20)\" size=\"normal\" imageMso=\"PageMarginsGallery\" onAction=\"Ribbon_CanLeA4\"/>" +
+                "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang (Từ Tr.2)\" size=\"normal\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\"/>" +
+                "</group>" +
+                "<group id=\"grpVbtmStudio\" label=\"4. Công Cụ Mở Rộng\">" +
+                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (QR &amp; PDF)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI (7.578 âm tiết), tạo mã QR và chuyển PDF sang Word.\"/>" +
                 "</group>" +
                 "</tab></tabs></ribbon></customUI>";
 
