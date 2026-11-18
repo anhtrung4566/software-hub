@@ -1,13 +1,13 @@
-﻿===================================================================
+===================================================================
 BỘ CÀI ĐẶT VBTM PRO 2.2.4 (WINDOWS NATIVE EXE - OFFLINE 100%)
 Chuẩn hóa văn bản Đảng ủy & UBND Phường (Nghị định 30/2020/NĐ-CP &
 Hướng dẫn số 05-HD/VPTW), Tạo mã QR động & Soát lỗi chính tả AI
 ===================================================================
 
 1. CÁCH CÀI ĐẶT & SỬ DỤNG:
-   - Nháy đúp chuột vào tệp: VBTM-Setup-2.2.4.exe
+   - Nháy đúp chuột vào tệp: VBTM-Setup-2.5.0.exe
    - Nhấn nút "Cài Đặt Ngay" để tự động cài vào máy và tạo biểu tượng
-     "VBTM Pro 2.2.4" ngoài màn hình Desktop (Không cần quyền Admin).
+     "VBTM Pro 2.5.0" ngoài màn hình Desktop (Không cần quyền Admin).
    - Hoặc nhấn "Chạy Ngay (Không Cần Cài)" để mở phần mềm ngay lập tức.
 
 2. TÍNH NĂNG TRONG PHẦN MỀM:
