@@ -1404,12 +1404,30 @@ function standardizeAndFixEverything() {
   }
   bodyEl.value = result;
 
-  // 4. Đảm bảo có Nơi nhận Lưu đúng quy định (NĐ30: "- Lưu: VT,..." | HD36/05: "- Lưu Văn phòng Đảng ủy.")
-  const recEl = document.getElementById('vbtmRecipients');
+  // 4. Chuẩn hóa tự động theo Hướng dẫn 05-HD/VPTW (Khối Đảng) hoặc Nghị định 30/2020/NĐ-CP (Khối Hành chính)
   const isPartyStd = document.getElementById('vbtmStandard')?.value === 'hd05';
-  if (recEl && !/Lưu/i.test(recEl.value)) {
-    const cur = recEl.value.trim();
-    recEl.value = (cur ? cur + '\n' : '') + (isPartyStd ? '- Lưu Văn phòng Đảng ủy.' : '- Lưu: VT, VP.');
+  const docNumEl = document.getElementById('vbtmDocNum');
+  if (docNumEl && docNumEl.value) {
+    docNumEl.value = docNumEl.value.trim().replace(/^Số\s*:?\s*/i, '');
+  }
+
+  const recEl = document.getElementById('vbtmRecipients');
+  if (recEl) {
+    let recLines = recEl.value
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => (l.startsWith('-') ? l : `- ${l}`));
+    if (!recLines.some(l => /Lưu/i.test(l))) {
+      recLines.push(isPartyStd ? '- Lưu Văn phòng Đảng ủy.' : '- Lưu: VT, VP.');
+    }
+    if (recLines.length > 0) {
+      recLines = recLines.map((l, idx) => {
+        const clean = l.replace(/[;.]+\s*$/, '');
+        return idx < recLines.length - 1 ? `${clean};` : `${clean}.`;
+      });
+      recEl.value = recLines.join('\n');
+    }
   }
 
   updateQrCanvas();
@@ -1418,7 +1436,7 @@ function standardizeAndFixEverything() {
   updateVbtmLiveStats();
 
   if (window.showToast) {
-    window.showToast(`✓ Đã chuẩn hóa thể thức A4 & tự động sửa ${fixedSpells} lỗi chính tả Tiếng Việt!`);
+    window.showToast(`✓ Đã chuẩn hóa tự động ${isPartyStd ? 'Hướng dẫn 05-HD/VPTW' : 'Nghị định 30/2020/NĐ-CP'} & sửa ${fixedSpells} lỗi chính tả!`);
   }
 }
 
@@ -1729,7 +1747,7 @@ function renderA4Preview() {
           ${qrDataUrl ? `<div style="margin-top: 10px;"><img src="${qrDataUrl}" alt="QR" style="width: 74px; height: 74px; border: 1px solid #ddd; padding: 2px;"/><div style="font-size: 8.5pt; color: #555;">Mã QR xác thực VBTM</div></div>` : ''}
         </td>
         <td style="width: 50%; vertical-align: top; text-align: center;">
-          <div style="font-weight: bold; font-size: 13.5pt; text-transform: uppercase; line-height: 1.35;">${signerTitleHtml}</div>
+          <div style="font-weight: bold; font-size: ${isParty ? '14pt' : '13.5pt'}; text-transform: uppercase; line-height: 1.35;">${signerTitleHtml}</div>
           <div style="height: 68px;"></div>
           <div style="font-weight: bold; font-size: 14pt;">${escapeHtml(signerName)}</div>
         </td>
