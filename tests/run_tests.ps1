@@ -92,7 +92,7 @@ function Run-TestCase([string]$Category, [string]$App, [string]$Name, [scriptblo
 
 try {
     # 1. UNIT TESTS
-    Run-TestCase "Unit Test" "VBTM Pro 2.2.4" "UT-01: Nhận diện tự động văn bản Đảng (Hướng dẫn 05-HD/VPTW) và Hành chính (NĐ 30/2020/NĐ-CP)" {
+    Run-TestCase "Unit Test" "VBTM Pro 2.5.0" "UT-01: Nhận diện tự động văn bản Đảng (Hướng dẫn 05-HD/VPTW) và Hành chính (NĐ 30/2020/NĐ-CP)" {
         $vbtmJs = [System.IO.File]::ReadAllText((Join-Path $RootDir "js\vbtm-app.js"), [System.Text.Encoding]::UTF8)
         if (-not $vbtmJs.Contains("function detectIsPartyDocument")) { throw "Thiếu hàm detectIsPartyDocument trong vbtm-app.js" }
         $isParty = [RegulationEngineTester]::IsPartyDocument(@("QUẬN ỦY BA ĐÌNH", "ĐẢNG ỦY PHƯỜNG", "ĐẢNG CỘNG SẢN VIỆT NAM", "Số 45-BC/ĐU"))
@@ -101,7 +101,7 @@ try {
         "Phân biệt chính xác 100% văn bản Đảng (05-HD/VPTW) và Hành chính (30/2020/NĐ-CP)"
     }
 
-    Run-TestCase "Unit Test" "VBTM Pro 2.2.4" "UT-02: Dựng khung Bảng Tiêu ngữ 2 cột đầu trang chuẩn Hướng dẫn 05-HD/VPTW" {
+    Run-TestCase "Unit Test" "VBTM Pro 2.5.0" "UT-02: Dựng khung Bảng Tiêu ngữ 2 cột đầu trang chuẩn Hướng dẫn 05-HD/VPTW" {
         $vbtmJs = [System.IO.File]::ReadAllText((Join-Path $RootDir "js\vbtm-app.js"), [System.Text.Encoding]::UTF8)
         $vbtmCs = [System.IO.File]::ReadAllText((Join-Path $RootDir "desktop-src\VBTM-Pro\VBTMSetupAndApp.cs"), [System.Text.Encoding]::UTF8)
         if (-not $vbtmJs.Contains("buildRegulationHeaderTableHtml")) { throw "Thiếu hàm buildRegulationHeaderTableHtml" }
@@ -111,7 +111,7 @@ try {
         "Tiêu ngữ ĐẢNG CỘNG SẢN VIỆT NAM 15pt đậm + đường kẻ ngang + cơ quan 14pt + dấu *"
     }
 
-    Run-TestCase "Unit Test" "VBTM Pro 2.2.4" "UT-03: Dựng khung Bảng Nơi nhận & Chức vụ ký chuẩn Hướng dẫn 05-HD/VPTW" {
+    Run-TestCase "Unit Test" "VBTM Pro 2.5.0" "UT-03: Dựng khung Bảng Nơi nhận & Chức vụ ký chuẩn Hướng dẫn 05-HD/VPTW" {
         $vbtmJs = [System.IO.File]::ReadAllText((Join-Path $RootDir "js\vbtm-app.js"), [System.Text.Encoding]::UTF8)
         $ocrJs  = [System.IO.File]::ReadAllText((Join-Path $RootDir "js\ocr-app.js"), [System.Text.Encoding]::UTF8)
         $vbtmCs = [System.IO.File]::ReadAllText((Join-Path $RootDir "desktop-src\VBTM-Pro\VBTMSetupAndApp.cs"), [System.Text.Encoding]::UTF8)
@@ -122,7 +122,7 @@ try {
         "Cả 4 module (Web VBTM, Web OCR, EXE VBTM, EXE OCR) đều xuất <u>Nơi nhận</u>: 14pt đứng + danh sách 12pt"
     }
 
-    Run-TestCase "Unit Test" "VietNamOCR 3.2 Pro" "UT-04: Thuật toán nối các dòng bị ngắt từ PDF thành đoạn văn hoàn chỉnh" {
+    Run-TestCase "Unit Test" "VietNamOCR 3.5 Pro" "UT-04: Thuật toán nối các dòng bị ngắt từ PDF thành đoạn văn hoàn chỉnh" {
         $merged = [RegulationEngineTester]::MergeBrokenPdfLines(@(
             "I. KẾT QUẢ CÔNG TÁC XÂY DỰNG ĐẢNG",
             "Trong quý IV năm 2026, Đảng ủy phường đã tập trung lãnh đạo, chỉ đạo các chi bộ",
@@ -134,7 +134,7 @@ try {
         "Ghép chính xác các dòng PDF bị ngắt thành đoạn văn liền mạch (text-indent: 1.27cm, Justify)"
     }
 
-    Run-TestCase "Unit Test" "VBTM Pro 2.2.4" "UT-05: Bộ từ điển sửa lỗi chính tả Tiếng Việt (7.578 âm tiết & 535 quy tắc hành chính)" {
+    Run-TestCase "Unit Test" "VBTM Pro 2.5.0" "UT-05: Bộ từ điển sửa lỗi chính tả Tiếng Việt (7.578 âm tiết & 535 quy tắc hành chính)" {
         $dictJs = [System.IO.File]::ReadAllText((Join-Path $RootDir "js\vietnamese-dictionary.js"), [System.Text.Encoding]::UTF8)
         $rulesJson = [System.IO.File]::ReadAllText((Join-Path $RootDir "data\spell_rules.json"), [System.Text.Encoding]::UTF8)
         if ($dictJs.Length -lt 50000 -or $rulesJson.Length -lt 50000) { throw "Từ điển chính tả chưa nạp đủ dữ liệu" }
@@ -229,12 +229,12 @@ try {
     }
 
     Run-TestCase "Security Test" "Windows EXE" "SEC-02: Kiểm định chữ ký băm SHA256 của bộ cài .exe khớp 100% với trang công bố" {
-        $vbtmHash = (Get-FileHash (Join-Path $RootDir "downloads\VBTM-Setup-2.2.4.exe") -Algorithm SHA256).Hash.ToLower()
-        $ocrHash  = (Get-FileHash (Join-Path $RootDir "downloads\VietNamOCR-Setup-3.2.0-x64.exe") -Algorithm SHA256).Hash.ToLower()
+        $vbtmHash = (Get-FileHash (Join-Path $RootDir "downloads\VBTM-Setup-2.5.0.exe") -Algorithm SHA256).Hash.ToLower()
+        $ocrHash  = (Get-FileHash (Join-Path $RootDir "downloads\VietNamOCR-Setup-3.5.0-x64.exe") -Algorithm SHA256).Hash.ToLower()
         $vbtmHtml = [System.IO.File]::ReadAllText((Join-Path $RootDir "products\vbtm-pro.html"), [System.Text.Encoding]::UTF8)
         $ocrHtml  = [System.IO.File]::ReadAllText((Join-Path $RootDir "products\vietnam-ocr.html"), [System.Text.Encoding]::UTF8)
-        if (-not $vbtmHtml.Contains($vbtmHash)) { throw "SHA256 VBTM-Setup-2.2.4.exe không khớp trên vbtm-pro.html" }
-        if (-not $ocrHtml.Contains($ocrHash))   { throw "SHA256 VietNamOCR-Setup-3.2.0-x64.exe không khớp trên vietnam-ocr.html" }
+        if (-not $vbtmHtml.Contains($vbtmHash)) { throw "SHA256 VBTM-Setup-2.5.0.exe không khớp trên vbtm-pro.html" }
+        if (-not $ocrHtml.Contains($ocrHash))   { throw "SHA256 VietNamOCR-Setup-3.5.0-x64.exe không khớp trên vietnam-ocr.html" }
         "SHA256 khớp 100%: VBTM ($($vbtmHash.Substring(0,12))...) & VietNamOCR ($($ocrHash.Substring(0,12))...)"
     }
 
