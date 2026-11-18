@@ -14,10 +14,10 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("VBTM Pro 2.2.4 - Chuan Hoa Van Ban Dang Uy & UBND Phuong")]
+[assembly: AssemblyTitle("VBTM Pro 2.5.0 - Chuan Hoa Van Ban Dang Uy & UBND Phuong")]
 [assembly: AssemblyDescription("Bo cong cu Chuan Hoa The Thuc Van Ban Nghi dinh 30, Van ban Dang, Tao QR & Soat Loi Chinh Ta AI Offline cho Microsoft Word")]
 [assembly: AssemblyCompany("Software Hub")]
-[assembly: AssemblyProduct("VBTM Pro 2.2.4")]
+[assembly: AssemblyProduct("VBTM Pro 2.5.0")]
 [assembly: AssemblyVersion("2.2.4.0")]
 [assembly: AssemblyFileVersion("2.2.4.0")]
 
@@ -67,18 +67,18 @@ namespace VBTMProSuite
         {
             try
             {
-                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.2.4.lnk");
+                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.5.0.lnk");
                 if (File.Exists(desktopLnk)) File.Delete(desktopLnk);
 
-                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.2.4.lnk");
+                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.5.0.lnk");
                 if (File.Exists(startMenuLnk)) File.Delete(startMenuLnk);
 
                 Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\VBTMPro", false);
-                MessageBox.Show("Đã gỡ cài đặt VBTM Pro 2.2.4 sạch sẽ khỏi hệ thống!", "Gỡ Cài Đặt - VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Đã gỡ cài đặt VBTM Pro 2.5.0 sạch sẽ khỏi hệ thống!", "Gỡ Cài Đặt - VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Thông báo khi gỡ cài đặt: " + ex.Message, "VBTM Pro 2.2.4");
+                MessageBox.Show("Thông báo khi gỡ cài đặt: " + ex.Message, "VBTM Pro 2.5.0");
             }
         }
     }
@@ -100,7 +100,7 @@ namespace VBTMProSuite
 
         public SetupWizardForm()
         {
-            this.Text = "Trình Cài Đặt VBTM Pro 2.2.4 (Offline Setup)";
+            this.Text = "Trình Cài Đặt VBTM Pro 2.5.0 (Offline Setup)";
             this.ClientSize = new Size(630, 440);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -123,7 +123,7 @@ namespace VBTMProSuite
 
             Label lblTitle = new Label
             {
-                Text = "★ VBTM Pro 2.2.4 · Bộ Cài Đặt Ngoại Tuyến (Đảng Ủy & UBND Phường)",
+                Text = "★ VBTM Pro 2.5.0 · Bộ Cài Đặt Ngoại Tuyến (Đảng Ủy & UBND Phường)",
                 Font = new Font("Segoe UI", 14f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(250, 204, 21),
                 AutoSize = true,
@@ -171,7 +171,7 @@ namespace VBTMProSuite
 
             chkDesktopShortcut = new CheckBox
             {
-                Text = "Tạo biểu tượng VBTM Pro 2.2.4 ngoài màn hình Desktop và Start Menu",
+                Text = "Tạo biểu tượng VBTM Pro 2.5.0 ngoài màn hình Desktop và Start Menu",
                 Checked = true,
                 Location = new Point(24, 172),
                 AutoSize = true,
@@ -285,8 +285,8 @@ namespace VBTMProSuite
                     File.WriteAllText(basPath, GetWordVbaMacroCode(), Encoding.UTF8);
                 }
 
-                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.2.4.lnk");
-                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.2.4.lnk");
+                string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.5.0.lnk");
+                string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.5.0.lnk");
 
                 string uninstallBat = Path.Combine(installDir, "Go_Cai_Dat_VBTM.bat");
                 File.WriteAllText(uninstallBat,
@@ -301,23 +301,23 @@ namespace VBTMProSuite
                 {
                     lblStatus.Text = "Đang tạo lối tắt ngoài màn hình Desktop & Start Menu...";
                     Application.DoEvents();
-                    CreateShortcut(desktopLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
-                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VBTM Pro 2.2.4 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
+                    CreateShortcut(desktopLnk, targetExePath, "--app", "VBTM Pro 2.5.0 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
+                    CreateShortcut(startMenuLnk, targetExePath, "--app", "VBTM Pro 2.5.0 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
                 }
 
                 progressBar.Value = 100;
-                lblStatus.Text = "✓ Cài đặt VBTM Pro 2.2.4 hoàn tất thành công!";
+                lblStatus.Text = "✓ Cài đặt VBTM Pro 2.5.0 hoàn tất thành công!";
                 lblStatus.ForeColor = Color.FromArgb(16, 185, 129);
                 isInstalled = true;
-                btnInstall.Text = "Mở VBTM Pro 2.2.4";
+                btnInstall.Text = "Mở VBTM Pro 2.5.0";
                 btnInstall.BackColor = Color.FromArgb(16, 185, 129);
 
                 MessageBox.Show(
-                    "Đã cài đặt thành công VBTM Pro 2.2.4!\n\n" +
+                    "Đã cài đặt thành công VBTM Pro 2.5.0!\n\n" +
                     "• Thư mục cài đặt: " + installDir + "\n" +
-                    "• Lối tắt Desktop: VBTM Pro 2.2.4\n\n" +
+                    "• Lối tắt Desktop: VBTM Pro 2.5.0\n\n" +
                     "Nhấn OK để mở phần mềm ngay.",
-                    "Cài Đặt Thành Công - VBTM Pro 2.2.4",
+                    "Cài Đặt Thành Công - VBTM Pro 2.5.0",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
                 );
@@ -348,7 +348,7 @@ namespace VBTMProSuite
                 {
                     if (key != null)
                     {
-                        key.SetValue("DisplayName", "VBTM Chuẩn Hóa Văn Bản Đảng Ủy & UBND Phường (VBTM Pro 2.2.4)");
+                        key.SetValue("DisplayName", "VBTM Chuẩn Hóa Văn Bản Đảng Ủy & UBND Phường (VBTM Pro 2.5.0)");
                         key.SetValue("DisplayVersion", "2.2.4");
                         key.SetValue("Publisher", "Software Hub");
                         key.SetValue("InstallLocation", installDir);
@@ -395,7 +395,7 @@ namespace VBTMProSuite
                    "        .Name = \"Times New Roman\"\r\n" +
                    "        .Size = 14\r\n" +
                    "    End With\r\n" +
-                   "    MsgBox \"Da chuan hoa van ban theo Nghi dinh 30/2020/ND-CP & Quy chuan Dang uy - UBND Phuong!\", vbInformation, \"VBTM Pro 2.2.4\"\r\n" +
+                   "    MsgBox \"Da chuan hoa van ban theo Nghi dinh 30/2020/ND-CP & Quy chuan Dang uy - UBND Phuong!\", vbInformation, \"VBTM Pro 2.5.0\"\r\n" +
                    "End Sub\r\n";
         }
     }
@@ -496,7 +496,7 @@ namespace VBTMProSuite
         public MainStudioForm()
         {
             try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls; } catch { }
-            this.Text = "★ VBTM Pro 2.2.4 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy (HD 05-HD/VPTW) & UBND Phường (NĐ 30/2020/NĐ-CP)";
+            this.Text = "★ VBTM Pro 2.5.0 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy (HD 05-HD/VPTW) & UBND Phường (NĐ 30/2020/NĐ-CP)";
             this.ClientSize = new Size(1120, 720);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(95, 10, 14);
@@ -597,7 +597,7 @@ namespace VBTMProSuite
 
             Label lblBrand = new Label
             {
-                Text = "★ VBTM Pro 2.2.4",
+                Text = "★ VBTM Pro 2.5.0",
                 Font = new Font("Segoe UI", 13.0f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(250, 204, 21),
                 Location = new Point(10, 16),
@@ -737,7 +737,7 @@ namespace VBTMProSuite
                     if (sfd.ShowDialog() == DialogResult.OK && picQr.Image != null)
                     {
                         picQr.Image.Save(sfd.FileName, ImageFormat.Png);
-                        MessageBox.Show("Đã lưu ảnh mã QR tại:\n" + sfd.FileName, "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Đã lưu ảnh mã QR tại:\n" + sfd.FileName, "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             };
@@ -848,7 +848,7 @@ namespace VBTMProSuite
                     txtBody.Text = "Thực hiện Kế hoạch công tác cải cách hành chính năm 2026, Ủy ban nhân dân phường báo cáo kết quả triển khai công tác chuẩn hóa văn bản và số hóa hồ sơ trên địa bàn phường như sau:\r\n\r\n" +
                                    "I. KẾT QUẢ ĐẠT ĐƯỢC\r\n\r\n" +
                                    "1. Công tác ban hành văn bản: 100% văn bản hành chính của Hội đồng nhân dân và Ủy ban nhân dân phường được chuẩn hóa đồng bộ theo Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ.\r\n\r\n" +
-                                   "2. Công tác số hóa hồ sơ: Đã ứng dụng phần mềm VBTM Pro 2.2.4 và VietNamOCR 3.2 Pro phục vụ rà soát lỗi chính tả tiếng Việt, tạo mã QR quản lý hồ sơ và bóc tách dữ liệu bảng biểu sang Word, Excel nhanh chóng, chính xác.\r\n\r\n" +
+                                   "2. Công tác số hóa hồ sơ: Đã ứng dụng phần mềm VBTM Pro 2.5.0 và VietNamOCR 3.5 Pro phục vụ rà soát lỗi chính tả tiếng Việt, tạo mã QR quản lý hồ sơ và bóc tách dữ liệu bảng biểu sang Word, Excel nhanh chóng, chính xác.\r\n\r\n" +
                                    "II. PHƯƠNG HƯỚNG, NHIỆM VỤ TRONG THỜI GIAN TỚI\r\n\r\n" +
                                    "Tiếp tục duy trì nền nếp công tác văn thư, lưu trữ và nâng cao hiệu quả giải quyết thủ tục hành chính phục vụ nhân dân./.";
                     break;
@@ -974,7 +974,7 @@ namespace VBTMProSuite
                     txtSignerName.Text = "Nguyễn Văn An";
                     txtRecipients.Text = "- Như trên;\r\n- Chủ tịch, các PCT UBND phường;\r\n- Lưu: VT, VP.";
                     txtBody.Text = "Kính gửi: Các đồng chí cán bộ, công chức chuyên môn và Tổ trưởng các tổ dân phố thuộc phường.\r\n\r\n" +
-                                   "Ủy ban nhân dân phường tổ chức hội nghị triển khai công tác chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP và hướng dẫn sử dụng phần mềm VBTM Pro 2.2.4.\r\n\r\n" +
+                                   "Ủy ban nhân dân phường tổ chức hội nghị triển khai công tác chuẩn hóa thể thức văn bản hành chính theo Nghị định số 30/2020/NĐ-CP và hướng dẫn sử dụng phần mềm VBTM Pro 2.5.0.\r\n\r\n" +
                                    "1. Thành phần: Lãnh đạo Ủy ban nhân dân phường, toàn thể cán bộ, công chức chuyên môn và Tổ trưởng các tổ dân phố.\r\n\r\n" +
                                    "2. Thời gian: 08 giờ 00 phút, ngày 15 tháng 11 năm 2026.\r\n\r\n" +
                                    "3. Địa điểm: Hội trường Ủy ban nhân dân phường.\r\n\r\n" +
@@ -1157,7 +1157,7 @@ namespace VBTMProSuite
             int totalFixed = bodyFixed + subjFixed;
             ScanIssuesOnly();
             lblStatus.Text = "  ✓ Đã chuẩn hóa thể thức Đảng ủy / UBND phường & tự động sửa " + totalFixed + " lỗi chính tả tiếng Việt!";
-            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ngày tháng, ký hiệu kết thúc và tự động sửa " + totalFixed + " lỗi chính tả AI!", "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ngày tháng, ký hiệu kết thúc và tự động sửa " + totalFixed + " lỗi chính tả AI!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void FormatActiveWordDocument()
@@ -1207,10 +1207,100 @@ namespace VBTMProSuite
                 pageSetup.GetType().InvokeMember("RightMargin", BindingFlags.SetProperty, null, pageSetup, new object[] { 42.5f });
                 try { pageSetup.GetType().InvokeMember("DifferentFirstPageHeaderFooter", BindingFlags.SetProperty, null, pageSetup, new object[] { -1 }); } catch { }
 
-                // 2. Đặt phông chữ Times New Roman (Giữ nguyên cỡ chữ riêng của bảng Quốc hiệu / Nơi nhận, không ghi đè toàn bộ 14pt lên bảng!)
+                // 2. Đặt phông chữ Times New Roman & Tự động phát hiện quy chuẩn Đảng (05-HD/VPTW) hay Hành chính (NĐ 30/2020/NĐ-CP)
                 object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                string fullDocText = Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "";
+                bool isDangWord = DetectIsPartyDocText(fullDocText) || (cboTemplate != null && cboTemplate.SelectedIndex >= 10);
                 object font = content.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, content, null);
                 font.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, font, new object[] { "Times New Roman" });
+
+                // 2b. Nếu là văn bản Đảng theo Hướng dẫn 05-HD/VPTW: Tự động chuẩn hóa Bảng Tiêu ngữ (Bảng 1) & Bảng Nơi nhận/Chữ ký (Bảng cuối)
+                if (isDangWord)
+                {
+                    try
+                    {
+                        object docTables = doc.GetType().InvokeMember("Tables", BindingFlags.GetProperty, null, doc, null);
+                        int tblTotal = (int)docTables.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docTables, null);
+                        if (tblTotal >= 1)
+                        {
+                            object topTbl = docTables.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, docTables, new object[] { 1 });
+                            object topCols = topTbl.GetType().InvokeMember("Columns", BindingFlags.GetProperty, null, topTbl, null);
+                            int topColCount = (int)topCols.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, topCols, null);
+                            if (topColCount >= 2)
+                            {
+                                object cellL = topTbl.GetType().InvokeMember("Cell", BindingFlags.InvokeMethod, null, topTbl, new object[] { 1, 1 });
+                                object rngL = cellL.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, cellL, null);
+                                object fntL = rngL.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, rngL, null);
+                                fntL.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, fntL, new object[] { "Times New Roman" });
+                                fntL.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, fntL, new object[] { 14f });
+
+                                object cellR = topTbl.GetType().InvokeMember("Cell", BindingFlags.InvokeMethod, null, topTbl, new object[] { 1, 2 });
+                                object rngR = cellR.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, cellR, null);
+                                object rParas = rngR.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, rngR, null);
+                                int rpCount = (int)rParas.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, rParas, null);
+                                for (int rpIdx = 1; rpIdx <= rpCount; rpIdx++)
+                                {
+                                    object rp = rParas.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, rParas, new object[] { rpIdx });
+                                    object rpRng = rp.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, rp, null);
+                                    string rpTxt = Convert.ToString(rpRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, rpRng, null)) ?? "";
+                                    object rpFnt = rpRng.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, rpRng, null);
+                                    rpFnt.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, rpFnt, new object[] { "Times New Roman" });
+                                    if (rpTxt.IndexOf("ĐẢNG CỘNG SẢN", StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        rpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, rpFnt, new object[] { 15f });
+                                        rpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, rpFnt, new object[] { -1 });
+                                    }
+                                    else if (Regex.IsMatch(rpTxt, @"\b(ngày|tháng|năm)\b", RegexOptions.IgnoreCase))
+                                    {
+                                        rpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, rpFnt, new object[] { 14f });
+                                        rpFnt.GetType().InvokeMember("Italic", BindingFlags.SetProperty, null, rpFnt, new object[] { -1 });
+                                        rpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, rpFnt, new object[] { 0 });
+                                    }
+                                }
+                            }
+                        }
+                        if (tblTotal >= 2)
+                        {
+                            object botTbl = docTables.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, docTables, new object[] { tblTotal });
+                            object botCols = botTbl.GetType().InvokeMember("Columns", BindingFlags.GetProperty, null, botTbl, null);
+                            int botColCount = (int)botCols.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, botCols, null);
+                            if (botColCount >= 2)
+                            {
+                                object cellBL = botTbl.GetType().InvokeMember("Cell", BindingFlags.InvokeMethod, null, botTbl, new object[] { 1, 1 });
+                                object rngBL = cellBL.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, cellBL, null);
+                                object blParas = rngBL.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, rngBL, null);
+                                int blpCount = (int)blParas.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, blParas, null);
+                                for (int bpIdx = 1; bpIdx <= blpCount; bpIdx++)
+                                {
+                                    object bp = blParas.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, blParas, new object[] { bpIdx });
+                                    object bpRng = bp.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, bp, null);
+                                    string bpTxt = Convert.ToString(bpRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, bpRng, null)) ?? "";
+                                    object bpFnt = bpRng.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, bpRng, null);
+                                    bpFnt.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, bpFnt, new object[] { "Times New Roman" });
+                                    bpFnt.GetType().InvokeMember("Italic", BindingFlags.SetProperty, null, bpFnt, new object[] { 0 });
+                                    bpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, bpFnt, new object[] { 0 });
+                                    if (bpTxt.IndexOf("Nơi nhận", StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        bpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, bpFnt, new object[] { 14f });
+                                        bpFnt.GetType().InvokeMember("Underline", BindingFlags.SetProperty, null, bpFnt, new object[] { 1 });
+                                    }
+                                    else
+                                    {
+                                        bpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, bpFnt, new object[] { 12f });
+                                    }
+                                }
+
+                                object cellBR = botTbl.GetType().InvokeMember("Cell", BindingFlags.InvokeMethod, null, botTbl, new object[] { 1, 2 });
+                                object rngBR = cellBR.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, cellBR, null);
+                                object fntBR = rngBR.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, rngBR, null);
+                                fntBR.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, fntBR, new object[] { "Times New Roman" });
+                                fntBR.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, fntBR, new object[] { 14f });
+                                fntBR.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, fntBR, new object[] { -1 });
+                            }
+                        }
+                    }
+                    catch { }
+                }
 
                 // 3. Duyệt từng đoạn văn an toàn tuyệt đối (Không bao giờ làm hỏng ô bảng \r\a của Word!)
                 int fixedInWord = 0;
@@ -1248,12 +1338,18 @@ namespace VBTMProSuite
                             try
                             {
                                 object pFont = pRange.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, pRange, null);
-                                pFont.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, pFont, new object[] { 14f });
+                                bool isPartyTitle = isDangWord && Regex.IsMatch(cleanP.Trim(), @"^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|BIÊN BẢN|GIẤY MỜI)$", RegexOptions.IgnoreCase);
+                                pFont.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, pFont, new object[] { isPartyTitle ? 15f : 14f });
                                 if (!isHeadingOrCentered)
                                 {
                                     para.GetType().InvokeMember("SpaceAfter", BindingFlags.SetProperty, null, para, new object[] { 6f });
                                     para.GetType().InvokeMember("FirstLineIndent", BindingFlags.SetProperty, null, para, new object[] { 36f });
                                     para.GetType().InvokeMember("Alignment", BindingFlags.SetProperty, null, para, new object[] { 3 }); // wdAlignParagraphJustify = 3
+                                }
+                                else if (isPartyTitle)
+                                {
+                                    pFont.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, pFont, new object[] { -1 });
+                                    para.GetType().InvokeMember("Alignment", BindingFlags.SetProperty, null, para, new object[] { 1 }); // wdAlignParagraphCenter = 1
                                 }
                             }
                             catch { }
@@ -1277,12 +1373,12 @@ namespace VBTMProSuite
                 catch { }
 
                 MessageBox.Show(
-                    "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo đúng quy định:\n\n" +
+                    "Đã chuẩn hóa trực tiếp tài liệu Microsoft Word đang mở theo đúng quy định " + (isDangWord ? "(Hướng dẫn số 05-HD/VPTW):" : "(Nghị định số 30/2020/NĐ-CP):") + "\n\n" +
                     "• Khổ giấy A4 (210mm x 297mm), Lề Trái 30mm - Phải 15mm - Trên 20mm - Dưới 20mm\n" +
-                    "• Phông chữ: Times New Roman (Giữ nguyên cỡ chữ chuẩn của bảng Quốc hiệu & Nơi nhận, chuẩn hóa thân bài 14pt, thụt đầu dòng 1.27cm, cách đoạn 6pt)\n" +
+                    "• Phông chữ: Times New Roman (Chuẩn hóa tự động Bảng Tiêu ngữ 15pt/14pt, Nơi nhận 14pt gạch chân + danh sách 12pt, Chữ ký 14pt đậm, Thân bài 14pt thụt đầu dòng 1.27cm, cách đoạn 6pt)\n" +
                     "• Đánh số trang tự động từ trang 2 ở lề trên (ẩn số trang ở trang 1)\n" +
                     "• Tự động sửa " + fixedInWord + " lỗi chính tả, ngày tháng & dấu câu trực tiếp trong Word!",
-                    "VBTM Pro 2.2.4 - Word Automation",
+                    "VBTM Pro 2.5.0 - Word Automation",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
                 );
@@ -1784,7 +1880,7 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
                 if (sfd.ShowDialog() != DialogResult.OK) return;
                 WriteWordDocFile(sfd.FileName);
                 lblStatus.Text = "  ✓ Đã xuất tệp Word chuẩn A4: " + sfd.FileName;
-                if (MessageBox.Show("Đã xuất tệp Word chuẩn thể thức thành công!\nBạn có muốn mở tệp ngay không?", "VBTM Pro 2.2.4", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                if (MessageBox.Show("Đã xuất tệp Word chuẩn thể thức thành công!\nBạn có muốn mở tệp ngay không?", "VBTM Pro 2.5.0", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                 {
                     Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
                 }
@@ -1882,7 +1978,7 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
                     {
                         if (string.IsNullOrWhiteSpace(extractedText))
                         {
-                            MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp PDF đã chọn!", "VBTM Pro 4.0 Ultimate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp PDF đã chọn!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
                         }
                         isPreservedPdfMode = true;
@@ -1895,7 +1991,7 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
                     extractedText = Regex.Replace(extractedText ?? "", @"(\r?\n){3,}", "\r\n\r\n").Trim();
                     if (string.IsNullOrWhiteSpace(extractedText))
                     {
-                        MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp đã chọn!", "VBTM Pro 4.0 Ultimate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Không tìm thấy nội dung văn bản trong tệp đã chọn!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
@@ -1904,7 +2000,7 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Lỗi khi đọc tệp văn bản: " + ex.Message, "VBTM Pro 2.2.4", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Lỗi khi đọc tệp văn bản: " + ex.Message, "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
