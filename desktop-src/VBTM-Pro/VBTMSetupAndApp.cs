@@ -956,6 +956,42 @@ namespace VBTMProSuite
             this.Controls.Add(topBar);
             this.Controls.Add(lblStatus);
 
+            this.Shown += (s, e) =>
+            {
+                System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    try
+                    {
+                        string startupDotm = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                            "Microsoft", "Word", "STARTUP", "VBTM_Pro_Addin.dotm"
+                        );
+                        string instDir = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                            "Programs", "VBTM-Pro"
+                        );
+                        if (!File.Exists(startupDotm))
+                        {
+                            Directory.CreateDirectory(instDir);
+                            string exeDst = Path.Combine(instDir, "VBTM-Pro.exe");
+                            if (!File.Exists(exeDst) && !Application.ExecutablePath.Equals(exeDst, StringComparison.OrdinalIgnoreCase))
+                            {
+                                try { File.Copy(Application.ExecutablePath, exeDst, true); } catch { }
+                            }
+                            bool ok = WordAddinInstaller.InstallWordRibbonAddin(instDir, exeDst);
+                            if (ok && !this.IsDisposed)
+                            {
+                                this.BeginInvoke((Action)(() =>
+                                {
+                                    lblStatus.Text = "  ✓ Đã tự động tích hợp Tab Ribbon 'VBTM Pro 2.5 (05-HD & ND30)' trực tiếp vào Microsoft Word!";
+                                }));
+                            }
+                        }
+                    }
+                    catch { }
+                });
+            };
+
             GroupBox grpMeta = new GroupBox
             {
                 Text = " 1. Thông Tin Thể Thức Hành Chính & Đảng Ủy (HD 05-HD/VPTW & Nghị định 30) ",
