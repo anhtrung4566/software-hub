@@ -444,9 +444,11 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_ChenMauDang05(ByVal control As Object): ChenMauVanBan_Dang05: End Sub");
             sb.AppendLine("Sub Ribbon_ChenMauUBND30(ByVal control As Object): ChenMauVanBan_UBND30: End Sub");
             sb.AppendLine("Sub Ribbon_SuaChinhTa(ByVal control As Object): SuaChinhTaVaDauCau_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_TuDongHoaTieuNgu(ByVal control As Object): TuDongHoaTieuNgu_Word: End Sub");
             sb.AppendLine("Sub Ribbon_NoiDongPDF(ByVal control As Object): NoiDongPDFBiNgat_Word: End Sub");
             sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
+            sb.AppendLine("Sub Ribbon_ChenMaQR(ByVal control As Object): Ribbon_MoVBTM control: End Sub");
             sb.AppendLine("Sub Ribbon_MoVBTM(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    Dim p As String");
@@ -693,36 +695,57 @@ namespace VBTMProSuite
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
-            // 8. Sửa lỗi chính tả & dấu câu trực tiếp trên Word
+            // 8. Sửa lỗi chính tả & dấu câu trực tiếp trên Word (chia nhóm nhỏ tránh giới hạn 24 dòng tiếp nối của VBA)
             sb.AppendLine("Sub SuaChinhTaVaDauCau_Word()");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
-            sb.AppendLine("    Dim pairs As Variant, i As Long, rng As Range, fixCount As Long");
-            sb.AppendLine("    fixCount = 0");
-            sb.AppendLine("    pairs = Array( _");
             string[,] quickRules = new string[,] {
                 { "bổ xung", "bổ sung" }, { "sử lý", "xử lý" }, { "xử dụng", "sử dụng" },
                 { "chính sác", "chính xác" }, { "kiểm xoát", "kiểm soát" }, { "ngiêm", "nghiêm" },
                 { "chuẫn", "chuẩn" }, { "kết qủa", "kết quả" }, { "hổ trợ", "hỗ trợ" },
                 { "kế hoạc", "kế hoạch" }, { "chủ chương", "chủ trương" }, { "khẩn chương", "khẩn trương" },
-                { "chiển khai", "triển khai" }, { "sắc sảo", "sắc sảo" }, { "dự thảo", "dự thảo" },
+                { "chiển khai", "triển khai" }, { "tỏ chức", "tổ chức" }, { "triển khay", "triển khai" },
+                { "cải cách hành chánh", "cải cách hành chính" }, { "chuyển đổi xố", "chuyển đổi số" },
+                { "nghị quyêt", "nghị quyết" }, { "quyết đinh", "quyết định" }, { "báo cao", "báo cáo" },
+                { "đảng uy", "đảng ủy" }, { "chi bô", "chi bộ" }, { "thể thuc", "thể thức" },
+                { "nhiệm vu", "nhiệm vụ" }, { "phát triễn", "phát triển" }, { "giải quyêt", "giải quyết" },
+                { "giám sat", "giám sát" }, { "quán triêt", "quán triệt" }, { "thực hiên", "thực hiện" },
+                { "đồng chi", "đồng chí" }, { "cán bô", "cán bộ" }, { "công chưc", "công chức" },
+                { "chủ tich", "chủ tịch" }, { "bí thu", "bí thư" }, { "lưu trử", "lưu trữ" },
+                { "hồ xơ", "hồ sơ" }, { "tài liêu", "tài liệu" }, { "đề nghi", "đề nghị" },
+                { "kính gởi", "kính gửi" }, { "xem xet", "xem xét" }, { "phê duyêt", "phê duyệt" },
                 { " ,", "," }, { " .", "." }, { " ;", ";" }, { " :", ":" }, { "  ", " " }
             };
             for (int r = 0; r < quickRules.GetLength(0); r++)
             {
-                string sep = (r < quickRules.GetLength(0) - 1) ? ", _" : ")";
-                sb.AppendLine("        " + VbaStr(quickRules[r, 0]) + ", " + VbaStr(quickRules[r, 1]) + sep);
+                sb.AppendLine("    ReplaceWordText " + VbaStr(quickRules[r, 0]) + ", " + VbaStr(quickRules[r, 1]));
             }
-            sb.AppendLine("    For i = 0 To UBound(pairs) Step 2");
-            sb.AppendLine("        Set rng = ActiveDocument.Content");
-            sb.AppendLine("        With rng.Find");
-            sb.AppendLine("            .ClearFormatting: .Replacement.ClearFormatting");
-            sb.AppendLine("            .Text = pairs(i): .Replacement.Text = pairs(i + 1)");
-            sb.AppendLine("            .Forward = True: .Wrap = 1: .MatchCase = False: .MatchWholeWord = False");
-            sb.AppendLine("            Do While .Execute(Replace:=2): fixCount = fixCount + 1: Exit Do: Loop");
-            sb.AppendLine("        End With");
-            sb.AppendLine("    Next i");
             sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã rà soát và sửa lỗi chính tả, khoảng trắng, dấu câu trực tiếp trong Word!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            sb.AppendLine("Private Sub ReplaceWordText(ByVal findTxt As String, ByVal repTxt As String)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim rng As Range: Set rng = ActiveDocument.Content");
+            sb.AppendLine("    With rng.Find");
+            sb.AppendLine("        .ClearFormatting: .Replacement.ClearFormatting");
+            sb.AppendLine("        .Text = findTxt: .Replacement.Text = repTxt");
+            sb.AppendLine("        .Forward = True: .Wrap = 1: .MatchCase = False: .MatchWholeWord = False");
+            sb.AppendLine("        .Execute Replace:=2");
+            sb.AppendLine("    End With");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 8b. Tự động hóa Tiêu ngữ & Bảng đầu trang theo 05-HD/VPTW hoặc NĐ 30/2020/NĐ-CP
+            sb.AppendLine("Sub TuDongHoaTieuNgu_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim docText As String: docText = UCase(ActiveDocument.Content.Text)");
+            sb.AppendLine("    Dim isDang As Boolean: isDang = (InStr(docText, " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Or InStr(docText, " + VbaStr("ĐẢNG ỦY") + ") > 0 Or InStr(docText, " + VbaStr("CHI BỘ") + ") > 0 Or InStr(docText, " + VbaStr("-BC/ĐU") + ") > 0 Or InStr(docText, " + VbaStr("-NQ/ĐU") + ") > 0)");
+            sb.AppendLine("    If ActiveDocument.Tables.Count = 0 Then");
+            sb.AppendLine("        If isDang Then ChenMauVanBan_Dang05 Else ChenMauVanBan_UBND30");
+            sb.AppendLine("        Exit Sub");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    If isDang Then ChuanHoaVanBan_HuongDan05 Else ChuanHoaVanBan_NghiDinh30");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
@@ -769,6 +792,8 @@ namespace VBTMProSuite
                 );
                 Directory.CreateDirectory(startupDir);
                 string dotmPath = Path.Combine(startupDir, "VBTM_Pro_Addin.dotm");
+                try { if (File.Exists(dotmPath)) File.Delete(dotmPath); } catch { }
+                string tempDotm = Path.Combine(Path.GetTempPath(), "VBTM_Pro_Addin_" + Guid.NewGuid().ToString("N") + ".dotm");
 
                 // 1. Cấp quyền AccessVBOM & Trusted Location trong Registry HKCU (không cần Admin)
                 string[] officeVers = new[] { "16.0", "15.0", "14.0" };
@@ -811,9 +836,8 @@ namespace VBTMProSuite
                         object vbComps = vbProj.GetType().InvokeMember("VBComponents", BindingFlags.GetProperty, null, vbProj, null);
                         vbComps.GetType().InvokeMember("Import", BindingFlags.InvokeMethod, null, vbComps, new object[] { basPath });
 
-                        if (File.Exists(dotmPath)) File.Delete(dotmPath);
                         // 15 = wdFormatXMLTemplateMacroEnabled (.dotm)
-                        doc.GetType().InvokeMember("SaveAs2", BindingFlags.InvokeMethod, null, doc, new object[] { dotmPath, 15 });
+                        doc.GetType().InvokeMember("SaveAs2", BindingFlags.InvokeMethod, null, doc, new object[] { tempDotm, 15 });
                     }
                     finally
                     {
@@ -825,11 +849,13 @@ namespace VBTMProSuite
                     try { wordType.InvokeMember("Quit", BindingFlags.InvokeMethod, null, wordApp, new object[] { false }); } catch { }
                 }
 
-                // 3. Nhúng trực tiếp Custom Ribbon Tab "VBTM Pro 2.5 (05-HD & ND30)" vào bên trong .dotm
-                if (File.Exists(dotmPath))
+                // 3. Nhúng trực tiếp Custom Ribbon Tab vào tempDotm rồi chép vào STARTUP
+                if (File.Exists(tempDotm))
                 {
-                    InjectRibbonUiIntoDotm(dotmPath);
-                    return true;
+                    InjectRibbonUiIntoDotm(tempDotm);
+                    File.Copy(tempDotm, dotmPath, true);
+                    try { File.Delete(tempDotm); } catch { }
+                    return File.Exists(dotmPath);
                 }
                 return false;
             }
@@ -851,6 +877,7 @@ namespace VBTMProSuite
                 "</group>" +
                 "<group id=\"grpVbtmFormat\" label=\"2. Chuẩn Hóa Thể Thức\">" +
                 "<button id=\"btnVbtmAuto\" label=\"Chuẩn Hóa Tự Động\" size=\"large\" imageMso=\"ReviewTrackChanges\" onAction=\"Ribbon_ChuanHoaTuDong\" supertip=\"Tự động nhận diện văn bản Đảng (05-HD/VPTW) hoặc Hành chính (NĐ 30) và chuẩn hóa toàn bộ văn bản đang mở.\"/>" +
+                "<button id=\"btnVbtmTieuNgu\" label=\"Tự Động Hóa Tiêu Ngữ\" size=\"large\" imageMso=\"HeaderFooterInsert\" onAction=\"Ribbon_TuDongHoaTieuNgu\" supertip=\"Tự động chuẩn hóa hoặc tạo mới Bảng Tiêu ngữ 2 cột (ĐẢNG CỘNG SẢN VIỆT NAM 15pt / Quốc hiệu) &amp; Bảng Nơi nhận/Chữ ký.\"/>" +
                 "<button id=\"btnVbtmHd05\" label=\"Chuẩn Đảng (05-HD)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_HuongDan05\" supertip=\"Chuẩn hóa trực tiếp theo Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng.\"/>" +
                 "<button id=\"btnVbtmNd30\" label=\"Chuẩn NĐ 30/2020\" size=\"large\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\" supertip=\"Chuẩn hóa trực tiếp theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\"/>" +
                 "</group>" +
@@ -861,7 +888,8 @@ namespace VBTMProSuite
                 "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang (Từ Tr.2)\" size=\"normal\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\"/>" +
                 "</group>" +
                 "<group id=\"grpVbtmStudio\" label=\"4. Công Cụ Mở Rộng\">" +
-                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (QR &amp; PDF)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI (7.578 âm tiết), tạo mã QR và chuyển PDF sang Word.\"/>" +
+                "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Văn Bản\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 để gắn vào văn bản Word.\"/>" +
+                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (AI 7.578 Từ)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI (7.578 âm tiết), tạo mã QR và chuyển PDF sang Word.\"/>" +
                 "</group>" +
                 "</tab></tabs></ribbon></customUI>";
 
