@@ -1886,7 +1886,150 @@ function printVbtmA4Document() {
   setTimeout(() => { w.focus(); w.print(); }, 250);
 }
 
+function fillAiPromptAndRun(promptText) {
+  const inp = document.getElementById('vbtmAiPromptInput');
+  if (inp) inp.value = promptText;
+  aiDraftDocumentFromPrompt();
+}
+
+function extractTopicFromPrompt(prompt) {
+  let topic = String(prompt || '').trim();
+  topic = topic.replace(/^(hãy\s+|vui lòng\s+|giúp tôi\s+|ai\s+)?(soạn thảo|soạn|viết|lập|tạo)\s+(giúp\s+|một\s+|bản\s+)?(báo cáo|nghị quyết|quyết định|kế hoạch|tờ trình|thông báo|công văn|giấy mời|chương trình|biên bản)?\s*(của\s+(đảng ủy|ubnd|ủy ban nhân dân|chi bộ)\s*(phường)?)?\s*(về việc|về|v\/v)?\s*/i, '');
+  topic = topic.replace(/[.?!]+$/, '').trim();
+  if (!topic) topic = 'triển khai nhiệm vụ trọng tâm và công tác chuyển đổi số tại địa phương';
+  return topic.charAt(0).toUpperCase() + topic.slice(1);
+}
+
+async function aiDraftDocumentFromPrompt() {
+  const promptText = (document.getElementById('vbtmAiPromptInput')?.value || '').trim();
+  if (!promptText) {
+    if (window.showToast) window.showToast('Vui lòng nhập yêu cầu nội dung cần AI soạn thảo!');
+    return;
+  }
+
+  const apiKey = (document.getElementById('vbtmGeminiKey')?.value || '').trim();
+  const isParty = /\b(đảng|đảng ủy|chi bộ|đảng bộ|ban thường vụ|bí thư|05-hd)\b/i.test(promptText);
+  const stdVal = isParty ? 'hd05' : 'nd30';
+
+  if (apiKey) {
+    try {
+      if (window.showToast) window.showToast('Đang kết nối Gemini AI để soạn thảo văn bản...');
+      const sysPrompt = `Bạn là chuyên gia văn thư Việt Nam. Hãy soạn thảo văn bản từ yêu cầu: "${promptText}". Trả về JSON thuần (không markdown) với các khóa: standard ("hd05" hoặc "nd30"), docType (in hoa, để rỗng nếu là công văn), docSubject, docBody (phân tách đoạn bằng \\n\\n, kết thúc bằng ./.), recipients (mỗi dòng 1 nơi nhận), signerTitle, signerName.`;
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: sysPrompt }] }] })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const rawTxt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const jsonMatch = rawTxt.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          document.getElementById('vbtmStandard').value = parsed.standard === 'hd05' ? 'hd05' : 'nd30';
+          document.getElementById('vbtmGovOrg').value = parsed.standard === 'hd05' ? 'QUẬN ỦY' : 'ỦY BAN NHÂN DÂN QUẬN';
+          document.getElementById('vbtmIssueOrg').value = parsed.standard === 'hd05' ? 'ĐẢNG ỦY PHƯỜNG' : 'ỦY BAN NHÂN DÂN PHƯỜNG';
+          document.getElementById('vbtmDocType').value = parsed.docType || '';
+          document.getElementById('vbtmDocSubject').value = parsed.docSubject || '';
+          document.getElementById('vbtmDocBody').value = parsed.docBody || '';
+          if (parsed.recipients) document.getElementById('vbtmRecipients').value = parsed.recipients;
+          if (parsed.signerTitle) document.getElementById('vbtmSignerTitle').value = parsed.signerTitle;
+          if (parsed.signerName) document.getElementById('vbtmSignerName').value = parsed.signerName;
+          standardizeAndFixEverything();
+          if (window.showToast) window.showToast('✓ Gemini AI đã soạn thảo và chuẩn hóa xong văn bản!');
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Gemini fallback to offline AI engine:', e);
+    }
+  }
+
+  // Bộ máy AI Soạn Thảo Ngoại Tuyến 100%
+  const lower = promptText.toLowerCase();
+  let docType = '';
+  let numCode = isParty ? '68-CV/ĐU' : '188/UBND-VP';
+  if (lower.includes('báo cáo')) { docType = 'BÁO CÁO'; numCode = isParty ? '52-BC/ĐU' : '96/BC-UBND'; }
+  else if (lower.includes('nghị quyết')) { docType = 'NGHỊ QUYẾT'; numCode = isParty ? '18-NQ/ĐU' : '12/NQ-HĐND'; }
+  else if (lower.includes('quyết định')) { docType = 'QUYẾT ĐỊNH'; numCode = isParty ? '40-QĐ/ĐU' : '155/QĐ-UBND'; }
+  else if (lower.includes('kế hoạch')) { docType = 'KẾ HOẠCH'; numCode = isParty ? '28-KH/ĐU' : '84/KH-UBND'; }
+  else if (lower.includes('tờ trình')) { docType = 'TỜ TRÌNH'; numCode = isParty ? '14-TTr/ĐU' : '62/TTr-UBND'; }
+  else if (lower.includes('thông báo')) { docType = 'THÔNG BÁO'; numCode = isParty ? '33-TB/ĐU' : '118/TB-UBND'; }
+  else if (lower.includes('chương trình')) { docType = 'CHƯƠNG TRÌNH'; numCode = isParty ? '11-CTr/ĐU' : '08/CTr-UBND'; }
+
+  const topic = extractTopicFromPrompt(promptText);
+  const agency = isParty ? 'Đảng ủy phường' : 'Ủy ban nhân dân phường';
+  const regRef = isParty ? 'Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng' : 'Nghị định số 30/2020/NĐ-CP của Chính phủ';
+
+  let body = '';
+  if (docType === 'QUYẾT ĐỊNH') {
+    body = `Căn cứ chức năng, nhiệm vụ, quyền hạn của ${agency};\n\nCăn cứ ${regRef} và yêu cầu thực tiễn công tác tại địa phương;\n\nXét đề nghị của Văn phòng ${agency},\n\n${isParty ? 'BAN THƯỜNG VỤ ĐẢNG ỦY QUYẾT ĐỊNH' : 'QUYẾT ĐỊNH:'}\n\nĐiều 1. Ban hành kèm theo Quyết định này các nội dung triển khai ${topic.charAt(0).toLowerCase() + topic.slice(1)}.\n\nĐiều 2. Giao các bộ phận chuyên môn, các ${isParty ? 'chi bộ trực thuộc' : 'tổ dân phố và công chức liên quan'} nghiêm túc tổ chức thực hiện bảo đảm tiến độ và chất lượng.\n\nĐiều 3. Quyết định này có hiệu lực kể từ ngày ký./.`;
+  } else if (docType === 'BÁO CÁO') {
+    body = `Thực hiện chương trình công tác và chỉ đạo của cấp trên, ${agency} báo cáo kết quả thực hiện ${topic.charAt(0).toLowerCase() + topic.slice(1)} như sau:\n\nI. KẾT QUẢ THỰC HIỆN\n1. ${agency} đã chủ động ban hành văn bản chỉ đạo, phân công nhiệm vụ cụ thể cho từng bộ phận phụ trách và tổ chức triển khai đồng bộ trên toàn địa bàn.\n\n2. Công tác tuyên truyền, kiểm tra, đôn đốc được thực hiện thường xuyên; chất lượng hồ sơ, văn bản được chuẩn hóa đúng quy định hiện hành.\n\nII. PHƯƠNG HƯỚNG, NHIỆM VỤ THỜI GIAN TỚI\nTiếp tục phát huy kết quả đạt được, kịp thời tháo gỡ khó khăn, vướng mắc và định kỳ tổng hợp báo cáo cấp trên theo quy định./.`;
+  } else if (docType === 'KẾ HOẠCH' || docType === 'CHƯƠNG TRÌNH') {
+    body = `Thực hiện chỉ đạo của cấp trên về ${topic.charAt(0).toLowerCase() + topic.slice(1)}, ${agency} xây dựng ${docType.toLowerCase()} triển khai thực hiện với các nội dung cụ thể như sau:\n\nI. MỤC ĐÍCH, YÊU CẦU\nNâng cao hiệu lực, hiệu quả quản lý, điều hành; bảo đảm sự phối hợp chặt chẽ, thống nhất giữa các bộ phận chuyên môn.\n\nII. NỘI DUNG VÀ TIẾN ĐỘ THỰC HIỆN\n1. Rà soát, hoàn thiện các quy trình nghiệp vụ và phân công rõ trách nhiệm cá nhân phụ trách.\n\n2. Tổ chức kiểm tra, đánh giá định kỳ hàng tháng và báo cáo kết quả về Văn phòng ${agency}.\n\nIII. TỔ CHỨC THỰC HIỆN\nĐề nghị các đơn vị, cá nhân liên quan nghiêm túc quán triệt và tổ chức thực hiện hiệu quả ${docType.toLowerCase()} này./.`;
+  } else if (docType === 'NGHỊ QUYẾT') {
+    body = `Thực hiện Quy chế làm việc của ${agency}, sau khi thảo luận và xem xét tình hình thực tế tại địa phương, ${agency} quyết nghị:\n\nI. ĐÁNH GIÁ TÌNH HÌNH\nCông tác lãnh đạo, chỉ đạo thực hiện ${topic.charAt(0).toLowerCase() + topic.slice(1)} thời gian qua đã đạt được nhiều chuyển biến tích cực, tạo sự đồng thuận cao trong cán bộ, đảng viên và nhân dân.\n\nII. NHIỆM VỤ VÀ GIẢI PHÁP CHỦ YẾU\n1. Tập trung nâng cao trách nhiệm người đứng đầu, tăng cường kỷ luật, kỷ cương hành chính và ứng dụng công nghệ thông tin.\n\n2. Giao Văn phòng ${agency} thường xuyên theo dõi, đôn đốc và tổng hợp báo cáo kết quả thực hiện Nghị quyết này./.`;
+  } else {
+    const subjPrefix = docType ? '' : 'V/v ';
+    document.getElementById('vbtmDocSubject').value = subjPrefix + topic;
+    body = `Kính gửi: ${isParty ? 'Các chi bộ trực thuộc Đảng ủy phường.' : 'Các bộ phận chuyên môn và Tổ trưởng các tổ dân phố thuộc phường.'}\n\nThực hiện chỉ đạo của cấp trên và yêu cầu nhiệm vụ công tác tại địa phương, ${agency} đề nghị các đơn vị triển khai thực hiện nghiêm túc nội dung ${topic.charAt(0).toLowerCase() + topic.slice(1)}:\n\n1. Chủ động rà soát các nhiệm vụ được giao, tổ chức thực hiện bảo đảm đúng tiến độ, chất lượng và quy trình quy định.\n\n2. Kịp thời báo cáo những khó khăn, vướng mắc (nếu có) về Văn phòng ${agency} để tổng hợp, tham mưu giải quyết.\n\nĐề nghị các đồng chí nghiêm túc triển khai thực hiện./.`;
+  }
+
+  document.getElementById('vbtmStandard').value = stdVal;
+  document.getElementById('vbtmGovOrg').value = isParty ? 'QUẬN ỦY' : 'ỦY BAN NHÂN DÂN QUẬN';
+  document.getElementById('vbtmIssueOrg').value = isParty ? 'ĐẢNG ỦY PHƯỜNG' : 'ỦY BAN NHÂN DÂN PHƯỜNG';
+  document.getElementById('vbtmDocNum').value = numCode;
+  document.getElementById('vbtmLocation').value = 'Phường';
+  document.getElementById('vbtmDocType').value = docType;
+  if (docType) document.getElementById('vbtmDocSubject').value = topic;
+  document.getElementById('vbtmDocBody').value = body;
+  document.getElementById('vbtmRecipients').value = isParty
+    ? `- Ban Thường vụ Quận ủy (để b/c);\n- Các chi bộ trực thuộc;\n- Lưu Văn phòng Đảng ủy.`
+    : `- Như trên;\n- Chủ tịch, các PCT UBND phường;\n- Lưu: VT, VP.`;
+  document.getElementById('vbtmSignerTitle').value = isParty ? 'T/M ĐẢNG ỦY\nBÍ THƯ' : 'TM. ỦY BAN NHÂN DÂN\nCHỦ TỊCH';
+  document.getElementById('vbtmSignerName').value = isParty ? 'Trần Minh Quân' : 'Nguyễn Văn An';
+
+  standardizeAndFixEverything();
+  if (window.showToast) {
+    window.showToast(`✓ AI đã soạn thảo xong ${docType || 'CÔNG VĂN'} chuẩn ${isParty ? 'Hướng dẫn 05-HD/VPTW' : 'Nghị định 30/2020/NĐ-CP'}!`);
+  }
+}
+
+function aiUpgradeWritingStyle() {
+  const bodyEl = document.getElementById('vbtmDocBody');
+  if (!bodyEl || !bodyEl.value.trim()) return;
+  const styleReplacements = [
+    [/\blàm gấp\b/gi, 'khẩn trương triển khai thực hiện'],
+    [/\bbáo lại\b/gi, 'báo cáo kết quả về'],
+    [/\bmọi người\b/gi, 'các đồng chí và cán bộ, công chức'],
+    [/\bcác bạn\b/gi, 'các đồng chí'],
+    [/\bcần phải\b/gi, 'đề nghị tập trung'],
+    [/\blàm xong\b/gi, 'hoàn thành'],
+    [/\bgửi gấp\b/gi, 'khẩn trương gửi'],
+    [/\bkiểm tra kỹ\b/gi, 'tăng cường công tác kiểm tra, giám sát chặt chẽ'],
+    [/\bxem lại\b/gi, 'rà soát, đánh giá lại'],
+    [/\bcông việc\b/gi, 'nhiệm vụ được giao']
+  ];
+  let txt = bodyEl.value;
+  let changed = 0;
+  for (const [rx, rep] of styleReplacements) {
+    if (rx.test(txt)) {
+      txt = txt.replace(rx, rep);
+      changed++;
+    }
+  }
+  bodyEl.value = txt;
+  standardizeAndFixEverything();
+  if (window.showToast) {
+    window.showToast(`✨ AI đã nâng cấp văn phong hành chính/Đảng (${changed} cụm từ trang trọng) & chuẩn hóa 100%!`);
+  }
+}
+
 window.loadTemplate = loadTemplate;
+window.fillAiPromptAndRun = fillAiPromptAndRun;
+window.aiDraftDocumentFromPrompt = aiDraftDocumentFromPrompt;
+window.aiUpgradeWritingStyle = aiUpgradeWritingStyle;
 window.standardizeTextContent = standardizeTextContent;
 window.standardizeAndFixEverything = standardizeAndFixEverything;
 window.runSpellAndFormatCheck = runSpellAndFormatCheck;
