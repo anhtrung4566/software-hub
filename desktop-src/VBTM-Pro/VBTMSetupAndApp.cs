@@ -541,7 +541,8 @@ namespace VBTMProSuite
             sb.AppendLine("Private Sub ShowUnicodeMsg(ByVal msgText As String)");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Not Application.Visible Then Exit Sub");
-            sb.AppendLine("    CreateObject(\"WScript.Shell\").Popup msgText, 0, \"VBTM Pro 2.5.0\", 64");
+            sb.AppendLine("    Application.StatusBar = \"VBTM Pro 2.5.0: \" & Replace(msgText, vbCrLf, \" \")");
+            sb.AppendLine("    CreateObject(\"WScript.Shell\").Popup msgText, 4, \"VBTM Pro 2.5.0\", 4160");
             sb.AppendLine("End Sub");
             sb.AppendLine("Sub Ribbon_MoVBTM(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
@@ -605,6 +606,7 @@ namespace VBTMProSuite
             sb.AppendLine("Sub ChuanHoaVanBan_HuongDan05()");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Application.ScreenUpdating = False");
             sb.AppendLine("    CanLeA4Chuan_Word False");
             sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
             sb.AppendLine("    ActiveDocument.Content.Font.Name = \"Times New Roman\"");
@@ -621,7 +623,11 @@ namespace VBTMProSuite
             sb.AppendLine("                    p.FirstLineIndent = 0");
             sb.AppendLine("                    p.Format.SpaceAfter = 2");
             sb.AppendLine("                ElseIf Left(t, 3) = " + VbaStr("───") + " Or Left(t, 3) = \"---\" Then");
-            sb.AppendLine("                    p.Range.Text = \"-----\" & vbCr");
+            sb.AppendLine("                    If t <> \"-----\" Then");
+            sb.AppendLine("                        Dim rRule As Range: Set rRule = p.Range.Duplicate");
+            sb.AppendLine("                        If rRule.End > rRule.Start Then rRule.End = rRule.End - 1");
+            sb.AppendLine("                        rRule.Text = \"-----\"");
+            sb.AppendLine("                    End If");
             sb.AppendLine("                    p.Range.Font.Size = 14");
             sb.AppendLine("                    p.Range.Font.Bold = True");
             sb.AppendLine("                    p.Alignment = 1");
@@ -672,22 +678,23 @@ namespace VBTMProSuite
             sb.AppendLine("            Dim pL As Paragraph, tL As String");
             sb.AppendLine("            For Each pL In tblTop.Cell(1, 1).Range.Paragraphs");
             sb.AppendLine("                tL = Trim(Replace(Replace(pL.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
-            sb.AppendLine("                If Len(tL) > 26 Then pL.Range.Font.Scaling = 86 Else If Len(tL) > 21 Then pL.Range.Font.Scaling = 92 Else pL.Range.Font.Scaling = 100");
+            sb.AppendLine("                If Len(tL) > 27 Then pL.Range.Font.Scaling = 74 Else If Len(tL) > 23 Then pL.Range.Font.Scaling = 80 Else If Len(tL) > 19 Then pL.Range.Font.Scaling = 88 Else pL.Range.Font.Scaling = 100");
             sb.AppendLine("            Next pL");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\"");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 2).Range.ParagraphFormat.Alignment = 1: tblTop.Cell(1, 2).Range.ParagraphFormat.SpaceAfter = 0");
-            sb.AppendLine("            Dim pTop As Paragraph, tTop As String");
-            sb.AppendLine("            For Each pTop In tblTop.Cell(1, 2).Range.Paragraphs");
+            sb.AppendLine("            Dim rpIdx As Integer, pTop As Paragraph, tTop As String");
+            sb.AppendLine("            For rpIdx = tblTop.Cell(1, 2).Range.Paragraphs.Count To 1 Step -1");
+            sb.AppendLine("                Set pTop = tblTop.Cell(1, 2).Range.Paragraphs(rpIdx)");
             sb.AppendLine("                tTop = Trim(Replace(Replace(pTop.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
             sb.AppendLine("                If InStr(UCase(tTop), " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Then");
-            sb.AppendLine("                    pTop.Range.Font.Size = 14.5: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 1: pTop.Range.Font.Scaling = 98");
+            sb.AppendLine("                    pTop.Range.Font.Size = 14.5: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 1: pTop.Range.Font.Scaling = 95");
             sb.AppendLine("                ElseIf Left(tTop, 3) = " + VbaStr("───") + " Or Left(tTop, 3) = \"---\" Then");
             sb.AppendLine("                    pTop.Range.Delete");
             sb.AppendLine("                ElseIf InStr(LCase(tTop), " + VbaStr("ngày") + ") > 0 Then");
             sb.AppendLine("                    pTop.Range.Font.Size = 14: pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Format.SpaceBefore = 2");
-            sb.AppendLine("                    If Len(tTop) > 32 Then pTop.Range.Font.Scaling = 88 Else If Len(tTop) > 26 Then pTop.Range.Font.Scaling = 93 Else pTop.Range.Font.Scaling = 100");
+            sb.AppendLine("                    If Len(tTop) > 40 Then pTop.Range.Font.Scaling = 72 Else If Len(tTop) > 33 Then pTop.Range.Font.Scaling = 78 Else If Len(tTop) > 26 Then pTop.Range.Font.Scaling = 86 Else pTop.Range.Font.Scaling = 100");
             sb.AppendLine("                End If");
-            sb.AppendLine("            Next pTop");
+            sb.AppendLine("            Next rpIdx");
             sb.AppendLine("        End If");
             sb.AppendLine("    End If");
             sb.AppendLine("    If ActiveDocument.Tables.Count >= 2 Then");
@@ -716,6 +723,7 @@ namespace VBTMProSuite
             sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Bold = True");
             sb.AppendLine("        End If");
             sb.AppendLine("    End If");
+            sb.AppendLine("    Application.ScreenUpdating = True");
             sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã tự động chuẩn hóa văn bản Word đúng chuẩn Hướng dẫn số 05-HD/VPTW!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
@@ -817,18 +825,18 @@ namespace VBTMProSuite
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
             sb.AppendLine("        .Text = pGov & vbCr & pIss & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
-            sb.AppendLine("        If Len(pGov) > 26 Then .Paragraphs(1).Range.Font.Scaling = 86 Else If Len(pGov) > 21 Then .Paragraphs(1).Range.Font.Scaling = 92");
+            sb.AppendLine("        If Len(pGov) > 27 Then .Paragraphs(1).Range.Font.Scaling = 74 Else If Len(pGov) > 23 Then .Paragraphs(1).Range.Font.Scaling = 80 Else If Len(pGov) > 19 Then .Paragraphs(1).Range.Font.Scaling = 88");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
-            sb.AppendLine("        If Len(pIss) > 26 Then .Paragraphs(2).Range.Font.Scaling = 86 Else If Len(pIss) > 21 Then .Paragraphs(2).Range.Font.Scaling = 92");
+            sb.AppendLine("        If Len(pIss) > 27 Then .Paragraphs(2).Range.Font.Scaling = 74 Else If Len(pIss) > 23 Then .Paragraphs(2).Range.Font.Scaling = 80 Else If Len(pIss) > 19 Then .Paragraphs(2).Range.Font.Scaling = 88");
             sb.AppendLine("        .Paragraphs(3).Range.Font.Bold = True");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl1.Cell(1, 2).Range");
             sb.AppendLine("        Dim dtStr As String: dtStr = loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
             sb.AppendLine("        .Text = pMotto & vbCr & dtStr");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
-            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 14.5: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 1: .Paragraphs(1).Range.Font.Scaling = 98");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 14.5: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 1: .Paragraphs(1).Range.Font.Scaling = 95");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 2");
-            sb.AppendLine("        If Len(dtStr) > 32 Then .Paragraphs(2).Range.Font.Scaling = 88 Else If Len(dtStr) > 26 Then .Paragraphs(2).Range.Font.Scaling = 93");
+            sb.AppendLine("        If Len(dtStr) > 40 Then .Paragraphs(2).Range.Font.Scaling = 72 Else If Len(dtStr) > 33 Then .Paragraphs(2).Range.Font.Scaling = 78 Else If Len(dtStr) > 26 Then .Paragraphs(2).Range.Font.Scaling = 86");
             sb.AppendLine("    End With");
             sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
             sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("BÁO CÁO") + " & vbCr & " + VbaStr("Tổng kết công tác xây dựng Đảng năm 2026") + " & vbCr & \"-----\" & vbCr & " + VbaStr("Thực hiện Chương trình công tác năm 2026, Đảng ủy phường báo cáo kết quả thực hiện như sau:./.") + " & vbCr");
@@ -2557,7 +2565,38 @@ namespace VBTMProSuite
                                 object rngL = cellL.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, cellL, null);
                                 object fntL = rngL.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, rngL, null);
                                 fntL.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, fntL, new object[] { "Times New Roman" });
+                                if (isDangWord)
+                                {
+                                    try
+                                    {
+                                        topTbl.GetType().InvokeMember("AllowAutoFit", BindingFlags.SetProperty, null, topTbl, new object[] { 0 });
+                                        topTbl.GetType().InvokeMember("LeftPadding", BindingFlags.SetProperty, null, topTbl, new object[] { 0f });
+                                        topTbl.GetType().InvokeMember("RightPadding", BindingFlags.SetProperty, null, topTbl, new object[] { 0f });
+                                        object c1 = topCols.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, topCols, new object[] { 1 });
+                                        object c2 = topCols.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, topCols, new object[] { 2 });
+                                        c1.GetType().InvokeMember("PreferredWidthType", BindingFlags.SetProperty, null, c1, new object[] { 2 });
+                                        c1.GetType().InvokeMember("PreferredWidth", BindingFlags.SetProperty, null, c1, new object[] { 49f });
+                                        c2.GetType().InvokeMember("PreferredWidthType", BindingFlags.SetProperty, null, c2, new object[] { 2 });
+                                        c2.GetType().InvokeMember("PreferredWidth", BindingFlags.SetProperty, null, c2, new object[] { 51f });
+                                    }
+                                    catch { }
+                                }
                                 fntL.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, fntL, new object[] { 14f });
+                                try
+                                {
+                                    object lParas = rngL.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, rngL, null);
+                                    int lpCount = (int)lParas.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, lParas, null);
+                                    for (int lpIdx = 1; lpIdx <= lpCount; lpIdx++)
+                                    {
+                                        object lp = lParas.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, lParas, new object[] { lpIdx });
+                                        object lpRng = lp.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, lp, null);
+                                        string lpTxt = (Convert.ToString(lpRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, lpRng, null)) ?? "").TrimEnd('\r', '\a', '\n').Trim();
+                                        object lpFnt = lpRng.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, lpRng, null);
+                                        int scL = lpTxt.Length > 27 ? 74 : (lpTxt.Length > 23 ? 80 : (lpTxt.Length > 19 ? 88 : 100));
+                                        lpFnt.GetType().InvokeMember("Scaling", BindingFlags.SetProperty, null, lpFnt, new object[] { scL });
+                                    }
+                                }
+                                catch { }
 
                                 object cellR = topTbl.GetType().InvokeMember("Cell", BindingFlags.InvokeMethod, null, topTbl, new object[] { 1, 2 });
                                 object rngR = cellR.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, cellR, null);
@@ -2567,19 +2606,23 @@ namespace VBTMProSuite
                                 {
                                     object rp = rParas.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, rParas, new object[] { rpIdx });
                                     object rpRng = rp.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, rp, null);
-                                    string rpTxt = Convert.ToString(rpRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, rpRng, null)) ?? "";
+                                    string rpTxt = (Convert.ToString(rpRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, rpRng, null)) ?? "").TrimEnd('\r', '\a', '\n').Trim();
                                     object rpFnt = rpRng.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, rpRng, null);
                                     rpFnt.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, rpFnt, new object[] { "Times New Roman" });
                                     if (rpTxt.IndexOf("ĐẢNG CỘNG SẢN", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
-                                        rpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, rpFnt, new object[] { 15f });
+                                        rpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, rpFnt, new object[] { 14.5f });
                                         rpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, rpFnt, new object[] { -1 });
+                                        rpFnt.GetType().InvokeMember("Underline", BindingFlags.SetProperty, null, rpFnt, new object[] { 1 });
+                                        rpFnt.GetType().InvokeMember("Scaling", BindingFlags.SetProperty, null, rpFnt, new object[] { 95 });
                                     }
                                     else if (Regex.IsMatch(rpTxt, @"\b(ngày|tháng|năm)\b", RegexOptions.IgnoreCase))
                                     {
                                         rpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, rpFnt, new object[] { 14f });
                                         rpFnt.GetType().InvokeMember("Italic", BindingFlags.SetProperty, null, rpFnt, new object[] { -1 });
                                         rpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, rpFnt, new object[] { 0 });
+                                        int scR = rpTxt.Length > 40 ? 72 : (rpTxt.Length > 33 ? 78 : (rpTxt.Length > 26 ? 86 : 100));
+                                        rpFnt.GetType().InvokeMember("Scaling", BindingFlags.SetProperty, null, rpFnt, new object[] { scR });
                                     }
                                 }
                             }
@@ -2607,7 +2650,16 @@ namespace VBTMProSuite
                                     if (bpTxt.IndexOf("Nơi nhận", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         bpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, bpFnt, new object[] { 14f });
-                                        bpFnt.GetType().InvokeMember("Underline", BindingFlags.SetProperty, null, bpFnt, new object[] { 1 });
+                                        bpFnt.GetType().InvokeMember("Underline", BindingFlags.SetProperty, null, bpFnt, new object[] { 0 });
+                                        try
+                                        {
+                                            object uDup = bpRng.GetType().InvokeMember("Duplicate", BindingFlags.GetProperty, null, bpRng, null);
+                                            int st = (int)uDup.GetType().InvokeMember("Start", BindingFlags.GetProperty, null, uDup, null);
+                                            uDup.GetType().InvokeMember("End", BindingFlags.SetProperty, null, uDup, new object[] { st + 8 });
+                                            object uFnt = uDup.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, uDup, null);
+                                            uFnt.GetType().InvokeMember("Underline", BindingFlags.SetProperty, null, uFnt, new object[] { 1 });
+                                        }
+                                        catch { }
                                     }
                                     else
                                     {
@@ -3074,14 +3126,52 @@ namespace VBTMProSuite
                     txtSubject.Text = customTopic;
                 }
 
-                string tempDoc = Path.Combine(Path.GetTempPath(), "VBTM_Tpl_" + Guid.NewGuid().ToString("N") + ".doc");
+                string tplDir = Path.Combine(Path.GetTempPath(), "VBTM_Templates");
+                Directory.CreateDirectory(tplDir);
+                string tempDoc = Path.Combine(tplDir, "VBTM_Mau_" + (tplIdx + 1) + "_" + DateTime.Now.ToString("HHmmssfff") + ".doc");
                 WriteWordDocFile(tempDoc);
 
-                object wordApp = Marshal.GetActiveObject("Word.Application");
-                object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
-                object rng = doc.GetType().InvokeMember("Range", BindingFlags.InvokeMethod, null, doc, new object[] { 0, 0 });
-                rng.GetType().InvokeMember("InsertFile", BindingFlags.InvokeMethod, null, rng, new object[] { tempDoc });
-                try { File.Delete(tempDoc); } catch { }
+                object wordApp = null;
+                try { wordApp = Marshal.GetActiveObject("Word.Application"); } catch { }
+                if (wordApp == null)
+                {
+                    Process.Start(tempDoc);
+                    return;
+                }
+
+                bool inserted = false;
+                try
+                {
+                    object docs = wordApp.GetType().InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
+                    int docCnt = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
+                    if (docCnt == 0)
+                    {
+                        docs.GetType().InvokeMember("Open", BindingFlags.InvokeMethod, null, docs, new object[] { tempDoc });
+                        inserted = true;
+                    }
+                    else
+                    {
+                        object sel = wordApp.GetType().InvokeMember("Selection", BindingFlags.GetProperty, null, wordApp, null);
+                        sel.GetType().InvokeMember("InsertFile", BindingFlags.InvokeMethod, null, sel, new object[] { tempDoc });
+                        inserted = true;
+                        try { File.Delete(tempDoc); } catch { }
+                    }
+                }
+                catch
+                {
+                    try
+                    {
+                        object docs = wordApp.GetType().InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
+                        docs.GetType().InvokeMember("Open", BindingFlags.InvokeMethod, null, docs, new object[] { tempDoc });
+                        inserted = true;
+                    }
+                    catch { }
+                }
+
+                if (!inserted)
+                {
+                    Process.Start(tempDoc);
+                }
             }
             catch (Exception ex)
             {
@@ -3241,15 +3331,15 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
 <body><div class='Section1'>
 <table><tr>
 <td style='width:" + (isDang ? "49%" : "42%") + @";text-align:center;'>
-  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + ";white-space:nowrap;'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
-  <div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + @";font-weight:bold;white-space:nowrap;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
+  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? (txtGovOrg.Text.Trim().Length > 24 ? "12pt;letter-spacing:-0.35pt" : "13.5pt") : "12.5pt") + ";'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
+  <div style='font-size:" + (isDang ? (txtIssueOrg.Text.Trim().Length > 24 ? "12pt;letter-spacing:-0.35pt" : "13.5pt") : "12.5pt") + @";font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
   " + leftSepHtml + @"
   <div style='font-size:" + (isDang ? "14pt" : "13pt") + @";margin-top:4pt;'>" + System.Security.SecurityElement.Escape(numberLabel) + @"</div>
   " + congVanSubjLeftHtml + @"
 </td>
 <td style='width:" + (isDang ? "51%" : "58%") + @";text-align:center;'>
   " + rightHeaderHtml + @"
-  <div style='font-size:" + (isDang ? "13.5pt" : "13.5pt") + @";font-style:italic;margin-top:4pt;white-space:nowrap;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
+  <div style='font-size:" + (txtLocation.Text.Trim().Length > 34 ? "12pt;letter-spacing:-0.35pt" : "13.5pt") + @";font-style:italic;margin-top:4pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
 </td>
 </tr></table>
 " + centerTitleBlockHtml + @"
