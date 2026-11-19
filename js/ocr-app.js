@@ -796,8 +796,8 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport, pa
       const verticalGap = prevLn.y - nxtLn.y;
       const prevEndedStop = /[.:;!?]$|\.\s*\/\.\s*$/.test(mergedText);
       const prevIsHeading = /^([IVXLCDM]+\.|PHẦN\s+[IVX0-9]+|CHƯƠNG\s+[IVX0-9]+|\d+\.\s+[A-ZĐÀ-Ỹ][^.:;!?]{1,50}$|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN PHƯỜNG QUYẾT ĐỊNH)/i.test(mergedText);
-      const nextStartsNewBlock = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVXLCDM]+\.|Điều\s+\d+|Khoản\s+\d+|Phần\s+[IVX0-9]+|Chương\s+[IVX0-9]+|Căn cứ\b|Xét\b|Theo đề nghị\b|Thực hiện\b|Kính gửi\b|Hôm nay\b|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN)/i.test(nxtTxt);
       const nextStartsLowercase = /^[a-zàáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/.test(nxtTxt);
+      const nextStartsNewBlock = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVXLCDM]+\.|Điều\s+\d+|Khoản\s+\d+|Phần\s+[IVX0-9]+|Chương\s+[IVX0-9]+|Căn cứ\b|Xét\b|Theo đề nghị\b|Thực hiện\b|Kính gửi\b|Hôm nay\b|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY PHƯỜNG QUYẾT ĐỊNH|ỦY BAN NHÂN DÂN)/.test(nxtTxt);
       const nextIsIndentedNewPara = !nextStartsLowercase && (nxtLn.x > minBodyX + 18) && (prevLn.endX < maxBodyX - 45 || prevEndedStop);
       const normalLineSpacing = verticalGap > 0 && verticalGap <= prevLn.fontSize * 2.55;
 
