@@ -1144,48 +1144,52 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl.Cell(1, 4).Range.Text = " + VbaStr("Ghi chú"));
             sb.AppendLine("End Sub");
             sb.AppendLine("");
-            // 15. Chèn Dấu Độ Khẩn / Độ Mật chuẩn văn thư: chữ đỏ đậm + khung viền đỏ 1.5pt đặt đúng dưới dòng Số ký hiệu (cột trái đầu trang 1)
+            // 15. Chèn Dấu Độ Khẩn / Độ Mật dạng khung nổi (TextBox Shape) di chuyển tự do bằng chuột + chọn nhanh 3 vị trí chuẩn
             sb.AppendLine("Sub ChenDoKhanMat_Word(Optional ByVal lvIdx As String = \"1\")");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
-            sb.AppendLine("    Dim lv As String");
-            sb.AppendLine("    Select Case lvIdx");
-            sb.AppendLine("        Case \"2\": lv = " + VbaStr("THƯỢNG KHẨN"));
-            sb.AppendLine("        Case \"3\": lv = " + VbaStr("HỎA TỐC"));
-            sb.AppendLine("        Case \"4\": lv = " + VbaStr("HỎA TỐC HẸN GIỜ"));
-            sb.AppendLine("        Case \"5\": lv = " + VbaStr("MẬT"));
-            sb.AppendLine("        Case \"6\": lv = " + VbaStr("TỐI MẬT"));
-            sb.AppendLine("        Case \"7\": lv = " + VbaStr("TUYỆT MẬT"));
-            sb.AppendLine("        Case Else: lv = " + VbaStr("KHẨN"));
-            sb.AppendLine("    End Select");
-            sb.AppendLine("    Dim targetRng As Range");
-            sb.AppendLine("    If ActiveDocument.Tables.Count >= 1 Then");
-            sb.AppendLine("        If ActiveDocument.Tables(1).Columns.Count >= 2 Then");
-            sb.AppendLine("            Set targetRng = ActiveDocument.Tables(1).Cell(1, 1).Range");
-            sb.AppendLine("            targetRng.End = targetRng.End - 1");
-            sb.AppendLine("            targetRng.Collapse 0");
-            sb.AppendLine("            targetRng.InsertAfter vbCr & lv");
-            sb.AppendLine("            Dim pStamp As Paragraph: Set pStamp = ActiveDocument.Tables(1).Cell(1, 1).Range.Paragraphs(ActiveDocument.Tables(1).Cell(1, 1).Range.Paragraphs.Count)");
-            sb.AppendLine("            pStamp.Range.Font.Name = \"Times New Roman\": pStamp.Range.Font.Size = 13: pStamp.Range.Font.Bold = True: pStamp.Range.Font.Color = RGB(204, 0, 0)");
-            sb.AppendLine("            pStamp.Alignment = 1: pStamp.Format.SpaceBefore = 4: pStamp.Format.SpaceAfter = 2: pStamp.Format.FirstLineIndent = 0");
-            sb.AppendLine("            pStamp.Format.LeftIndent = CentimetersToPoints(1.6): pStamp.Format.RightIndent = CentimetersToPoints(1.6)");
-            sb.AppendLine("            Dim bi As Integer");
-            sb.AppendLine("            For bi = -1 To -4 Step -1");
-            sb.AppendLine("                pStamp.Borders(bi).LineStyle = 1: pStamp.Borders(bi).LineWidth = 12: pStamp.Borders(bi).Color = RGB(204, 0, 0)");
-            sb.AppendLine("            Next bi");
-            sb.AppendLine("            Exit Sub");
+            sb.AppendLine("    If Left(lvIdx, 3) = \"pos\" Then");
+            sb.AppendLine("        If Selection.ShapeRange.Count >= 1 Then");
+            sb.AppendLine("            Dim sMove As Shape: Set sMove = Selection.ShapeRange(1)");
+            sb.AppendLine("            sMove.RelativeHorizontalPosition = 1: sMove.RelativeVerticalPosition = 1");
+            sb.AppendLine("            If lvIdx = \"pos1\" Then sMove.Left = CentimetersToPoints(3.0): sMove.Top = CentimetersToPoints(1.0)");
+            sb.AppendLine("            If lvIdx = \"pos2\" Then sMove.Left = CentimetersToPoints(4.2): sMove.Top = CentimetersToPoints(4.8)");
+            sb.AppendLine("            If lvIdx = \"pos3\" Then sMove.Left = CentimetersToPoints(14.5): sMove.Top = CentimetersToPoints(1.0)");
+            sb.AppendLine("        Else");
+            sb.AppendLine("            ShowUnicodeMsg " + VbaStr("Hãy bấm chọn khung dấu KHẨN / MẬT trước khi đổi vị trí, hoặc nắm trực tiếp viền khung kéo bằng chuột!") + "");
             sb.AppendLine("        End If");
+            sb.AppendLine("        Exit Sub");
             sb.AppendLine("    End If");
-            sb.AppendLine("    Set targetRng = ActiveDocument.Range(0, 0)");
-            sb.AppendLine("    targetRng.InsertBefore lv & vbCr");
-            sb.AppendLine("    Dim pTopS As Paragraph: Set pTopS = ActiveDocument.Paragraphs(1)");
-            sb.AppendLine("    pTopS.Range.Font.Name = \"Times New Roman\": pTopS.Range.Font.Size = 13: pTopS.Range.Font.Bold = True: pTopS.Range.Font.Color = RGB(204, 0, 0)");
-            sb.AppendLine("    pTopS.Alignment = 0: pTopS.Format.SpaceBefore = 2: pTopS.Format.SpaceAfter = 4: pTopS.Format.FirstLineIndent = 0");
-            sb.AppendLine("    pTopS.Format.RightIndent = CentimetersToPoints(11.5)");
-            sb.AppendLine("    Dim bj As Integer");
-            sb.AppendLine("    For bj = -1 To -4 Step -1");
-            sb.AppendLine("        pTopS.Borders(bj).LineStyle = 1: pTopS.Borders(bj).LineWidth = 12: pTopS.Borders(bj).Color = RGB(204, 0, 0)");
-            sb.AppendLine("    Next bj");
+            sb.AppendLine("    Dim lv As String, boxW As Single, defTop As Single");
+            sb.AppendLine("    boxW = 3.2: defTop = 4.8");
+            sb.AppendLine("    Select Case lvIdx");
+            sb.AppendLine("        Case \"2\": lv = " + VbaStr("THƯỢNG KHẨN") + ": boxW = 4.8");
+            sb.AppendLine("        Case \"3\": lv = " + VbaStr("HỎA TỐC") + ": boxW = 3.6");
+            sb.AppendLine("        Case \"4\": lv = " + VbaStr("HỎA TỐC HẸN GIỜ") + ": boxW = 5.6");
+            sb.AppendLine("        Case \"5\": lv = " + VbaStr("MẬT") + ": boxW = 2.6: defTop = 1.0");
+            sb.AppendLine("        Case \"6\": lv = " + VbaStr("TỐI MẬT") + ": boxW = 3.4: defTop = 1.0");
+            sb.AppendLine("        Case \"7\": lv = " + VbaStr("TUYỆT MẬT") + ": boxW = 4.0: defTop = 1.0");
+            sb.AppendLine("        Case Else: lv = " + VbaStr("KHẨN") + ": boxW = 2.8");
+            sb.AppendLine("    End Select");
+            sb.AppendLine("    Dim shp As Shape");
+            sb.AppendLine("    Set shp = ActiveDocument.Shapes.AddTextbox(1, CentimetersToPoints(4.0), CentimetersToPoints(defTop), CentimetersToPoints(boxW), CentimetersToPoints(0.85))");
+            sb.AppendLine("    shp.RelativeHorizontalPosition = 1");
+            sb.AppendLine("    shp.RelativeVerticalPosition = 1");
+            sb.AppendLine("    shp.Left = CentimetersToPoints(4.0)");
+            sb.AppendLine("    shp.Top = CentimetersToPoints(defTop)");
+            sb.AppendLine("    shp.WrapFormat.Type = 3");
+            sb.AppendLine("    shp.Fill.Visible = 0");
+            sb.AppendLine("    shp.Line.Visible = -1");
+            sb.AppendLine("    shp.Line.ForeColor.RGB = RGB(204, 0, 0)");
+            sb.AppendLine("    shp.Line.Weight = 1.5");
+            sb.AppendLine("    shp.TextFrame.MarginLeft = 2: shp.TextFrame.MarginRight = 2: shp.TextFrame.MarginTop = 2: shp.TextFrame.MarginBottom = 2");
+            sb.AppendLine("    shp.TextFrame.VerticalAnchor = 3");
+            sb.AppendLine("    With shp.TextFrame.TextRange");
+            sb.AppendLine("        .Text = lv");
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 13: .Font.Bold = True: .Font.Color = RGB(204, 0, 0)");
+            sb.AppendLine("        .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceBefore = 0: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("    End With");
+            sb.AppendLine("    shp.Select");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
             // 16. Xuất Nhanh PDF Chuẩn In / Ký Số (1-Click)
@@ -1371,6 +1375,10 @@ namespace VBTMProSuite
                 "<button id=\"btnKm5\" label=\"MẬT\" tag=\"5\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm6\" label=\"TỐI MẬT\" tag=\"6\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm7\" label=\"TUYỆT MẬT\" tag=\"7\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<menuSeparator id=\"sepPos\" title=\"III. Đặt Vị Trí Khung (Hoặc Kéo Chuột Tự Do)\"/>" +
+                "<button id=\"btnKmPos1\" label=\"↖ Đặt Góc Trên Trái Trang\" tag=\"pos1\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<button id=\"btnKmPos2\" label=\"↙ Đặt Dưới Số Ký Hiệu\" tag=\"pos2\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<button id=\"btnKmPos3\" label=\"↗ Đặt Góc Trên Phải Trang\" tag=\"pos3\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "</menu>" +
                 "<button id=\"btnVbtmPdf\" label=\"Xuất PDF Ký Số (1-Click)\" size=\"normal\" imageMso=\"FileSaveAsPdfOrXps\" onAction=\"Ribbon_XuatPDFNhanh\" supertip=\"Xuất ngay tài liệu Word đang mở sang file PDF chuẩn A4 để in ấn hoặc trình ký số.\"/>" +
                 "<button id=\"btnVbtmStat\" label=\"Thống Kê Trang &amp; Từ\" size=\"normal\" imageMso=\"WordCount\" onAction=\"Ribbon_ThongKeVanBan\" supertip=\"Thống kê nhanh số trang A4, số từ, số ký tự và thời gian đọc của báo cáo.\"/>" +
