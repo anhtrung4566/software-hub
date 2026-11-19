@@ -35,16 +35,26 @@ namespace VBTMProSuite
             bool uninstallMode = false;
             bool unitSettingsMode = false;
             bool wordSpellCheckMode = false;
-            foreach (string a in args)
+            bool aiWordMode = false;
+            bool spellWordMode = false;
+            int insertTplIdx = -1;
+            for (int idx = 0; idx < args.Length; idx++)
             {
+                string a = args[idx];
                 if (a.Equals("--app", StringComparison.OrdinalIgnoreCase))
                     launchAppDirectly = true;
-                if (a.Equals("--uninstall", StringComparison.OrdinalIgnoreCase))
+                else if (a.Equals("--uninstall", StringComparison.OrdinalIgnoreCase))
                     uninstallMode = true;
-                if (a.Equals("--unit-settings", StringComparison.OrdinalIgnoreCase))
+                else if (a.Equals("--unit-settings", StringComparison.OrdinalIgnoreCase))
                     unitSettingsMode = true;
-                if (a.Equals("--word-spellcheck", StringComparison.OrdinalIgnoreCase))
+                else if (a.Equals("--word-spellcheck", StringComparison.OrdinalIgnoreCase))
                     wordSpellCheckMode = true;
+                else if (a.Equals("--ai-word", StringComparison.OrdinalIgnoreCase))
+                    aiWordMode = true;
+                else if (a.Equals("--spell-word", StringComparison.OrdinalIgnoreCase))
+                    spellWordMode = true;
+                else if (a.Equals("--insert-tpl", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
+                    int.TryParse(args[++idx], out insertTplIdx);
             }
 
             if (uninstallMode)
@@ -55,6 +65,24 @@ namespace VBTMProSuite
             if (unitSettingsMode)
             {
                 Application.Run(new UnitSettingsForm());
+                return;
+            }
+            if (aiWordMode)
+            {
+                Application.Run(new AiWordAssistantForm());
+                return;
+            }
+            if (spellWordMode)
+            {
+                Application.Run(new WordSpellInspectorForm());
+                return;
+            }
+            if (insertTplIdx >= 0)
+            {
+                using (MainStudioForm f = new MainStudioForm())
+                {
+                    f.InsertTemplateIntoActiveWord(insertTplIdx);
+                }
                 return;
             }
             if (wordSpellCheckMode)
@@ -471,7 +499,21 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_NoiDongPDF(ByVal control As Object): NoiDongPDFBiNgat_Word: End Sub");
             sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
-            sb.AppendLine("Sub Ribbon_AISoanThao(ByVal control As Object): AISoanThao_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_AISoanThao(ByVal control As Object)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --ai-word\", vbNormalFocus Else AISoanThao_Word");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("Sub Ribbon_RaSoatChinhTaAI(ByVal control As Object)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --spell-word\", vbNormalFocus Else SuaChinhTaVaDauCau_Word");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("Sub Ribbon_InsertTpl(ByVal control As Object)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --insert-tpl \" & control.Tag, vbNormalFocus Else ChenMauVanBan_Dang05");
+            sb.AppendLine("End Sub");
             sb.AppendLine("Sub Ribbon_ChinhDangNhanh(ByVal control As Object): ChinhTheThucDangNhanh_Word: End Sub");
             sb.AppendLine("Sub Ribbon_CaiDatDonVi(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
@@ -714,8 +756,8 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl1.AllowAutoFit = False");
             sb.AppendLine("    tbl1.PreferredWidthType = 2: tbl1.PreferredWidth = 100");
             sb.AppendLine("    tbl1.LeftPadding = 0: tbl1.RightPadding = 0: tbl1.TopPadding = 0: tbl1.BottomPadding = 0");
-            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 44");
-            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 56");
+            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 47");
+            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 53");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
             sb.AppendLine("        .Text = pGov & vbCr & pIss & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
@@ -729,9 +771,10 @@ namespace VBTMProSuite
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 6");
             sb.AppendLine("    End With");
             sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
-            sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("BÁO CÁO") + " & vbCr & " + VbaStr("Tổng kết công tác xây dựng Đảng năm 2026") + " & vbCr & " + VbaStr("Thực hiện Chương trình công tác năm 2026, Đảng ủy phường báo cáo kết quả thực hiện như sau:./.") + " & vbCr");
-            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Size = 15: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Bold = True");
-            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Bold = True");
+            sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("BÁO CÁO") + " & vbCr & " + VbaStr("Tổng kết công tác xây dựng Đảng năm 2026") + " & vbCr & " + VbaStr("──────────────") + " & vbCr & " + VbaStr("Thực hiện Chương trình công tác năm 2026, Đảng ủy phường báo cáo kết quả thực hiện như sau:./.") + " & vbCr");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).Range.Font.Size = 15: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).Range.Font.Bold = True: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).FirstLineIndent = 0: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).SpaceAfter = 2");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Bold = True: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).FirstLineIndent = 0: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).SpaceAfter = 2");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Size = 10: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Bold = False: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).FirstLineIndent = 0: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).SpaceAfter = 10");
             sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Alignment = 3: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).FirstLineIndent = CentimetersToPoints(1.27): ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).SpaceAfter = 6");
             sb.AppendLine("    Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
             sb.AppendLine("    Set tbl2 = ActiveDocument.Tables.Add(pEnd, 1, 2)");
@@ -1010,11 +1053,29 @@ namespace VBTMProSuite
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
                 "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 2.5 (05-HD &amp; ND30)\">" +
-                "<group id=\"grpVbtmTemplates\" label=\"1. AI &amp; Cài Đặt Tiêu Ngữ Đơn Vị\">" +
-                "<button id=\"btnVbtmAiDraft\" label=\"AI Soạn Thảo Văn Bản\" size=\"large\" imageMso=\"SmartArtInsert\" onAction=\"Ribbon_AISoanThao\" supertip=\"Trợ lý AI tự động soạn thảo văn bản Đảng (05-HD/VPTW) hoặc UBND (NĐ 30) theo yêu cầu của bạn.\"/>" +
-                "<button id=\"btnVbtmTplDang\" label=\"Chèn Mẫu Đảng (05-HD)\" size=\"large\" imageMso=\"FileNewBlogPost\" onAction=\"Ribbon_ChenMauDang05\" supertip=\"Chèn trực tiếp khung văn bản Đảng ủy / Chi bộ chuẩn Hướng dẫn số 05-HD/VPTW theo tên đơn vị đã cài đặt.\"/>" +
-                "<button id=\"btnVbtmTplUbnd\" label=\"Chèn Mẫu UBND (NĐ 30)\" size=\"large\" imageMso=\"FileCreateDocumentWorkspace\" onAction=\"Ribbon_ChenMauUBND30\" supertip=\"Chèn trực tiếp khung văn bản UBND Phường chuẩn Nghị định số 30/2020/NĐ-CP theo tên đơn vị đã cài đặt.\"/>" +
-                "<button id=\"btnVbtmUnitCfg\" label=\"Cài Đặt Tiêu Ngữ Đơn Vị\" size=\"large\" imageMso=\"FileDocumentManagementInformation\" onAction=\"Ribbon_CaiDatDonVi\" supertip=\"Thiết lập tên Đảng ủy, Chi bộ, UBND Phường, Địa danh và Người ký mặc định cho các mẫu văn bản.\"/>" +
+                "<group id=\"grpVbtmTemplates\" label=\"1. AI &amp; 16 Mẫu Văn Bản\">" +
+                "<button id=\"btnVbtmAiDraft\" label=\"AI Soạn Thảo &amp; Văn Phong\" size=\"large\" imageMso=\"SmartArtInsert\" onAction=\"Ribbon_AISoanThao\" supertip=\"Trợ lý AI tự động soạn thảo văn bản Đảng (05-HD/VPTW) hoặc UBND (NĐ 30) &amp; nâng cấp văn phong trực tiếp vào Word.\"/>" +
+                "<menu id=\"mnuVbtm16\" label=\"16 Mẫu Chuẩn (Đảng &amp; UBND)\" size=\"large\" imageMso=\"FileNewBlogPost\">" +
+                "<menuSeparator id=\"sepUbnd\" title=\"I. Khối HĐND &amp; UBND Phường (Nghị định 30/2020/NĐ-CP)\"/>" +
+                "<button id=\"btnTpl0\" label=\"1. Công văn UBND Phường\" tag=\"0\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl1\" label=\"2. Báo cáo UBND Phường\" tag=\"1\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl2\" label=\"3. Quyết định (cá biệt) UBND\" tag=\"2\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl3\" label=\"4. Quyết định (Quy chế) UBND\" tag=\"3\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl4\" label=\"5. Kế hoạch UBND Phường\" tag=\"4\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl5\" label=\"6. Tờ trình UBND Phường\" tag=\"5\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl6\" label=\"7. Thông báo UBND Phường\" tag=\"6\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl7\" label=\"8. Nghị quyết HĐND Phường\" tag=\"7\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl8\" label=\"9. Biên bản họp UBND Phường\" tag=\"8\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl9\" label=\"10. Giấy mời họp UBND Phường\" tag=\"9\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<menuSeparator id=\"sepDang\" title=\"II. Khối Đảng Ủy &amp; Chi Bộ (Hướng dẫn 05-HD/VPTW)\"/>" +
+                "<button id=\"btnTpl10\" label=\"11. Công văn Đảng ủy Phường\" tag=\"10\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl11\" label=\"12. Báo cáo Đảng ủy Phường\" tag=\"11\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl12\" label=\"13. Nghị quyết Đảng ủy / Chi bộ\" tag=\"12\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl13\" label=\"14. Kế hoạch Đảng ủy Phường\" tag=\"13\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl14\" label=\"15. Chương trình công tác Đảng ủy\" tag=\"14\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "<button id=\"btnTpl15\" label=\"16. Quyết định Đảng ủy Phường\" tag=\"15\" onAction=\"Ribbon_InsertTpl\"/>" +
+                "</menu>" +
+                "<button id=\"btnVbtmUnitCfg\" label=\"Cài Đặt Tiêu Ngữ Đơn Vị\" size=\"large\" imageMso=\"FileDocumentManagementInformation\" onAction=\"Ribbon_CaiDatDonVi\" supertip=\"Thiết lập tên Đảng ủy, Chi bộ, UBND Phường, Tiêu ngữ, Địa danh và Người ký mặc định.\"/>" +
                 "</group>" +
                 "<group id=\"grpVbtmFormat\" label=\"2. Chỉnh Thể Thức Nhanh\">" +
                 "<button id=\"btnVbtmDangFast\" label=\"Chỉnh Thể Thức Đảng Nhanh (05-HD)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\" supertip=\"1 Bấm chỉnh toàn bộ văn bản Word đang mở đúng chuẩn Hướng dẫn số 05-HD/VPTW và sửa lỗi chính tả.\"/>" +
@@ -1022,9 +1083,10 @@ namespace VBTMProSuite
                 "<button id=\"btnVbtmTieuNgu\" label=\"Tự Động Hóa Tiêu Ngữ\" size=\"normal\" imageMso=\"HeaderFooterInsert\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
                 "<button id=\"btnVbtmNd30\" label=\"Chuẩn NĐ 30/2020\" size=\"normal\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\"/>" +
                 "</group>" +
-                "<group id=\"grpVbtmTools\" label=\"3. Sửa Lỗi &amp; Trình Bày Nhanh\">" +
-                "<button id=\"btnVbtmSpell\" label=\"Sửa Chính Tả &amp; Dấu Câu\" size=\"large\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_SuaChinhTa\" supertip=\"Tự động sửa lỗi chính tả phổ biến, xóa khoảng trắng thừa trước dấu câu trực tiếp trong Word.\"/>" +
-                "<button id=\"btnVbtmMergePdf\" label=\"Nối Dòng PDF Bị Ngắt\" size=\"large\" imageMso=\"WrapText\" onAction=\"Ribbon_NoiDongPDF\" supertip=\"Ghép các dòng bị ngắt khi copy/mở từ PDF sang Word thành đoạn văn hoàn chỉnh.\"/>" +
+                "<group id=\"grpVbtmTools\" label=\"3. Chính Tả AI &amp; Trình Bày\">" +
+                "<button id=\"btnVbtmSpellAI\" label=\"Rà Soát &amp; Sửa Chính Tả AI\" size=\"large\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_RaSoatChinhTaAI\" supertip=\"Mở bảng Thẩm Định Chính Tả &amp; Thể Thức AI quét trực tiếp tài liệu Word đang mở và tự động sửa hết lỗi.\"/>" +
+                "<button id=\"btnVbtmSpell\" label=\"Sửa Lỗi Tự Động (1-Click)\" size=\"normal\" imageMso=\"AcceptChanges\" onAction=\"Ribbon_SuaChinhTa\"/>" +
+                "<button id=\"btnVbtmMergePdf\" label=\"Nối Dòng PDF Bị Ngắt\" size=\"normal\" imageMso=\"WrapText\" onAction=\"Ribbon_NoiDongPDF\"/>" +
                 "<button id=\"btnVbtmMargins\" label=\"Căn Lề A4 (30-15-20-20)\" size=\"normal\" imageMso=\"PageMarginsGallery\" onAction=\"Ribbon_CanLeA4\"/>" +
                 "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang (Từ Tr.2)\" size=\"normal\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\"/>" +
                 "</group>" +
@@ -1163,6 +1225,286 @@ namespace VBTMProSuite
             string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM");
             Directory.CreateDirectory(dir);
             File.WriteAllLines(Path.Combine(dir, "word_unit_config.ini"), vals, Encoding.Unicode);
+        }
+    }
+
+    public class AiWordAssistantForm : Form
+    {
+        private TextBox txtPrompt;
+        private Button btnDraft, btnUpgrade;
+
+        public AiWordAssistantForm()
+        {
+            this.Text = "Trợ Lý AI Soạn Thảo & Văn Phong Trực Tiếp Vào Word - VBTM Pro 2.5.0";
+            this.ClientSize = new Size(640, 290);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(95, 10, 14);
+            this.ForeColor = Color.White;
+            this.Font = new Font("Segoe UI", 9.5f);
+
+            Label lbl = new Label
+            {
+                Text = "🤖 Nhập yêu cầu để AI tự động soạn văn bản (05-HD/VPTW hoặc NĐ 30) & chèn thẳng vào Word:",
+                Location = new Point(20, 18),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(250, 204, 21),
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
+            };
+            this.Controls.Add(lbl);
+
+            txtPrompt = new TextBox
+            {
+                Location = new Point(20, 48),
+                Size = new Size(600, 74),
+                Multiline = true,
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.White,
+                Text = "Soạn báo cáo kết quả công tác xây dựng Đảng tháng 11 năm 2026 của Đảng ủy phường"
+            };
+            this.Controls.Add(txtPrompt);
+
+            string[] samples = new string[] {
+                "Báo cáo Đảng ủy", "Nghị quyết Đảng ủy", "Công văn UBND", "Kế hoạch UBND"
+            };
+            string[] fullPrompts = new string[] {
+                "Soạn báo cáo kết quả công tác xây dựng Đảng tháng 11 năm 2026 của Đảng ủy phường",
+                "Soạn nghị quyết Đảng ủy phường về đẩy mạnh chuyển đổi số và cải cách hành chính",
+                "Soạn công văn UBND phường về tăng cường kiểm tra trật tự đô thị và vệ sinh môi trường",
+                "Soạn kế hoạch UBND phường tổ chức kiểm tra an toàn phòng cháy chữa cháy trên địa bàn"
+            };
+            for (int i = 0; i < 4; i++)
+            {
+                int idx = i;
+                Button b = new Button
+                {
+                    Text = samples[i],
+                    Location = new Point(20 + i * 152, 134),
+                    Size = new Size(144, 30),
+                    BackColor = Color.FromArgb(127, 29, 29),
+                    ForeColor = Color.FromArgb(254, 240, 138),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand
+                };
+                b.Click += (s, e) => { txtPrompt.Text = fullPrompts[idx]; };
+                this.Controls.Add(b);
+            }
+
+            btnDraft = new Button
+            {
+                Text = "🤖 AI Soạn & Chèn Thẳng Vào Word",
+                Location = new Point(20, 186),
+                Size = new Size(290, 44),
+                BackColor = Color.FromArgb(234, 179, 8),
+                ForeColor = Color.FromArgb(69, 10, 10),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnDraft.FlatAppearance.BorderSize = 0;
+            btnDraft.Click += (s, e) => DraftIntoActiveWord();
+            this.Controls.Add(btnDraft);
+
+            btnUpgrade = new Button
+            {
+                Text = "✨ AI Nâng Cấp Văn Phong Word Đang Mở",
+                Location = new Point(325, 186),
+                Size = new Size(295, 44),
+                BackColor = Color.FromArgb(185, 28, 28),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnUpgrade.FlatAppearance.BorderSize = 0;
+            btnUpgrade.Click += (s, e) => UpgradeActiveWordStyle();
+            this.Controls.Add(btnUpgrade);
+
+            Label note = new Label
+            {
+                Text = "Lưu ý: Văn bản chèn vào Word sẽ tự động dùng Tiêu ngữ đơn vị bạn đã cài đặt, cỡ chữ 14pt và gạch ngang dưới trích yếu.",
+                Location = new Point(20, 246),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(254, 249, 195),
+                Font = new Font("Segoe UI", 8.5f)
+            };
+            this.Controls.Add(note);
+        }
+
+        private void DraftIntoActiveWord()
+        {
+            string p = txtPrompt.Text.Trim();
+            if (string.IsNullOrEmpty(p)) return;
+            string low = p.ToLowerInvariant();
+            bool isParty = low.Contains("đảng") || low.Contains("chi bộ") || low.Contains("bí thư");
+            int tplIdx = isParty ? 11 : 0;
+            if (low.Contains("nghị quyết")) tplIdx = isParty ? 12 : 7;
+            else if (low.Contains("quyết định")) tplIdx = isParty ? 15 : 2;
+            else if (low.Contains("kế hoạch")) tplIdx = isParty ? 13 : 4;
+            else if (low.Contains("công văn")) tplIdx = isParty ? 10 : 0;
+            else if (low.Contains("báo cáo")) tplIdx = isParty ? 11 : 1;
+
+            using (MainStudioForm f = new MainStudioForm())
+            {
+                f.InsertTemplateIntoActiveWord(tplIdx, p);
+            }
+            this.Close();
+        }
+
+        private void UpgradeActiveWordStyle()
+        {
+            try
+            {
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
+                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                object find = content.GetType().InvokeMember("Find", BindingFlags.GetProperty, null, content, null);
+                string[,] reps = new string[,] {
+                    { "làm gấp", "khẩn trương triển khai thực hiện" },
+                    { "báo lại", "báo cáo kết quả về" },
+                    { "mọi người", "các đồng chí và cán bộ, công chức" },
+                    { "cần phải", "đề nghị tập trung" },
+                    { "công việc", "nhiệm vụ được giao" },
+                    { "làm xong", "hoàn thành" }
+                };
+                for (int i = 0; i < reps.GetLength(0); i++)
+                {
+                    find.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, find, null);
+                    find.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, find, new object[] { reps[i, 0] });
+                    object rep = find.GetType().InvokeMember("Replacement", BindingFlags.GetProperty, null, find, null);
+                    rep.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, rep, null);
+                    rep.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, rep, new object[] { reps[i, 1] });
+                    find.GetType().InvokeMember("Execute", BindingFlags.InvokeMethod, null, find, new object[] {
+                        Type.Missing, false, false, false, false, false, true, 1, false, Type.Missing, 2
+                    });
+                }
+                using (MainStudioForm f = new MainStudioForm())
+                {
+                    f.FormatActiveWordDocument();
+                }
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Hãy mở sẵn tài liệu trong Microsoft Word trước khi nâng cấp văn phong!\n(" + ex.Message + ")", "VBTM Pro 2.5.0");
+            }
+        }
+    }
+
+    public class WordSpellInspectorForm : Form
+    {
+        private ListBox lstFindings;
+        private Label lblSummary;
+
+        public WordSpellInspectorForm()
+        {
+            this.Text = "Thẩm Định & Sửa Lỗi Chính Tả AI Trực Tiếp Trong Word - VBTM Pro 2.5.0";
+            this.ClientSize = new Size(660, 420);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(95, 10, 14);
+            this.ForeColor = Color.White;
+            this.Font = new Font("Segoe UI", 9.5f);
+
+            lblSummary = new Label
+            {
+                Text = "Đang quét tài liệu Microsoft Word đang mở...",
+                Location = new Point(18, 16),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(250, 204, 21),
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold)
+            };
+            this.Controls.Add(lblSummary);
+
+            lstFindings = new ListBox
+            {
+                Location = new Point(18, 48),
+                Size = new Size(624, 295),
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.FromArgb(254, 240, 138),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            this.Controls.Add(lstFindings);
+
+            Button btnRescan = new Button
+            {
+                Text = "🔍 Quét Lại Word",
+                Location = new Point(18, 360),
+                Size = new Size(165, 40),
+                BackColor = Color.FromArgb(127, 29, 29),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnRescan.Click += (s, e) => ScanOpenWordDocument();
+            this.Controls.Add(btnRescan);
+
+            Button btnFixAll = new Button
+            {
+                Text = "⚡ Tự Động Sửa Hết Lỗi & Chuẩn Hóa Trong Word",
+                Location = new Point(200, 360),
+                Size = new Size(442, 40),
+                BackColor = Color.FromArgb(234, 179, 8),
+                ForeColor = Color.FromArgb(69, 10, 10),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnFixAll.FlatAppearance.BorderSize = 0;
+            btnFixAll.Click += (s, e) =>
+            {
+                using (MainStudioForm f = new MainStudioForm())
+                {
+                    f.FormatActiveWordDocument();
+                }
+                ScanOpenWordDocument();
+            };
+            this.Controls.Add(btnFixAll);
+
+            this.Shown += (s, e) => ScanOpenWordDocument();
+        }
+
+        private void ScanOpenWordDocument()
+        {
+            lstFindings.Items.Clear();
+            try
+            {
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
+                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                string docText = Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "";
+
+                using (MainStudioForm helper = new MainStudioForm())
+                {
+                    int fixedDummy = 0;
+                    string fixedText = helper.FixAllVietnameseSpellingAndPunctuation(docText, out fixedDummy);
+                    if (fixedDummy > 0 || !string.Equals(docText.Trim(), fixedText.Trim(), StringComparison.Ordinal))
+                    {
+                        lstFindings.Items.Add("• Phát hiện " + Math.Max(1, fixedDummy) + " lỗi chính tả, khoảng trắng hoặc dấu câu cần sửa tự động.");
+                    }
+                }
+                if (Regex.IsMatch(docText, @"\s+[,.;:!?]"))
+                    lstFindings.Items.Add("• [Thể thức] Có khoảng trắng thừa trước dấu câu (, . ; : ! ?).");
+                if (Regex.IsMatch(docText, @"\bngày\s+[1-9]\s+tháng\b|\btháng\s+[12]\s+năm\b", RegexOptions.IgnoreCase))
+                    lstFindings.Items.Add("• [Thể thức] Ngày nhỏ hơn 10 hoặc tháng 1, 2 chưa có số 0 phía trước.");
+
+                if (lstFindings.Items.Count == 0)
+                {
+                    lblSummary.Text = "✓ Tài liệu Word đang mở đã đạt chuẩn 100% chính tả & thể thức!";
+                    lstFindings.Items.Add("✓ Không phát hiện lỗi chính tả hay lỗi dấu câu nào trong văn bản Word đang mở.");
+                }
+                else
+                {
+                    lblSummary.Text = "⚠ Phát hiện " + lstFindings.Items.Count + " nhóm lỗi cần sửa trong tài liệu Word:";
+                }
+            }
+            catch
+            {
+                lblSummary.Text = "⚠ Không tìm thấy cửa sổ Microsoft Word đang mở.";
+                lstFindings.Items.Add("Hãy mở một tài liệu trong Microsoft Word rồi nhấn 'Quét Lại Word'.");
+            }
         }
     }
 
@@ -1943,7 +2285,7 @@ namespace VBTMProSuite
             }
         }
 
-        private string FixAllVietnameseSpellingAndPunctuation(string rawInput, out int fixedCount)
+        public string FixAllVietnameseSpellingAndPunctuation(string rawInput, out int fixedCount)
         {
             string raw = rawInput ?? "";
             int count = 0;
@@ -2530,6 +2872,41 @@ namespace VBTMProSuite
             return sb.ToString();
         }
 
+        public void InsertTemplateIntoActiveWord(int tplIdx, string customTopic = "")
+        {
+            try
+            {
+                if (tplIdx >= 0 && tplIdx < cboTemplate.Items.Count)
+                {
+                    cboTemplate.SelectedIndex = tplIdx;
+                    LoadTemplate(tplIdx);
+                }
+                string[] cfg = UnitSettingsForm.LoadUnitConfig();
+                bool isDang = tplIdx >= 10;
+                txtGovOrg.Text = isDang ? cfg[0] : cfg[2];
+                txtIssueOrg.Text = isDang ? cfg[1] : cfg[3];
+                txtLocation.Text = cfg[4] + ", ngày " + DateTime.Now.ToString("dd") + " tháng " + (DateTime.Now.Month <= 2 ? "0" + DateTime.Now.Month : DateTime.Now.Month.ToString()) + " năm " + DateTime.Now.Year;
+                txtSignerName.Text = isDang ? cfg[5] : cfg[6];
+                if (!string.IsNullOrWhiteSpace(customTopic))
+                {
+                    txtSubject.Text = customTopic;
+                }
+
+                string tempDoc = Path.Combine(Path.GetTempPath(), "VBTM_Tpl_" + Guid.NewGuid().ToString("N") + ".doc");
+                WriteWordDocFile(tempDoc);
+
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
+                object rng = doc.GetType().InvokeMember("Range", BindingFlags.InvokeMethod, null, doc, new object[] { 0, 0 });
+                rng.GetType().InvokeMember("InsertFile", BindingFlags.InvokeMethod, null, rng, new object[] { tempDoc });
+                try { File.Delete(tempDoc); } catch { }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể chèn trực tiếp vào Word đang mở: " + ex.Message, "VBTM Pro 2.5.0");
+            }
+        }
+
         private void WriteWordDocFile(string filePath)
         {
             if (isPreservedPdfMode)
@@ -2639,8 +3016,8 @@ td p { margin:0; text-indent:0; }
                 centerTitleBlockHtml += "<p style='text-align:center;font-weight:bold;font-size:" + (isDang ? "15pt" : "14pt") + ";margin:14pt 0 4pt 0;'>" + System.Security.SecurityElement.Escape(docTypeStr) + "</p>";
                 if (!string.IsNullOrEmpty(docSubjStr))
                 {
-                    centerTitleBlockHtml += "<p style='text-align:center;font-weight:bold;font-size:14pt;margin:0 0 4pt 0;'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</p>" +
-                                            "<hr style='width:32%;border:0;border-top:1px solid #000;margin-bottom:12pt;'/>";
+                    centerTitleBlockHtml += "<p align='center' style='text-align:center;text-indent:0;font-weight:bold;font-size:14pt;margin:0 0 2pt 0;'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</p>" +
+                                            "<p align='center' style='text-align:center;text-indent:0;font-size:10pt;margin:0 0 10pt 0;line-height:1;'>──────────────</p>";
                 }
             }
             else
