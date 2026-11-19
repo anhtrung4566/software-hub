@@ -1928,7 +1928,7 @@ async function aiDraftDocumentFromPrompt() {
     try {
       if (window.showToast) window.showToast('Đang kết nối Gemini AI để soạn thảo văn bản...');
       const sysPrompt = `Bạn là chuyên gia văn thư Việt Nam. Hãy soạn thảo văn bản từ yêu cầu: "${promptText}". Trả về JSON thuần (không markdown) với các khóa: standard ("hd05" hoặc "nd30"), docType (in hoa, để rỗng nếu là công văn), docSubject, docBody (phân tách đoạn bằng \\n\\n, kết thúc bằng ./.), recipients (mỗi dòng 1 nơi nhận), signerTitle, signerName.`;
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: sysPrompt }] }] })
