@@ -521,6 +521,10 @@ namespace VBTMProSuite
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
             sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --spell-word\", vbNormalFocus Else SuaChinhTaVaDauCau_Word");
             sb.AppendLine("End Sub");
+            sb.AppendLine("Sub Ribbon_AiTomTatVanBan(ByVal control As Object): AiTomTatVanBan_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_ChuyenDoiDangHanhChinh(ByVal control As Object): ChuyenDoiDangHanhChinh_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_KiemDinhTheThuc(ByVal control As Object): KiemDinhTheThuc_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_ChenBangChuan(ByVal control As Object): ChenBangChuan_Word: End Sub");
             sb.AppendLine("Sub Ribbon_InsertTpl(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
@@ -617,8 +621,9 @@ namespace VBTMProSuite
             sb.AppendLine("                    p.FirstLineIndent = 0");
             sb.AppendLine("                    p.Format.SpaceAfter = 2");
             sb.AppendLine("                ElseIf Left(t, 3) = " + VbaStr("───") + " Or Left(t, 3) = \"---\" Then");
-            sb.AppendLine("                    p.Range.Font.Size = 10");
-            sb.AppendLine("                    p.Range.Font.Bold = False");
+            sb.AppendLine("                    p.Range.Text = \"-----\" & vbCr");
+            sb.AppendLine("                    p.Range.Font.Size = 14");
+            sb.AppendLine("                    p.Range.Font.Bold = True");
             sb.AppendLine("                    p.Alignment = 1");
             sb.AppendLine("                    p.FirstLineIndent = 0");
             sb.AppendLine("                    p.Format.SpaceAfter = 10");
@@ -657,22 +662,30 @@ namespace VBTMProSuite
             sb.AppendLine("            tblTop.AllowAutoFit = False");
             sb.AppendLine("            tblTop.PreferredWidthType = 2: tblTop.PreferredWidth = 100");
             sb.AppendLine("            tblTop.LeftPadding = 0: tblTop.RightPadding = 0: tblTop.TopPadding = 0: tblTop.BottomPadding = 0");
-            sb.AppendLine("            tblTop.Columns(1).PreferredWidthType = 2: tblTop.Columns(1).PreferredWidth = 47");
-            sb.AppendLine("            tblTop.Columns(2).PreferredWidthType = 2: tblTop.Columns(2).PreferredWidth = 53");
+            sb.AppendLine("            tblTop.Columns(1).PreferredWidthType = 2: tblTop.Columns(1).PreferredWidth = 49");
+            sb.AppendLine("            tblTop.Columns(2).PreferredWidthType = 2: tblTop.Columns(2).PreferredWidth = 51");
+            sb.AppendLine("            tblTop.Cell(1, 1).LeftPadding = 0: tblTop.Cell(1, 1).RightPadding = 0");
+            sb.AppendLine("            tblTop.Cell(1, 2).LeftPadding = 0: tblTop.Cell(1, 2).RightPadding = 0");
             sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Name = \"Times New Roman\"");
             sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Size = 14");
-            sb.AppendLine("            tblTop.Cell(1, 1).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 1).Range.ParagraphFormat.Alignment = 1");
+            sb.AppendLine("            tblTop.Cell(1, 1).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 1).Range.ParagraphFormat.Alignment = 1: tblTop.Cell(1, 1).Range.ParagraphFormat.SpaceAfter = 0");
+            sb.AppendLine("            Dim pL As Paragraph, tL As String");
+            sb.AppendLine("            For Each pL In tblTop.Cell(1, 1).Range.Paragraphs");
+            sb.AppendLine("                tL = Trim(Replace(Replace(pL.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
+            sb.AppendLine("                If Len(tL) > 26 Then pL.Range.Font.Scaling = 86 Else If Len(tL) > 21 Then pL.Range.Font.Scaling = 92 Else pL.Range.Font.Scaling = 100");
+            sb.AppendLine("            Next pL");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\"");
-            sb.AppendLine("            tblTop.Cell(1, 2).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 2).Range.ParagraphFormat.Alignment = 1");
+            sb.AppendLine("            tblTop.Cell(1, 2).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 2).Range.ParagraphFormat.Alignment = 1: tblTop.Cell(1, 2).Range.ParagraphFormat.SpaceAfter = 0");
             sb.AppendLine("            Dim pTop As Paragraph, tTop As String");
             sb.AppendLine("            For Each pTop In tblTop.Cell(1, 2).Range.Paragraphs");
             sb.AppendLine("                tTop = Trim(Replace(Replace(pTop.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
             sb.AppendLine("                If InStr(UCase(tTop), " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Then");
-            sb.AppendLine("                    pTop.Range.Font.Size = 15: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 0");
+            sb.AppendLine("                    pTop.Range.Font.Size = 14.5: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 1: pTop.Range.Font.Scaling = 98");
             sb.AppendLine("                ElseIf Left(tTop, 3) = " + VbaStr("───") + " Or Left(tTop, 3) = \"---\" Then");
-            sb.AppendLine("                    pTop.Range.Font.Size = 8: pTop.Range.Font.Bold = False: pTop.Range.Font.Underline = 0");
+            sb.AppendLine("                    pTop.Range.Delete");
             sb.AppendLine("                ElseIf InStr(LCase(tTop), " + VbaStr("ngày") + ") > 0 Then");
-            sb.AppendLine("                    pTop.Range.Font.Size = 14: pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Range.Font.Scaling = 95");
+            sb.AppendLine("                    pTop.Range.Font.Size = 14: pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Format.SpaceBefore = 2");
+            sb.AppendLine("                    If Len(tTop) > 32 Then pTop.Range.Font.Scaling = 88 Else If Len(tTop) > 26 Then pTop.Range.Font.Scaling = 93 Else pTop.Range.Font.Scaling = 100");
             sb.AppendLine("                End If");
             sb.AppendLine("            Next pTop");
             sb.AppendLine("        End If");
@@ -797,29 +810,31 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl1.AllowAutoFit = False");
             sb.AppendLine("    tbl1.PreferredWidthType = 2: tbl1.PreferredWidth = 100");
             sb.AppendLine("    tbl1.LeftPadding = 0: tbl1.RightPadding = 0: tbl1.TopPadding = 0: tbl1.BottomPadding = 0");
-            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 47");
-            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 53");
+            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 49");
+            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 51");
             sb.AppendLine("    tbl1.Cell(1, 1).LeftPadding = 0: tbl1.Cell(1, 1).RightPadding = 0");
             sb.AppendLine("    tbl1.Cell(1, 2).LeftPadding = 0: tbl1.Cell(1, 2).RightPadding = 0");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
             sb.AppendLine("        .Text = pGov & vbCr & pIss & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
-            sb.AppendLine("        .Paragraphs(1).Range.Font.Scaling = 95");
-            sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True: .Paragraphs(2).Range.Font.Scaling = 95");
+            sb.AppendLine("        If Len(pGov) > 26 Then .Paragraphs(1).Range.Font.Scaling = 86 Else If Len(pGov) > 21 Then .Paragraphs(1).Range.Font.Scaling = 92");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
+            sb.AppendLine("        If Len(pIss) > 26 Then .Paragraphs(2).Range.Font.Scaling = 86 Else If Len(pIss) > 21 Then .Paragraphs(2).Range.Font.Scaling = 92");
             sb.AppendLine("        .Paragraphs(3).Range.Font.Bold = True");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl1.Cell(1, 2).Range");
-            sb.AppendLine("        .Text = pMotto & vbCr & " + VbaStr("────────────────────────") + " & vbCr & loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
+            sb.AppendLine("        Dim dtStr As String: dtStr = loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
+            sb.AppendLine("        .Text = pMotto & vbCr & dtStr");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
-            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 15: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 0");
-            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 8: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 0: .Paragraphs(2).SpaceAfter = 4");
-            sb.AppendLine("        .Paragraphs(3).Range.Font.Size = 14: .Paragraphs(3).Range.Font.Italic = True: .Paragraphs(3).Range.Font.Bold = False: .Paragraphs(3).Range.Font.Scaling = 95");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 14.5: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 1: .Paragraphs(1).Range.Font.Scaling = 98");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 2");
+            sb.AppendLine("        If Len(dtStr) > 32 Then .Paragraphs(2).Range.Font.Scaling = 88 Else If Len(dtStr) > 26 Then .Paragraphs(2).Range.Font.Scaling = 93");
             sb.AppendLine("    End With");
             sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
-            sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("BÁO CÁO") + " & vbCr & " + VbaStr("Tổng kết công tác xây dựng Đảng năm 2026") + " & vbCr & " + VbaStr("──────────────") + " & vbCr & " + VbaStr("Thực hiện Chương trình công tác năm 2026, Đảng ủy phường báo cáo kết quả thực hiện như sau:./.") + " & vbCr");
+            sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("BÁO CÁO") + " & vbCr & " + VbaStr("Tổng kết công tác xây dựng Đảng năm 2026") + " & vbCr & \"-----\" & vbCr & " + VbaStr("Thực hiện Chương trình công tác năm 2026, Đảng ủy phường báo cáo kết quả thực hiện như sau:./.") + " & vbCr");
             sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).Range.Font.Size = 15: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).Range.Font.Bold = True: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).FirstLineIndent = 0: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 4).SpaceAfter = 2");
             sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).Range.Font.Bold = True: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).FirstLineIndent = 0: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 3).SpaceAfter = 2");
-            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Size = 10: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Bold = False: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).FirstLineIndent = 0: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).SpaceAfter = 10");
+            sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Alignment = 1: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).Range.Font.Bold = True: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).FirstLineIndent = 0: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 2).SpaceAfter = 10");
             sb.AppendLine("    ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Alignment = 3: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).Range.Font.Size = 14: ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).FirstLineIndent = CentimetersToPoints(1.27): ActiveDocument.Paragraphs(ActiveDocument.Paragraphs.Count - 1).SpaceAfter = 6");
             sb.AppendLine("    Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
             sb.AppendLine("    Set tbl2 = ActiveDocument.Tables.Add(pEnd, 1, 2)");
@@ -998,6 +1013,79 @@ namespace VBTMProSuite
             sb.AppendLine("    End If");
             sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Trợ lý AI đã tự động khởi tạo xong khung & nội dung chuẩn theo yêu cầu: ") + " & req");
             sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            // 11. AI Tóm tắt & Đề xuất Trích yếu văn bản đang mở
+            sb.AppendLine("Sub AiTomTatVanBan_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim p As Paragraph, t As String, sumText As String, cnt As Integer");
+            sb.AppendLine("    cnt = 0");
+            sb.AppendLine("    For Each p In ActiveDocument.Paragraphs");
+            sb.AppendLine("        If p.Range.Tables.Count = 0 Then");
+            sb.AppendLine("            t = Trim(Replace(Replace(p.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
+            sb.AppendLine("            If Len(t) > 30 And cnt < 4 Then");
+            sb.AppendLine("                cnt = cnt + 1");
+            sb.AppendLine("                If Len(t) > 120 Then t = Left(t, 117) & \"...\"");
+            sb.AppendLine("                sumText = sumText & \"- \" & t & vbCrLf");
+            sb.AppendLine("            End If");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    Next p");
+            sb.AppendLine("    If Len(sumText) = 0 Then sumText = " + VbaStr("Chưa có đoạn nội dung đủ dài để AI tóm tắt.") + "");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("TÓM TẮT TRỌNG TÂM AI:") + " & vbCrLf & vbCrLf & sumText");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            // 12. Chuyển đổi Thể thức Đảng (05-HD) <-> Hành chính (NĐ 30)
+            sb.AppendLine("Sub ChuyenDoiDangHanhChinh_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim allU As String: allU = UCase(ActiveDocument.Content.Text)");
+            sb.AppendLine("    If InStr(allU, " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Then");
+            sb.AppendLine("        ReplaceWordText " + VbaStr("ĐẢNG CỘNG SẢN VIỆT NAM") + ", " + VbaStr("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"));
+            sb.AppendLine("        ReplaceWordText " + VbaStr("T/M ĐẢNG ỦY") + ", " + VbaStr("TM. ỦY BAN NHÂN DÂN"));
+            sb.AppendLine("        ReplaceWordText " + VbaStr("BÍ THƯ") + ", " + VbaStr("CHỦ TỊCH"));
+            sb.AppendLine("        ReplaceWordText " + VbaStr("- Lưu Văn phòng Đảng ủy.") + ", " + VbaStr("- Lưu: VT, VP."));
+            sb.AppendLine("        ChuanHoaVanBan_NghiDinh30");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        ReplaceWordText " + VbaStr("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM") + ", " + VbaStr("ĐẢNG CỘNG SẢN VIỆT NAM"));
+            sb.AppendLine("        ReplaceWordText " + VbaStr("TM. ỦY BAN NHÂN DÂN") + ", " + VbaStr("T/M ĐẢNG ỦY"));
+            sb.AppendLine("        ReplaceWordText " + VbaStr("CHỦ TỊCH") + ", " + VbaStr("BÍ THƯ"));
+            sb.AppendLine("        ReplaceWordText " + VbaStr("- Lưu: VT, VP.") + ", " + VbaStr("- Lưu Văn phòng Đảng ủy."));
+            sb.AppendLine("        ChuanHoaVanBan_HuongDan05");
+            sb.AppendLine("    End If");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            // 13. Kiểm định Thể thức Tự động (% tuân thủ 05-HD/VPTW & NĐ 30)
+            sb.AppendLine("Sub KiemDinhTheThuc_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim score As Integer: score = 0");
+            sb.AppendLine("    Dim report As String: report = \"\"");
+            sb.AppendLine("    Dim txt As String: txt = ActiveDocument.Content.Text");
+            sb.AppendLine("    Dim uTxt As String: uTxt = UCase(txt)");
+            sb.AppendLine("    If Round(PointsToMillimeters(ActiveDocument.PageSetup.LeftMargin)) >= 28 Then score = score + 20 Else report = report & " + VbaStr("- Lề trái chưa đạt 30mm") + " & vbCrLf");
+            sb.AppendLine("    If InStr(uTxt, " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Or InStr(uTxt, " + VbaStr("CỘNG HÒA XÃ HỘI") + ") > 0 Then score = score + 20 Else report = report & " + VbaStr("- Thiếu Quốc hiệu / ĐẢNG CỘNG SẢN VIỆT NAM") + " & vbCrLf");
+            sb.AppendLine("    If InStr(txt, " + VbaStr("Số") + ") > 0 Then score = score + 20 Else report = report & " + VbaStr("- Thiếu Số, ký hiệu văn bản") + " & vbCrLf");
+            sb.AppendLine("    If InStr(LCase(txt), " + VbaStr("nơi nhận") + ") > 0 Then score = score + 20 Else report = report & " + VbaStr("- Thiếu mục Nơi nhận:") + " & vbCrLf");
+            sb.AppendLine("    If InStr(LCase(txt), " + VbaStr("lưu") + ") > 0 Then score = score + 20 Else report = report & " + VbaStr("- Thiếu dòng - Lưu ở Nơi nhận") + " & vbCrLf");
+            sb.AppendLine("    If Len(report) = 0 Then report = " + VbaStr("Hoàn hảo! Văn bản đạt đầy đủ các tiêu chí thể thức bắt buộc."));
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("KẾT QUẢ KIỂM ĐỊNH THỂ THỨC: ") + " & score & \"/100%\" & vbCrLf & vbCrLf & report");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            // 14. Chèn Bảng Biểu Chuẩn 13pt (Tự lặp tiêu đề khi sang trang)
+            sb.AppendLine("Sub ChenBangChuan_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
+            sb.AppendLine("    Dim tbl As Table");
+            sb.AppendLine("    Set tbl = ActiveDocument.Tables.Add(Selection.Range, 4, 4)");
+            sb.AppendLine("    tbl.Borders.Enable = 1");
+            sb.AppendLine("    tbl.Rows(1).HeadingFormat = True");
+            sb.AppendLine("    tbl.Range.Font.Name = \"Times New Roman\": tbl.Range.Font.Size = 13");
+            sb.AppendLine("    tbl.Rows(1).Range.Font.Bold = True: tbl.Rows(1).Range.ParagraphFormat.Alignment = 1");
+            sb.AppendLine("    tbl.Cell(1, 1).Range.Text = \"STT\"");
+            sb.AppendLine("    tbl.Cell(1, 2).Range.Text = " + VbaStr("Nội dung / Nhiệm vụ"));
+            sb.AppendLine("    tbl.Cell(1, 3).Range.Text = " + VbaStr("Đơn vị thực hiện"));
+            sb.AppendLine("    tbl.Cell(1, 4).Range.Text = " + VbaStr("Ghi chú"));
+            sb.AppendLine("End Sub");
             return sb.ToString();
         }
 
@@ -1142,7 +1230,11 @@ namespace VBTMProSuite
                 "<button id=\"btnVbtmMargins\" label=\"Căn Lề A4 (30-15-20-20)\" size=\"normal\" imageMso=\"PageMarginsGallery\" onAction=\"Ribbon_CanLeA4\"/>" +
                 "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang (Từ Tr.2)\" size=\"normal\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\"/>" +
                 "</group>" +
-                "<group id=\"grpVbtmStudio\" label=\"4. Công Cụ Mở Rộng\">" +
+                "<group id=\"grpVbtmStudio\" label=\"4. AI Nâng Cao &amp; Công Cụ 2026\">" +
+                "<button id=\"btnVbtmSummary\" label=\"AI Tóm Tắt Văn Bản\" size=\"normal\" imageMso=\"OutlineShowDetail\" onAction=\"Ribbon_AiTomTatVanBan\" supertip=\"AI đọc nhanh văn bản đang mở và trích xuất các điểm trọng tâm.\"/>" +
+                "<button id=\"btnVbtmConvert\" label=\"Đổi Đảng &lt;-&gt; Hành Chính\" size=\"normal\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\" supertip=\"Chuyển đổi tự động thể thức &amp; thuật ngữ qua lại giữa Khối Đảng (05-HD) và UBND (NĐ 30).\"/>" +
+                "<button id=\"btnVbtmAudit\" label=\"Kiểm Định Thể Thức (%)\" size=\"normal\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\" supertip=\"Chấm điểm tuân thủ thể thức 05-HD/VPTW &amp; NĐ 30/2020/NĐ-CP và chỉ ra lỗi thiếu sót.\"/>" +
+                "<button id=\"btnVbtmTbl\" label=\"Chèn Bảng Chuẩn 13pt\" size=\"normal\" imageMso=\"TableInsert\" onAction=\"Ribbon_ChenBangChuan\" supertip=\"Chèn bảng thống kê Times New Roman 13pt tự động lặp dòng tiêu đề khi sang trang.\"/>" +
                 "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Văn Bản\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 để gắn vào văn bản Word.\"/>" +
                 "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (AI 7.578 Từ)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI (7.578 âm tiết), tạo mã QR và chuyển PDF sang Word.\"/>" +
                 "</group>" +
@@ -2587,8 +2679,8 @@ namespace VBTMProSuite
                                 }
                                 else if (isRuleLine)
                                 {
-                                    pFont.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, pFont, new object[] { 10f });
-                                    pFont.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, pFont, new object[] { 0 });
+                                    pFont.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, pFont, new object[] { isDangWord ? 14f : 10f });
+                                    pFont.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, pFont, new object[] { isDangWord ? -1 : 0 });
                                     para.GetType().InvokeMember("Alignment", BindingFlags.SetProperty, null, para, new object[] { 1 });
                                     para.GetType().InvokeMember("FirstLineIndent", BindingFlags.SetProperty, null, para, new object[] { 0f });
                                     para.GetType().InvokeMember("SpaceAfter", BindingFlags.SetProperty, null, para, new object[] { 10f });
@@ -3084,9 +3176,10 @@ td p { margin:0; text-indent:0; }
                           txtIssueOrg.Text.IndexOf("CHI BỘ", StringComparison.OrdinalIgnoreCase) >= 0;
 
             string rightHeaderHtml = isDang
-                ? "<div style='font-size:15pt;font-weight:bold;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
-                : "<div style='font-size:12.5pt;font-weight:bold;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>" +
-                  "<div style='font-size:13.5pt;font-weight:bold;'>Độc lập - Tự do - Hạnh phúc</div>";
+                ? "<div style='font-size:14.5pt;font-weight:bold;text-decoration:underline;white-space:nowrap;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
+                : "<div style='font-size:12.5pt;font-weight:bold;white-space:nowrap;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>" +
+                  "<div style='font-size:13.5pt;font-weight:bold;white-space:nowrap;'>Độc lập - Tự do - Hạnh phúc</div>" +
+                  "<p align='center' style='text-align:center;text-indent:0;font-size:8pt;margin:1pt 0 2pt 0;line-height:1;'>────────────────────────</p>";
 
             string cleanNum = Regex.Replace(txtDocNum.Text.Trim(), @"^Số\s*:?\s*", "", RegexOptions.IgnoreCase);
             string numberLabel = isDang ? ("Số " + cleanNum) : ("Số: " + cleanNum);
@@ -3107,7 +3200,9 @@ td p { margin:0; text-indent:0; }
                 if (!string.IsNullOrEmpty(docSubjStr))
                 {
                     centerTitleBlockHtml += "<p align='center' style='text-align:center;text-indent:0;font-weight:bold;font-size:14pt;margin:0 0 2pt 0;'>" + System.Security.SecurityElement.Escape(docSubjStr) + "</p>" +
-                                            "<p align='center' style='text-align:center;text-indent:0;font-size:10pt;margin:0 0 10pt 0;line-height:1;'>──────────────</p>";
+                                            (isDang
+                                                ? "<p align='center' style='text-align:center;text-indent:0;font-weight:bold;font-size:14pt;margin:0 0 10pt 0;line-height:1;'>-----</p>"
+                                                : "<p align='center' style='text-align:center;text-indent:0;font-size:10pt;margin:0 0 10pt 0;line-height:1;'>──────────────</p>");
                 }
             }
             else
@@ -3145,17 +3240,16 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
 </style></head>
 <body><div class='Section1'>
 <table><tr>
-<td style='width:" + (isDang ? "47%" : "42%") + @";text-align:center;'>
-  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? "14pt" : "12.5pt") + ";'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
-  <div style='font-size:" + (isDang ? "14pt" : "12.5pt") + @";font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
+<td style='width:" + (isDang ? "49%" : "42%") + @";text-align:center;'>
+  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + ";white-space:nowrap;'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
+  <div style='font-size:" + (isDang ? "13.5pt" : "12.5pt") + @";font-weight:bold;white-space:nowrap;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
   " + leftSepHtml + @"
-  <div style='font-size:" + (isDang ? "14pt" : "13pt") + @";margin-top:6pt;'>" + System.Security.SecurityElement.Escape(numberLabel) + @"</div>
+  <div style='font-size:" + (isDang ? "14pt" : "13pt") + @";margin-top:4pt;'>" + System.Security.SecurityElement.Escape(numberLabel) + @"</div>
   " + congVanSubjLeftHtml + @"
 </td>
-<td style='width:" + (isDang ? "53%" : "58%") + @";text-align:center;'>
+<td style='width:" + (isDang ? "51%" : "58%") + @";text-align:center;'>
   " + rightHeaderHtml + @"
-  <p align='center' style='text-align:center;text-indent:0;font-size:8pt;margin:1pt 0 4pt 0;line-height:1;'>────────────────────────</p>
-  <div style='font-size:" + (isDang ? "14pt" : "13.5pt") + @";font-style:italic;margin-top:4pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
+  <div style='font-size:" + (isDang ? "13.5pt" : "13.5pt") + @";font-style:italic;margin-top:4pt;white-space:nowrap;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
 </td>
 </tr></table>
 " + centerTitleBlockHtml + @"
