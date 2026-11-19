@@ -1050,24 +1050,35 @@ namespace VBTMProSuite
             sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Trợ lý AI đã tự động khởi tạo xong khung & nội dung chuẩn theo yêu cầu: ") + " & req");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
-            // 11. AI Tóm tắt & Đề xuất Trích yếu văn bản đang mở
+            // 11. AI Tóm tắt & Tự động chèn bản tóm tắt trọng tâm trực tiếp vào Word
             sb.AppendLine("Sub AiTomTatVanBan_Word()");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Application.ScreenUpdating = False");
             sb.AppendLine("    Dim p As Paragraph, t As String, sumText As String, cnt As Integer");
             sb.AppendLine("    cnt = 0");
             sb.AppendLine("    For Each p In ActiveDocument.Paragraphs");
             sb.AppendLine("        If p.Range.Tables.Count = 0 Then");
             sb.AppendLine("            t = Trim(Replace(Replace(p.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
-            sb.AppendLine("            If Len(t) > 30 And cnt < 4 Then");
+            sb.AppendLine("            If Len(t) > 30 And cnt < 4 And InStr(t, " + VbaStr("TÓM TẮT TRỌNG TÂM") + ") = 0 Then");
             sb.AppendLine("                cnt = cnt + 1");
-            sb.AppendLine("                If Len(t) > 120 Then t = Left(t, 117) & \"...\"");
-            sb.AppendLine("                sumText = sumText & \"- \" & t & vbCrLf");
+            sb.AppendLine("                If Len(t) > 160 Then t = Left(t, 157) & \"...\"");
+            sb.AppendLine("                sumText = sumText & \"- \" & t & vbCr");
             sb.AppendLine("            End If");
             sb.AppendLine("        End If");
             sb.AppendLine("    Next p");
-            sb.AppendLine("    If Len(sumText) = 0 Then sumText = " + VbaStr("Chưa có đoạn nội dung đủ dài để AI tóm tắt.") + "");
-            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("TÓM TẮT TRỌNG TÂM AI:") + " & vbCrLf & vbCrLf & sumText");
+            sb.AppendLine("    If Len(sumText) > 0 Then");
+            sb.AppendLine("        Dim rngIns As Range: Set rngIns = ActiveDocument.Content");
+            sb.AppendLine("        rngIns.Collapse 0");
+            sb.AppendLine("        rngIns.InsertAfter vbCr & " + VbaStr("TÓM TẮT TRỌNG TÂM (AI):") + " & vbCr & sumText");
+            sb.AppendLine("        rngIns.Font.Name = \"Times New Roman\": rngIns.Font.Size = 14");
+            sb.AppendLine("        SuaChinhTaVaDauCau_Word");
+            sb.AppendLine("        Application.ScreenUpdating = True");
+            sb.AppendLine("        ShowUnicodeMsg " + VbaStr("AI đã tóm tắt xong, tự động chèn bản tóm tắt vào cuối văn bản và rà soát lỗi chính tả!") + "");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        Application.ScreenUpdating = True");
+            sb.AppendLine("        ShowUnicodeMsg " + VbaStr("Chưa có đoạn nội dung đủ dài để AI tóm tắt.") + "");
+            sb.AppendLine("    End If");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
             // 12. Chuyển đổi Thể thức Đảng (05-HD) <-> Hành chính (NĐ 30)
@@ -1123,31 +1134,48 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl.Cell(1, 4).Range.Text = " + VbaStr("Ghi chú"));
             sb.AppendLine("End Sub");
             sb.AppendLine("");
-            // 15. Chèn Dấu Độ Khẩn / Độ Mật thuần Unicode 100% (KHẨN, THƯỢNG KHẨN, HỎA TỐC, HỎA TỐC HẸN GIỜ, MẬT, TỐI MẬT, TUYỆT MẬT)
+            // 15. Chèn Dấu Độ Khẩn / Độ Mật chuẩn văn thư: chữ đỏ đậm + khung viền đỏ 1.5pt đặt đúng dưới dòng Số ký hiệu (cột trái đầu trang 1)
             sb.AppendLine("Sub ChenDoKhanMat_Word(Optional ByVal lvIdx As String = \"1\")");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
-            sb.AppendLine("    Dim lv As String, boxW As Single");
-            sb.AppendLine("    boxW = 3.8");
+            sb.AppendLine("    Dim lv As String");
             sb.AppendLine("    Select Case lvIdx");
-            sb.AppendLine("        Case \"2\": lv = " + VbaStr("THƯỢNG KHẨN") + ": boxW = 5.0");
-            sb.AppendLine("        Case \"3\": lv = " + VbaStr("HỎA TỐC") + ": boxW = 4.0");
-            sb.AppendLine("        Case \"4\": lv = " + VbaStr("HỎA TỐC HẸN GIỜ") + ": boxW = 5.8");
-            sb.AppendLine("        Case \"5\": lv = " + VbaStr("MẬT") + ": boxW = 3.4");
-            sb.AppendLine("        Case \"6\": lv = " + VbaStr("TỐI MẬT") + ": boxW = 4.0");
-            sb.AppendLine("        Case \"7\": lv = " + VbaStr("TUYỆT MẬT") + ": boxW = 4.5");
-            sb.AppendLine("        Case Else: lv = " + VbaStr("KHẨN") + ": boxW = 3.6");
+            sb.AppendLine("        Case \"2\": lv = " + VbaStr("THƯỢNG KHẨN"));
+            sb.AppendLine("        Case \"3\": lv = " + VbaStr("HỎA TỐC"));
+            sb.AppendLine("        Case \"4\": lv = " + VbaStr("HỎA TỐC HẸN GIỜ"));
+            sb.AppendLine("        Case \"5\": lv = " + VbaStr("MẬT"));
+            sb.AppendLine("        Case \"6\": lv = " + VbaStr("TỐI MẬT"));
+            sb.AppendLine("        Case \"7\": lv = " + VbaStr("TUYỆT MẬT"));
+            sb.AppendLine("        Case Else: lv = " + VbaStr("KHẨN"));
             sb.AppendLine("    End Select");
-            sb.AppendLine("    Dim tbl As Table: Set tbl = ActiveDocument.Tables.Add(Selection.Range, 1, 1)");
-            sb.AppendLine("    tbl.AllowAutoFit = False");
-            sb.AppendLine("    tbl.Borders.Enable = 1");
-            sb.AppendLine("    tbl.PreferredWidthType = 3: tbl.PreferredWidth = CentimetersToPoints(boxW)");
-            sb.AppendLine("    tbl.Columns(1).PreferredWidthType = 3: tbl.Columns(1).PreferredWidth = CentimetersToPoints(boxW)");
-            sb.AppendLine("    With tbl.Cell(1, 1).Range");
-            sb.AppendLine("        .Text = lv");
-            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True");
-            sb.AppendLine("        .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceBefore = 2: .ParagraphFormat.SpaceAfter = 2: .ParagraphFormat.FirstLineIndent = 0");
-            sb.AppendLine("    End With");
+            sb.AppendLine("    Dim targetRng As Range");
+            sb.AppendLine("    If ActiveDocument.Tables.Count >= 1 Then");
+            sb.AppendLine("        If ActiveDocument.Tables(1).Columns.Count >= 2 Then");
+            sb.AppendLine("            Set targetRng = ActiveDocument.Tables(1).Cell(1, 1).Range");
+            sb.AppendLine("            targetRng.End = targetRng.End - 1");
+            sb.AppendLine("            targetRng.Collapse 0");
+            sb.AppendLine("            targetRng.InsertAfter vbCr & lv");
+            sb.AppendLine("            Dim pStamp As Paragraph: Set pStamp = ActiveDocument.Tables(1).Cell(1, 1).Range.Paragraphs(ActiveDocument.Tables(1).Cell(1, 1).Range.Paragraphs.Count)");
+            sb.AppendLine("            pStamp.Range.Font.Name = \"Times New Roman\": pStamp.Range.Font.Size = 13: pStamp.Range.Font.Bold = True: pStamp.Range.Font.Color = RGB(204, 0, 0)");
+            sb.AppendLine("            pStamp.Alignment = 1: pStamp.Format.SpaceBefore = 4: pStamp.Format.SpaceAfter = 2: pStamp.Format.FirstLineIndent = 0");
+            sb.AppendLine("            pStamp.Format.LeftIndent = CentimetersToPoints(1.6): pStamp.Format.RightIndent = CentimetersToPoints(1.6)");
+            sb.AppendLine("            Dim bi As Integer");
+            sb.AppendLine("            For bi = -1 To -4 Step -1");
+            sb.AppendLine("                pStamp.Borders(bi).LineStyle = 1: pStamp.Borders(bi).LineWidth = 12: pStamp.Borders(bi).Color = RGB(204, 0, 0)");
+            sb.AppendLine("            Next bi");
+            sb.AppendLine("            Exit Sub");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    Set targetRng = ActiveDocument.Range(0, 0)");
+            sb.AppendLine("    targetRng.InsertBefore lv & vbCr");
+            sb.AppendLine("    Dim pTopS As Paragraph: Set pTopS = ActiveDocument.Paragraphs(1)");
+            sb.AppendLine("    pTopS.Range.Font.Name = \"Times New Roman\": pTopS.Range.Font.Size = 13: pTopS.Range.Font.Bold = True: pTopS.Range.Font.Color = RGB(204, 0, 0)");
+            sb.AppendLine("    pTopS.Alignment = 0: pTopS.Format.SpaceBefore = 2: pTopS.Format.SpaceAfter = 4: pTopS.Format.FirstLineIndent = 0");
+            sb.AppendLine("    pTopS.Format.RightIndent = CentimetersToPoints(11.5)");
+            sb.AppendLine("    Dim bj As Integer");
+            sb.AppendLine("    For bj = -1 To -4 Step -1");
+            sb.AppendLine("        pTopS.Borders(bj).LineStyle = 1: pTopS.Borders(bj).LineWidth = 12: pTopS.Borders(bj).Color = RGB(204, 0, 0)");
+            sb.AppendLine("    Next bj");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
             // 16. Xuất Nhanh PDF Chuẩn In / Ký Số (1-Click)
@@ -1666,7 +1694,7 @@ namespace VBTMProSuite
             txtApiKey = new TextBox
             {
                 Location = new Point(82, 75),
-                Size = new Size(320, 26),
+                Size = new Size(210, 26),
                 BackColor = Color.FromArgb(69, 10, 10),
                 ForeColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -1675,12 +1703,27 @@ namespace VBTMProSuite
             };
             this.Controls.Add(txtApiKey);
 
-            Label lblUrl = new Label { Text = "Endpoint:", Location = new Point(410, 78), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
+            Button btnGetKey = new Button
+            {
+                Text = "🔑 Đăng Nhập Lấy Key",
+                Location = new Point(298, 74),
+                Size = new Size(155, 28),
+                BackColor = Color.FromArgb(37, 99, 235),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnGetKey.FlatAppearance.BorderSize = 0;
+            btnGetKey.Click += (s, e) => OpenProviderLoginUrl();
+            this.Controls.Add(btnGetKey);
+
+            Label lblUrl = new Label { Text = "URL:", Location = new Point(460, 78), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
             this.Controls.Add(lblUrl);
             txtEndpoint = new TextBox
             {
-                Location = new Point(475, 75),
-                Size = new Size(245, 26),
+                Location = new Point(496, 75),
+                Size = new Size(224, 26),
                 BackColor = Color.FromArgb(69, 10, 10),
                 ForeColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
@@ -1880,6 +1923,23 @@ namespace VBTMProSuite
                 return;
             }
 
+            if (cboProvider.SelectedIndex > 0 && cboProvider.SelectedIndex != 6 && string.IsNullOrWhiteSpace(txtApiKey.Text))
+            {
+                DialogResult dr = MessageBox.Show(
+                    "Bạn chưa dán API Key cho " + cboProvider.SelectedItem.ToString() + ".\n\n" +
+                    "• Bấm YES để mở ngay trang đăng nhập lấy API Key (miễn phí/tài khoản cá nhân).\n" +
+                    "• Bấm NO để tự động sửa ngay lập tức bằng Offline AI VBTM (miễn phí 100%, không cần Key).",
+                    "Kết Nối AI - VBTM Pro 2.5.0",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                if (dr == DialogResult.Yes)
+                {
+                    OpenProviderLoginUrl();
+                    return;
+                }
+                cboProvider.SelectedIndex = 0;
+            }
+
             SaveAiConfig(new string[] { cboProvider.SelectedIndex.ToString(), txtModel.Text.Trim(), txtApiKey.Text.Trim(), txtEndpoint.Text.Trim() });
             lblStatus.Text = "⏳ Đang gửi yêu cầu tới " + cboProvider.SelectedItem.ToString() + "...";
             Application.DoEvents();
@@ -2044,6 +2104,31 @@ namespace VBTMProSuite
             }
         }
 
+        private void OpenProviderLoginUrl()
+        {
+            int p = cboProvider.SelectedIndex;
+            string url = "https://aistudio.google.com/apikey";
+            if (p == 2) url = "https://platform.openai.com/api-keys";
+            else if (p == 3) url = "https://console.anthropic.com/settings/keys";
+            else if (p == 4) url = "https://platform.deepseek.com/api_keys";
+            else if (p == 5) url = "https://console.groq.com/keys";
+            else if (p == 6) url = "https://openrouter.ai/keys";
+            else if (p == 0)
+            {
+                MessageBox.Show("Offline AI VBTM đang hoạt động sẵn 100% miễn phí trên máy — không cần đăng nhập hay API Key!\n\nNếu bạn muốn kết nối Gemini / ChatGPT / Claude / DeepSeek, hãy chọn ở mục 1 bên trên rồi bấm '🔑 Đăng Nhập Lấy Key'.", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            try
+            {
+                Process.Start(url);
+                lblStatus.Text = "✓ Đã mở trang đăng nhập lấy API Key. Sau khi đăng nhập hãy Copy Key dán vào ô API Key rồi bấm Lưu Key!";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Mở trình duyệt tới: " + url + "\n(" + ex.Message + ")", "VBTM Pro 2.5.0");
+            }
+        }
+
         private string RunOfflineAiTransform(string text, int taskIdx)
         {
             int cnt = 0;
@@ -2051,6 +2136,23 @@ namespace VBTMProSuite
             using (MainStudioForm mf = new MainStudioForm())
             {
                 res = mf.FixAllVietnameseSpellingAndPunctuation(text, out cnt);
+            }
+            if (taskIdx == 4)
+            {
+                string[] lines = res.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                StringBuilder sbSum = new StringBuilder();
+                sbSum.AppendLine("TÓM TẮT TRỌNG TÂM:");
+                int kept = 0;
+                foreach (string raw in lines)
+                {
+                    string l = raw.Trim();
+                    if (l.Length < 15) continue;
+                    if (l.Length > 180) l = l.Substring(0, 177) + "...";
+                    sbSum.AppendLine("- " + l);
+                    kept++;
+                    if (kept >= 5) break;
+                }
+                return kept > 0 ? sbSum.ToString().Trim() : res;
             }
             string[,] reps = new string[,] {
                 { "làm gấp", "khẩn trương triển khai thực hiện" },
