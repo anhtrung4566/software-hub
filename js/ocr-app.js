@@ -870,8 +870,9 @@ function finalizeSegment(seg) {
 // GIỮ NGUYÊN CÂU CHỮ, ĐỒNG THỜI DỰNG CHUẨN THỂ THỨC HƯỚNG DẪN 05-HD/VPTW & NĐ 30
 // ============================================================================
 function reconstructExactLayoutFromPlainText(rawText, forceMode = 'auto') {
-  const isPartyDoc = forceMode === 'hd05' ? true : (forceMode === 'nd30' ? false : detectIsPartyDocInOcr(rawText));
-  const rawLines = String(rawText || '').replace(/\r\n/g, '\n').split('\n');
+  const cleanedRaw = cleanAndFixVietnameseOcrText(rawText);
+  const isPartyDoc = forceMode === 'hd05' ? true : (forceMode === 'nd30' ? false : detectIsPartyDocInOcr(cleanedRaw));
+  const rawLines = String(cleanedRaw || '').replace(/\r\n/g, '\n').split('\n');
   const nonEmptyLines = rawLines.map(l => l.trim()).filter(Boolean);
   if (nonEmptyLines.length === 0) return '';
 
@@ -880,8 +881,10 @@ function reconstructExactLayoutFromPlainText(rawText, forceMode = 'auto') {
   const footerLeft = [];
   const footerRight = [];
   const bodyLines = [];
+  const postFooterLines = [];
 
   let state = 'HEADER';
+  let sawLuuInFooter = false;
   for (let i = 0; i < nonEmptyLines.length; i++) {
     const line = nonEmptyLines[i];
     if (/^[-_*—–=]{2,}$/.test(line)) continue;
@@ -909,21 +912,36 @@ function reconstructExactLayoutFromPlainText(rawText, forceMode = 'auto') {
     }
 
     if (state === 'BODY') {
-      if (/^Nơi nhận\b/i.test(line) || /\b(T\/M\s+ĐẢNG\s+ỦY|T\/M\s+BAN\s+THƯỜNG\s+VỤ|TM\.\s+ỦY\s+BAN|KT\.\s+CHỦ\s+TỊCH|TL\.\s+CHỦ\s+TỊCH)\b/i.test(line)) {
+      if (/^Nơi nhận\b/i.test(line) || /\b(T\/M\s+ĐẢNG\s+ỦY|T\/M\s+BAN\s+THƯỜNG\s+VỤ|TM\.\s+ỦY\s+BAN|KT\.\s+CHỦ\s+TỊCH|TL\.\s+CHỦ\s+TỊCH|K\/T\s+CHÁNH\s+VĂN\s+PHÒNG)\b/i.test(line)) {
         state = 'FOOTER';
       }
     }
 
     if (state === 'FOOTER') {
+      const isAppendixStart = /^(PHỤ\s+LỤC\b|SƠ\s+ĐỒ\b|MẪU\s+\d+|BẢNG\s+CHỮ\s+VIẾT\s+TẮT)/i.test(line);
+      const isOverflowAfterLuu = sawLuuInFooter && (footerLeft.length + footerRight.length >= 10 || line.length > 65 || /^[-+]\s*(Tên cơ quan|Thể loại|Trích yếu|Từ\s+")/i.test(line));
+      if (isAppendixStart || isOverflowAfterLuu) {
+        state = 'POST_FOOTER';
+        postFooterLines.push(line);
+        continue;
+      }
+
       const twoCol = line.match(/^(.+?)(?:\t+|\s{4,})(.+)$/);
       if (twoCol) {
         footerLeft.push(twoCol[1].trim());
         footerRight.push(twoCol[2].trim());
+        if (/Lưu\b/i.test(twoCol[1])) sawLuuInFooter = true;
       } else if (/^(Nơi nhận|-|\+|•|Lưu\b)/i.test(line)) {
         footerLeft.push(line);
+        if (/Lưu\b/i.test(line)) sawLuuInFooter = true;
       } else {
         footerRight.push(line);
       }
+      continue;
+    }
+
+    if (state === 'POST_FOOTER') {
+      postFooterLines.push(line);
       continue;
     }
 
@@ -935,61 +953,160 @@ function reconstructExactLayoutFromPlainText(rawText, forceMode = 'auto') {
     outHtml.push(buildOcrHeaderTableHtml(headerLeft, headerRight, isPartyDoc));
   }
 
-  let bIdx = 0;
-  while (bIdx < bodyLines.length) {
-    const l = bodyLines[bIdx];
-    if (l.includes('|')) {
-      const cells = l.split('|').map(c => c.trim()).filter(Boolean);
-      if (cells.length >= 2) {
-        const tds = cells.map(c => `<td style="border:1px solid #000; padding:4pt 6pt; font-size:13pt;">${escapeHtml(c)}</td>`).join('');
-        outHtml.push(`<table style="width:100%; border-collapse:collapse; margin:2pt 0;"><tr>${tds}</tr></table>`);
+  const renderLinesToHtml = (arrLines, allowTitleDetect) => {
+    let bIdx = 0;
+    while (bIdx < arrLines.length) {
+      const l = arrLines[bIdx];
+      if (l.includes('|')) {
+        const cells = l.split('|').map(c => c.trim()).filter(Boolean);
+        if (cells.length >= 2) {
+          const tds = cells.map(c => `<td style="border:1px solid #000; padding:4pt 6pt; font-size:13pt;">${escapeHtml(c)}</td>`).join('');
+          outHtml.push(`<table style="width:100%; border-collapse:collapse; margin:2pt 0;"><tr>${tds}</tr></table>`);
+          bIdx++;
+          continue;
+        }
+      }
+      if (/^(PHỤ\s+LỤC\s*\d*|SƠ\s+ĐỒ\b.*)$/i.test(l)) {
+        outHtml.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:12pt 0 4pt 0; font-size:14pt; text-transform:uppercase;">${escapeHtml(l)}</p>`);
         bIdx++;
         continue;
       }
-    }
-    if (/^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN|ĐỀ ÁN|PHƯƠNG ÁN)$/i.test(l) && bIdx <= 3) {
-      const titleSize = isPartyDoc ? '15pt' : '14pt';
-      outHtml.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:12pt 0 3pt 0; font-size:${titleSize}; text-transform:uppercase;">${escapeHtml(l)}</p>`);
-      bIdx++;
-      if (bIdx < bodyLines.length && !/^(Căn cứ|Thực hiện|Kính gửi|I\.|1\.|Điều\s+1)/i.test(bodyLines[bIdx])) {
-        outHtml.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 2pt 0; font-size:14pt;">${escapeHtml(bodyLines[bIdx])}</p>`);
-        outHtml.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:normal; margin:0 0 10pt 0; line-height:1; font-size:10pt;">──────────────</p>`);
+      if (allowTitleDetect && /^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|QUY CHẾ|QUY ĐỊNH|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|KẾT LUẬN|ĐỀ ÁN|PHƯƠNG ÁN)$/i.test(l) && bIdx <= 3) {
+        const titleSize = isPartyDoc ? '15pt' : '14pt';
+        outHtml.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:12pt 0 3pt 0; font-size:${titleSize}; text-transform:uppercase;">${escapeHtml(l)}</p>`);
         bIdx++;
+        if (bIdx < arrLines.length && !/^(Căn cứ|Thực hiện|Kính gửi|I\.|1\.|Điều\s+1)/i.test(arrLines[bIdx])) {
+          outHtml.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 2pt 0; font-size:14pt;">${escapeHtml(arrLines[bIdx])}</p>`);
+          outHtml.push(isPartyDoc
+            ? `<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 10pt 0; line-height:1; font-size:14pt;">-----</p>`
+            : `<p align="center" style="text-align:center; text-indent:0; font-weight:normal; margin:0 0 10pt 0; line-height:1; font-size:10pt;">──────────────</p>`);
+          bIdx++;
+        }
+        continue;
       }
-      continue;
-    }
 
-    let merged = l;
-    bIdx++;
-    while (bIdx < bodyLines.length) {
-      const nxt = bodyLines[bIdx];
-      if (nxt.includes('|')) break;
-      const endedStop = /[.:;!?]$|\.\s*\/\.\s*$/.test(merged);
-      const startsNew = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Khoản\s+\d+|Căn cứ\s+|Xét\s+|Theo đề nghị|Kính gửi|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)/i.test(nxt);
-      if (!endedStop && !startsNew) {
-        merged += ' ' + nxt;
-        bIdx++;
-      } else {
-        break;
+      let merged = l;
+      bIdx++;
+      while (bIdx < arrLines.length) {
+        const nxt = arrLines[bIdx];
+        if (nxt.includes('|')) break;
+        const endedStop = /[.:;!?]$|\.\s*\/\.\s*$/.test(merged);
+        const startsNew = /^([-+•*]|\d+[.)]|[a-zđ]\)|[IVX]+\.|Điều\s+\d+|Khoản\s+\d+|Căn cứ\s+|Xét\s+|Theo đề nghị|Kính gửi|PHỤ\s+LỤC|SƠ\s+ĐỒ|QUYẾT ĐỊNH|QUYẾT NGHỊ|BAN THƯỜNG VỤ|ĐẢNG ỦY|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN)/i.test(nxt);
+        if (!endedStop && !startsNew) {
+          merged += ' ' + nxt;
+          bIdx++;
+        } else {
+          break;
+        }
       }
+      outHtml.push(formatOcrBodyParagraphHtml(merged));
     }
-    outHtml.push(formatOcrBodyParagraphHtml(merged));
-  }
+  };
+
+  renderLinesToHtml(bodyLines, true);
 
   if (footerLeft.length > 0 || footerRight.length > 0) {
     outHtml.push(buildOcrFooterTableHtml(footerLeft, footerRight, isPartyDoc));
   }
 
+  if (postFooterLines.length > 0) {
+    renderLinesToHtml(postFooterLines, false);
+  }
+
   return outHtml.join('\n');
 }
 
-// Tiền xử lý ảnh cho OCR
+// Hậu xử lý: Lọc nhiễu dấu mộc/watermark bảo mật & tự động hiệu đính lỗi dấu/chính tả OCR Tiếng Việt
+function cleanAndFixVietnameseOcrText(rawText) {
+  if (!rawText) return '';
+  let text = String(rawText).normalize('NFC').replace(/\r\n/g, '\n');
+
+  // 1. Lọc bỏ các dòng watermark bảo mật và dòng rác sinh ra từ dấu mộc đỏ / nét kẻ bảng
+  const cleanedLines = [];
+  for (const rawLine of text.split('\n')) {
+    let line = rawLine.trim();
+    if (!line) {
+      cleanedLines.push('');
+      continue;
+    }
+    const upper = line.toUpperCase();
+    // Bỏ dòng watermark chéo bảo mật
+    if (/TÀI LIỆU NÀY THUỘC SỞ HỮU CỦA|CÁC CƠ QUAN ĐẢNG\.?\s*VIỆC PHÁT|TÁN,\s*SỬ DỤNG TRÁI PHÉP BỊ NGHIÊM|SỬ DỤNG TRÁI PHÉP BỊ NGHIÊM C[ẤÁ]M/i.test(upper)) {
+      continue;
+    }
+    // Bỏ dòng rác toàn ký tự nhiễu hoặc chuỗi phụ âm vô nghĩa do dấu mộc đỏ (VD: THHHH//NNNTNNNN..., ZZSGSXN, Ĩ - |)
+    if (/[BCDFGHJKLMNPQRSTVWXZ]{6,}/.test(line) || /([A-Z])\1{3,}/.test(line)) {
+      continue;
+    }
+    if (/^[ĨŨÚ|_\-—–=+<>\\\/.,;:()\[\]~`'\"0-9\s]{1,12}$/.test(line) && !/^\d+[.)]?$/.test(line) && !/^[-—]{3,}$/.test(line)) {
+      continue;
+    }
+    if (/[⇙ØÏÑŠ]/.test(line) && line.length < 40) {
+      line = line.replace(/[⇙ØÏÑŠ\\<>]+/g, ' ').replace(/\b[A-Z]{5,}\b/g, ' ').trim();
+      if (line.length < 3) continue;
+    }
+
+    // Dọn ký tự rác xen giữa câu
+    line = line
+      .replace(/\s*\|\s*(?=[a-zà-ỹA-ZÀ-Ỹ])/g, ' ')
+      .replace(/(?<=[a-zà-ỹA-ZÀ-Ỹ])\s*\|\s*/g, ' ')
+      .replace(/[⇙ØÏÑŠ]/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (!line) continue;
+
+    cleanedLines.push(line);
+  }
+
+  text = cleanedLines.join('\n');
+
+  // 2. Tự động hiệu đính các lỗi dấu thanh & dính chữ OCR Tiếng Việt phổ biến trong văn bản Đảng & Hành chính
+  const ocrFixes = [
+    [/\bhướng dân\b/g, 'hướng dẫn'],
+    [/\bHướng dân\b/g, 'Hướng dẫn'],
+    [/\bHƯỚNG DÂN\b/g, 'HƯỚNG DẪN'],
+    [/\bdân chiều\b/g, 'dẫn chiếu'],
+    [/\bdân chiểu\b/g, 'dẫn chiếu'],
+    [/\bbỏ sung\b/g, 'bổ sung'],
+    [/\bbổ xung\b/g, 'bổ sung'],
+    [/\bđông chí\b/g, 'đồng chí'],
+    [/\bĐông chí\b/g, 'Đồng chí'],
+    [/\bTÔ CHỨC\b/g, 'TỔ CHỨC'],
+    [/\btô chức\b/g, 'tổ chức'],
+    [/\bSƠ ĐÔ\b/g, 'SƠ ĐỒ'],
+    [/\bBÔ TRÍ\b/g, 'BỐ TRÍ'],
+    [/\bTHÊ THỨC\b/g, 'THỂ THỨC'],
+    [/\bthê thức\b/g, 'thể thức'],
+    [/\bTIỂU BẠN\b/g, 'TIỂU BAN'],
+    [/\btiểu bạn\b/g, 'tiểu ban'],
+    [/\bNGHIÊM CÁM\b/g, 'NGHIÊM CẤM'],
+    [/\bInhoa\b/g, 'In hoa'],
+    [/\bInthường\b/g, 'In thường'],
+    [/\bvàsốthứtự\b/gi, 'và số thứ tự'],
+    [/\bkết qủa\b/g, 'kết quả'],
+    [/\bnghị quyêt\b/g, 'nghị quyết'],
+    [/\bquyết đinh\b/g, 'quyết định'],
+    [/\bđảng uy\b/g, 'đảng ủy'],
+    [/\bchi bô\b/g, 'chi bộ'],
+    [/\bnhiệm vu\b/g, 'nhiệm vụ'],
+    [/\bthực hiên\b/g, 'thực hiện'],
+    [/\bcải cách hành chánh\b/g, 'cải cách hành chính'],
+    [/\bchỉ bộ\b/g, 'chi bộ'],
+    [/\s+([.,;:!?])/g, '$1']
+  ];
+  for (const [pat, rep] of ocrFixes) {
+    text = text.replace(pat, rep);
+  }
+  return text.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+// Tiền xử lý ảnh cho OCR: Phóng nét + Tẩy con dấu đỏ & Watermark xám mờ
 function createPreprocessedOcrCanvas(sourceCanvas, forceBinarize = false) {
-  const baseSource = currentImageSource || sourceCanvas;
+  const baseSource = sourceCanvas || currentImageSource;
   const srcW = baseSource.width || sourceCanvas.width;
   const srcH = baseSource.height || sourceCanvas.height;
-  const scale = srcW < 1100 ? 2 : 1;
-  const outW = Math.min(srcW * scale, 2200);
+  const scale = srcW < 1400 ? 2 : 1;
+  const outW = Math.min(srcW * scale, 2400);
   const outH = Math.round(srcH * (outW / srcW));
 
   const procCanvas = document.createElement('canvas');
@@ -1017,31 +1134,46 @@ function createPreprocessedOcrCanvas(sourceCanvas, forceBinarize = false) {
     ctx.drawImage(baseSource, 0, 0, outW, outH);
   }
 
-  if (forceBinarize || ocrHighContrast) {
+  // Luôn tẩy dấu mộc đỏ & watermark xám mờ giúp OCR đọc sạch dấu tiếng Việt
+  try {
     const imgData = ctx.getImageData(0, 0, procCanvas.width, procCanvas.height);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
-      let gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-      gray = Math.min(255, Math.max(0, (gray - 128) * 1.45 + 128));
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      // Tẩy pixel con dấu đỏ (Đỏ nổi trội hơn Xanh lá và Xanh dương)
+      if (r > 115 && (r - g) > 32 && (r - b) > 32) {
+        data[i] = data[i + 1] = data[i + 2] = 255;
+        continue;
+      }
+      let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      // Tẩy watermark xám nhạt / nền giấy ố
+      if (gray > 186) {
+        gray = 255;
+      } else if (forceBinarize || ocrHighContrast) {
+        gray = Math.min(255, Math.max(0, (gray - 128) * 1.55 + 128));
+      } else if (gray < 145) {
+        gray = Math.max(0, gray * 0.85);
+      }
       data[i] = data[i + 1] = data[i + 2] = gray;
     }
     ctx.putImageData(imgData, 0, 0);
-  }
+  } catch (e) {}
 
   return procCanvas;
 }
 
 async function recognizeCanvasPageWithoutAlteringWords(canvasEl) {
+  const cleanCanvas = createPreprocessedOcrCanvas(canvasEl, true);
   try {
-    const cloudResult = await runCloudNeuralVietnameseOcr(canvasEl);
+    const cloudResult = await runCloudNeuralVietnameseOcr(cleanCanvas);
     if (cloudResult && cloudResult.trim().length > 0) {
-      return cloudResult.normalize('NFC');
+      return cleanAndFixVietnameseOcrText(cloudResult);
     }
   } catch (e) {}
 
   if (window.Tesseract) {
-    const result = await window.Tesseract.recognize(canvasEl, 'vie');
-    return (result?.data?.text || '').normalize('NFC');
+    const result = await window.Tesseract.recognize(cleanCanvas, 'vie');
+    return cleanAndFixVietnameseOcrText(result?.data?.text || '');
   }
   return '';
 }
@@ -1115,8 +1247,8 @@ async function runVietnameseOcr(appendTableMode = false) {
   }
 
   progressFill.style.width = '100%';
-  // Giữ nguyên câu chữ nhận diện được, không tự ý thay thế từ ngữ
-  const rawPreserved = recognizedText.replace(/\r\n/g, '\n').trim();
+  // Lọc nhiễu dấu mộc đỏ/watermark & tự động hiệu đính lỗi dấu OCR Tiếng Việt
+  const rawPreserved = cleanAndFixVietnameseOcrText(recognizedText);
   textOutput.value = rawPreserved;
   if (paperEl) {
     paperEl.innerHTML = reconstructExactLayoutFromPlainText(rawPreserved);
