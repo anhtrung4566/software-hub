@@ -516,7 +516,7 @@ namespace VBTMProSuite
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
             sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --word-spellcheck\", vbNormalFocus Else SuaChinhTaVaDauCau_Word");
             sb.AppendLine("End Sub");
-            sb.AppendLine("Sub Ribbon_TuDongHoaTieuNgu(ByVal control As Object): TuDongHoaTieuNgu_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_TuDongHoaTieuNgu(ByVal control As Object): TuDongHoaTieuNgu_Word CStr(control.Tag): End Sub");
             sb.AppendLine("Sub Ribbon_NoiDongPDF(ByVal control As Object): NoiDongPDFBiNgat_Word: End Sub");
             sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
@@ -764,7 +764,7 @@ namespace VBTMProSuite
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
-            // 5. Chuẩn hóa văn bản Hành chính theo Nghị định 30/2020/NĐ-CP
+            // 5. Chuẩn hóa văn bản Hành chính theo Nghị định 30/2020/NĐ-CP (đầy đủ Tiêu ngữ, Thân bài, Nơi nhận & Chữ ký)
             sb.AppendLine("Sub ChuanHoaVanBan_NghiDinh30()");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
@@ -772,22 +772,72 @@ namespace VBTMProSuite
             sb.AppendLine("    CanLeA4Chuan_Word False");
             sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
             sb.AppendLine("    ActiveDocument.Content.Font.Name = \"Times New Roman\"");
-            sb.AppendLine("    Dim p As Paragraph");
+            sb.AppendLine("    Dim p As Paragraph, t As String");
             sb.AppendLine("    For Each p In ActiveDocument.Paragraphs");
             sb.AppendLine("        If p.Range.Tables.Count = 0 Then");
-            sb.AppendLine("            p.LeftIndent = 0: p.RightIndent = 0: p.Format.SpaceBefore = 0");
-            sb.AppendLine("            p.Range.Font.Size = 14");
-            sb.AppendLine("            p.Format.SpaceAfter = 6");
-            sb.AppendLine("            p.Format.LineSpacingRule = 5");
-            sb.AppendLine("            p.Format.LineSpacing = LinesToPoints(1.15)");
-            sb.AppendLine("            If p.Alignment <> 1 Then");
-            sb.AppendLine("                p.Alignment = 3");
-            sb.AppendLine("                p.FirstLineIndent = CentimetersToPoints(1.27)");
+            sb.AppendLine("            t = Trim(Replace(Replace(p.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
+            sb.AppendLine("            If Len(t) > 0 Then");
+            sb.AppendLine("                p.Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("                p.LeftIndent = 0: p.RightIndent = 0: p.Format.SpaceBefore = 0");
+            sb.AppendLine("                If t = " + VbaStr("BÁO CÁO") + " Or t = " + VbaStr("NGHỊ QUYẾT") + " Or t = " + VbaStr("QUYẾT ĐỊNH") + " Or t = " + VbaStr("KẾ HOẠCH") + " Or t = " + VbaStr("TỜ TRÌNH") + " Or t = " + VbaStr("THÔNG BÁO") + " Or t = " + VbaStr("BIÊN BẢN") + " Or t = " + VbaStr("GIẤY MỜI") + " Then");
+            sb.AppendLine("                    p.Range.Font.Size = 14: p.Range.Font.Bold = True: p.Alignment = 1: p.FirstLineIndent = 0: p.Format.SpaceAfter = 2");
+            sb.AppendLine("                ElseIf Left(t, 3) = " + VbaStr("───") + " Or Left(t, 3) = \"---\" Then");
+            sb.AppendLine("                    p.Range.Font.Size = 10: p.Range.Font.Bold = False: p.Alignment = 1: p.FirstLineIndent = 0: p.Format.SpaceAfter = 10");
+            sb.AppendLine("                ElseIf Left(t, 2) = \"I.\" Or Left(t, 3) = \"II.\" Or Left(t, 4) = \"III.\" Or Left(t, 3) = \"IV.\" Or Left(t, 2) = \"V.\" Then");
+            sb.AppendLine("                    p.Range.Font.Size = 14: p.Range.Font.Bold = True: p.Alignment = 3: p.FirstLineIndent = CentimetersToPoints(1.27): p.Format.SpaceAfter = 6");
+            sb.AppendLine("                Else");
+            sb.AppendLine("                    p.Range.Font.Size = 14: p.Format.LineSpacingRule = 5: p.Format.LineSpacing = LinesToPoints(1.15)");
+            sb.AppendLine("                    If p.Alignment = 1 Then");
+            sb.AppendLine("                        p.FirstLineIndent = 0: p.Format.SpaceAfter = 2");
+            sb.AppendLine("                    Else");
+            sb.AppendLine("                        p.Alignment = 3: p.FirstLineIndent = CentimetersToPoints(1.27): p.Format.SpaceAfter = 6");
+            sb.AppendLine("                    End If");
+            sb.AppendLine("                End If");
             sb.AppendLine("            End If");
             sb.AppendLine("        End If");
             sb.AppendLine("    Next p");
+            sb.AppendLine("    If ActiveDocument.Tables.Count >= 1 Then");
+            sb.AppendLine("        Dim tblTop As Table: Set tblTop = ActiveDocument.Tables(1)");
+            sb.AppendLine("        If tblTop.Columns.Count >= 2 Then");
+            sb.AppendLine("            tblTop.AllowAutoFit = False: tblTop.PreferredWidthType = 2: tblTop.PreferredWidth = 100");
+            sb.AppendLine("            tblTop.LeftPadding = 0: tblTop.RightPadding = 0: tblTop.TopPadding = 0: tblTop.BottomPadding = 0");
+            sb.AppendLine("            tblTop.Columns(1).PreferredWidthType = 2: tblTop.Columns(1).PreferredWidth = 42");
+            sb.AppendLine("            tblTop.Columns(2).PreferredWidthType = 2: tblTop.Columns(2).PreferredWidth = 58");
+            sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Name = \"Times New Roman\": tblTop.Cell(1, 1).Range.Font.Size = 12.5: tblTop.Cell(1, 1).Range.Font.Scaling = 100");
+            sb.AppendLine("            tblTop.Cell(1, 1).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 1).Range.ParagraphFormat.Alignment = 1: tblTop.Cell(1, 1).Range.ParagraphFormat.SpaceAfter = 0");
+            sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\": tblTop.Cell(1, 2).Range.Font.Scaling = 100");
+            sb.AppendLine("            tblTop.Cell(1, 2).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 2).Range.ParagraphFormat.Alignment = 1: tblTop.Cell(1, 2).Range.ParagraphFormat.SpaceAfter = 0");
+            sb.AppendLine("            Dim pTop As Paragraph, tTop As String");
+            sb.AppendLine("            For Each pTop In tblTop.Cell(1, 2).Range.Paragraphs");
+            sb.AppendLine("                tTop = Trim(Replace(Replace(pTop.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
+            sb.AppendLine("                If InStr(UCase(tTop), " + VbaStr("CỘNG HÒA") + ") > 0 Then");
+            sb.AppendLine("                    pTop.Range.Font.Size = 12.5: pTop.Range.Font.Bold = True: pTop.Range.Font.Scaling = 100");
+            sb.AppendLine("                ElseIf InStr(LCase(tTop), " + VbaStr("độc lập") + ") > 0 Then");
+            sb.AppendLine("                    pTop.Range.Font.Size = 13.5: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 0: pTop.Range.Font.Scaling = 100");
+            sb.AppendLine("                ElseIf InStr(LCase(tTop), " + VbaStr("ngày") + ") > 0 Then");
+            sb.AppendLine("                    pTop.Range.Font.Size = 13.5: pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Range.Font.Scaling = 100: pTop.Format.SpaceBefore = 2");
+            sb.AppendLine("                End If");
+            sb.AppendLine("            Next pTop");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    If ActiveDocument.Tables.Count >= 2 Then");
+            sb.AppendLine("        Dim tblBot As Table: Set tblBot = ActiveDocument.Tables(ActiveDocument.Tables.Count)");
+            sb.AppendLine("        If tblBot.Columns.Count >= 2 Then");
+            sb.AppendLine("            tblBot.AllowAutoFit = False: tblBot.LeftPadding = 0: tblBot.RightPadding = 0: tblBot.TopPadding = 0: tblBot.BottomPadding = 0");
+            sb.AppendLine("            Dim pRec As Paragraph");
+            sb.AppendLine("            For Each pRec In tblBot.Cell(1, 1).Range.Paragraphs");
+            sb.AppendLine("                pRec.Range.Font.Name = \"Times New Roman\": pRec.Format.SpaceBefore = 0: pRec.Format.SpaceAfter = 0: pRec.Format.LineSpacingRule = 0");
+            sb.AppendLine("                If InStr(LCase(pRec.Range.Text), " + VbaStr("nơi nhận") + ") > 0 Then");
+            sb.AppendLine("                    pRec.Range.Font.Size = 12: pRec.Range.Font.Bold = True: pRec.Range.Font.Italic = True");
+            sb.AppendLine("                Else");
+            sb.AppendLine("                    pRec.Range.Font.Size = 11: pRec.Range.Font.Bold = False: pRec.Range.Font.Italic = False");
+            sb.AppendLine("                End If");
+            sb.AppendLine("            Next pRec");
+            sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Name = \"Times New Roman\": tblBot.Cell(1, 2).Range.Font.Size = 14: tblBot.Cell(1, 2).Range.Font.Bold = True");
+            sb.AppendLine("        End If");
+            sb.AppendLine("    End If");
             sb.AppendLine("    Application.ScreenUpdating = True");
-            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã chuẩn hóa văn bản Word theo Nghị định số 30/2020/NĐ-CP!") + "");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã chuẩn hóa văn bản Word đầy đủ theo Nghị định số 30/2020/NĐ-CP!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
@@ -912,6 +962,13 @@ namespace VBTMProSuite
             sb.AppendLine("    Dim uIss As String: uIss = GetUnitConfigVal(3, " + VbaStr("ỦY BAN NHÂN DÂN PHƯỜNG") + ")");
             sb.AppendLine("    Dim loc As String: loc = GetUnitConfigVal(4, " + VbaStr("Phường") + ")");
             sb.AppendLine("    Dim uSign As String: uSign = GetUnitConfigVal(6, " + VbaStr("Nguyễn Văn An") + ")");
+            sb.AppendLine("    Dim uMottoRaw As String: uMottoRaw = GetUnitConfigVal(8, " + VbaStr("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập - Tự do - Hạnh phúc") + ")");
+            sb.AppendLine("    Dim uQh As String, uTn As String");
+            sb.AppendLine("    If InStr(uMottoRaw, \"|\") > 0 Then");
+            sb.AppendLine("        uQh = Trim(Split(uMottoRaw, \"|\")(0)): uTn = Trim(Split(uMottoRaw, \"|\")(1))");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        uQh = uMottoRaw: uTn = " + VbaStr("Độc lập - Tự do - Hạnh phúc"));
+            sb.AppendLine("    End If");
             sb.AppendLine("    Dim rng As Range, tbl1 As Table, tbl2 As Table");
             sb.AppendLine("    Set rng = ActiveDocument.Range(0, 0)");
             sb.AppendLine("    Set tbl1 = ActiveDocument.Tables.Add(rng, 1, 2)");
@@ -923,18 +980,18 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 58");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
             sb.AppendLine("        .Text = uGov & vbCr & uIss & vbCr & " + VbaStr("──────────────") + " & vbCr & " + VbaStr("Số: 01/UBND-VP"));
-            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 12.5: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 12.5: .Font.Scaling = 100: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
             sb.AppendLine("        .Paragraphs(3).Range.Font.Size = 8: .Paragraphs(3).Range.Font.Bold = False");
             sb.AppendLine("        .Paragraphs(4).Range.Font.Size = 13: .Paragraphs(4).SpaceBefore = 2");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl1.Cell(1, 2).Range");
-            sb.AppendLine("        .Text = " + VbaStr("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM") + " & vbCr & " + VbaStr("Độc lập - Tự do - Hạnh phúc") + " & vbCr & " + VbaStr("────────────────────────") + " & vbCr & loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
-            sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
-            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 12.5: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Scaling = 95");
+            sb.AppendLine("        .Text = uQh & vbCr & uTn & vbCr & " + VbaStr("────────────────────────") + " & vbCr & loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Scaling = 100: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 12.5: .Paragraphs(1).Range.Font.Bold = True");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 13.5: .Paragraphs(2).Range.Font.Bold = True: .Paragraphs(2).Range.Font.Underline = 0");
             sb.AppendLine("        .Paragraphs(3).Range.Font.Size = 8: .Paragraphs(3).Range.Font.Bold = False: .Paragraphs(3).Range.Font.Underline = 0");
-            sb.AppendLine("        .Paragraphs(4).Range.Font.Size = 13.5: .Paragraphs(4).Range.Font.Italic = True: .Paragraphs(4).Range.Font.Scaling = 95: .Paragraphs(4).SpaceBefore = 2");
+            sb.AppendLine("        .Paragraphs(4).Range.Font.Size = 13.5: .Paragraphs(4).Range.Font.Italic = True: .Paragraphs(4).SpaceBefore = 2");
             sb.AppendLine("    End With");
             sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
             sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("Kính gửi: Các bộ phận chuyên môn thuộc Ủy ban nhân dân phường.") + " & vbCr & " + VbaStr("Thực hiện kế hoạch công tác năm 2026, Ủy ban nhân dân phường triển khai các nội dung sau:./.") + " & vbCr");
@@ -998,10 +1055,17 @@ namespace VBTMProSuite
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
-            // 8b. Tự động hóa Tiêu ngữ & Bảng đầu trang theo 05-HD/VPTW hoặc NĐ 30/2020/NĐ-CP
-            sb.AppendLine("Sub TuDongHoaTieuNgu_Word()");
+            // 8b. Tự động hóa Tiêu ngữ & Bảng đầu trang theo 05-HD/VPTW hoặc NĐ 30/2020/NĐ-CP (hỗ trợ chọn trực tiếp Khối Đảng / Khối UBND / Tự động)
+            sb.AppendLine("Sub TuDongHoaTieuNgu_Word(Optional ByVal mode As String = \"auto\")");
             sb.AppendLine("    On Error Resume Next");
-            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
+            sb.AppendLine("    If mode = \"ubnd\" Then");
+            sb.AppendLine("        ChenMauVanBan_UBND30");
+            sb.AppendLine("        Exit Sub");
+            sb.AppendLine("    ElseIf mode = \"dang\" Then");
+            sb.AppendLine("        ChenMauVanBan_Dang05");
+            sb.AppendLine("        Exit Sub");
+            sb.AppendLine("    End If");
             sb.AppendLine("    Dim docText As String: docText = UCase(ActiveDocument.Content.Text)");
             sb.AppendLine("    Dim isDang As Boolean: isDang = (InStr(docText, " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Or InStr(docText, " + VbaStr("ĐẢNG ỦY") + ") > 0 Or InStr(docText, " + VbaStr("CHI BỘ") + ") > 0 Or InStr(docText, " + VbaStr("-BC/ĐU") + ") > 0 Or InStr(docText, " + VbaStr("-NQ/ĐU") + ") > 0)");
             sb.AppendLine("    If ActiveDocument.Tables.Count = 0 Then");
@@ -1356,7 +1420,13 @@ namespace VBTMProSuite
                 "<group id=\"grpVbtmFormat\" label=\"2. Chỉnh Thể Thức Nhanh\">" +
                 "<button id=\"btnVbtmDangFast\" label=\"Chỉnh Thể Thức Đảng Nhanh (05-HD)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\" supertip=\"1 Bấm chỉnh toàn bộ văn bản Word đang mở đúng chuẩn Hướng dẫn số 05-HD/VPTW và sửa lỗi chính tả.\"/>" +
                 "<button id=\"btnVbtmAuto\" label=\"Chuẩn Hóa Tự Động\" size=\"large\" imageMso=\"ReviewTrackChanges\" onAction=\"Ribbon_ChuanHoaTuDong\" supertip=\"Tự động nhận diện văn bản Đảng (05-HD/VPTW) hoặc Hành chính (NĐ 30) và chuẩn hóa toàn bộ văn bản đang mở.\"/>" +
-                "<button id=\"btnVbtmTieuNgu\" label=\"Tự Động Hóa Tiêu Ngữ\" size=\"normal\" imageMso=\"HeaderFooterInsert\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<menu id=\"mnuVbtmTieuNgu\" label=\"Tự Động Hóa Tiêu Ngữ\" size=\"normal\" imageMso=\"HeaderFooterInsert\" supertip=\"Chọn chèn nhanh Tiêu ngữ Khối UBND / Hành chính (NĐ 30), Khối Đảng (05-HD/VPTW) hoặc tự động chuẩn hóa.\">" +
+                "<button id=\"btnTnAuto\" label=\"⚡ Tự Động Nhận Diện &amp; Chuẩn Hóa\" tag=\"auto\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<button id=\"btnTnUbnd\" label=\"🏛️ Chèn Tiêu Ngữ Khối UBND / Hành Chính (NĐ 30)\" tag=\"ubnd\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<button id=\"btnTnDang\" label=\"⭐ Chèn Tiêu Ngữ Khối Đảng (05-HD/VPTW)\" tag=\"dang\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<menuSeparator id=\"sepTnCfg\" title=\"Tùy chỉnh cơ quan &amp; tiêu ngữ\"/>" +
+                "<button id=\"btnTnCfg\" label=\"⚙️ Cài Đặt / Đổi Tiêu Ngữ Khối Đảng &amp; UBND\" onAction=\"Ribbon_CaiDatDonVi\"/>" +
+                "</menu>" +
                 "<button id=\"btnVbtmNd30\" label=\"Chuẩn NĐ 30/2020\" size=\"normal\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\"/>" +
                 "</group>" +
                 "<group id=\"grpVbtmTools\" label=\"3. Chính Tả AI &amp; Trình Bày\">" +
@@ -1430,13 +1500,13 @@ namespace VBTMProSuite
 
     public class UnitSettingsForm : Form
     {
-        private ComboBox cboPreset, cboPGov, cboPIss, cboPMotto, cboUGov, cboUIss, cboLoc;
+        private ComboBox cboPreset, cboPGov, cboPIss, cboPMotto, cboUGov, cboUIss, cboUMotto, cboLoc;
         private TextBox txtPSign, txtUSign;
 
         public UnitSettingsForm()
         {
             this.Text = "Cài Đặt Tiêu Ngữ & Tên Đơn Vị (Đa Cơ Quan) - VBTM Pro 2.5.0";
-            this.ClientSize = new Size(640, 520);
+            this.ClientSize = new Size(640, 565);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -1508,6 +1578,15 @@ namespace VBTMProSuite
                 "TRẠM Y TẾ PHƯỜNG", "TRƯỜNG TIỂU HỌC", "TRƯỜNG TRUNG HỌC CƠ SỞ"
             }, out cboUIss, ref y);
 
+            AddComboRow("Tiêu ngữ khối UBND / Đoàn thể:", vals[8], new string[] {
+                "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM | Độc lập - Tự do - Hạnh phúc",
+                "ĐOÀN TNCS HỒ CHÍ MINH | Thanh niên xung kích, sáng tạo",
+                "CÔNG ĐOÀN VIỆT NAM | Đổi mới - Dân chủ - Đoàn kết - Phát triển",
+                "HỘI LIÊN HIỆP PHỤ NỮ VIỆT NAM | Đoàn kết - Sáng tạo - Hội nhập - Phát triển",
+                "HỘI CỰU CHIẾN BINH VIỆT NAM | Trung thành - Đoàn kết - Gương mẫu - Đổi mới",
+                "ĐẢNG CỘNG SẢN VIỆT NAM"
+            }, out cboUMotto, ref y);
+
             AddComboRow("Địa danh (Phường/Xã/Tỉnh):", vals[4], new string[] {
                 "Tân Sơn Nhất", "Phường Tân Sơn Nhất", "TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Phường", "Xã"
             }, out cboLoc, ref y);
@@ -1517,7 +1596,7 @@ namespace VBTMProSuite
 
             Label lblNote = new Label
             {
-                Text = "Mẹo: Bấm mũi tên xổ xuống để chọn nhanh hoặc gõ trực tiếp tên cơ quan bất kỳ của bạn.",
+                Text = "Mẹo: Bấm mũi tên xổ xuống để chọn nhanh hoặc gõ trực tiếp tên cơ quan / tiêu ngữ bất kỳ của bạn.",
                 Location = new Point(22, y + 2),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(253, 224, 71),
@@ -1541,7 +1620,7 @@ namespace VBTMProSuite
             {
                 SaveUnitConfig(new string[] {
                     cboPGov.Text.Trim(), cboPIss.Text.Trim(), cboUGov.Text.Trim(), cboUIss.Text.Trim(),
-                    cboLoc.Text.Trim(), txtPSign.Text.Trim(), txtUSign.Text.Trim(), cboPMotto.Text.Trim()
+                    cboLoc.Text.Trim(), txtPSign.Text.Trim(), txtUSign.Text.Trim(), cboPMotto.Text.Trim(), cboUMotto.Text.Trim()
                 });
                 MessageBox.Show("Đã lưu cấu hình Tiêu ngữ & Đơn vị! Các mẫu chèn trong Microsoft Word sẽ tự động sử dụng thông tin này.", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
@@ -1601,7 +1680,8 @@ namespace VBTMProSuite
         {
             string[] defs = new string[] {
                 "QUẬN ỦY", "ĐẢNG ỦY PHƯỜNG", "ỦY BAN NHÂN DÂN QUẬN", "ỦY BAN NHÂN DÂN PHƯỜNG",
-                "Phường", "Trần Minh Quân", "Nguyễn Văn An", "ĐẢNG CỘNG SẢN VIỆT NAM"
+                "Phường", "Trần Minh Quân", "Nguyễn Văn An", "ĐẢNG CỘNG SẢN VIỆT NAM",
+                "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM | Độc lập - Tự do - Hạnh phúc"
             };
             try
             {
@@ -2677,13 +2757,14 @@ namespace VBTMProSuite
         private TextBox txtQrData;
         private PictureBox picQr;
         private ComboBox cboPos, cboSize;
-        private Label lblStatus;
+        private Label lblStatus, lblLogoName;
         private Bitmap currentQrBmp;
+        private string selectedLogoPath = "";
 
         public WordQrInsertForm()
         {
-            this.Text = "Tạo & Chèn Mã QR Chuẩn ISO 18004 Trực Tiếp Vào Word - VBTM Pro 2.5.0";
-            this.ClientSize = new Size(640, 390);
+            this.Text = "Tạo & Chèn Mã QR Kèm Logo Tự Chọn Trực Tiếp Vào Word - VBTM Pro 2.5.0";
+            this.ClientSize = new Size(650, 440);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -2704,7 +2785,7 @@ namespace VBTMProSuite
             txtQrData = new TextBox
             {
                 Location = new Point(20, 40),
-                Size = new Size(390, 96),
+                Size = new Size(395, 92),
                 Multiline = true,
                 ScrollBars = ScrollBars.Vertical,
                 BackColor = Color.FromArgb(69, 10, 10),
@@ -2716,8 +2797,8 @@ namespace VBTMProSuite
 
             picQr = new PictureBox
             {
-                Location = new Point(430, 40),
-                Size = new Size(190, 190),
+                Location = new Point(435, 40),
+                Size = new Size(195, 195),
                 BackColor = Color.White,
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle
@@ -2727,8 +2808,8 @@ namespace VBTMProSuite
             Button btnRefresh = new Button
             {
                 Text = "🔄 Tạo Xem Trước QR",
-                Location = new Point(430, 238),
-                Size = new Size(190, 32),
+                Location = new Point(435, 243),
+                Size = new Size(195, 32),
                 BackColor = Color.FromArgb(127, 29, 29),
                 ForeColor = Color.FromArgb(254, 240, 138),
                 FlatStyle = FlatStyle.Flat,
@@ -2738,12 +2819,12 @@ namespace VBTMProSuite
             btnRefresh.Click += (s, e) => RenderQrPreview();
             this.Controls.Add(btnRefresh);
 
-            Label lblPos = new Label { Text = "Vị trí chèn vào Word:", Location = new Point(20, 152), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
+            Label lblPos = new Label { Text = "Vị trí chèn vào Word:", Location = new Point(20, 144), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
             this.Controls.Add(lblPos);
             cboPos = new ComboBox
             {
-                Location = new Point(20, 176),
-                Size = new Size(390, 28),
+                Location = new Point(20, 168),
+                Size = new Size(395, 28),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 BackColor = Color.FromArgb(69, 10, 10),
                 ForeColor = Color.White
@@ -2756,12 +2837,12 @@ namespace VBTMProSuite
             cboPos.SelectedIndex = 0;
             this.Controls.Add(cboPos);
 
-            Label lblSz = new Label { Text = "Kích thước mã QR:", Location = new Point(20, 216), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
+            Label lblSz = new Label { Text = "Kích thước mã QR:", Location = new Point(20, 208), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
             this.Controls.Add(lblSz);
             cboSize = new ComboBox
             {
-                Location = new Point(155, 212),
-                Size = new Size(255, 28),
+                Location = new Point(155, 204),
+                Size = new Size(260, 28),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 BackColor = Color.FromArgb(69, 10, 10),
                 ForeColor = Color.White
@@ -2770,11 +2851,50 @@ namespace VBTMProSuite
             cboSize.SelectedIndex = 1;
             this.Controls.Add(cboSize);
 
+            Button btnPickLogo = new Button
+            {
+                Text = "🖼️ Chọn Logo Chèn Giữa QR...",
+                Location = new Point(20, 244),
+                Size = new Size(215, 32),
+                BackColor = Color.FromArgb(37, 99, 235),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnPickLogo.FlatAppearance.BorderSize = 0;
+            btnPickLogo.Click += (s, e) => PickLogoImage();
+            this.Controls.Add(btnPickLogo);
+
+            Button btnClearLogo = new Button
+            {
+                Text = "✕ Bỏ Logo",
+                Location = new Point(242, 244),
+                Size = new Size(88, 32),
+                BackColor = Color.FromArgb(127, 29, 29),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.5f),
+                Cursor = Cursors.Hand
+            };
+            btnClearLogo.Click += (s, e) => { selectedLogoPath = ""; lblLogoName.Text = "Chưa chọn logo"; RenderQrPreview(); };
+            this.Controls.Add(btnClearLogo);
+
+            lblLogoName = new Label
+            {
+                Text = "Chưa chọn logo",
+                Location = new Point(20, 282),
+                Size = new Size(395, 20),
+                ForeColor = Color.FromArgb(254, 249, 195),
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Italic)
+            };
+            this.Controls.Add(lblLogoName);
+
             Button btnInsert = new Button
             {
-                Text = "✅ Tạo && Chèn Trực Tiếp Mã QR Vào File Word",
-                Location = new Point(20, 286),
-                Size = new Size(600, 46),
+                Text = "✅ Tạo && Chèn Trực Tiếp Mã QR (Kèm Logo) Vào File Word",
+                Location = new Point(20, 322),
+                Size = new Size(610, 46),
                 BackColor = Color.FromArgb(234, 179, 8),
                 ForeColor = Color.FromArgb(69, 10, 10),
                 FlatStyle = FlatStyle.Flat,
@@ -2787,15 +2907,59 @@ namespace VBTMProSuite
 
             lblStatus = new Label
             {
-                Text = "Mẹo: Quét thử mã QR bên phải bằng Camera/Zalo. Sau khi chèn vào Word có thể nắm kéo di chuyển tự do!",
-                Location = new Point(20, 348),
+                Text = "Mẹo: Chọn logo Quốc huy / Búa liềm / Đơn vị (PNG/JPG) để chèn vào tâm mã QR, quét Zalo vẫn nhạy 100%!",
+                Location = new Point(20, 386),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(253, 224, 71),
-                Font = new Font("Segoe UI", 8.5f)
+                Font = new Font("Segoe UI", 8.3f)
             };
             this.Controls.Add(lblStatus);
 
             this.Shown += (s, e) => RenderQrPreview();
+        }
+
+        private void PickLogoImage()
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Title = "Chọn ảnh Logo chèn vào chính giữa Mã QR (PNG, JPG, BMP)";
+                ofd.Filter = "Hình ảnh Logo (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp|Tất cả tệp (*.*)|*.*";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    selectedLogoPath = ofd.FileName;
+                    lblLogoName.Text = "✓ Logo đã chọn: " + Path.GetFileName(selectedLogoPath);
+                    RenderQrPreview();
+                }
+            }
+        }
+
+        private Bitmap OverlayLogoOnQr(Bitmap baseQr)
+        {
+            if (string.IsNullOrEmpty(selectedLogoPath) || !File.Exists(selectedLogoPath)) return baseQr;
+            try
+            {
+                Bitmap result = new Bitmap(baseQr.Width, baseQr.Height);
+                using (Graphics g = Graphics.FromImage(result))
+                {
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.DrawImage(baseQr, 0, 0, baseQr.Width, baseQr.Height);
+                    using (Image logo = Image.FromFile(selectedLogoPath))
+                    {
+                        int boxSz = (int)(baseQr.Width * 0.23);
+                        int pad = Math.Max(4, boxSz / 10);
+                        int totalSz = boxSz + pad * 2;
+                        int cx = (baseQr.Width - totalSz) / 2;
+                        int cy = (baseQr.Height - totalSz) / 2;
+                        g.FillRectangle(Brushes.White, cx, cy, totalSz, totalSz);
+                        using (Pen p = new Pen(Color.FromArgb(220, 220, 220), 1f))
+                            g.DrawRectangle(p, cx, cy, totalSz - 1, totalSz - 1);
+                        g.DrawImage(logo, cx + pad, cy + pad, boxSz, boxSz);
+                    }
+                }
+                return result;
+            }
+            catch { return baseQr; }
         }
 
         private string DetectDefaultQrTextFromWord()
@@ -2821,10 +2985,11 @@ namespace VBTMProSuite
             string data = txtQrData.Text.Trim();
             if (string.IsNullOrEmpty(data)) data = "VBTM-PRO";
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+            string ecc = (!string.IsNullOrEmpty(selectedLogoPath) && File.Exists(selectedLogoPath)) ? "H" : "M";
 
             string[] urls = new string[] {
-                "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=6&ecc=M&data=" + Uri.EscapeDataString(data),
-                "https://quickchart.io/qr?size=300&margin=2&text=" + Uri.EscapeDataString(data)
+                "https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=6&ecc=" + ecc + "&data=" + Uri.EscapeDataString(data),
+                "https://quickchart.io/qr?size=320&margin=2&ecLevel=" + ecc + "&text=" + Uri.EscapeDataString(data)
             };
 
             foreach (string u in urls)
@@ -2840,9 +3005,11 @@ namespace VBTMProSuite
                         {
                             using (Image img = Image.FromStream(s))
                             {
-                                currentQrBmp = new Bitmap(img);
+                                currentQrBmp = OverlayLogoOnQr(new Bitmap(img));
                                 picQr.Image = currentQrBmp;
-                                lblStatus.Text = "✓ Đã tạo Mã QR chuẩn ISO 18004 sắc nét (quét được bằng Zalo / Camera)!";
+                                lblStatus.Text = !string.IsNullOrEmpty(selectedLogoPath)
+                                    ? "✓ Đã tạo Mã QR chuẩn ISO 18004 (ECC-H) gắn Logo ở tâm!"
+                                    : "✓ Đã tạo Mã QR chuẩn ISO 18004 sắc nét (quét được bằng Zalo / Camera)!";
                                 return;
                             }
                         }
@@ -2875,7 +3042,7 @@ namespace VBTMProSuite
                             g.FillRectangle(Brushes.Black, pad + c * scale, pad + r * scale, scale, scale);
                     }
             }
-            currentQrBmp = bmp;
+            currentQrBmp = OverlayLogoOnQr(bmp);
             picQr.Image = currentQrBmp;
             lblStatus.Text = "⚠ Đang ngoại tuyến: đã tạo ảnh QR dự phòng (kết nối mạng để tạo QR ISO quét điện thoại).";
         }
