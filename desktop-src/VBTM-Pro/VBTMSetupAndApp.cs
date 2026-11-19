@@ -512,13 +512,23 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_NoiDongPDF(ByVal control As Object): NoiDongPDFBiNgat_Word: End Sub");
             sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
+            sb.AppendLine("Private Sub ExportWordSnapshotForApp()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim fso As Object: Set fso = CreateObject(\"Scripting.FileSystemObject\")");
+            sb.AppendLine("    Dim ts As Object: Set ts = fso.CreateTextFile(Environ(\"TEMP\") & \"\\vbtm_word_snapshot.txt\", True, True)");
+            sb.AppendLine("    ts.Write ActiveDocument.Content.Text");
+            sb.AppendLine("    ts.Close");
+            sb.AppendLine("End Sub");
             sb.AppendLine("Sub Ribbon_AISoanThao(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    ExportWordSnapshotForApp");
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
             sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --ai-word\", vbNormalFocus Else AISoanThao_Word");
             sb.AppendLine("End Sub");
             sb.AppendLine("Sub Ribbon_RaSoatChinhTaAI(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    ExportWordSnapshotForApp");
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
             sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --spell-word\", vbNormalFocus Else SuaChinhTaVaDauCau_Word");
             sb.AppendLine("End Sub");
@@ -1905,6 +1915,22 @@ namespace VBTMProSuite
             }
             catch
             {
+                try
+                {
+                    string snapPath = Path.Combine(Path.GetTempPath(), "vbtm_word_snapshot.txt");
+                    if (File.Exists(snapPath))
+                    {
+                        string snapTxt = File.ReadAllText(snapPath, Encoding.Unicode).Trim();
+                        if (snapTxt.Length > 4000) snapTxt = snapTxt.Substring(0, 4000);
+                        if (!string.IsNullOrWhiteSpace(snapTxt))
+                        {
+                            txtPrompt.Text = snapTxt;
+                            lblStatus.Text = "✓ Đã nạp nội dung từ tài liệu Microsoft Word đang mở.";
+                            return;
+                        }
+                    }
+                }
+                catch { }
                 if (!silent) lblStatus.Text = "⚠ Chưa mở tài liệu Microsoft Word nào.";
             }
         }
@@ -2269,7 +2295,7 @@ namespace VBTMProSuite
 
             Button btnFixAll = new Button
             {
-                Text = "⚡ Tự Động Sửa Hết Lỗi & Chuẩn Hóa Trong Word",
+                Text = "⚡ Tự Động Sửa Hết Lỗi && Chuẩn Hóa Trong Word",
                 Location = new Point(200, 360),
                 Size = new Size(442, 40),
                 BackColor = Color.FromArgb(234, 179, 8),
@@ -2297,10 +2323,42 @@ namespace VBTMProSuite
             lstFindings.Items.Clear();
             try
             {
-                object wordApp = Marshal.GetActiveObject("Word.Application");
-                object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
-                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
-                string docText = Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "";
+                string docText = "";
+                try
+                {
+                    object wordApp = Marshal.GetActiveObject("Word.Application");
+                    object doc = null;
+                    try
+                    {
+                        doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
+                    }
+                    catch
+                    {
+                        object docs = wordApp.GetType().InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
+                        int dc = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
+                        if (dc > 0) doc = docs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, docs, new object[] { 1 });
+                    }
+                    if (doc != null)
+                    {
+                        object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                        docText = Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "";
+                    }
+                }
+                catch { }
+
+                if (string.IsNullOrWhiteSpace(docText))
+                {
+                    string snapPath = Path.Combine(Path.GetTempPath(), "vbtm_word_snapshot.txt");
+                    if (File.Exists(snapPath))
+                    {
+                        docText = File.ReadAllText(snapPath, Encoding.Unicode);
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(docText))
+                {
+                    throw new Exception("Chưa có nội dung trong tài liệu Word đang mở.");
+                }
 
                 using (MainStudioForm helper = new MainStudioForm())
                 {
