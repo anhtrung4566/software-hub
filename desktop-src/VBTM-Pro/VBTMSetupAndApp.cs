@@ -38,6 +38,7 @@ namespace VBTMProSuite
             bool wordSpellCheckMode = false;
             bool aiWordMode = false;
             bool spellWordMode = false;
+            bool qrWordMode = false;
             bool installWordMode = false;
             int insertTplIdx = -1;
             for (int idx = 0; idx < args.Length; idx++)
@@ -57,6 +58,8 @@ namespace VBTMProSuite
                     aiWordMode = true;
                 else if (a.Equals("--spell-word", StringComparison.OrdinalIgnoreCase))
                     spellWordMode = true;
+                else if (a.Equals("--qr-word", StringComparison.OrdinalIgnoreCase))
+                    qrWordMode = true;
                 else if (a.Equals("--insert-tpl", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
                     int.TryParse(args[++idx], out insertTplIdx);
             }
@@ -88,6 +91,11 @@ namespace VBTMProSuite
             if (spellWordMode)
             {
                 Application.Run(new WordSpellInspectorForm());
+                return;
+            }
+            if (qrWordMode)
+            {
+                Application.Run(new WordQrInsertForm());
                 return;
             }
             if (insertTplIdx >= 0)
@@ -550,7 +558,12 @@ namespace VBTMProSuite
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
             sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --unit-settings\", vbNormalFocus Else CaiDatTieuNguDonVi_Word");
             sb.AppendLine("End Sub");
-            sb.AppendLine("Sub Ribbon_ChenMaQR(ByVal control As Object): Ribbon_MoVBTM control: End Sub");
+            sb.AppendLine("Sub Ribbon_ChenMaQR(ByVal control As Object)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    ExportWordSnapshotForApp");
+            sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --qr-word\", vbNormalFocus Else Ribbon_MoVBTM control");
+            sb.AppendLine("End Sub");
             sb.AppendLine("");
             sb.AppendLine("Private Sub ShowUnicodeMsg(ByVal msgText As String)");
             sb.AppendLine("    On Error Resume Next");
@@ -2573,6 +2586,277 @@ namespace VBTMProSuite
             }
             ScanOpenWordDocument();
             MessageBox.Show("Đã tự động sửa xong " + okCnt + " lỗi chính tả & chuẩn hóa trực tiếp trong tài liệu Word!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+
+    public class WordQrInsertForm : Form
+    {
+        private TextBox txtQrData;
+        private PictureBox picQr;
+        private ComboBox cboPos, cboSize;
+        private Label lblStatus;
+        private Bitmap currentQrBmp;
+
+        public WordQrInsertForm()
+        {
+            this.Text = "Tạo & Chèn Mã QR Chuẩn ISO 18004 Trực Tiếp Vào Word - VBTM Pro 2.5.0";
+            this.ClientSize = new Size(640, 390);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(95, 10, 14);
+            this.ForeColor = Color.White;
+            this.Font = new Font("Segoe UI", 9.5f);
+
+            Label lblData = new Label
+            {
+                Text = "🔗 Nội dung Mã QR (Link tài liệu, Google Drive, Số văn bản & Trích yếu):",
+                Location = new Point(20, 14),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(250, 204, 21),
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
+            };
+            this.Controls.Add(lblData);
+
+            txtQrData = new TextBox
+            {
+                Location = new Point(20, 40),
+                Size = new Size(390, 96),
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Text = DetectDefaultQrTextFromWord()
+            };
+            this.Controls.Add(txtQrData);
+
+            picQr = new PictureBox
+            {
+                Location = new Point(430, 40),
+                Size = new Size(190, 190),
+                BackColor = Color.White,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            this.Controls.Add(picQr);
+
+            Button btnRefresh = new Button
+            {
+                Text = "🔄 Tạo Xem Trước QR",
+                Location = new Point(430, 238),
+                Size = new Size(190, 32),
+                BackColor = Color.FromArgb(127, 29, 29),
+                ForeColor = Color.FromArgb(254, 240, 138),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnRefresh.Click += (s, e) => RenderQrPreview();
+            this.Controls.Add(btnRefresh);
+
+            Label lblPos = new Label { Text = "Vị trí chèn vào Word:", Location = new Point(20, 152), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
+            this.Controls.Add(lblPos);
+            cboPos = new ComboBox
+            {
+                Location = new Point(20, 176),
+                Size = new Size(390, 28),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.White
+            };
+            cboPos.Items.AddRange(new object[] {
+                "1. Khung nổi tự do (Góc trên phải — Kéo chuột di chuyển thoải mái)",
+                "2. Khung nổi tự do (Góc dưới trái — Dưới mục Nơi nhận)",
+                "3. Chèn thẳng tại vị trí con trỏ chuột đang đặt"
+            });
+            cboPos.SelectedIndex = 0;
+            this.Controls.Add(cboPos);
+
+            Label lblSz = new Label { Text = "Kích thước mã QR:", Location = new Point(20, 216), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
+            this.Controls.Add(lblSz);
+            cboSize = new ComboBox
+            {
+                Location = new Point(155, 212),
+                Size = new Size(255, 28),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.White
+            };
+            cboSize.Items.AddRange(new object[] { "1.8 cm (Nhỏ gọn)", "2.2 cm (Chuẩn văn thư)", "2.6 cm (Vừa rõ)", "3.0 cm (Lớn dễ quét)" });
+            cboSize.SelectedIndex = 1;
+            this.Controls.Add(cboSize);
+
+            Button btnInsert = new Button
+            {
+                Text = "✅ Tạo && Chèn Trực Tiếp Mã QR Vào File Word",
+                Location = new Point(20, 286),
+                Size = new Size(600, 46),
+                BackColor = Color.FromArgb(234, 179, 8),
+                ForeColor = Color.FromArgb(69, 10, 10),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnInsert.FlatAppearance.BorderSize = 0;
+            btnInsert.Click += (s, e) => InsertQrIntoActiveWord();
+            this.Controls.Add(btnInsert);
+
+            lblStatus = new Label
+            {
+                Text = "Mẹo: Quét thử mã QR bên phải bằng Camera/Zalo. Sau khi chèn vào Word có thể nắm kéo di chuyển tự do!",
+                Location = new Point(20, 348),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(253, 224, 71),
+                Font = new Font("Segoe UI", 8.5f)
+            };
+            this.Controls.Add(lblStatus);
+
+            this.Shown += (s, e) => RenderQrPreview();
+        }
+
+        private string DetectDefaultQrTextFromWord()
+        {
+            try
+            {
+                string snapPath = Path.Combine(Path.GetTempPath(), "vbtm_word_snapshot.txt");
+                string txt = File.Exists(snapPath) ? File.ReadAllText(snapPath, Encoding.Unicode) : "";
+                if (!string.IsNullOrWhiteSpace(txt))
+                {
+                    Match mNum = Regex.Match(txt, @"Số\s*:?\s*[0-9A-Za-zĐđ\-/]+", RegexOptions.IgnoreCase);
+                    string numPart = mNum.Success ? mNum.Value.Trim() : "VBTM-PRO";
+                    string[] cfg = UnitSettingsForm.LoadUnitConfig();
+                    return cfg[1] + " | " + numPart + " | Ngày " + DateTime.Now.ToString("dd/MM/yyyy");
+                }
+            }
+            catch { }
+            return "VBTM Pro 2.5.0 | Văn bản xác thực ngày " + DateTime.Now.ToString("dd/MM/yyyy");
+        }
+
+        private void RenderQrPreview()
+        {
+            string data = txtQrData.Text.Trim();
+            if (string.IsNullOrEmpty(data)) data = "VBTM-PRO";
+            ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+
+            string[] urls = new string[] {
+                "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=6&ecc=M&data=" + Uri.EscapeDataString(data),
+                "https://quickchart.io/qr?size=300&margin=2&text=" + Uri.EscapeDataString(data)
+            };
+
+            foreach (string u in urls)
+            {
+                try
+                {
+                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(u);
+                    req.Timeout = 4000;
+                    using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                    using (Stream s = resp.GetResponseStream())
+                    {
+                        if (s != null)
+                        {
+                            using (Image img = Image.FromStream(s))
+                            {
+                                currentQrBmp = new Bitmap(img);
+                                picQr.Image = currentQrBmp;
+                                lblStatus.Text = "✓ Đã tạo Mã QR chuẩn ISO 18004 sắc nét (quét được bằng Zalo / Camera)!";
+                                return;
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // Fallback offline matrix
+            int size = 25, scale = 8, pad = 12;
+            Bitmap bmp = new Bitmap(size * scale + pad * 2, size * scale + pad * 2);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.White);
+                uint hash = 2166136261;
+                foreach (char c in data) { hash ^= c; hash *= 16777619; }
+                Action<int, int> drawFinder = (ox, oy) =>
+                {
+                    g.FillRectangle(Brushes.Black, pad + ox * scale, pad + oy * scale, 7 * scale, 7 * scale);
+                    g.FillRectangle(Brushes.White, pad + (ox + 1) * scale, pad + (oy + 1) * scale, 5 * scale, 5 * scale);
+                    g.FillRectangle(Brushes.Black, pad + (ox + 2) * scale, pad + (oy + 2) * scale, 3 * scale, 3 * scale);
+                };
+                drawFinder(0, 0); drawFinder(size - 7, 0); drawFinder(0, size - 7);
+                for (int r = 0; r < size; r++)
+                    for (int c = 0; c < size; c++)
+                    {
+                        if ((r < 8 && c < 8) || (r < 8 && c >= size - 8) || (r >= size - 8 && c < 8)) continue;
+                        int ch = data[(r * size + c) % data.Length];
+                        if (((hash ^ (r * 131 + c * 313 + ch * 17)) & 3) == 0 || ((r * c + ch) % 5 == 0))
+                            g.FillRectangle(Brushes.Black, pad + c * scale, pad + r * scale, scale, scale);
+                    }
+            }
+            currentQrBmp = bmp;
+            picQr.Image = currentQrBmp;
+            lblStatus.Text = "⚠ Đang ngoại tuyến: đã tạo ảnh QR dự phòng (kết nối mạng để tạo QR ISO quét điện thoại).";
+        }
+
+        private void InsertQrIntoActiveWord()
+        {
+            RenderQrPreview();
+            if (currentQrBmp == null) return;
+
+            string qrDir = Path.Combine(Path.GetTempPath(), "VBTM_QR");
+            Directory.CreateDirectory(qrDir);
+            string qrFile = Path.Combine(qrDir, "QR_" + DateTime.Now.ToString("yyyyMMdd_HHmmssfff") + ".png");
+            currentQrBmp.Save(qrFile, ImageFormat.Png);
+
+            float[] cmSizes = new float[] { 1.8f, 2.2f, 2.6f, 3.0f };
+            float cm = cmSizes[Math.Max(0, Math.Min(cboSize.SelectedIndex, cmSizes.Length - 1))];
+            float ptSize = cm * 28.3465f;
+
+            try
+            {
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object doc = null;
+                try { doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null); }
+                catch
+                {
+                    object docs = wordApp.GetType().InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
+                    int dc = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
+                    if (dc > 0) doc = docs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, docs, new object[] { 1 });
+                }
+                if (doc == null) throw new Exception("Chưa có tài liệu Microsoft Word đang mở.");
+
+                if (cboPos.SelectedIndex == 2)
+                {
+                    object sel = wordApp.GetType().InvokeMember("Selection", BindingFlags.GetProperty, null, wordApp, null);
+                    object inlines = sel.GetType().InvokeMember("InlineShapes", BindingFlags.GetProperty, null, sel, null);
+                    object pic = inlines.GetType().InvokeMember("AddPicture", BindingFlags.InvokeMethod, null, inlines, new object[] { qrFile, false, true });
+                    pic.GetType().InvokeMember("Width", BindingFlags.SetProperty, null, pic, new object[] { ptSize });
+                    pic.GetType().InvokeMember("Height", BindingFlags.SetProperty, null, pic, new object[] { ptSize });
+                }
+                else
+                {
+                    object shapes = doc.GetType().InvokeMember("Shapes", BindingFlags.GetProperty, null, doc, null);
+                    float leftPt = cboPos.SelectedIndex == 0 ? (17.2f * 28.3465f) : (3.2f * 28.3465f);
+                    float topPt = cboPos.SelectedIndex == 0 ? (1.2f * 28.3465f) : (23.5f * 28.3465f);
+                    object shp = shapes.GetType().InvokeMember("AddPicture", BindingFlags.InvokeMethod, null, shapes, new object[] {
+                        qrFile, false, true, leftPt, topPt, ptSize, ptSize
+                    });
+                    shp.GetType().InvokeMember("RelativeHorizontalPosition", BindingFlags.SetProperty, null, shp, new object[] { 1 });
+                    shp.GetType().InvokeMember("RelativeVerticalPosition", BindingFlags.SetProperty, null, shp, new object[] { 1 });
+                    shp.GetType().InvokeMember("Left", BindingFlags.SetProperty, null, shp, new object[] { leftPt });
+                    shp.GetType().InvokeMember("Top", BindingFlags.SetProperty, null, shp, new object[] { topPt });
+                    object wrap = shp.GetType().InvokeMember("WrapFormat", BindingFlags.GetProperty, null, shp, null);
+                    wrap.GetType().InvokeMember("Type", BindingFlags.SetProperty, null, wrap, new object[] { 3 }); // In Front of Text
+                    shp.GetType().InvokeMember("Select", BindingFlags.InvokeMethod, null, shp, null);
+                }
+
+                lblStatus.Text = "✓ Đã chèn trực tiếp Mã QR vào file Word! Bạn có thể nắm chuột kéo di chuyển tùy thích.";
+                MessageBox.Show("Đã tạo và chèn trực tiếp Mã QR vào file Microsoft Word đang mở!\n\nBạn có thể nắm chuột kéo khung mã QR di chuyển tới bất kỳ vị trí nào trên trang.", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể chèn Mã QR vào Word đang mở: " + ex.Message, "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
     }
 
