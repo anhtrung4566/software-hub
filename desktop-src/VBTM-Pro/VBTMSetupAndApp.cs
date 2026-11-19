@@ -525,7 +525,7 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_ChuyenDoiDangHanhChinh(ByVal control As Object): ChuyenDoiDangHanhChinh_Word: End Sub");
             sb.AppendLine("Sub Ribbon_KiemDinhTheThuc(ByVal control As Object): KiemDinhTheThuc_Word: End Sub");
             sb.AppendLine("Sub Ribbon_ChenBangChuan(ByVal control As Object): ChenBangChuan_Word: End Sub");
-            sb.AppendLine("Sub Ribbon_ChenDoKhanMat(ByVal control As Object): ChenDoKhanMat_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_ChenDoKhanMat(ByVal control As Object): ChenDoKhanMat_Word CStr(control.Tag): End Sub");
             sb.AppendLine("Sub Ribbon_XuatPDFNhanh(ByVal control As Object): XuatPDFNhanh_Word: End Sub");
             sb.AppendLine("Sub Ribbon_ThongKeVanBan(ByVal control As Object): ThongKeVanBan_Word: End Sub");
             sb.AppendLine("Sub Ribbon_InsertTpl(ByVal control As Object)");
@@ -1113,19 +1113,26 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl.Cell(1, 4).Range.Text = " + VbaStr("Ghi chú"));
             sb.AppendLine("End Sub");
             sb.AppendLine("");
-            // 15. Chèn Dấu Độ Khẩn / Độ Mật (KHẨN, THƯỢNG KHẨN, HỎA TỐC, MẬT, TỐI MẬT)
-            sb.AppendLine("Sub ChenDoKhanMat_Word()");
+            // 15. Chèn Dấu Độ Khẩn / Độ Mật thuần Unicode 100% (KHẨN, THƯỢNG KHẨN, HỎA TỐC, HỎA TỐC HẸN GIỜ, MẬT, TỐI MẬT, TUYỆT MẬT)
+            sb.AppendLine("Sub ChenDoKhanMat_Word(Optional ByVal lvIdx As String = \"1\")");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
-            sb.AppendLine("    Dim lv As String: lv = " + VbaStr("KHẨN"));
-            sb.AppendLine("    If Application.Visible Then");
-            sb.AppendLine("        Dim inp As String: inp = InputBox(" + VbaStr("Nhập mức độ cần đóng khung (VD: KHẨN, THƯỢNG KHẨN, HỎA TỐC, MẬT, TỐI MẬT):") + ", " + VbaStr("Chèn Dấu Độ Khẩn / Mật") + ", " + VbaStr("KHẨN") + ")");
-            sb.AppendLine("        If Len(Trim(inp)) = 0 Then Exit Sub");
-            sb.AppendLine("        lv = UCase(Trim(inp))");
-            sb.AppendLine("    End If");
+            sb.AppendLine("    Dim lv As String, boxW As Single");
+            sb.AppendLine("    boxW = 3.8");
+            sb.AppendLine("    Select Case lvIdx");
+            sb.AppendLine("        Case \"2\": lv = " + VbaStr("THƯỢNG KHẨN") + ": boxW = 5.0");
+            sb.AppendLine("        Case \"3\": lv = " + VbaStr("HỎA TỐC") + ": boxW = 4.0");
+            sb.AppendLine("        Case \"4\": lv = " + VbaStr("HỎA TỐC HẸN GIỜ") + ": boxW = 5.8");
+            sb.AppendLine("        Case \"5\": lv = " + VbaStr("MẬT") + ": boxW = 3.4");
+            sb.AppendLine("        Case \"6\": lv = " + VbaStr("TỐI MẬT") + ": boxW = 4.0");
+            sb.AppendLine("        Case \"7\": lv = " + VbaStr("TUYỆT MẬT") + ": boxW = 4.5");
+            sb.AppendLine("        Case Else: lv = " + VbaStr("KHẨN") + ": boxW = 3.6");
+            sb.AppendLine("    End Select");
             sb.AppendLine("    Dim tbl As Table: Set tbl = ActiveDocument.Tables.Add(Selection.Range, 1, 1)");
+            sb.AppendLine("    tbl.AllowAutoFit = False");
             sb.AppendLine("    tbl.Borders.Enable = 1");
-            sb.AppendLine("    tbl.PreferredWidthType = 3: tbl.PreferredWidth = CentimetersToPoints(4.2)");
+            sb.AppendLine("    tbl.PreferredWidthType = 3: tbl.PreferredWidth = CentimetersToPoints(boxW)");
+            sb.AppendLine("    tbl.Columns(1).PreferredWidthType = 3: tbl.Columns(1).PreferredWidth = CentimetersToPoints(boxW)");
             sb.AppendLine("    With tbl.Cell(1, 1).Range");
             sb.AppendLine("        .Text = lv");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True");
@@ -1306,7 +1313,17 @@ namespace VBTMProSuite
                 "<button id=\"btnVbtmConvert\" label=\"Đổi Đảng &lt;-&gt; Hành Chính\" size=\"normal\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\" supertip=\"Chuyển đổi tự động thể thức &amp; thuật ngữ qua lại giữa Khối Đảng (05-HD) và UBND (NĐ 30).\"/>" +
                 "<button id=\"btnVbtmAudit\" label=\"Kiểm Định Thể Thức (%)\" size=\"normal\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\" supertip=\"Chấm điểm tuân thủ thể thức 05-HD/VPTW &amp; NĐ 30/2020/NĐ-CP và chỉ ra lỗi thiếu sót.\"/>" +
                 "<button id=\"btnVbtmTbl\" label=\"Chèn Bảng Chuẩn 13pt\" size=\"normal\" imageMso=\"TableInsert\" onAction=\"Ribbon_ChenBangChuan\" supertip=\"Chèn bảng thống kê Times New Roman 13pt tự động lặp dòng tiêu đề khi sang trang.\"/>" +
-                "<button id=\"btnVbtmKhanMat\" label=\"Dấu Khẩn / Mật\" size=\"normal\" imageMso=\"HighImportance\" onAction=\"Ribbon_ChenDoKhanMat\" supertip=\"Chèn khung đóng dấu độ Khẩn (KHẨN, THƯỢNG KHẨN, HỎA TỐC) hoặc độ Mật (MẬT, TỐI MẬT).\"/>" +
+                "<menu id=\"mnuVbtmKhanMat\" label=\"Dấu Khẩn / Mật\" size=\"normal\" imageMso=\"HighImportance\" supertip=\"Chèn nhanh khung đóng dấu Độ Khẩn (KHẨN, THƯỢNG KHẨN, HỎA TỐC) hoặc Độ Mật (MẬT, TỐI MẬT, TUYỆT MẬT) chuẩn Unicode 100%.\">" +
+                "<menuSeparator id=\"sepKhan\" title=\"I. Dấu Độ Khẩn\"/>" +
+                "<button id=\"btnKm1\" label=\"KHẨN\" tag=\"1\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<button id=\"btnKm2\" label=\"THƯỢNG KHẨN\" tag=\"2\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<button id=\"btnKm3\" label=\"HỎA TỐC\" tag=\"3\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<button id=\"btnKm4\" label=\"HỎA TỐC HẸN GIỜ\" tag=\"4\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<menuSeparator id=\"sepMat\" title=\"II. Dấu Độ Mật\"/>" +
+                "<button id=\"btnKm5\" label=\"MẬT\" tag=\"5\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<button id=\"btnKm6\" label=\"TỐI MẬT\" tag=\"6\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "<button id=\"btnKm7\" label=\"TUYỆT MẬT\" tag=\"7\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
+                "</menu>" +
                 "<button id=\"btnVbtmPdf\" label=\"Xuất PDF Ký Số (1-Click)\" size=\"normal\" imageMso=\"FileSaveAsPdfOrXps\" onAction=\"Ribbon_XuatPDFNhanh\" supertip=\"Xuất ngay tài liệu Word đang mở sang file PDF chuẩn A4 để in ấn hoặc trình ký số.\"/>" +
                 "<button id=\"btnVbtmStat\" label=\"Thống Kê Trang &amp; Từ\" size=\"normal\" imageMso=\"WordCount\" onAction=\"Ribbon_ThongKeVanBan\" supertip=\"Thống kê nhanh số trang A4, số từ, số ký tự và thời gian đọc của báo cáo.\"/>" +
                 "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Văn Bản\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 để gắn vào văn bản Word.\"/>" +
