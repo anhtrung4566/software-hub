@@ -1323,7 +1323,7 @@ $inFileStream.Close()
             {
                 string pageContent = pages[pIdx];
                 if (string.IsNullOrWhiteSpace(pageContent)) continue;
-                if (pIdx > 0) sb.Append("<br clear='all' style='page-break-before:always'/>");
+                // Nối chảy tự nhiên liên tục giữa các trang PDF, không chèn page-break cứng gây trang trắng thừa trong Word
 
                 string[] rawLines = pageContent.Replace("\r\n", "\n").Split('\n');
                 List<string> lines = new List<string>();
