@@ -278,10 +278,18 @@ function applyCasePattern(sourceStr, targetStr) {
 }
 
 // Kiểm tra một âm tiết có hợp lệ trong 7.578 âm tiết Tiếng Việt chuẩn hay không
+const TECH_LOANWORDS = new Set([
+  'times', 'new', 'roman', 'arial', 'unicode', 'offline', 'online', 'word', 'excel',
+  'pdf', 'docx', 'doc', 'qr', 'ai', 'iso', 'email', 'internet', 'website', 'web',
+  'app', 'software', 'pro', 'windows', 'wifi', 'usb', 'cloud', 'server', 'data',
+  'file', 'scan', 'ocr', 'digital', 'smart', 'admin', 'system', 'macro', 'addin'
+]);
+
 function isValidVietnameseSyllable(word) {
   if (!window.VN_VALID_SYLLABLES) return true;
   const w = word.normalize('NFC').toLowerCase();
   if (w.length <= 1) return true;
+  if (TECH_LOANWORDS.has(w)) return true;
   // Bỏ qua từ viết tắt IN HOA (UBND, HĐND, ĐU, VPTW...), từ có số hoặc ký tự đặc biệt
   if (word === word.toUpperCase() && word.length <= 8) return true;
   if (!/^\p{L}+$/u.test(w)) return true;
