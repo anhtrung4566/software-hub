@@ -687,11 +687,12 @@ namespace VBTMProSuite
             sb.AppendLine("                Set pTop = tblTop.Cell(1, 2).Range.Paragraphs(rpIdx)");
             sb.AppendLine("                tTop = Trim(Replace(Replace(pTop.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
             sb.AppendLine("                If InStr(UCase(tTop), " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Then");
-            sb.AppendLine("                    pTop.Range.Font.Size = 14.5: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 1: pTop.Range.Font.Scaling = 95");
+            sb.AppendLine("                    pTop.Range.Font.Size = 15: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 0: pTop.Range.Font.Scaling = 95");
+            sb.AppendLine("                    pTop.Borders(-3).LineStyle = 1: pTop.Borders(-3).LineWidth = 6");
             sb.AppendLine("                ElseIf Left(tTop, 3) = " + VbaStr("───") + " Or Left(tTop, 3) = \"---\" Then");
             sb.AppendLine("                    pTop.Range.Delete");
             sb.AppendLine("                ElseIf InStr(LCase(tTop), " + VbaStr("ngày") + ") > 0 Then");
-            sb.AppendLine("                    pTop.Range.Font.Size = 14: pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Format.SpaceBefore = 2");
+            sb.AppendLine("                    pTop.Range.Font.Size = 14: pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Format.SpaceBefore = 3");
             sb.AppendLine("                    If Len(tTop) > 40 Then pTop.Range.Font.Scaling = 72 Else If Len(tTop) > 33 Then pTop.Range.Font.Scaling = 78 Else If Len(tTop) > 26 Then pTop.Range.Font.Scaling = 86 Else pTop.Range.Font.Scaling = 100");
             sb.AppendLine("                End If");
             sb.AppendLine("            Next rpIdx");
@@ -709,6 +710,7 @@ namespace VBTMProSuite
             sb.AppendLine("                pRec.Range.Font.Italic = False");
             sb.AppendLine("                pRec.Range.Font.Bold = False");
             sb.AppendLine("                pRec.Range.Font.Underline = 0");
+            sb.AppendLine("                pRec.Format.SpaceBefore = 0: pRec.Format.SpaceAfter = 0: pRec.Format.LineSpacingRule = 0");
             sb.AppendLine("                If InStr(LCase(pRec.Range.Text), " + VbaStr("nơi nhận") + ") > 0 Then");
             sb.AppendLine("                    pRec.Range.Font.Size = 14");
             sb.AppendLine("                    Dim uRng As Range: Set uRng = pRec.Range.Duplicate");
@@ -720,7 +722,16 @@ namespace VBTMProSuite
             sb.AppendLine("            Next pRec");
             sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Name = \"Times New Roman\"");
             sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Size = 14");
-            sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Bold = True");
+            sb.AppendLine("            Dim pSig As Paragraph, tSig As String");
+            sb.AppendLine("            For Each pSig In tblBot.Cell(1, 2).Range.Paragraphs");
+            sb.AppendLine("                pSig.Format.SpaceBefore = 0: pSig.Format.SpaceAfter = 0: pSig.Format.LineSpacingRule = 0");
+            sb.AppendLine("                tSig = UCase(Trim(Replace(Replace(pSig.Range.Text, vbCr, \"\"), Chr(7), \"\")))");
+            sb.AppendLine("                If tSig = " + VbaStr("BÍ THƯ") + " Or tSig = " + VbaStr("PHÓ BÍ THƯ") + " Or tSig = " + VbaStr("PHÓ BÍ THƯ THƯỜNG TRỰC") + " Or tSig = " + VbaStr("CHÁNH VĂN PHÒNG") + " Or tSig = " + VbaStr("PHÓ CHÁNH VĂN PHÒNG") + " Or tSig = " + VbaStr("CHỦ NHIỆM") + " Or tSig = " + VbaStr("TRƯỞNG BAN") + " Then");
+            sb.AppendLine("                    pSig.Range.Font.Bold = False");
+            sb.AppendLine("                Else");
+            sb.AppendLine("                    pSig.Range.Font.Bold = True");
+            sb.AppendLine("                End If");
+            sb.AppendLine("            Next pSig");
             sb.AppendLine("        End If");
             sb.AppendLine("    End If");
             sb.AppendLine("    Application.ScreenUpdating = True");
@@ -834,8 +845,9 @@ namespace VBTMProSuite
             sb.AppendLine("        Dim dtStr As String: dtStr = loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
             sb.AppendLine("        .Text = pMotto & vbCr & dtStr");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
-            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 14.5: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 1: .Paragraphs(1).Range.Font.Scaling = 95");
-            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 2");
+            sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 15: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 0: .Paragraphs(1).Range.Font.Scaling = 95");
+            sb.AppendLine("        .Paragraphs(1).Borders(-3).LineStyle = 1: .Paragraphs(1).Borders(-3).LineWidth = 6");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 3");
             sb.AppendLine("        If Len(dtStr) > 40 Then .Paragraphs(2).Range.Font.Scaling = 72 Else If Len(dtStr) > 33 Then .Paragraphs(2).Range.Font.Scaling = 78 Else If Len(dtStr) > 26 Then .Paragraphs(2).Range.Font.Scaling = 86");
             sb.AppendLine("    End With");
             sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
@@ -851,14 +863,15 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl2.LeftPadding = 0: tbl2.RightPadding = 0: tbl2.TopPadding = 0: tbl2.BottomPadding = 0");
             sb.AppendLine("    With tbl2.Cell(1, 1).Range");
             sb.AppendLine("        .Text = " + VbaStr("Nơi nhận:") + " & vbCr & " + VbaStr("- Ban Thường vụ Quận ủy (để b/c);") + " & vbCr & " + VbaStr("- Các chi bộ trực thuộc;") + " & vbCr & " + VbaStr("- Lưu Văn phòng Đảng ủy."));
-            sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 0: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 0: .ParagraphFormat.SpaceBefore = 0: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.LineSpacingRule = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 14: .Paragraphs(1).Range.Font.Underline = 0");
             sb.AppendLine("        Dim uRng2 As Range: Set uRng2 = .Paragraphs(1).Range.Duplicate: uRng2.End = uRng2.Start + 8: uRng2.Font.Underline = 1");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 12: .Paragraphs(3).Range.Font.Size = 12: .Paragraphs(4).Range.Font.Size = 12");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl2.Cell(1, 2).Range");
             sb.AppendLine("        .Text = " + VbaStr("T/M ĐẢNG ỦY") + " & vbCr & " + VbaStr("BÍ THƯ") + " & vbCr & vbCr & vbCr & pSign");
-            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceBefore = 0: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.LineSpacingRule = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = False");
             sb.AppendLine("    End With");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
@@ -1285,12 +1298,13 @@ namespace VBTMProSuite
 
     public class UnitSettingsForm : Form
     {
-        private TextBox txtPGov, txtPIss, txtPMotto, txtUGov, txtUIss, txtLoc, txtPSign, txtUSign;
+        private ComboBox cboPreset, cboPGov, cboPIss, cboPMotto, cboUGov, cboUIss, cboLoc;
+        private TextBox txtPSign, txtUSign;
 
         public UnitSettingsForm()
         {
-            this.Text = "Cài Đặt Tiêu Ngữ & Tên Đơn Vị - VBTM Pro 2.5.0";
-            this.ClientSize = new Size(560, 440);
+            this.Text = "Cài Đặt Tiêu Ngữ & Tên Đơn Vị (Đa Cơ Quan) - VBTM Pro 2.5.0";
+            this.ClientSize = new Size(640, 520);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -1299,21 +1313,91 @@ namespace VBTMProSuite
             this.Font = new Font("Segoe UI", 9.5f);
 
             string[] vals = LoadUnitConfig();
-            int y = 18;
-            AddRow("Cơ quan Đảng cấp trên:", vals[0], out txtPGov, ref y);
-            AddRow("Đơn vị Đảng ban hành:", vals[1], out txtPIss, ref y);
-            AddRow("Tiêu ngữ văn bản Đảng:", vals[7], out txtPMotto, ref y);
-            AddRow("UBND cấp trên:", vals[2], out txtUGov, ref y);
-            AddRow("UBND ban hành:", vals[3], out txtUIss, ref y);
-            AddRow("Địa danh (Phường/Xã):", vals[4], out txtLoc, ref y);
-            AddRow("Họ tên Bí thư Đảng ủy:", vals[5], out txtPSign, ref y);
-            AddRow("Họ tên Chủ tịch UBND:", vals[6], out txtUSign, ref y);
+            int y = 16;
+
+            Label lblPre = new Label { Text = "Chọn nhanh loại cơ quan:", Location = new Point(22, y + 4), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138), Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            cboPreset = new ComboBox
+            {
+                Location = new Point(215, y),
+                Size = new Size(395, 28),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.White
+            };
+            cboPreset.Items.AddRange(new object[] {
+                "-- Giữ nguyên cấu hình hiện tại --",
+                "1. Đảng ủy Phường (Trực thuộc Thành ủy / Quận ủy)",
+                "2. Văn phòng Đảng ủy Phường",
+                "3. Chi bộ Khu phố / Chi bộ trực thuộc",
+                "4. Ủy ban Kiểm tra / Ban Xây dựng Đảng",
+                "5. Ủy ban nhân dân Phường / Xã",
+                "6. Hội đồng nhân dân Phường / Xã",
+                "7. Ủy ban MTTQ Việt Nam Phường / Xã",
+                "8. Công an / Ban CHQS Phường",
+                "9. Trường học / Trạm Y tế / Đơn vị sự nghiệp"
+            });
+            cboPreset.SelectedIndex = 0;
+            cboPreset.SelectedIndexChanged += (s, e) => ApplyPreset(cboPreset.SelectedIndex);
+            this.Controls.Add(lblPre);
+            this.Controls.Add(cboPreset);
+            y += 44;
+
+            AddComboRow("Cơ quan Đảng cấp trên:", vals[0], new string[] {
+                "ĐẢNG BỘ THÀNH PHỐ HỒ CHÍ MINH", "ĐẢNG BỘ THÀNH PHỐ HÀ NỘI", "ĐẢNG BỘ THÀNH PHỐ ĐÀ NẴNG",
+                "ĐẢNG BỘ TỈNH", "THÀNH ỦY", "QUẬN ỦY", "HUYỆN ỦY", "THỊ ỦY",
+                "ĐẢNG ỦY PHƯỜNG TÂN SƠN NHẤT", "ĐẢNG ỦY PHƯỜNG", "ĐẢNG ỦY XÃ",
+                "ĐẢNG ỦY KHỐI CÁC CƠ QUAN", "ĐẢNG ỦY CÁC CƠ QUAN ĐẢNG"
+            }, out cboPGov, ref y);
+
+            AddComboRow("Đơn vị Đảng ban hành:", vals[1], new string[] {
+                "ĐẢNG ỦY PHƯỜNG TÂN SƠN NHẤT", "ĐẢNG ỦY PHƯỜNG", "ĐẢNG ỦY XÃ",
+                "VĂN PHÒNG", "VĂN PHÒNG ĐẢNG ỦY", "BAN TỔ CHỨC ĐẢNG ỦY",
+                "ỦY BAN KIỂM TRA ĐẢNG ỦY", "BAN TUYÊN GIÁO VÀ DÂN VẬN",
+                "CHI BỘ KHU PHỐ 1", "CHI BỘ CƠ QUAN", "CHI BỘ CÔNG AN PHƯỜNG",
+                "CHI BỘ QUÂN SỰ PHƯỜNG", "CHI BỘ TRƯỜNG HỌC", "CHI BỘ TRẠM Y TẾ"
+            }, out cboPIss, ref y);
+
+            AddComboRow("Tiêu ngữ văn bản Đảng:", vals[7], new string[] {
+                "ĐẢNG CỘNG SẢN VIỆT NAM",
+                "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"
+            }, out cboPMotto, ref y);
+
+            AddComboRow("Cơ quan Hành chính cấp trên:", vals[2], new string[] {
+                "ỦY BAN NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH", "ỦY BAN NHÂN DÂN THÀNH PHỐ HÀ NỘI",
+                "ỦY BAN NHÂN DÂN TỈNH", "ỦY BAN NHÂN DÂN QUẬN", "ỦY BAN NHÂN DÂN HUYỆN",
+                "ỦY BAN NHÂN DÂN PHƯỜNG TÂN SƠN NHẤT", "HỘI ĐỒNG NHÂN DÂN QUẬN",
+                "ỦY BAN MTTQ VIỆT NAM THÀNH PHỐ", "CÔNG AN THÀNH PHỐ", "SỞ GIÁO DỤC VÀ ĐÀO TẠO", "SỞ Y TẾ"
+            }, out cboUGov, ref y);
+
+            AddComboRow("Cơ quan Hành chính ban hành:", vals[3], new string[] {
+                "ỦY BAN NHÂN DÂN PHƯỜNG TÂN SƠN NHẤT", "ỦY BAN NHÂN DÂN PHƯỜNG", "ỦY BAN NHÂN DÂN XÃ",
+                "HỘI ĐỒNG NHÂN DÂN PHƯỜNG", "VĂN PHÒNG HĐND VÀ UBND",
+                "ỦY BAN MTTQ VIỆT NAM PHƯỜNG", "CÔNG AN PHƯỜNG", "BAN CHỈ HUY QUÂN SỰ PHƯỜNG",
+                "TRẠM Y TẾ PHƯỜNG", "TRƯỜNG TIỂU HỌC", "TRƯỜNG TRUNG HỌC CƠ SỞ"
+            }, out cboUIss, ref y);
+
+            AddComboRow("Địa danh (Phường/Xã/Tỉnh):", vals[4], new string[] {
+                "Tân Sơn Nhất", "Phường Tân Sơn Nhất", "TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Phường", "Xã"
+            }, out cboLoc, ref y);
+
+            AddRow("Họ tên người ký (Khối Đảng):", vals[5], out txtPSign, ref y);
+            AddRow("Họ tên người ký (Khối UBND):", vals[6], out txtUSign, ref y);
+
+            Label lblNote = new Label
+            {
+                Text = "Mẹo: Bấm mũi tên xổ xuống để chọn nhanh hoặc gõ trực tiếp tên cơ quan bất kỳ của bạn.",
+                Location = new Point(22, y + 2),
+                AutoSize = true,
+                ForeColor = Color.FromArgb(253, 224, 71),
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Italic)
+            };
+            this.Controls.Add(lblNote);
 
             Button btnSave = new Button
             {
                 Text = "💾 Lưu Cài Đặt Tiêu Ngữ",
-                Location = new Point(340, y + 12),
-                Size = new Size(195, 38),
+                Location = new Point(405, y + 26),
+                Size = new Size(205, 38),
                 BackColor = Color.FromArgb(234, 179, 8),
                 ForeColor = Color.FromArgb(69, 10, 10),
                 FlatStyle = FlatStyle.Flat,
@@ -1324,13 +1408,44 @@ namespace VBTMProSuite
             btnSave.Click += (s, e) =>
             {
                 SaveUnitConfig(new string[] {
-                    txtPGov.Text.Trim(), txtPIss.Text.Trim(), txtUGov.Text.Trim(), txtUIss.Text.Trim(),
-                    txtLoc.Text.Trim(), txtPSign.Text.Trim(), txtUSign.Text.Trim(), txtPMotto.Text.Trim()
+                    cboPGov.Text.Trim(), cboPIss.Text.Trim(), cboUGov.Text.Trim(), cboUIss.Text.Trim(),
+                    cboLoc.Text.Trim(), txtPSign.Text.Trim(), txtUSign.Text.Trim(), cboPMotto.Text.Trim()
                 });
                 MessageBox.Show("Đã lưu cấu hình Tiêu ngữ & Đơn vị! Các mẫu chèn trong Microsoft Word sẽ tự động sử dụng thông tin này.", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             };
             this.Controls.Add(btnSave);
+        }
+
+        private void ApplyPreset(int idx)
+        {
+            if (idx == 1) { cboPGov.Text = "ĐẢNG BỘ THÀNH PHỐ HỒ CHÍ MINH"; cboPIss.Text = "ĐẢNG ỦY PHƯỜNG TÂN SƠN NHẤT"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 2) { cboPGov.Text = "ĐẢNG ỦY PHƯỜNG TÂN SƠN NHẤT"; cboPIss.Text = "VĂN PHÒNG"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 3) { cboPGov.Text = "ĐẢNG ỦY PHƯỜNG TÂN SƠN NHẤT"; cboPIss.Text = "CHI BỘ KHU PHỐ 1"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 4) { cboPGov.Text = "ĐẢNG ỦY PHƯỜNG TÂN SƠN NHẤT"; cboPIss.Text = "ỦY BAN KIỂM TRA ĐẢNG ỦY"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 5) { cboUGov.Text = "ỦY BAN NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH"; cboUIss.Text = "ỦY BAN NHÂN DÂN PHƯỜNG TÂN SƠN NHẤT"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 6) { cboUGov.Text = "HỘI ĐỒNG NHÂN DÂN THÀNH PHỐ HỒ CHÍ MINH"; cboUIss.Text = "HỘI ĐỒNG NHÂN DÂN PHƯỜNG TÂN SƠN NHẤT"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 7) { cboUGov.Text = "ỦY BAN MTTQ VIỆT NAM THÀNH PHỐ"; cboUIss.Text = "ỦY BAN MTTQ VIỆT NAM PHƯỜNG TÂN SƠN NHẤT"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 8) { cboUGov.Text = "CÔNG AN THÀNH PHỐ"; cboUIss.Text = "CÔNG AN PHƯỜNG TÂN SƠN NHẤT"; cboLoc.Text = "Tân Sơn Nhất"; }
+            else if (idx == 9) { cboUGov.Text = "ỦY BAN NHÂN DÂN PHƯỜNG TÂN SƠN NHẤT"; cboUIss.Text = "TRẠM Y TẾ PHƯỜNG"; cboLoc.Text = "Tân Sơn Nhất"; }
+        }
+
+        private void AddComboRow(string label, string initVal, string[] suggestions, out ComboBox cb, ref int y)
+        {
+            Label lbl = new Label { Text = label, Location = new Point(22, y + 4), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
+            cb = new ComboBox
+            {
+                Location = new Point(215, y),
+                Size = new Size(395, 28),
+                DropDownStyle = ComboBoxStyle.DropDown,
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.White
+            };
+            cb.Items.AddRange(suggestions);
+            cb.Text = initVal;
+            this.Controls.Add(lbl);
+            this.Controls.Add(cb);
+            y += 42;
         }
 
         private void AddRow(string label, string initVal, out TextBox tb, ref int y)
@@ -1339,8 +1454,8 @@ namespace VBTMProSuite
             tb = new TextBox
             {
                 Text = initVal,
-                Location = new Point(205, y),
-                Size = new Size(330, 26),
+                Location = new Point(215, y),
+                Size = new Size(395, 26),
                 BackColor = Color.FromArgb(69, 10, 10),
                 ForeColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
@@ -2611,10 +2726,18 @@ namespace VBTMProSuite
                                     rpFnt.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, rpFnt, new object[] { "Times New Roman" });
                                     if (rpTxt.IndexOf("ĐẢNG CỘNG SẢN", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
-                                        rpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, rpFnt, new object[] { 14.5f });
+                                        rpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, rpFnt, new object[] { 15f });
                                         rpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, rpFnt, new object[] { -1 });
-                                        rpFnt.GetType().InvokeMember("Underline", BindingFlags.SetProperty, null, rpFnt, new object[] { 1 });
+                                        rpFnt.GetType().InvokeMember("Underline", BindingFlags.SetProperty, null, rpFnt, new object[] { 0 });
                                         rpFnt.GetType().InvokeMember("Scaling", BindingFlags.SetProperty, null, rpFnt, new object[] { 95 });
+                                        try
+                                        {
+                                            object rpBdrs = rp.GetType().InvokeMember("Borders", BindingFlags.GetProperty, null, rp, null);
+                                            object bBot = rpBdrs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, rpBdrs, new object[] { -3 });
+                                            bBot.GetType().InvokeMember("LineStyle", BindingFlags.SetProperty, null, bBot, new object[] { 1 });
+                                            bBot.GetType().InvokeMember("LineWidth", BindingFlags.SetProperty, null, bBot, new object[] { 6 });
+                                        }
+                                        catch { }
                                     }
                                     else if (Regex.IsMatch(rpTxt, @"\b(ngày|tháng|năm)\b", RegexOptions.IgnoreCase))
                                     {
@@ -2647,6 +2770,13 @@ namespace VBTMProSuite
                                     bpFnt.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, bpFnt, new object[] { "Times New Roman" });
                                     bpFnt.GetType().InvokeMember("Italic", BindingFlags.SetProperty, null, bpFnt, new object[] { 0 });
                                     bpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, bpFnt, new object[] { 0 });
+                                    try
+                                    {
+                                        bp.GetType().InvokeMember("SpaceBefore", BindingFlags.SetProperty, null, bp, new object[] { 0f });
+                                        bp.GetType().InvokeMember("SpaceAfter", BindingFlags.SetProperty, null, bp, new object[] { 0f });
+                                        bp.GetType().InvokeMember("LineSpacingRule", BindingFlags.SetProperty, null, bp, new object[] { 0 });
+                                    }
+                                    catch { }
                                     if (bpTxt.IndexOf("Nơi nhận", StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         bpFnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, bpFnt, new object[] { 14f });
@@ -2672,7 +2802,23 @@ namespace VBTMProSuite
                                 object fntBR = rngBR.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, rngBR, null);
                                 fntBR.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, fntBR, new object[] { "Times New Roman" });
                                 fntBR.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, fntBR, new object[] { 14f });
-                                fntBR.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, fntBR, new object[] { -1 });
+                                try
+                                {
+                                    object brParas = rngBR.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, rngBR, null);
+                                    int brCount = (int)brParas.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, brParas, null);
+                                    for (int brIdx = 1; brIdx <= brCount; brIdx++)
+                                    {
+                                        object brp = brParas.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, brParas, new object[] { brIdx });
+                                        brp.GetType().InvokeMember("SpaceBefore", BindingFlags.SetProperty, null, brp, new object[] { 0f });
+                                        brp.GetType().InvokeMember("SpaceAfter", BindingFlags.SetProperty, null, brp, new object[] { 0f });
+                                        object brpRng = brp.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, brp, null);
+                                        string brTxt = (Convert.ToString(brpRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, brpRng, null)) ?? "").TrimEnd('\r', '\a', '\n').Trim().ToUpperInvariant();
+                                        object brpFnt = brpRng.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, brpRng, null);
+                                        bool isPlainRole = Regex.IsMatch(brTxt, @"^(BÍ THƯ|PHÓ BÍ THƯ|PHÓ BÍ THƯ THƯỜNG TRỰC|CHÁNH VĂN PHÒNG|PHÓ CHÁNH VĂN PHÒNG|CHỦ NHIỆM|TRƯỞNG BAN)$");
+                                        brpFnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, brpFnt, new object[] { isPlainRole ? 0 : -1 });
+                                    }
+                                }
+                                catch { }
                             }
                         }
                     }
@@ -3244,10 +3390,15 @@ td p { margin:0; text-indent:0; }
                 }
             }
 
+            bool isDang = (cboTemplate != null && cboTemplate.SelectedIndex >= 10) ||
+                          txtIssueOrg.Text.IndexOf("ĐẢNG", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                          txtIssueOrg.Text.IndexOf("CHI BỘ", StringComparison.OrdinalIgnoreCase) >= 0;
+            string noiNhanSize = isDang ? "12pt" : "11pt";
+
             StringBuilder sbRec = new StringBuilder();
             foreach (string r in txtRecipients.Text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
-                sbRec.AppendFormat("<div>{0}</div>", System.Security.SecurityElement.Escape(r.Trim()));
+                sbRec.AppendFormat("<p style='margin:0;padding:0;text-indent:0;line-height:1.08;font-size:{1};'>{0}</p>", System.Security.SecurityElement.Escape(r.Trim()), noiNhanSize);
             }
 
             string qrImgHtml = "";
@@ -3261,12 +3412,8 @@ td p { margin:0; text-indent:0; }
                 }
             }
 
-            bool isDang = (cboTemplate != null && cboTemplate.SelectedIndex >= 10) ||
-                          txtIssueOrg.Text.IndexOf("ĐẢNG", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                          txtIssueOrg.Text.IndexOf("CHI BỘ", StringComparison.OrdinalIgnoreCase) >= 0;
-
             string rightHeaderHtml = isDang
-                ? "<div style='font-size:14.5pt;font-weight:bold;text-decoration:underline;white-space:nowrap;'>ĐẢNG CỘNG SẢN VIỆT NAM</div>"
+                ? "<p align='center' style='margin:0;padding:0;text-align:center;text-indent:0;font-size:15pt;font-weight:bold;line-height:1.15;'><span style='border-bottom:0.75pt solid #000;padding-bottom:1.5pt;'>ĐẢNG CỘNG SẢN VIỆT NAM</span></p>"
                 : "<div style='font-size:12.5pt;font-weight:bold;white-space:nowrap;'>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>" +
                   "<div style='font-size:13.5pt;font-weight:bold;white-space:nowrap;'>Độc lập - Tự do - Hạnh phúc</div>" +
                   "<p align='center' style='text-align:center;text-indent:0;font-size:8pt;margin:1pt 0 2pt 0;line-height:1;'>────────────────────────</p>";
@@ -3300,15 +3447,21 @@ td p { margin:0; text-indent:0; }
                 centerTitleBlockHtml = "<div style='height:10pt;'></div>";
             }
 
-            string signerTitleFormatted = string.Join("<br/>",
-                Array.ConvertAll(txtSignerTitle.Text.Split(new[] { "\r\n", "\n", " - " }, StringSplitOptions.RemoveEmptyEntries),
-                s => System.Security.SecurityElement.Escape(s.Trim())));
+            string[] signerParts = txtSignerTitle.Text.Split(new[] { "\r\n", "\n", " - " }, StringSplitOptions.RemoveEmptyEntries);
+            StringBuilder sbSigTitle = new StringBuilder();
+            for (int si = 0; si < signerParts.Length; si++)
+            {
+                string sp = signerParts[si].Trim();
+                bool isPlainDangRole = isDang && Regex.IsMatch(sp, @"^(BÍ THƯ|PHÓ BÍ THƯ|PHÓ BÍ THƯ THƯỜNG TRỰC|CHÁNH VĂN PHÒNG|PHÓ CHÁNH VĂN PHÒNG|CHỦ NHIỆM|TRƯỞNG BAN)$", RegexOptions.IgnoreCase);
+                sbSigTitle.AppendFormat("<p align='center' style='margin:0;padding:0;text-align:center;text-indent:0;line-height:1.15;font-size:14pt;font-weight:{1};'>{0}</p>",
+                    System.Security.SecurityElement.Escape(sp), isPlainDangRole ? "normal" : "bold");
+            }
+            string signerTitleFormatted = sbSigTitle.ToString();
 
             // Theo Hướng dẫn 05-HD/VPTW: Từ "Nơi nhận:" cỡ chữ 14pt, kiểu chữ đứng, có gạch chân dưới từ "Nơi nhận", sau có dấu hai chấm (:)
             string noiNhanHeaderHtml = isDang
-                ? "<div style='font-size:14pt;font-style:normal;font-weight:normal;'><u>Nơi nhận</u>:</div>"
-                : "<div style='font-size:12pt;font-weight:bold;font-style:italic;'>Nơi nhận:</div>";
-            string noiNhanSize = isDang ? "12pt" : "11pt";
+                ? "<p style='margin:0;padding:0;text-indent:0;line-height:1.08;font-size:14pt;font-style:normal;font-weight:normal;'><u>Nơi nhận</u>:</p>"
+                : "<p style='margin:0;padding:0;text-indent:0;line-height:1.08;font-size:12pt;font-weight:bold;font-style:italic;'>Nơi nhận:</p>";
 
             string html = @"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head><meta charset='utf-8'>
@@ -3327,6 +3480,7 @@ div.Section1 { page:Section1; font-family:'Times New Roman',serif; font-size:14p
 p.MsoHeader, li.MsoHeader, div.MsoHeader { margin:0cm; text-align:center; font-size:13pt; font-family:'Times New Roman',serif; }
 table { width:100%; border-collapse:collapse; }
 td { vertical-align:top; font-family:'Times New Roman',serif; }
+td p { margin:0cm; margin-bottom:0pt; mso-para-margin:0cm; mso-para-margin-bottom:0pt; line-height:1.08; }
 </style></head>
 <body><div class='Section1'>
 <table><tr>
@@ -3346,7 +3500,7 @@ td { vertical-align:top; font-family:'Times New Roman',serif; }
 " + sbBody.ToString() + @"
 <table style='margin-top:16pt;'><tr>
 <td style='width:50%;font-size:" + noiNhanSize + @";'>" + noiNhanHeaderHtml + sbRec.ToString() + qrImgHtml + @"</td>
-<td style='width:50%;text-align:center;font-size:13.5pt;'><b>" + signerTitleFormatted + @"</b><br/><br/><br/><br/><b>" + System.Security.SecurityElement.Escape(txtSignerName.Text) + @"</b></td>
+<td style='width:50%;text-align:center;font-size:14pt;'>" + signerTitleFormatted + @"<br/><br/><br/><p align='center' style='margin:0;padding:0;text-align:center;text-indent:0;font-size:14pt;font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtSignerName.Text) + @"</p></td>
 </tr></table>
 <div style='mso-element:header' id='fh1'><p class='MsoHeader'>&nbsp;</p></div>
 <div style='mso-element:header' id='h1'>
