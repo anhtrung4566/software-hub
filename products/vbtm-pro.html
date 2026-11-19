@@ -174,6 +174,31 @@
           </button>
         </div>
 
+        <!-- TRỢ LÝ AI SOẠN THẢO VĂN BẢN & CHỈNH VĂN PHONG -->
+        <div style="margin-bottom: 18px; padding: 16px; border-radius: 16px; background: rgba(69, 10, 10, 0.72); border: 1.5px solid rgba(250, 204, 21, 0.5);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+            <strong style="color: #facc15; font-size: 0.96rem;">🤖 Trợ Lý AI Soạn Thảo Văn Bản &amp; Chuẩn Hóa Văn Phong (Đảng Ủy &amp; UBND Phường)</strong>
+            <span style="font-size: 0.78rem; color: #fef08a;">Hoạt động tức thì Ngoại tuyến 100% hoặc kết nối Gemini API Key riêng</span>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <input type="text" id="vbtmAiPromptInput" class="glass-input" style="flex: 1; min-width: 260px;" placeholder="Nhập yêu cầu soạn văn bản (VD: Soạn báo cáo công tác xây dựng Đảng tháng 11 năm 2026)...">
+            <button type="button" class="btn-tool primary" onclick="aiDraftDocumentFromPrompt()">
+              <span>🤖 AI Soạn Văn Bản</span>
+            </button>
+            <button type="button" class="btn-tool" onclick="aiUpgradeWritingStyle()">
+              <span>✨ AI Nâng Cấp Văn Phong</span>
+            </button>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center;">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Gợi ý nhanh:</span>
+            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn báo cáo kết quả công tác xây dựng Đảng tháng 11 năm 2026 của Đảng ủy phường')">Báo cáo Đảng ủy</button>
+            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn nghị quyết Đảng ủy phường về đẩy mạnh chuyển đổi số và cải cách hành chính')">Nghị quyết Đảng ủy</button>
+            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn công văn UBND phường về tăng cường kiểm tra trật tự đô thị và vệ sinh môi trường')">Công văn UBND</button>
+            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn kế hoạch UBND phường tổ chức kiểm tra an toàn phòng cháy chữa cháy trên địa bàn')">Kế hoạch UBND</button>
+            <input type="password" id="vbtmGeminiKey" class="glass-input" style="width: 210px; margin-left: auto; padding: 4px 10px; font-size: 0.76rem;" placeholder="Gemini API Key (tùy chọn)">
+          </div>
+        </div>
+
         <div class="studio-grid-2col">
           <div class="studio-panel">
             <div class="studio-panel-title">
@@ -302,7 +327,7 @@
             <li>Trong phần mềm: Bấm <strong>"Mở File Word (.docx / .doc)"</strong> để nạp văn bản cần chuẩn hóa, bấm <strong>"1. Chuẩn Hóa &amp; Sửa Chính Tả AI"</strong>, sau đó bấm <strong>"2. Chuẩn Hóa Word Đang Mở"</strong> hoặc <strong>"3. Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
           </ol>
           <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
-            Mã chuẩn SHA256: <code id="sha256Code">1dde1640c9b2bffbd7c4d33f916fffdcd04d53e5b6b80c179ad56d5004049c4d</code>
+            Mã chuẩn SHA256: <code id="sha256Code">4b0c91cb72b2afa19b7d24f569e4535bdbf8c883f6b9e4a03563f5a3fb80d56d</code>
           </div>
         </div>
       </div>
