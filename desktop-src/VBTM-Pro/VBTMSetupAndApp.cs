@@ -696,14 +696,19 @@ namespace VBTMProSuite
             sb.AppendLine("            tblTop.AllowAutoFit = False");
             sb.AppendLine("            tblTop.PreferredWidthType = 2: tblTop.PreferredWidth = 100");
             sb.AppendLine("            tblTop.LeftPadding = 0: tblTop.RightPadding = 0: tblTop.TopPadding = 0: tblTop.BottomPadding = 0");
-            sb.AppendLine("            tblTop.Columns(1).PreferredWidthType = 2: tblTop.Columns(1).PreferredWidth = 49");
-            sb.AppendLine("            tblTop.Columns(2).PreferredWidthType = 2: tblTop.Columns(2).PreferredWidth = 51");
+            sb.AppendLine("            tblTop.Columns(1).PreferredWidthType = 2: tblTop.Columns(1).PreferredWidth = 50");
+            sb.AppendLine("            tblTop.Columns(2).PreferredWidthType = 2: tblTop.Columns(2).PreferredWidth = 50");
             sb.AppendLine("            tblTop.Cell(1, 1).LeftPadding = 0: tblTop.Cell(1, 1).RightPadding = 0");
             sb.AppendLine("            tblTop.Cell(1, 2).LeftPadding = 0: tblTop.Cell(1, 2).RightPadding = 0");
             sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Name = \"Times New Roman\"");
-            sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Size = 14");
             sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Scaling = 100");
             sb.AppendLine("            tblTop.Cell(1, 1).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 1).Range.ParagraphFormat.Alignment = 1: tblTop.Cell(1, 1).Range.ParagraphFormat.SpaceAfter = 0");
+            sb.AppendLine("            Dim pL As Paragraph, tL As String");
+            sb.AppendLine("            For Each pL In tblTop.Cell(1, 1).Range.Paragraphs");
+            sb.AppendLine("                tL = Trim(Replace(Replace(pL.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
+            sb.AppendLine("                pL.Range.Font.Scaling = 100");
+            sb.AppendLine("                If Len(tL) > 25 Then pL.Range.Font.Size = 12.5 Else If Len(tL) > 21 Then pL.Range.Font.Size = 13 Else pL.Range.Font.Size = 14");
+            sb.AppendLine("            Next pL");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\"");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Scaling = 100");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 2).Range.ParagraphFormat.Alignment = 1: tblTop.Cell(1, 2).Range.ParagraphFormat.SpaceAfter = 0");
@@ -713,12 +718,13 @@ namespace VBTMProSuite
             sb.AppendLine("                tTop = Trim(Replace(Replace(pTop.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
             sb.AppendLine("                If InStr(UCase(tTop), " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Then");
             sb.AppendLine("                    pTop.Range.Font.Size = 15: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 0: pTop.Range.Font.Scaling = 100");
-            sb.AppendLine("                    pTop.Format.LeftIndent = CentimetersToPoints(0.55): pTop.Format.RightIndent = CentimetersToPoints(0.55)");
+            sb.AppendLine("                    pTop.Format.LeftIndent = CentimetersToPoints(0.45): pTop.Format.RightIndent = CentimetersToPoints(0.45)");
             sb.AppendLine("                    pTop.Borders(-3).LineStyle = 1: pTop.Borders(-3).LineWidth = 6");
             sb.AppendLine("                ElseIf Left(tTop, 3) = " + VbaStr("───") + " Or Left(tTop, 3) = \"---\" Then");
             sb.AppendLine("                    pTop.Range.Delete");
             sb.AppendLine("                ElseIf InStr(LCase(tTop), " + VbaStr("ngày") + ") > 0 Then");
-            sb.AppendLine("                    pTop.Range.Font.Size = 14: pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Range.Font.Scaling = 100: pTop.Format.SpaceBefore = 3");
+            sb.AppendLine("                    pTop.Range.Font.Italic = True: pTop.Range.Font.Bold = False: pTop.Range.Font.Scaling = 100: pTop.Format.SpaceBefore = 3");
+            sb.AppendLine("                    If Len(tTop) > 40 Then pTop.Range.Font.Size = 12 Else If Len(tTop) > 32 Then pTop.Range.Font.Size = 13 Else pTop.Range.Font.Size = 14");
             sb.AppendLine("                End If");
             sb.AppendLine("            Next rpIdx");
             sb.AppendLine("        End If");
@@ -907,14 +913,16 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl1.AllowAutoFit = False");
             sb.AppendLine("    tbl1.PreferredWidthType = 2: tbl1.PreferredWidth = 100");
             sb.AppendLine("    tbl1.LeftPadding = 0: tbl1.RightPadding = 0: tbl1.TopPadding = 0: tbl1.BottomPadding = 0");
-            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 49");
-            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 51");
+            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 50");
+            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 50");
             sb.AppendLine("    tbl1.Cell(1, 1).LeftPadding = 0: tbl1.Cell(1, 1).RightPadding = 0");
             sb.AppendLine("    tbl1.Cell(1, 2).LeftPadding = 0: tbl1.Cell(1, 2).RightPadding = 0");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
             sb.AppendLine("        .Text = pGov & vbCr & pIss & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Scaling = 100: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("        If Len(pGov) > 25 Then .Paragraphs(1).Range.Font.Size = 12.5 Else If Len(pGov) > 21 Then .Paragraphs(1).Range.Font.Size = 13");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
+            sb.AppendLine("        If Len(pIss) > 25 Then .Paragraphs(2).Range.Font.Size = 12.5 Else If Len(pIss) > 21 Then .Paragraphs(2).Range.Font.Size = 13");
             sb.AppendLine("        .Paragraphs(3).Range.Font.Bold = True");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl1.Cell(1, 2).Range");
@@ -922,9 +930,10 @@ namespace VBTMProSuite
             sb.AppendLine("        .Text = pMotto & vbCr & dtStr");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Scaling = 100: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 15: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 0: .Paragraphs(1).Range.Font.Scaling = 100");
-            sb.AppendLine("        .Paragraphs(1).Format.LeftIndent = CentimetersToPoints(0.55): .Paragraphs(1).Format.RightIndent = CentimetersToPoints(0.55)");
+            sb.AppendLine("        .Paragraphs(1).Format.LeftIndent = CentimetersToPoints(0.45): .Paragraphs(1).Format.RightIndent = CentimetersToPoints(0.45)");
             sb.AppendLine("        .Paragraphs(1).Borders(-3).LineStyle = 1: .Paragraphs(1).Borders(-3).LineWidth = 6");
-            sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).Range.Font.Scaling = 100: .Paragraphs(2).SpaceBefore = 3");
+            sb.AppendLine("        .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).Range.Font.Scaling = 100: .Paragraphs(2).SpaceBefore = 3");
+            sb.AppendLine("        If Len(dtStr) > 40 Then .Paragraphs(2).Range.Font.Size = 12 Else If Len(dtStr) > 32 Then .Paragraphs(2).Range.Font.Size = 13 Else .Paragraphs(2).Range.Font.Size = 14");
             sb.AppendLine("    End With");
             sb.AppendLine("    Dim pEnd As Range: Set pEnd = ActiveDocument.Content: pEnd.Collapse 0");
             sb.AppendLine("    pEnd.InsertAfter vbCr & " + VbaStr("BÁO CÁO") + " & vbCr & " + VbaStr("Tổng kết công tác xây dựng Đảng năm 2026") + " & vbCr & \"-----\" & vbCr & " + VbaStr("Thực hiện Chương trình công tác năm 2026, Đảng ủy phường báo cáo kết quả thực hiện như sau:./.") + " & vbCr");
@@ -4808,16 +4817,16 @@ td p { margin:0cm; margin-bottom:0pt; mso-para-margin:0cm; mso-para-margin-botto
 </style></head>
 <body><div class='Section1'>
 <table><tr>
-<td style='width:" + (isDang ? "49%" : "42%") + @";text-align:center;'>
-  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? "14pt" : "12.5pt") + ";'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
-  <div style='font-size:" + (isDang ? "14pt" : "12.5pt") + @";font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
+<td style='width:" + (isDang ? "50%" : "42%") + @";text-align:center;'>
+  " + (string.IsNullOrWhiteSpace(txtGovOrg.Text) ? "" : "<div style='font-size:" + (isDang ? (txtGovOrg.Text.Trim().Length > 25 ? "12.5pt" : (txtGovOrg.Text.Trim().Length > 21 ? "13pt" : "14pt")) : "12.5pt") + ";'>" + System.Security.SecurityElement.Escape(txtGovOrg.Text) + "</div>") + @"
+  <div style='font-size:" + (isDang ? (txtIssueOrg.Text.Trim().Length > 25 ? "12.5pt" : (txtIssueOrg.Text.Trim().Length > 21 ? "13pt" : "14pt")) : "12.5pt") + @";font-weight:bold;'>" + System.Security.SecurityElement.Escape(txtIssueOrg.Text) + @"</div>
   " + leftSepHtml + @"
   <div style='font-size:" + (isDang ? "14pt" : "13pt") + @";margin-top:4pt;'>" + System.Security.SecurityElement.Escape(numberLabel) + @"</div>
   " + congVanSubjLeftHtml + @"
 </td>
-<td style='width:" + (isDang ? "51%" : "58%") + @";text-align:center;'>
+<td style='width:" + (isDang ? "50%" : "58%") + @";text-align:center;'>
   " + rightHeaderHtml + @"
-  <div style='font-size:" + (isDang ? "14pt" : "13.5pt") + @";font-style:italic;margin-top:4pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
+  <div style='font-size:" + (txtLocation.Text.Trim().Length > 40 ? "12pt" : (txtLocation.Text.Trim().Length > 32 ? "13pt" : "14pt")) + @";font-style:italic;margin-top:4pt;'>" + System.Security.SecurityElement.Escape(txtLocation.Text) + @"</div>
 </td>
 </tr></table>
 " + centerTitleBlockHtml + @"
