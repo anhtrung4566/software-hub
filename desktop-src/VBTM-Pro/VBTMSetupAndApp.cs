@@ -449,6 +449,8 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_AISoanThao(ByVal control As Object): AISoanThao_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_ChinhDangNhanh(ByVal control As Object): ChinhTheThucDangNhanh_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_CaiDatDonVi(ByVal control As Object): CaiDatTieuNguDonVi_Word: End Sub");
             sb.AppendLine("Sub Ribbon_ChenMaQR(ByVal control As Object): Ribbon_MoVBTM control: End Sub");
             sb.AppendLine("Sub Ribbon_MoVBTM(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
@@ -606,12 +608,64 @@ namespace VBTMProSuite
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
-            // 6. Chèn Mẫu Văn Bản Đảng Chuẩn Hướng dẫn 05-HD/VPTW trực tiếp vào Word
+            // 6. Chèn Mẫu Văn Bản Đảng Chuẩn Hướng dẫn 05-HD/VPTW trực tiếp vào Word (tự nạp Tiêu ngữ đơn vị đã cài đặt)
+            sb.AppendLine("Private Function GetUnitConfigVal(ByVal idx As Integer, ByVal defVal As String) As String");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    GetUnitConfigVal = defVal");
+            sb.AppendLine("    Dim cfgPath As String: cfgPath = Environ(\"APPDATA\") & \"\\VBTM\\word_unit_config.ini\"");
+            sb.AppendLine("    Dim fso As Object: Set fso = CreateObject(\"Scripting.FileSystemObject\")");
+            sb.AppendLine("    If Not fso.FileExists(cfgPath) Then Exit Function");
+            sb.AppendLine("    Dim ts As Object: Set ts = fso.OpenTextFile(cfgPath, 1, False, -1)");
+            sb.AppendLine("    Dim allTxt As String: allTxt = ts.ReadAll: ts.Close");
+            sb.AppendLine("    Dim arr As Variant: arr = Split(allTxt, vbCrLf)");
+            sb.AppendLine("    If idx <= UBound(arr) Then If Len(Trim(arr(idx))) > 0 Then GetUnitConfigVal = Trim(arr(idx))");
+            sb.AppendLine("End Function");
+            sb.AppendLine("");
+            sb.AppendLine("Sub CaiDatTieuNguDonVi_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim pGov As String, pIss As String, uGov As String, uIss As String, loc As String, pSign As String, uSign As String");
+            sb.AppendLine("    pGov = GetUnitConfigVal(0, " + VbaStr("QUẬN ỦY") + ")");
+            sb.AppendLine("    pIss = GetUnitConfigVal(1, " + VbaStr("ĐẢNG ỦY PHƯỜNG") + ")");
+            sb.AppendLine("    uGov = GetUnitConfigVal(2, " + VbaStr("ỦY BAN NHÂN DÂN QUẬN") + ")");
+            sb.AppendLine("    uIss = GetUnitConfigVal(3, " + VbaStr("ỦY BAN NHÂN DÂN PHƯỜNG") + ")");
+            sb.AppendLine("    loc  = GetUnitConfigVal(4, " + VbaStr("Phường") + ")");
+            sb.AppendLine("    pSign = GetUnitConfigVal(5, " + VbaStr("Trần Minh Quân") + ")");
+            sb.AppendLine("    uSign = GetUnitConfigVal(6, " + VbaStr("Nguyễn Văn An") + ")");
+            sb.AppendLine("    If Application.Visible Then");
+            sb.AppendLine("        Dim v As String");
+            sb.AppendLine("        v = InputBox(" + VbaStr("1/5. Tên cơ quan Đảng cấp trên (VD: QUẬN ỦY ...):") + ", " + VbaStr("Cài Đặt Tiêu Ngữ Đơn Vị") + ", pGov): If Len(v) > 0 Then pGov = UCase(Trim(v))");
+            sb.AppendLine("        v = InputBox(" + VbaStr("2/5. Tên đơn vị Đảng ban hành (VD: ĐẢNG ỦY PHƯỜNG ...):") + ", " + VbaStr("Cài Đặt Tiêu Ngữ Đơn Vị") + ", pIss): If Len(v) > 0 Then pIss = UCase(Trim(v))");
+            sb.AppendLine("        v = InputBox(" + VbaStr("3/5. Tên UBND cấp trên (VD: ỦY BAN NHÂN DÂN QUẬN ...):") + ", " + VbaStr("Cài Đặt Tiêu Ngữ Đơn Vị") + ", uGov): If Len(v) > 0 Then uGov = UCase(Trim(v))");
+            sb.AppendLine("        v = InputBox(" + VbaStr("4/5. Tên UBND ban hành (VD: ỦY BAN NHÂN DÂN PHƯỜNG ...):") + ", " + VbaStr("Cài Đặt Tiêu Ngữ Đơn Vị") + ", uIss): If Len(v) > 0 Then uIss = UCase(Trim(v))");
+            sb.AppendLine("        v = InputBox(" + VbaStr("5/5. Địa danh & Họ tên Bí thư (cách nhau dấu |, VD: Hải Châu|Trần Minh Quân):") + ", " + VbaStr("Cài Đặt Tiêu Ngữ Đơn Vị") + ", loc & \"|\" & pSign)");
+            sb.AppendLine("        If InStr(v, \"|\") > 0 Then loc = Trim(Split(v, \"|\")(0)): pSign = Trim(Split(v, \"|\")(1))");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    Dim fso As Object: Set fso = CreateObject(\"Scripting.FileSystemObject\")");
+            sb.AppendLine("    Dim dirPath As String: dirPath = Environ(\"APPDATA\") & \"\\VBTM\"");
+            sb.AppendLine("    If Not fso.FolderExists(dirPath) Then fso.CreateFolder dirPath");
+            sb.AppendLine("    Dim ts As Object: Set ts = fso.CreateTextFile(dirPath & \"\\word_unit_config.ini\", True, True)");
+            sb.AppendLine("    ts.Write pGov & vbCrLf & pIss & vbCrLf & uGov & vbCrLf & uIss & vbCrLf & loc & vbCrLf & pSign & vbCrLf & uSign");
+            sb.AppendLine("    ts.Close");
+            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã lưu cài đặt Tiêu ngữ đơn vị! Các nút Chèn Mẫu Đảng / UBND sẽ tự động dùng tên đơn vị của bạn.") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            sb.AppendLine("Sub ChinhTheThucDangNhanh_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim prevVis As Boolean: prevVis = Application.Visible");
+            sb.AppendLine("    ChuanHoaVanBan_HuongDan05");
+            sb.AppendLine("    SuaChinhTaVaDauCau_Word");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
             sb.AppendLine("Sub ChenMauVanBan_Dang05()");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
             sb.AppendLine("    CanLeA4Chuan_Word False");
             sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
+            sb.AppendLine("    Dim pGov As String: pGov = GetUnitConfigVal(0, " + VbaStr("QUẬN ỦY") + ")");
+            sb.AppendLine("    Dim pIss As String: pIss = GetUnitConfigVal(1, " + VbaStr("ĐẢNG ỦY PHƯỜNG") + ")");
+            sb.AppendLine("    Dim loc As String: loc = GetUnitConfigVal(4, " + VbaStr("Phường") + ")");
+            sb.AppendLine("    Dim pSign As String: pSign = GetUnitConfigVal(5, " + VbaStr("Trần Minh Quân") + ")");
             sb.AppendLine("    Dim rng As Range, tbl1 As Table, tbl2 As Table");
             sb.AppendLine("    Set rng = ActiveDocument.Range(0, 0)");
             sb.AppendLine("    Set tbl1 = ActiveDocument.Tables.Add(rng, 1, 2)");
@@ -619,13 +673,13 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl1.Columns(1).PreferredWidth = CentimetersToPoints(7.2)");
             sb.AppendLine("    tbl1.Columns(2).PreferredWidth = CentimetersToPoints(9.3)");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
-            sb.AppendLine("        .Text = " + VbaStr("QUẬN ỦY") + " & vbCr & " + VbaStr("ĐẢNG ỦY PHƯỜNG") + " & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
+            sb.AppendLine("        .Text = pGov & vbCr & pIss & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
             sb.AppendLine("        .Paragraphs(3).Range.Font.Bold = True");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl1.Cell(1, 2).Range");
-            sb.AppendLine("        .Text = " + VbaStr("ĐẢNG CỘNG SẢN VIỆT NAM") + " & vbCr & " + VbaStr("Phường, ngày 18 tháng 11 năm 2026"));
+            sb.AppendLine("        .Text = " + VbaStr("ĐẢNG CỘNG SẢN VIỆT NAM") + " & vbCr & loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 15: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 1");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 6");
@@ -645,18 +699,22 @@ namespace VBTMProSuite
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 12: .Paragraphs(3).Range.Font.Size = 12: .Paragraphs(4).Range.Font.Size = 12");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl2.Cell(1, 2).Range");
-            sb.AppendLine("        .Text = " + VbaStr("T/M ĐẢNG ỦY") + " & vbCr & " + VbaStr("BÍ THƯ") + " & vbCr & vbCr & vbCr & " + VbaStr("Trần Minh Quân"));
+            sb.AppendLine("        .Text = " + VbaStr("T/M ĐẢNG ỦY") + " & vbCr & " + VbaStr("BÍ THƯ") + " & vbCr & vbCr & vbCr & pSign");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("    End With");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
-            // 7. Chèn Mẫu Văn Bản Hành Chính Nghị định 30/2020/NĐ-CP trực tiếp vào Word
+            // 7. Chèn Mẫu Văn Bản Hành Chính Nghị định 30/2020/NĐ-CP trực tiếp vào Word (tự nạp Tiêu ngữ đơn vị đã cài đặt)
             sb.AppendLine("Sub ChenMauVanBan_UBND30()");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
             sb.AppendLine("    CanLeA4Chuan_Word False");
             sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
+            sb.AppendLine("    Dim uGov As String: uGov = GetUnitConfigVal(2, " + VbaStr("ỦY BAN NHÂN DÂN QUẬN") + ")");
+            sb.AppendLine("    Dim uIss As String: uIss = GetUnitConfigVal(3, " + VbaStr("ỦY BAN NHÂN DÂN PHƯỜNG") + ")");
+            sb.AppendLine("    Dim loc As String: loc = GetUnitConfigVal(4, " + VbaStr("Phường") + ")");
+            sb.AppendLine("    Dim uSign As String: uSign = GetUnitConfigVal(6, " + VbaStr("Nguyễn Văn An") + ")");
             sb.AppendLine("    Dim rng As Range, tbl1 As Table, tbl2 As Table");
             sb.AppendLine("    Set rng = ActiveDocument.Range(0, 0)");
             sb.AppendLine("    Set tbl1 = ActiveDocument.Tables.Add(rng, 1, 2)");
@@ -664,13 +722,13 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl1.Columns(1).PreferredWidth = CentimetersToPoints(7.0)");
             sb.AppendLine("    tbl1.Columns(2).PreferredWidth = CentimetersToPoints(9.5)");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
-            sb.AppendLine("        .Text = " + VbaStr("ỦY BAN NHÂN DÂN QUẬN") + " & vbCr & " + VbaStr("ỦY BAN NHÂN DÂN PHƯỜNG") + " & vbCr & " + VbaStr("Số: 01/UBND-VP"));
+            sb.AppendLine("        .Text = uGov & vbCr & uIss & vbCr & " + VbaStr("Số: 01/UBND-VP"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 12.5: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Bold = True");
             sb.AppendLine("        .Paragraphs(3).Range.Font.Size = 13: .Paragraphs(3).SpaceBefore = 4");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl1.Cell(1, 2).Range");
-            sb.AppendLine("        .Text = " + VbaStr("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM") + " & vbCr & " + VbaStr("Độc lập - Tự do - Hạnh phúc") + " & vbCr & " + VbaStr("Phường, ngày 18 tháng 11 năm 2026"));
+            sb.AppendLine("        .Text = " + VbaStr("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM") + " & vbCr & " + VbaStr("Độc lập - Tự do - Hạnh phúc") + " & vbCr & loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 12.5: .Paragraphs(1).Range.Font.Bold = True");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 13.5: .Paragraphs(2).Range.Font.Bold = True: .Paragraphs(2).Range.Font.Underline = 1");
@@ -690,7 +748,7 @@ namespace VBTMProSuite
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 11: .Paragraphs(3).Range.Font.Size = 11");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl2.Cell(1, 2).Range");
-            sb.AppendLine("        .Text = " + VbaStr("TM. ỦY BAN NHÂN DÂN") + " & vbCr & " + VbaStr("CHỦ TỊCH") + " & vbCr & vbCr & vbCr & " + VbaStr("Nguyễn Văn An"));
+            sb.AppendLine("        .Text = " + VbaStr("TM. ỦY BAN NHÂN DÂN") + " & vbCr & " + VbaStr("CHỦ TỊCH") + " & vbCr & vbCr & vbCr & uSign");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("    End With");
             sb.AppendLine("End Sub");
@@ -872,13 +930,24 @@ namespace VBTMProSuite
                     try { wordType.InvokeMember("Quit", BindingFlags.InvokeMethod, null, wordApp, new object[] { false }); } catch { }
                 }
 
-                // 3. Nhúng trực tiếp Custom Ribbon Tab vào tempDotm rồi chép vào STARTUP
+                // 3. Chờ Word nhả khóa tệp tạm rồi nhúng Custom Ribbon Tab vào tempDotm và chép vào STARTUP
                 if (File.Exists(tempDotm))
                 {
-                    InjectRibbonUiIntoDotm(tempDotm);
-                    File.Copy(tempDotm, dotmPath, true);
-                    try { File.Delete(tempDotm); } catch { }
-                    return File.Exists(dotmPath);
+                    for (int retry = 0; retry < 6; retry++)
+                    {
+                        try
+                        {
+                            System.Threading.Thread.Sleep(300);
+                            InjectRibbonUiIntoDotm(tempDotm);
+                            File.Copy(tempDotm, dotmPath, true);
+                            try { File.Delete(tempDotm); } catch { }
+                            return File.Exists(dotmPath);
+                        }
+                        catch
+                        {
+                            if (retry == 5) throw;
+                        }
+                    }
                 }
                 return false;
             }
@@ -894,16 +963,17 @@ namespace VBTMProSuite
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
                 "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 2.5 (05-HD &amp; ND30)\">" +
-                "<group id=\"grpVbtmTemplates\" label=\"1. AI &amp; Chèn Mẫu Chuẩn\">" +
+                "<group id=\"grpVbtmTemplates\" label=\"1. AI &amp; Cài Đặt Tiêu Ngữ Đơn Vị\">" +
                 "<button id=\"btnVbtmAiDraft\" label=\"AI Soạn Thảo Văn Bản\" size=\"large\" imageMso=\"SmartArtInsert\" onAction=\"Ribbon_AISoanThao\" supertip=\"Trợ lý AI tự động soạn thảo văn bản Đảng (05-HD/VPTW) hoặc UBND (NĐ 30) theo yêu cầu của bạn.\"/>" +
-                "<button id=\"btnVbtmTplDang\" label=\"Chèn Mẫu Đảng (05-HD)\" size=\"large\" imageMso=\"FileNewBlogPost\" onAction=\"Ribbon_ChenMauDang05\" supertip=\"Chèn trực tiếp khung văn bản Đảng ủy / Chi bộ chuẩn Hướng dẫn số 05-HD/VPTW.\"/>" +
-                "<button id=\"btnVbtmTplUbnd\" label=\"Chèn Mẫu UBND (NĐ 30)\" size=\"large\" imageMso=\"FileCreateDocumentWorkspace\" onAction=\"Ribbon_ChenMauUBND30\" supertip=\"Chèn trực tiếp khung văn bản UBND Phường chuẩn Nghị định số 30/2020/NĐ-CP.\"/>" +
+                "<button id=\"btnVbtmTplDang\" label=\"Chèn Mẫu Đảng (05-HD)\" size=\"large\" imageMso=\"FileNewBlogPost\" onAction=\"Ribbon_ChenMauDang05\" supertip=\"Chèn trực tiếp khung văn bản Đảng ủy / Chi bộ chuẩn Hướng dẫn số 05-HD/VPTW theo tên đơn vị đã cài đặt.\"/>" +
+                "<button id=\"btnVbtmTplUbnd\" label=\"Chèn Mẫu UBND (NĐ 30)\" size=\"large\" imageMso=\"FileCreateDocumentWorkspace\" onAction=\"Ribbon_ChenMauUBND30\" supertip=\"Chèn trực tiếp khung văn bản UBND Phường chuẩn Nghị định số 30/2020/NĐ-CP theo tên đơn vị đã cài đặt.\"/>" +
+                "<button id=\"btnVbtmUnitCfg\" label=\"Cài Đặt Tiêu Ngữ Đơn Vị\" size=\"large\" imageMso=\"FileDocumentManagementInformation\" onAction=\"Ribbon_CaiDatDonVi\" supertip=\"Thiết lập tên Đảng ủy, Chi bộ, UBND Phường, Địa danh và Người ký mặc định cho các mẫu văn bản.\"/>" +
                 "</group>" +
-                "<group id=\"grpVbtmFormat\" label=\"2. Chuẩn Hóa Thể Thức\">" +
+                "<group id=\"grpVbtmFormat\" label=\"2. Chỉnh Thể Thức Nhanh\">" +
+                "<button id=\"btnVbtmDangFast\" label=\"Chỉnh Thể Thức Đảng Nhanh (05-HD)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\" supertip=\"1 Bấm chỉnh toàn bộ văn bản Word đang mở đúng chuẩn Hướng dẫn số 05-HD/VPTW và sửa lỗi chính tả.\"/>" +
                 "<button id=\"btnVbtmAuto\" label=\"Chuẩn Hóa Tự Động\" size=\"large\" imageMso=\"ReviewTrackChanges\" onAction=\"Ribbon_ChuanHoaTuDong\" supertip=\"Tự động nhận diện văn bản Đảng (05-HD/VPTW) hoặc Hành chính (NĐ 30) và chuẩn hóa toàn bộ văn bản đang mở.\"/>" +
-                "<button id=\"btnVbtmTieuNgu\" label=\"Tự Động Hóa Tiêu Ngữ\" size=\"large\" imageMso=\"HeaderFooterInsert\" onAction=\"Ribbon_TuDongHoaTieuNgu\" supertip=\"Tự động chuẩn hóa hoặc tạo mới Bảng Tiêu ngữ 2 cột (ĐẢNG CỘNG SẢN VIỆT NAM 15pt / Quốc hiệu) &amp; Bảng Nơi nhận/Chữ ký.\"/>" +
-                "<button id=\"btnVbtmHd05\" label=\"Chuẩn Đảng (05-HD)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_HuongDan05\" supertip=\"Chuẩn hóa trực tiếp theo Hướng dẫn số 05-HD/VPTW của Văn phòng Trung ương Đảng.\"/>" +
-                "<button id=\"btnVbtmNd30\" label=\"Chuẩn NĐ 30/2020\" size=\"large\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\" supertip=\"Chuẩn hóa trực tiếp theo Nghị định số 30/2020/NĐ-CP của Chính phủ.\"/>" +
+                "<button id=\"btnVbtmTieuNgu\" label=\"Tự Động Hóa Tiêu Ngữ\" size=\"normal\" imageMso=\"HeaderFooterInsert\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<button id=\"btnVbtmNd30\" label=\"Chuẩn NĐ 30/2020\" size=\"normal\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\"/>" +
                 "</group>" +
                 "<group id=\"grpVbtmTools\" label=\"3. Sửa Lỗi &amp; Trình Bày Nhanh\">" +
                 "<button id=\"btnVbtmSpell\" label=\"Sửa Chính Tả &amp; Dấu Câu\" size=\"large\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_SuaChinhTa\" supertip=\"Tự động sửa lỗi chính tả phổ biến, xóa khoảng trắng thừa trước dấu câu trực tiếp trong Word.\"/>" +
