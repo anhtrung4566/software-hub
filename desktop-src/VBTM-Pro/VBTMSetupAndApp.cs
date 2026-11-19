@@ -525,6 +525,9 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_ChuyenDoiDangHanhChinh(ByVal control As Object): ChuyenDoiDangHanhChinh_Word: End Sub");
             sb.AppendLine("Sub Ribbon_KiemDinhTheThuc(ByVal control As Object): KiemDinhTheThuc_Word: End Sub");
             sb.AppendLine("Sub Ribbon_ChenBangChuan(ByVal control As Object): ChenBangChuan_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_ChenDoKhanMat(ByVal control As Object): ChenDoKhanMat_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_XuatPDFNhanh(ByVal control As Object): XuatPDFNhanh_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_ThongKeVanBan(ByVal control As Object): ThongKeVanBan_Word: End Sub");
             sb.AppendLine("Sub Ribbon_InsertTpl(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
@@ -688,6 +691,7 @@ namespace VBTMProSuite
             sb.AppendLine("                tTop = Trim(Replace(Replace(pTop.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
             sb.AppendLine("                If InStr(UCase(tTop), " + VbaStr("ĐẢNG CỘNG SẢN") + ") > 0 Then");
             sb.AppendLine("                    pTop.Range.Font.Size = 15: pTop.Range.Font.Bold = True: pTop.Range.Font.Underline = 0: pTop.Range.Font.Scaling = 95");
+            sb.AppendLine("                    pTop.Format.LeftIndent = CentimetersToPoints(0.55): pTop.Format.RightIndent = CentimetersToPoints(0.55)");
             sb.AppendLine("                    pTop.Borders(-3).LineStyle = 1: pTop.Borders(-3).LineWidth = 6");
             sb.AppendLine("                ElseIf Left(tTop, 3) = " + VbaStr("───") + " Or Left(tTop, 3) = \"---\" Then");
             sb.AppendLine("                    pTop.Range.Delete");
@@ -846,6 +850,7 @@ namespace VBTMProSuite
             sb.AppendLine("        .Text = pMotto & vbCr & dtStr");
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 15: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 0: .Paragraphs(1).Range.Font.Scaling = 95");
+            sb.AppendLine("        .Paragraphs(1).Format.LeftIndent = CentimetersToPoints(0.55): .Paragraphs(1).Format.RightIndent = CentimetersToPoints(0.55)");
             sb.AppendLine("        .Paragraphs(1).Borders(-3).LineStyle = 1: .Paragraphs(1).Borders(-3).LineWidth = 6");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 3");
             sb.AppendLine("        If Len(dtStr) > 40 Then .Paragraphs(2).Range.Font.Scaling = 72 Else If Len(dtStr) > 33 Then .Paragraphs(2).Range.Font.Scaling = 78 Else If Len(dtStr) > 26 Then .Paragraphs(2).Range.Font.Scaling = 86");
@@ -1107,6 +1112,51 @@ namespace VBTMProSuite
             sb.AppendLine("    tbl.Cell(1, 3).Range.Text = " + VbaStr("Đơn vị thực hiện"));
             sb.AppendLine("    tbl.Cell(1, 4).Range.Text = " + VbaStr("Ghi chú"));
             sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            // 15. Chèn Dấu Độ Khẩn / Độ Mật (KHẨN, THƯỢNG KHẨN, HỎA TỐC, MẬT, TỐI MẬT)
+            sb.AppendLine("Sub ChenDoKhanMat_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Documents.Add");
+            sb.AppendLine("    Dim lv As String: lv = " + VbaStr("KHẨN"));
+            sb.AppendLine("    If Application.Visible Then");
+            sb.AppendLine("        Dim inp As String: inp = InputBox(" + VbaStr("Nhập mức độ cần đóng khung (VD: KHẨN, THƯỢNG KHẨN, HỎA TỐC, MẬT, TỐI MẬT):") + ", " + VbaStr("Chèn Dấu Độ Khẩn / Mật") + ", " + VbaStr("KHẨN") + ")");
+            sb.AppendLine("        If Len(Trim(inp)) = 0 Then Exit Sub");
+            sb.AppendLine("        lv = UCase(Trim(inp))");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    Dim tbl As Table: Set tbl = ActiveDocument.Tables.Add(Selection.Range, 1, 1)");
+            sb.AppendLine("    tbl.Borders.Enable = 1");
+            sb.AppendLine("    tbl.PreferredWidthType = 3: tbl.PreferredWidth = CentimetersToPoints(4.2)");
+            sb.AppendLine("    With tbl.Cell(1, 1).Range");
+            sb.AppendLine("        .Text = lv");
+            sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .Font.Bold = True");
+            sb.AppendLine("        .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceBefore = 2: .ParagraphFormat.SpaceAfter = 2: .ParagraphFormat.FirstLineIndent = 0");
+            sb.AppendLine("    End With");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            // 16. Xuất Nhanh PDF Chuẩn In / Ký Số (1-Click)
+            sb.AppendLine("Sub XuatPDFNhanh_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim pdfPath As String");
+            sb.AppendLine("    If Len(ActiveDocument.Path) > 0 Then");
+            sb.AppendLine("        pdfPath = ActiveDocument.Path & \"\\\" & Left(ActiveDocument.Name, InStrRev(ActiveDocument.Name, \".\") - 1) & \".pdf\"");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        pdfPath = Environ(\"USERPROFILE\") & \"\\Desktop\\VBTM_VanBan_\" & Format(Now, \"yyyymmdd_hhnnss\") & \".pdf\"");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    ActiveDocument.ExportAsFixedFormat OutputFileName:=pdfPath, ExportFormat:=17, OpenAfterExport:=Application.Visible");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã xuất file PDF chuẩn in & ký số tại: ") + " & pdfPath");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("");
+            // 17. Thống Kê Số Trang, Số Từ & Thời Gian Đọc Văn Bản
+            sb.AppendLine("Sub ThongKeVanBan_Word()");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Dim pg As Long: pg = ActiveDocument.ComputeStatistics(2)");
+            sb.AppendLine("    Dim wd As Long: wd = ActiveDocument.ComputeStatistics(0)");
+            sb.AppendLine("    Dim ch As Long: ch = ActiveDocument.ComputeStatistics(3)");
+            sb.AppendLine("    Dim mins As Long: mins = Int((wd + 199) / 200)");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("THỐNG KÊ VĂN BẢN:") + " & vbCrLf & " + VbaStr("- Số trang A4: ") + " & pg & vbCrLf & " + VbaStr("- Tổng số từ: ") + " & wd & vbCrLf & " + VbaStr("- Tổng ký tự: ") + " & ch & vbCrLf & " + VbaStr("- Thời gian đọc ước tính: ~") + " & mins & " + VbaStr(" phút") + "");
+            sb.AppendLine("End Sub");
             return sb.ToString();
         }
 
@@ -1256,6 +1306,9 @@ namespace VBTMProSuite
                 "<button id=\"btnVbtmConvert\" label=\"Đổi Đảng &lt;-&gt; Hành Chính\" size=\"normal\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\" supertip=\"Chuyển đổi tự động thể thức &amp; thuật ngữ qua lại giữa Khối Đảng (05-HD) và UBND (NĐ 30).\"/>" +
                 "<button id=\"btnVbtmAudit\" label=\"Kiểm Định Thể Thức (%)\" size=\"normal\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\" supertip=\"Chấm điểm tuân thủ thể thức 05-HD/VPTW &amp; NĐ 30/2020/NĐ-CP và chỉ ra lỗi thiếu sót.\"/>" +
                 "<button id=\"btnVbtmTbl\" label=\"Chèn Bảng Chuẩn 13pt\" size=\"normal\" imageMso=\"TableInsert\" onAction=\"Ribbon_ChenBangChuan\" supertip=\"Chèn bảng thống kê Times New Roman 13pt tự động lặp dòng tiêu đề khi sang trang.\"/>" +
+                "<button id=\"btnVbtmKhanMat\" label=\"Dấu Khẩn / Mật\" size=\"normal\" imageMso=\"HighImportance\" onAction=\"Ribbon_ChenDoKhanMat\" supertip=\"Chèn khung đóng dấu độ Khẩn (KHẨN, THƯỢNG KHẨN, HỎA TỐC) hoặc độ Mật (MẬT, TỐI MẬT).\"/>" +
+                "<button id=\"btnVbtmPdf\" label=\"Xuất PDF Ký Số (1-Click)\" size=\"normal\" imageMso=\"FileSaveAsPdfOrXps\" onAction=\"Ribbon_XuatPDFNhanh\" supertip=\"Xuất ngay tài liệu Word đang mở sang file PDF chuẩn A4 để in ấn hoặc trình ký số.\"/>" +
+                "<button id=\"btnVbtmStat\" label=\"Thống Kê Trang &amp; Từ\" size=\"normal\" imageMso=\"WordCount\" onAction=\"Ribbon_ThongKeVanBan\" supertip=\"Thống kê nhanh số trang A4, số từ, số ký tự và thời gian đọc của báo cáo.\"/>" +
                 "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Văn Bản\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 để gắn vào văn bản Word.\"/>" +
                 "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (AI 7.578 Từ)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI (7.578 âm tiết), tạo mã QR và chuyển PDF sang Word.\"/>" +
                 "</group>" +
@@ -2732,6 +2785,8 @@ namespace VBTMProSuite
                                         rpFnt.GetType().InvokeMember("Scaling", BindingFlags.SetProperty, null, rpFnt, new object[] { 95 });
                                         try
                                         {
+                                            rp.GetType().InvokeMember("LeftIndent", BindingFlags.SetProperty, null, rp, new object[] { 15.6f });
+                                            rp.GetType().InvokeMember("RightIndent", BindingFlags.SetProperty, null, rp, new object[] { 15.6f });
                                             object rpBdrs = rp.GetType().InvokeMember("Borders", BindingFlags.GetProperty, null, rp, null);
                                             object bBot = rpBdrs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, rpBdrs, new object[] { -3 });
                                             bBot.GetType().InvokeMember("LineStyle", BindingFlags.SetProperty, null, bBot, new object[] { 1 });
