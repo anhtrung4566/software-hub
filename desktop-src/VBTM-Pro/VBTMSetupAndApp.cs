@@ -619,6 +619,7 @@ namespace VBTMProSuite
             sb.AppendLine("            t = Trim(Replace(Replace(p.Range.Text, vbCr, \"\"), Chr(7), \"\"))");
             sb.AppendLine("            If Len(t) > 0 Then");
             sb.AppendLine("                p.Range.Font.Name = \"Times New Roman\"");
+            sb.AppendLine("                p.LeftIndent = 0: p.RightIndent = 0: p.Format.SpaceBefore = 0");
             sb.AppendLine("                If t = " + VbaStr("BÁO CÁO") + " Or t = " + VbaStr("NGHỊ QUYẾT") + " Or t = " + VbaStr("QUYẾT ĐỊNH") + " Or t = " + VbaStr("KẾ HOẠCH") + " Or t = " + VbaStr("CHƯƠNG TRÌNH") + " Or t = " + VbaStr("TỜ TRÌNH") + " Or t = " + VbaStr("THÔNG BÁO") + " Or t = " + VbaStr("CHỈ THỊ") + " Or t = " + VbaStr("BIÊN BẢN") + " Or t = " + VbaStr("GIẤY MỜI") + " Then");
             sb.AppendLine("                    p.Range.Font.Size = 15");
             sb.AppendLine("                    p.Range.Font.Bold = True");
@@ -747,12 +748,14 @@ namespace VBTMProSuite
             sb.AppendLine("Sub ChuanHoaVanBan_NghiDinh30()");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    If Documents.Count = 0 Then Exit Sub");
+            sb.AppendLine("    Application.ScreenUpdating = False");
             sb.AppendLine("    CanLeA4Chuan_Word False");
             sb.AppendLine("    DanhSoTrangTuTrang2_Word False");
             sb.AppendLine("    ActiveDocument.Content.Font.Name = \"Times New Roman\"");
             sb.AppendLine("    Dim p As Paragraph");
             sb.AppendLine("    For Each p In ActiveDocument.Paragraphs");
             sb.AppendLine("        If p.Range.Tables.Count = 0 Then");
+            sb.AppendLine("            p.LeftIndent = 0: p.RightIndent = 0: p.Format.SpaceBefore = 0");
             sb.AppendLine("            p.Range.Font.Size = 14");
             sb.AppendLine("            p.Format.SpaceAfter = 6");
             sb.AppendLine("            p.Format.LineSpacingRule = 5");
@@ -763,6 +766,7 @@ namespace VBTMProSuite
             sb.AppendLine("            End If");
             sb.AppendLine("        End If");
             sb.AppendLine("    Next p");
+            sb.AppendLine("    Application.ScreenUpdating = True");
             sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã chuẩn hóa văn bản Word theo Nghị định số 30/2020/NĐ-CP!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
@@ -2939,6 +2943,9 @@ namespace VBTMProSuite
                             try
                             {
                                 object pFont = pRange.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, pRange, null);
+                                para.GetType().InvokeMember("LeftIndent", BindingFlags.SetProperty, null, para, new object[] { 0f });
+                                para.GetType().InvokeMember("RightIndent", BindingFlags.SetProperty, null, para, new object[] { 0f });
+                                para.GetType().InvokeMember("SpaceBefore", BindingFlags.SetProperty, null, para, new object[] { 0f });
                                 if (isPartyTitle)
                                 {
                                     pFont.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, pFont, new object[] { 15f });
