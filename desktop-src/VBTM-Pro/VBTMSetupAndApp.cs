@@ -33,17 +33,36 @@ namespace VBTMProSuite
 
             bool launchAppDirectly = false;
             bool uninstallMode = false;
+            bool unitSettingsMode = false;
+            bool wordSpellCheckMode = false;
             foreach (string a in args)
             {
                 if (a.Equals("--app", StringComparison.OrdinalIgnoreCase))
                     launchAppDirectly = true;
                 if (a.Equals("--uninstall", StringComparison.OrdinalIgnoreCase))
                     uninstallMode = true;
+                if (a.Equals("--unit-settings", StringComparison.OrdinalIgnoreCase))
+                    unitSettingsMode = true;
+                if (a.Equals("--word-spellcheck", StringComparison.OrdinalIgnoreCase))
+                    wordSpellCheckMode = true;
             }
 
             if (uninstallMode)
             {
                 RunUninstaller();
+                return;
+            }
+            if (unitSettingsMode)
+            {
+                Application.Run(new UnitSettingsForm());
+                return;
+            }
+            if (wordSpellCheckMode)
+            {
+                using (MainStudioForm f = new MainStudioForm())
+                {
+                    f.FormatActiveWordDocument();
+                }
                 return;
             }
 
@@ -443,15 +462,29 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_NghiDinh30(ByVal control As Object): ChuanHoaVanBan_NghiDinh30: End Sub");
             sb.AppendLine("Sub Ribbon_ChenMauDang05(ByVal control As Object): ChenMauVanBan_Dang05: End Sub");
             sb.AppendLine("Sub Ribbon_ChenMauUBND30(ByVal control As Object): ChenMauVanBan_UBND30: End Sub");
-            sb.AppendLine("Sub Ribbon_SuaChinhTa(ByVal control As Object): SuaChinhTaVaDauCau_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_SuaChinhTa(ByVal control As Object)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --word-spellcheck\", vbNormalFocus Else SuaChinhTaVaDauCau_Word");
+            sb.AppendLine("End Sub");
             sb.AppendLine("Sub Ribbon_TuDongHoaTieuNgu(ByVal control As Object): TuDongHoaTieuNgu_Word: End Sub");
             sb.AppendLine("Sub Ribbon_NoiDongPDF(ByVal control As Object): NoiDongPDFBiNgat_Word: End Sub");
             sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_AISoanThao(ByVal control As Object): AISoanThao_Word: End Sub");
             sb.AppendLine("Sub Ribbon_ChinhDangNhanh(ByVal control As Object): ChinhTheThucDangNhanh_Word: End Sub");
-            sb.AppendLine("Sub Ribbon_CaiDatDonVi(ByVal control As Object): CaiDatTieuNguDonVi_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_CaiDatDonVi(ByVal control As Object)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --unit-settings\", vbNormalFocus Else CaiDatTieuNguDonVi_Word");
+            sb.AppendLine("End Sub");
             sb.AppendLine("Sub Ribbon_ChenMaQR(ByVal control As Object): Ribbon_MoVBTM control: End Sub");
+            sb.AppendLine("");
+            sb.AppendLine("Private Sub ShowUnicodeMsg(ByVal msgText As String)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    If Not Application.Visible Then Exit Sub");
+            sb.AppendLine("    CreateObject(\"WScript.Shell\").Popup msgText, 0, \"VBTM Pro 2.5.0\", 64");
+            sb.AppendLine("End Sub");
             sb.AppendLine("Sub Ribbon_MoVBTM(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    Dim p As String");
@@ -475,7 +508,7 @@ namespace VBTMProSuite
             sb.AppendLine("        .LeftMargin = CentimetersToPoints(3)");
             sb.AppendLine("        .RightMargin = CentimetersToPoints(1.5)");
             sb.AppendLine("    End With");
-            sb.AppendLine("    If showMsg And Application.Visible Then MsgBox " + VbaStr("Đã căn lề chuẩn khổ A4 (Trên 20mm, Dưới 20mm, Trái 30mm, Phải 15mm)!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã căn lề chuẩn khổ A4 (Trên 20mm, Dưới 20mm, Trái 30mm, Phải 15mm)!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
@@ -492,7 +525,7 @@ namespace VBTMProSuite
             sb.AppendLine("    hdr.Range.Font.Size = 13");
             sb.AppendLine("    hdr.Range.Font.Bold = False");
             sb.AppendLine("    hdr.Range.Font.Italic = False");
-            sb.AppendLine("    If showMsg And Application.Visible Then MsgBox " + VbaStr("Đã bật đánh số trang tự động từ trang 2 (căn giữa lề trên, cỡ 13pt)!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã bật đánh số trang tự động từ trang 2 (căn giữa lề trên, cỡ 13pt)!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
@@ -545,10 +578,17 @@ namespace VBTMProSuite
             sb.AppendLine("        Dim tblTop As Table");
             sb.AppendLine("        Set tblTop = ActiveDocument.Tables(1)");
             sb.AppendLine("        If tblTop.Columns.Count >= 2 Then");
+            sb.AppendLine("            tblTop.AllowAutoFit = False");
+            sb.AppendLine("            tblTop.PreferredWidthType = 2: tblTop.PreferredWidth = 100");
+            sb.AppendLine("            tblTop.LeftPadding = 0: tblTop.RightPadding = 0: tblTop.TopPadding = 0: tblTop.BottomPadding = 0");
+            sb.AppendLine("            tblTop.Columns(1).PreferredWidthType = 2: tblTop.Columns(1).PreferredWidth = 44");
+            sb.AppendLine("            tblTop.Columns(2).PreferredWidthType = 2: tblTop.Columns(2).PreferredWidth = 56");
             sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Name = \"Times New Roman\"");
             sb.AppendLine("            tblTop.Cell(1, 1).Range.Font.Size = 14");
+            sb.AppendLine("            tblTop.Cell(1, 1).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 1).Range.ParagraphFormat.Alignment = 1");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Name = \"Times New Roman\"");
             sb.AppendLine("            tblTop.Cell(1, 2).Range.Font.Size = 15");
+            sb.AppendLine("            tblTop.Cell(1, 2).Range.ParagraphFormat.FirstLineIndent = 0: tblTop.Cell(1, 2).Range.ParagraphFormat.Alignment = 1");
             sb.AppendLine("            Dim pTop As Paragraph");
             sb.AppendLine("            For Each pTop In tblTop.Cell(1, 2).Range.Paragraphs");
             sb.AppendLine("                If InStr(LCase(pTop.Range.Text), " + VbaStr("ngày") + ") > 0 Then");
@@ -580,7 +620,7 @@ namespace VBTMProSuite
             sb.AppendLine("            tblBot.Cell(1, 2).Range.Font.Bold = True");
             sb.AppendLine("        End If");
             sb.AppendLine("    End If");
-            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã tự động chuẩn hóa văn bản Word đúng chuẩn Hướng dẫn số 05-HD/VPTW!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã tự động chuẩn hóa văn bản Word đúng chuẩn Hướng dẫn số 05-HD/VPTW!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
@@ -604,7 +644,7 @@ namespace VBTMProSuite
             sb.AppendLine("            End If");
             sb.AppendLine("        End If");
             sb.AppendLine("    Next p");
-            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã chuẩn hóa văn bản Word theo Nghị định số 30/2020/NĐ-CP!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã chuẩn hóa văn bản Word theo Nghị định số 30/2020/NĐ-CP!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
@@ -646,7 +686,7 @@ namespace VBTMProSuite
             sb.AppendLine("    Dim ts As Object: Set ts = fso.CreateTextFile(dirPath & \"\\word_unit_config.ini\", True, True)");
             sb.AppendLine("    ts.Write pGov & vbCrLf & pIss & vbCrLf & uGov & vbCrLf & uIss & vbCrLf & loc & vbCrLf & pSign & vbCrLf & uSign");
             sb.AppendLine("    ts.Close");
-            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã lưu cài đặt Tiêu ngữ đơn vị! Các nút Chèn Mẫu Đảng / UBND sẽ tự động dùng tên đơn vị của bạn.") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã lưu cài đặt Tiêu ngữ đơn vị! Các nút Chèn Mẫu Đảng / UBND sẽ tự động dùng tên đơn vị của bạn.") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
             sb.AppendLine("Sub ChinhTheThucDangNhanh_Word()");
@@ -666,12 +706,16 @@ namespace VBTMProSuite
             sb.AppendLine("    Dim pIss As String: pIss = GetUnitConfigVal(1, " + VbaStr("ĐẢNG ỦY PHƯỜNG") + ")");
             sb.AppendLine("    Dim loc As String: loc = GetUnitConfigVal(4, " + VbaStr("Phường") + ")");
             sb.AppendLine("    Dim pSign As String: pSign = GetUnitConfigVal(5, " + VbaStr("Trần Minh Quân") + ")");
+            sb.AppendLine("    Dim pMotto As String: pMotto = GetUnitConfigVal(7, " + VbaStr("ĐẢNG CỘNG SẢN VIỆT NAM") + ")");
             sb.AppendLine("    Dim rng As Range, tbl1 As Table, tbl2 As Table");
             sb.AppendLine("    Set rng = ActiveDocument.Range(0, 0)");
             sb.AppendLine("    Set tbl1 = ActiveDocument.Tables.Add(rng, 1, 2)");
             sb.AppendLine("    tbl1.Borders.Enable = 0");
-            sb.AppendLine("    tbl1.Columns(1).PreferredWidth = CentimetersToPoints(7.2)");
-            sb.AppendLine("    tbl1.Columns(2).PreferredWidth = CentimetersToPoints(9.3)");
+            sb.AppendLine("    tbl1.AllowAutoFit = False");
+            sb.AppendLine("    tbl1.PreferredWidthType = 2: tbl1.PreferredWidth = 100");
+            sb.AppendLine("    tbl1.LeftPadding = 0: tbl1.RightPadding = 0: tbl1.TopPadding = 0: tbl1.BottomPadding = 0");
+            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 44");
+            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 56");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
             sb.AppendLine("        .Text = pGov & vbCr & pIss & vbCr & \"*\" & vbCr & " + VbaStr("Số 01-BC/ĐU"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 14: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
@@ -679,7 +723,7 @@ namespace VBTMProSuite
             sb.AppendLine("        .Paragraphs(3).Range.Font.Bold = True");
             sb.AppendLine("    End With");
             sb.AppendLine("    With tbl1.Cell(1, 2).Range");
-            sb.AppendLine("        .Text = " + VbaStr("ĐẢNG CỘNG SẢN VIỆT NAM") + " & vbCr & loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
+            sb.AppendLine("        .Text = pMotto & vbCr & loc & " + VbaStr(", ngày 19 tháng 11 năm 2026"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
             sb.AppendLine("        .Paragraphs(1).Range.Font.Size = 15: .Paragraphs(1).Range.Font.Bold = True: .Paragraphs(1).Range.Font.Underline = 1");
             sb.AppendLine("        .Paragraphs(2).Range.Font.Size = 14: .Paragraphs(2).Range.Font.Italic = True: .Paragraphs(2).Range.Font.Bold = False: .Paragraphs(2).SpaceBefore = 6");
@@ -719,8 +763,11 @@ namespace VBTMProSuite
             sb.AppendLine("    Set rng = ActiveDocument.Range(0, 0)");
             sb.AppendLine("    Set tbl1 = ActiveDocument.Tables.Add(rng, 1, 2)");
             sb.AppendLine("    tbl1.Borders.Enable = 0");
-            sb.AppendLine("    tbl1.Columns(1).PreferredWidth = CentimetersToPoints(7.0)");
-            sb.AppendLine("    tbl1.Columns(2).PreferredWidth = CentimetersToPoints(9.5)");
+            sb.AppendLine("    tbl1.AllowAutoFit = False");
+            sb.AppendLine("    tbl1.PreferredWidthType = 2: tbl1.PreferredWidth = 100");
+            sb.AppendLine("    tbl1.LeftPadding = 0: tbl1.RightPadding = 0: tbl1.TopPadding = 0: tbl1.BottomPadding = 0");
+            sb.AppendLine("    tbl1.Columns(1).PreferredWidthType = 2: tbl1.Columns(1).PreferredWidth = 42");
+            sb.AppendLine("    tbl1.Columns(2).PreferredWidthType = 2: tbl1.Columns(2).PreferredWidth = 58");
             sb.AppendLine("    With tbl1.Cell(1, 1).Range");
             sb.AppendLine("        .Text = uGov & vbCr & uIss & vbCr & " + VbaStr("Số: 01/UBND-VP"));
             sb.AppendLine("        .Font.Name = \"Times New Roman\": .Font.Size = 12.5: .ParagraphFormat.Alignment = 1: .ParagraphFormat.SpaceAfter = 0: .ParagraphFormat.FirstLineIndent = 0");
@@ -779,7 +826,7 @@ namespace VBTMProSuite
             {
                 sb.AppendLine("    ReplaceWordText " + VbaStr(quickRules[r, 0]) + ", " + VbaStr(quickRules[r, 1]));
             }
-            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã rà soát và sửa lỗi chính tả, khoảng trắng, dấu câu trực tiếp trong Word!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã rà soát và sửa lỗi chính tả, khoảng trắng, dấu câu trực tiếp trong Word!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
             sb.AppendLine("Private Sub ReplaceWordText(ByVal findTxt As String, ByVal repTxt As String)");
@@ -832,7 +879,7 @@ namespace VBTMProSuite
             sb.AppendLine("            End If");
             sb.AppendLine("        End If");
             sb.AppendLine("    Next i");
-            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã nối ") + " & mergedCount & " + VbaStr(" dòng bị ngắt từ PDF thành đoạn văn hoàn chỉnh!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Đã nối ") + " & mergedCount & " + VbaStr(" dòng bị ngắt từ PDF thành đoạn văn hoàn chỉnh!") + "");
             sb.AppendLine("End Sub");
             sb.AppendLine("");
 
@@ -854,7 +901,7 @@ namespace VBTMProSuite
             sb.AppendLine("    Else");
             sb.AppendLine("        ChenMauVanBan_UBND30");
             sb.AppendLine("    End If");
-            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Trợ lý AI đã tự động khởi tạo xong khung & nội dung chuẩn theo yêu cầu: ") + " & req, vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("    ShowUnicodeMsg " + VbaStr("Trợ lý AI đã tự động khởi tạo xong khung & nội dung chuẩn theo yêu cầu: ") + " & req");
             sb.AppendLine("End Sub");
             return sb.ToString();
         }
@@ -1019,6 +1066,103 @@ namespace VBTMProSuite
                     }
                 }
             }
+        }
+    }
+
+    public class UnitSettingsForm : Form
+    {
+        private TextBox txtPGov, txtPIss, txtPMotto, txtUGov, txtUIss, txtLoc, txtPSign, txtUSign;
+
+        public UnitSettingsForm()
+        {
+            this.Text = "Cài Đặt Tiêu Ngữ & Tên Đơn Vị - VBTM Pro 2.5.0";
+            this.ClientSize = new Size(560, 440);
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(95, 10, 14);
+            this.ForeColor = Color.White;
+            this.Font = new Font("Segoe UI", 9.5f);
+
+            string[] vals = LoadUnitConfig();
+            int y = 18;
+            AddRow("Cơ quan Đảng cấp trên:", vals[0], out txtPGov, ref y);
+            AddRow("Đơn vị Đảng ban hành:", vals[1], out txtPIss, ref y);
+            AddRow("Tiêu ngữ văn bản Đảng:", vals[7], out txtPMotto, ref y);
+            AddRow("UBND cấp trên:", vals[2], out txtUGov, ref y);
+            AddRow("UBND ban hành:", vals[3], out txtUIss, ref y);
+            AddRow("Địa danh (Phường/Xã):", vals[4], out txtLoc, ref y);
+            AddRow("Họ tên Bí thư Đảng ủy:", vals[5], out txtPSign, ref y);
+            AddRow("Họ tên Chủ tịch UBND:", vals[6], out txtUSign, ref y);
+
+            Button btnSave = new Button
+            {
+                Text = "💾 Lưu Cài Đặt Tiêu Ngữ",
+                Location = new Point(340, y + 12),
+                Size = new Size(195, 38),
+                BackColor = Color.FromArgb(234, 179, 8),
+                ForeColor = Color.FromArgb(69, 10, 10),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnSave.FlatAppearance.BorderSize = 0;
+            btnSave.Click += (s, e) =>
+            {
+                SaveUnitConfig(new string[] {
+                    txtPGov.Text.Trim(), txtPIss.Text.Trim(), txtUGov.Text.Trim(), txtUIss.Text.Trim(),
+                    txtLoc.Text.Trim(), txtPSign.Text.Trim(), txtUSign.Text.Trim(), txtPMotto.Text.Trim()
+                });
+                MessageBox.Show("Đã lưu cấu hình Tiêu ngữ & Đơn vị! Các mẫu chèn trong Microsoft Word sẽ tự động sử dụng thông tin này.", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
+            };
+            this.Controls.Add(btnSave);
+        }
+
+        private void AddRow(string label, string initVal, out TextBox tb, ref int y)
+        {
+            Label lbl = new Label { Text = label, Location = new Point(22, y + 4), AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138) };
+            tb = new TextBox
+            {
+                Text = initVal,
+                Location = new Point(205, y),
+                Size = new Size(330, 26),
+                BackColor = Color.FromArgb(69, 10, 10),
+                ForeColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            this.Controls.Add(lbl);
+            this.Controls.Add(tb);
+            y += 42;
+        }
+
+        public static string[] LoadUnitConfig()
+        {
+            string[] defs = new string[] {
+                "QUẬN ỦY", "ĐẢNG ỦY PHƯỜNG", "ỦY BAN NHÂN DÂN QUẬN", "ỦY BAN NHÂN DÂN PHƯỜNG",
+                "Phường", "Trần Minh Quân", "Nguyễn Văn An", "ĐẢNG CỘNG SẢN VIỆT NAM"
+            };
+            try
+            {
+                string cfgPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM", "word_unit_config.ini");
+                if (File.Exists(cfgPath))
+                {
+                    string[] lines = File.ReadAllLines(cfgPath, Encoding.Unicode);
+                    for (int i = 0; i < Math.Min(lines.Length, defs.Length); i++)
+                    {
+                        if (!string.IsNullOrWhiteSpace(lines[i])) defs[i] = lines[i].Trim();
+                    }
+                }
+            }
+            catch { }
+            return defs;
+        }
+
+        public static void SaveUnitConfig(string[] vals)
+        {
+            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM");
+            Directory.CreateDirectory(dir);
+            File.WriteAllLines(Path.Combine(dir, "word_unit_config.ini"), vals, Encoding.Unicode);
         }
     }
 
@@ -1855,7 +1999,7 @@ namespace VBTMProSuite
             MessageBox.Show("Đã chuẩn hóa dấu câu, khoảng trắng, ngày tháng, ký hiệu kết thúc và tự động sửa " + totalFixed + " lỗi chính tả AI!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void FormatActiveWordDocument()
+        public void FormatActiveWordDocument()
         {
             try
             {
