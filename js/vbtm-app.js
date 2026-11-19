@@ -833,7 +833,9 @@ function reconstructVbtmExactPdfPageLayout(rawItems, page, textContent, viewport
 
       if (subjParts.length > 0) {
         htmlBlocks.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 2pt 0; line-height:1.3; font-size:14pt;">${escapeHtml(subjParts.join(' '))}</p>`);
-        htmlBlocks.push(`<p align="center" style="text-align:center; text-indent:0; font-weight:normal; margin:0 0 10pt 0; line-height:1; font-size:10pt;">──────────────</p>`);
+        htmlBlocks.push(isParty
+          ? `<p align="center" style="text-align:center; text-indent:0; font-weight:bold; margin:0 0 10pt 0; line-height:1; font-size:14pt;">-----</p>`
+          : `<p align="center" style="text-align:center; text-indent:0; font-weight:normal; margin:0 0 10pt 0; line-height:1; font-size:10pt;">──────────────</p>`);
       }
     }
   }
