@@ -577,13 +577,13 @@ function buildRegulationFooterTableHtml(leftSegs, rightSegs, isParty) {
   // Theo Hướng dẫn 05-HD/VPTW: Từ "Nơi nhận:" cỡ chữ 14pt, kiểu chữ đứng, có gạch chân dưới từ "Nơi nhận", sau có dấu hai chấm (:)
   const noiNhanHeaderHtml = hasNoiNhanLabel
     ? (isParty
-        ? `<p align="left" style="margin:0 0 2pt 0; text-indent:0; text-align:left; font-size:14pt; font-style:normal; font-weight:normal; line-height:1.25;"><u>Nơi nhận</u>:</p>`
-        : `<p align="left" style="margin:0 0 2pt 0; text-indent:0; text-align:left; font-size:12pt; font-weight:bold; font-style:italic; line-height:1.25;">Nơi nhận:</p>`)
+        ? `<p align="left" style="margin:0; text-indent:0; text-align:left; font-size:14pt; font-style:normal; font-weight:normal; line-height:1.08;"><u>Nơi nhận</u>:</p>`
+        : `<p align="left" style="margin:0; text-indent:0; text-align:left; font-size:12pt; font-weight:bold; font-style:italic; line-height:1.08;">Nơi nhận:</p>`)
     : '';
 
   const recFontSize = isParty ? '12pt' : '11pt';
   const recListHtml = recipientItems
-    .map(item => `<p align="left" style="margin:0; text-indent:0; text-align:left; font-size:${recFontSize}; line-height:1.3;">${escapeHtml(item)}</p>`)
+    .map(item => `<p align="left" style="margin:0; text-indent:0; text-align:left; font-size:${recFontSize}; line-height:1.08;">${escapeHtml(item)}</p>`)
     .join('');
 
   const authorityLines = [];
@@ -602,7 +602,10 @@ function buildRegulationFooterTableHtml(leftSegs, rightSegs, isParty) {
 
   const authFontSize = isParty ? '14pt' : '13.5pt';
   const authHtml = authorityLines
-    .map(a => `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:${authFontSize}; font-weight:bold; text-transform:uppercase; line-height:1.3;">${escapeHtml(a)}</p>`)
+    .map(a => {
+      const isPlainDangRole = isParty && /^(BÍ THƯ|PHÓ BÍ THƯ|PHÓ BÍ THƯ THƯỜNG TRỰC|CHÁNH VĂN PHÒNG|PHÓ CHÁNH VĂN PHÒNG|CHỦ NHIỆM|TRƯỞNG BAN)$/i.test(a.trim());
+      return `<p align="center" style="margin:0; text-indent:0; text-align:center; font-size:${authFontSize}; font-weight:${isPlainDangRole ? 'normal' : 'bold'}; text-transform:uppercase; line-height:1.2;">${escapeHtml(a)}</p>`;
+    })
     .join('');
   const nameHtml = signerName
     ? `<p align="center" style="margin:44pt 0 0 0; mso-margin-top-alt:44pt; text-indent:0; text-align:center; font-size:14pt; font-weight:bold; line-height:1.3;">${escapeHtml(signerName)}</p>`
