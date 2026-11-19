@@ -264,11 +264,11 @@ async function loadRealPdfDocument(file) {
       }
     }
 
-    // Hiển thị toàn bộ các trang lên khung Bản Word Giữ Nguyên Thể Thức 1:1
+    // Hiển thị toàn bộ các trang nối chảy tự nhiên (không chèn page-break cứng gây trang trắng thừa khi xuất Word)
     const fullWordHtml = pdfPagesLayoutHtml
       .map((html, idx) => idx === 0
         ? html
-        : `<div style="page-break-before: always; border-top: 1px dashed #cbd5e1; margin-top: 18pt; padding-top: 18pt;">${html}</div>`)
+        : `<div class="ocr-page-flow" style="margin-top: 6pt;">${html}</div>`)
       .join('\n');
 
     const fullPlainText = pdfPagesRawText.join('\n\n');
@@ -1061,7 +1061,7 @@ async function runVietnameseOcr(appendTableMode = false) {
     const fullWordHtml = pdfPagesLayoutHtml
       .map((html, idx) => idx === 0
         ? html
-        : `<div style="page-break-before: always; border-top: 1px dashed #cbd5e1; margin-top: 18pt; padding-top: 18pt;">${html}</div>`)
+        : `<div class="ocr-page-flow" style="margin-top: 6pt;">${html}</div>`)
       .join('\n');
     if (paperEl) paperEl.innerHTML = fullWordHtml;
     textOutput.value = pdfPagesRawText.join('\n\n');
@@ -1489,7 +1489,7 @@ function exportOcrToWord() {
   if (plainWrap && plainWrap.style.display !== 'none') {
     bodyHtml = reconstructExactLayoutFromPlainText(textContent);
   } else if (paperEl && paperEl.innerHTML.trim()) {
-    bodyHtml = paperEl.innerHTML;
+    bodyHtml = paperEl.innerHTML.replace(/page-break-(before|after)\s*:\s*always\s*;?/gi, '');
   } else {
     bodyHtml = reconstructExactLayoutFromPlainText(textContent);
   }
@@ -1524,8 +1524,8 @@ function exportOcrToWord() {
         font-size: 13.0pt;
         font-family: "Times New Roman", Times, serif;
       }
-      body { font-family: "Times New Roman", Times, serif; font-size: 14pt; color: #000000; line-height: 1.38; }
-      p { font-family: "Times New Roman", Times, serif; margin: 0 0 6pt 0; font-size: 14pt; }
+      body { font-family: "Times New Roman", Times, serif; font-size: 14pt; color: #000000; line-height: 1.15; }
+      p { font-family: "Times New Roman", Times, serif; margin: 0 0 6pt 0; font-size: 14pt; line-height: 1.15; }
       table { width: 100%; border-collapse: collapse; font-family: "Times New Roman", Times, serif; }
       td, th { font-family: "Times New Roman", Times, serif; vertical-align: top; }
       td p { margin: 0; text-indent: 0; }
