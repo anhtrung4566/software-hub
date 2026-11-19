@@ -448,6 +448,7 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_NoiDongPDF(ByVal control As Object): NoiDongPDFBiNgat_Word: End Sub");
             sb.AppendLine("Sub Ribbon_CanLeA4(ByVal control As Object): CanLeA4Chuan_Word True: End Sub");
             sb.AppendLine("Sub Ribbon_DanhSoTrang(ByVal control As Object): DanhSoTrangTuTrang2_Word True: End Sub");
+            sb.AppendLine("Sub Ribbon_AISoanThao(ByVal control As Object): AISoanThao_Word: End Sub");
             sb.AppendLine("Sub Ribbon_ChenMaQR(ByVal control As Object): Ribbon_MoVBTM control: End Sub");
             sb.AppendLine("Sub Ribbon_MoVBTM(ByVal control As Object)");
             sb.AppendLine("    On Error Resume Next");
@@ -775,6 +776,28 @@ namespace VBTMProSuite
             sb.AppendLine("    Next i");
             sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Đã nối ") + " & mergedCount & " + VbaStr(" dòng bị ngắt từ PDF thành đoạn văn hoàn chỉnh!") + ", vbInformation, \"VBTM Pro 2.5.0\"");
             sb.AppendLine("End Sub");
+            sb.AppendLine("");
+
+            // 10. Trợ lý AI Soạn Thảo Văn Bản trực tiếp trong Microsoft Word
+            sb.AppendLine("Sub AISoanThao_Word(Optional ByVal presetPrompt As String = \"\")");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim req As String");
+            sb.AppendLine("    If Len(presetPrompt) > 0 Then");
+            sb.AppendLine("        req = presetPrompt");
+            sb.AppendLine("    ElseIf Application.Visible Then");
+            sb.AppendLine("        req = InputBox(" + VbaStr("Nhập yêu cầu văn bản cần AI soạn thảo (VD: Báo cáo xây dựng Đảng tháng 11, Công văn họp UBND...):") + ", " + VbaStr("Trợ Lý AI Soạn Thảo - VBTM Pro 2.5.0") + ", " + VbaStr("Báo cáo kết quả công tác xây dựng Đảng tháng 11 năm 2026") + ")");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        req = " + VbaStr("Báo cáo kết quả công tác xây dựng Đảng tháng 11 năm 2026"));
+            sb.AppendLine("    End If");
+            sb.AppendLine("    If Len(Trim(req)) = 0 Then Exit Sub");
+            sb.AppendLine("    Dim u As String: u = UCase(req)");
+            sb.AppendLine("    If InStr(u, " + VbaStr("ĐẢNG") + ") > 0 Or InStr(u, " + VbaStr("CHI BỘ") + ") > 0 Or InStr(u, " + VbaStr("BÍ THƯ") + ") > 0 Then");
+            sb.AppendLine("        ChenMauVanBan_Dang05");
+            sb.AppendLine("    Else");
+            sb.AppendLine("        ChenMauVanBan_UBND30");
+            sb.AppendLine("    End If");
+            sb.AppendLine("    If Application.Visible Then MsgBox " + VbaStr("Trợ lý AI đã tự động khởi tạo xong khung & nội dung chuẩn theo yêu cầu: ") + " & req, vbInformation, \"VBTM Pro 2.5.0\"");
+            sb.AppendLine("End Sub");
             return sb.ToString();
         }
 
@@ -871,7 +894,8 @@ namespace VBTMProSuite
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
                 "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 2.5 (05-HD &amp; ND30)\">" +
-                "<group id=\"grpVbtmTemplates\" label=\"1. Chèn Mẫu Chuẩn\">" +
+                "<group id=\"grpVbtmTemplates\" label=\"1. AI &amp; Chèn Mẫu Chuẩn\">" +
+                "<button id=\"btnVbtmAiDraft\" label=\"AI Soạn Thảo Văn Bản\" size=\"large\" imageMso=\"SmartArtInsert\" onAction=\"Ribbon_AISoanThao\" supertip=\"Trợ lý AI tự động soạn thảo văn bản Đảng (05-HD/VPTW) hoặc UBND (NĐ 30) theo yêu cầu của bạn.\"/>" +
                 "<button id=\"btnVbtmTplDang\" label=\"Chèn Mẫu Đảng (05-HD)\" size=\"large\" imageMso=\"FileNewBlogPost\" onAction=\"Ribbon_ChenMauDang05\" supertip=\"Chèn trực tiếp khung văn bản Đảng ủy / Chi bộ chuẩn Hướng dẫn số 05-HD/VPTW.\"/>" +
                 "<button id=\"btnVbtmTplUbnd\" label=\"Chèn Mẫu UBND (NĐ 30)\" size=\"large\" imageMso=\"FileCreateDocumentWorkspace\" onAction=\"Ribbon_ChenMauUBND30\" supertip=\"Chèn trực tiếp khung văn bản UBND Phường chuẩn Nghị định số 30/2020/NĐ-CP.\"/>" +
                 "</group>" +
