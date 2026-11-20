@@ -2229,6 +2229,7 @@ namespace VBTMProSuite
 
             System.Threading.ThreadPool.QueueUserWorkItem(_ =>
             {
+                System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
                 string res = "";
                 string note = "";
                 bool hadError = false;
@@ -2237,14 +2238,16 @@ namespace VBTMProSuite
                     try
                     {
                         res = CallOnlineAiDirect(provIdx, modelStr, keyStr, sysPrompt, src);
+                        sw.Stop();
                         res = res.Replace("**", "").Replace("### ", "").Replace("## ", "").Trim();
+                        string secStr = (sw.ElapsedMilliseconds / 1000.0).ToString("0.0") + "s";
                         if (string.Equals(res.Trim(), src.Trim(), StringComparison.Ordinal) && !isSpellOnly)
                         {
-                            note = "ℹ AI đánh giá đoạn văn đã khá chuẩn. Bạn có thể gõ yêu cầu cụ thể hơn (vd: 'rút gọn còn 2 câu') rồi bấm Xử Lý lại.";
+                            note = "ℹ Xong (" + secStr + ") — AI đánh giá đoạn văn đã khá chuẩn. Gõ yêu cầu cụ thể hơn rồi bấm Xử Lý lại.";
                         }
                         else
                         {
-                            note = "✓ AI đã xử lý xong (" + modelStr + ")! Xem khung xanh bên trên — nếu đồng ý hãy bấm '✅ Đồng Ý — Thay Vào Đoạn Bôi Đen'.";
+                            note = "✓ Xong trong " + secStr + " (" + modelStr + ")! Xem khung xanh — đồng ý thì bấm '✅ Đồng Ý — Thay Vào Đoạn Bôi Đen'.";
                         }
                     }
                     catch (Exception ex)
@@ -2364,10 +2367,13 @@ namespace VBTMProSuite
         public static string CallOnlineAiDirect(int prov, string model, string apiKey, string systemPrompt, string userText)
         {
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; // TLS 1.2
+            ServicePointManager.Expect100Continue = false;
+            ServicePointManager.UseNagleAlgorithm = false;
+            ServicePointManager.DefaultConnectionLimit = 12;
             JavaScriptSerializer js = new JavaScriptSerializer();
             js.MaxJsonLength = int.MaxValue;
 
-            if (prov == 0) // Google Gemini (tắt thinkingBudget = 0 -> trả lời siêu tốc 1–2 giây/đoạn!)
+            if (prov == 0) // Google Gemini (tắt thinkingBudget = 0 + Proxy=null -> trả lời siêu tốc 1–2 giây!)
             {
                 string reqModel = string.IsNullOrEmpty(model) || model.Equals("gemini-2.5-flash", StringComparison.OrdinalIgnoreCase)
                     ? "gemini-3.8-flash"
@@ -2376,12 +2382,12 @@ namespace VBTMProSuite
                 var fastPayload = new
                 {
                     contents = new object[] { new { parts = new object[] { new { text = systemPrompt + "\n\n" + userText } } } },
-                    generationConfig = new { temperature = 0.55, thinkingConfig = new { thinkingBudget = 0 } }
+                    generationConfig = new { temperature = 0.55, maxOutputTokens = 1024, thinkingConfig = new { thinkingBudget = 0 } }
                 };
                 var plainPayload = new
                 {
                     contents = new object[] { new { parts = new object[] { new { text = systemPrompt + "\n\n" + userText } } } },
-                    generationConfig = new { temperature = 0.55 }
+                    generationConfig = new { temperature = 0.55, maxOutputTokens = 1024 }
                 };
                 string resp = null;
                 Exception lastEx = null;
@@ -2466,8 +2472,11 @@ namespace VBTMProSuite
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
             req.Method = "POST";
             req.ContentType = "application/json; charset=utf-8";
-            req.Timeout = 45000;
-            req.ReadWriteTimeout = 45000;
+            req.Proxy = null; // Tắt dò WPAD Proxy của Windows (loại bỏ độ trễ 5–15 giây!)
+            req.KeepAlive = true;
+            req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            req.Timeout = 20000;
+            req.ReadWriteTimeout = 20000;
             if (headers != null)
             {
                 foreach (var kv in headers) req.Headers[kv.Key] = kv.Value;
