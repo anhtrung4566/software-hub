@@ -2424,6 +2424,49 @@ namespace VBTMProSuite
                         }
                     }
                 }
+                if (string.IsNullOrEmpty(resp) && lastEx != null &&
+                    (lastEx.Message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     lastEx.Message.IndexOf("NOT_FOUND", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     lastEx.Message.IndexOf("no longer available", StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    // Tự động hỏi Google API danh sách model Flash đang mở cho Key này để không bao giờ bị lỗi 404 nữa!
+                    try
+                    {
+                        string listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + Uri.EscapeDataString(apiKey);
+                        HttpWebRequest lreq = (HttpWebRequest)WebRequest.Create(listUrl);
+                        lreq.Proxy = null;
+                        lreq.Timeout = 10000;
+                        using (HttpWebResponse lresp = (HttpWebResponse)lreq.GetResponse())
+                        using (StreamReader lsr = new StreamReader(lresp.GetResponseStream(), Encoding.UTF8))
+                        {
+                            var lobj = js.Deserialize<Dictionary<string, object>>(lsr.ReadToEnd());
+                            var mlist = lobj["models"] as System.Collections.ArrayList;
+                            if (mlist != null)
+                            {
+                                string discovered = null;
+                                foreach (object mo in mlist)
+                                {
+                                    var md = mo as Dictionary<string, object>;
+                                    if (md == null) continue;
+                                    string mn = Convert.ToString(md["name"] ?? "");
+                                    var methods = md.ContainsKey("supportedGenerationMethods") ? md["supportedGenerationMethods"] as System.Collections.ArrayList : null;
+                                    bool canGen = methods != null && methods.Contains("generateContent");
+                                    if (canGen && mn.IndexOf("flash", StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        discovered = mn.StartsWith("models/") ? mn.Substring(7) : mn;
+                                        break;
+                                    }
+                                }
+                                if (!string.IsNullOrEmpty(discovered))
+                                {
+                                    string dUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + Uri.EscapeDataString(discovered) + ":generateContent?key=" + Uri.EscapeDataString(apiKey);
+                                    try { resp = HttpPostJson(dUrl, js.Serialize(plainPayload), null); } catch (Exception exD) { lastEx = exD; }
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
                 if (string.IsNullOrEmpty(resp)) throw (lastEx ?? new Exception("Không gọi được Gemini API."));
                 var obj = js.Deserialize<Dictionary<string, object>>(resp);
                 var cands = obj["candidates"] as System.Collections.ArrayList;
@@ -2507,6 +2550,21 @@ namespace VBTMProSuite
                 {
                     using (StreamReader sr = new StreamReader(wex.Response.GetResponseStream(), Encoding.UTF8))
                         detail = sr.ReadToEnd();
+                    try
+                    {
+                        JavaScriptSerializer jsErr = new JavaScriptSerializer();
+                        var eObj = jsErr.Deserialize<Dictionary<string, object>>(detail);
+                        if (eObj != null && eObj.ContainsKey("error"))
+                        {
+                            var inner = eObj["error"] as Dictionary<string, object>;
+                            if (inner != null && inner.ContainsKey("message"))
+                            {
+                                string code = inner.ContainsKey("code") ? ("[" + inner["code"] + "] ") : "";
+                                detail = code + Convert.ToString(inner["message"]);
+                            }
+                        }
+                    }
+                    catch { }
                 }
                 throw new Exception(detail);
             }
@@ -3386,6 +3444,7 @@ namespace VBTMProSuite
             Label lblTitle = new Label
             {
                 Text = "★ RÀ SOÁT CHÍNH TẢ AI & GỢI Ý SỬA ĐỔI CHUYÊN SÂU (05-HD/VPTW & NĐ 30)",
+                UseMnemonic = false,
                 Location = new Point(16, 8),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
@@ -3394,6 +3453,7 @@ namespace VBTMProSuite
             lblSummary = new Label
             {
                 Text = "Đang quét chuyên sâu toàn bộ tài liệu Microsoft Word đang mở...",
+                UseMnemonic = false,
                 Location = new Point(16, 32),
                 Size = new Size(810, 20),
                 Font = new Font("Segoe UI", 8.8f),
@@ -3422,7 +3482,7 @@ namespace VBTMProSuite
 
             btnDeepAi = new Button
             {
-                Text = "🧠 Quét Sâu Bằng AI (Ngữ Cảnh & Câu Từ)",
+                Text = "🧠 Quét Sâu Bằng AI (Ngữ Cảnh && Câu Từ)",
                 Location = new Point(x + 233, y),
                 Size = new Size(265, 32),
                 BackColor = Color.FromArgb(37, 99, 235),
@@ -3597,7 +3657,15 @@ namespace VBTMProSuite
             btnFixAll.Click += (s, e) => FixAllFoundErrorsInWord();
             this.Controls.Add(btnFixAll);
 
-            this.Shown += (s, e) => ScanOpenWordDocument();
+            this.Shown += (s, e) =>
+            {
+                ScanOpenWordDocument();
+                string[] cfg = AiWordAssistantForm.LoadAiConfig();
+                if (!string.IsNullOrWhiteSpace(cfg[2]) && cfg[0] != "5" && !string.IsNullOrWhiteSpace(currentDocText))
+                {
+                    RunDeepAiSpellScanAsync();
+                }
+            };
         }
 
         private string ExtractContextSnippet(string docText, int matchIndex, int matchLen)
@@ -3700,6 +3768,7 @@ namespace VBTMProSuite
                 {
                     throw new Exception("Chưa có nội dung trong tài liệu Word đang mở.");
                 }
+                docText = docText.Normalize(NormalizationForm.FormC);
                 currentDocText = docText;
 
                 // 1. Quét 150+ quy tắc chính tả hành chính & Đảng (s/x, ch/tr, hỏi/ngã, thiếu dấu, từ sai...)
@@ -3709,8 +3778,7 @@ namespace VBTMProSuite
                     string s = InspectorRules[r, 1];
                     string reason = InspectorRules[r, 2];
                     if (string.IsNullOrEmpty(reason) || string.Equals(w, s, StringComparison.OrdinalIgnoreCase)) continue;
-                    Match m = Regex.Match(docText, @"\b" + Regex.Escape(w) + @"\b", RegexOptions.IgnoreCase);
-                    if (m.Success)
+                    foreach (Match m in Regex.Matches(docText, @"(?<![A-Za-zÀ-Ỹà-ỹĐđ])" + Regex.Escape(w) + @"(?![A-Za-zÀ-Ỹà-ỹĐđ])", RegexOptions.IgnoreCase))
                     {
                         string matched = m.Value;
                         string prop = matched == matched.ToUpper() ? s.ToUpper() : (char.IsUpper(matched[0]) ? char.ToUpper(s[0]) + s.Substring(1) : s);
@@ -3826,13 +3894,14 @@ namespace VBTMProSuite
 
         private void UpdateSummaryHeader()
         {
+            int wordCnt = string.IsNullOrWhiteSpace(currentDocText) ? 0 : Regex.Matches(currentDocText, @"[A-Za-zÀ-Ỹà-ỹĐđ0-9]+").Count;
             if (issues.Count == 0)
             {
-                lblSummary.Text = "✓ Quét nhanh xong: Chưa phát hiện lỗi chính tả cơ bản! Bạn có thể bấm '🧠 Quét Sâu Bằng AI' để kiểm tra ngữ cảnh.";
+                lblSummary.Text = "✓ Đã quét " + wordCnt + " từ trong Word — không phát hiện lỗi chính tả cơ bản! Bấm 'Quét Sâu Bằng AI' để kiểm tra ngữ cảnh.";
             }
             else
             {
-                lblSummary.Text = "⚠ Phát hiện " + issues.Count + " lỗi & gợi ý sửa đổi (chọn từng dòng để xem ngữ cảnh / sửa hoặc bấm 'Sửa Hết Tất Cả'):";
+                lblSummary.Text = "⚠ Đã quét " + wordCnt + " từ trong Word — phát hiện " + issues.Count + " lỗi & gợi ý sửa đổi (chọn dòng để sửa hoặc bấm 'Sửa Hết Tất Cả'):";
                 if (lvFindings.Items.Count > 0 && lvFindings.SelectedIndices.Count == 0)
                 {
                     lvFindings.Items[0].Selected = true;
@@ -3925,7 +3994,9 @@ namespace VBTMProSuite
 
                     if (errMsg != null)
                     {
-                        lblAiStatus.Text = "⚠ AI trực tuyến lỗi: " + errMsg;
+                        lblAiStatus.Text = "⚠ AI lỗi: " + (errMsg.Length > 70 ? errMsg.Substring(0, 70) + "..." : errMsg);
+                        if (string.IsNullOrWhiteSpace(txtContext.Text))
+                            txtContext.Text = "Chi tiết lỗi AI trực tuyến: " + errMsg;
                     }
                     else
                     {
