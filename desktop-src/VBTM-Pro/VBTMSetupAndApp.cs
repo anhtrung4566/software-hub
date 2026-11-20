@@ -2179,6 +2179,30 @@ namespace VBTMProSuite
             int provIdx = cboProvider.SelectedIndex;
             string modelStr = txtModel.Text.Trim();
             string keyStr = txtApiKey.Text.Trim();
+
+            // Tự động nhận diện đúng nhà cung cấp AI theo tiền tố API Key (tránh chọn nhầm ChatGPT khi đang dán Key Gemini AIza...)
+            if (keyStr.StartsWith("AIza", StringComparison.Ordinal))
+            {
+                provIdx = 0;
+                if (string.IsNullOrWhiteSpace(modelStr) || !modelStr.StartsWith("gemini", StringComparison.OrdinalIgnoreCase)) modelStr = "gemini-3.8-flash";
+                cboProvider.SelectedIndex = 0;
+                txtModel.Text = modelStr;
+            }
+            else if (keyStr.StartsWith("sk-ant-", StringComparison.Ordinal))
+            {
+                provIdx = 2;
+                if (string.IsNullOrWhiteSpace(modelStr) || !modelStr.StartsWith("claude", StringComparison.OrdinalIgnoreCase)) modelStr = "claude-3-5-sonnet-latest";
+                cboProvider.SelectedIndex = 2;
+                txtModel.Text = modelStr;
+            }
+            else if (keyStr.StartsWith("gsk_", StringComparison.Ordinal))
+            {
+                provIdx = 4;
+                if (string.IsNullOrWhiteSpace(modelStr)) modelStr = "llama-3.3-70b-versatile";
+                cboProvider.SelectedIndex = 4;
+                txtModel.Text = modelStr;
+            }
+
             bool useOnline = (provIdx != 5 && !string.IsNullOrWhiteSpace(keyStr));
 
             if (useOnline)
@@ -2186,12 +2210,20 @@ namespace VBTMProSuite
                 SaveAiConfig(new string[] { provIdx.ToString(), modelStr, keyStr });
             }
 
+            string taskInstr = string.IsNullOrWhiteSpace(instruction) ? "Viết lại hay hơn, gọn hơn, đúng chính tả." : instruction;
+            bool isSpellOnly = taskInstr.IndexOf("chính tả", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                               taskInstr.IndexOf("hay hơn", StringComparison.OrdinalIgnoreCase) < 0 &&
+                               taskInstr.IndexOf("gọn hơn", StringComparison.OrdinalIgnoreCase) < 0;
+
             string sysPrompt = "Bạn là chuyên gia biên tập văn bản Đảng (05-HD/VPTW) và Hành chính Việt Nam (NĐ 30/2020). " +
-                               "Yêu cầu xử lý đoạn văn bản sau: " + (string.IsNullOrWhiteSpace(instruction) ? "Viết lại hay hơn, gọn hơn, đúng chính tả." : instruction) +
-                               " CHỈ TRẢ VỀ ĐÚNG ĐOẠN VĂN BẢN ĐÃ XỬ LÝ, không thêm lời chào, không giải thích, không dùng dấu Markdown (** hay #).";
+                               "Yêu cầu bắt buộc: " + taskInstr +
+                               (isSpellOnly
+                                   ? " Chỉ sửa các lỗi chính tả, dấu câu, giữ sát câu chữ gốc."
+                                   : " PHẢI biên tập, trau chuốt hoặc rút gọn câu chữ rõ rệt theo đúng yêu cầu (KHÔNG chép lại y nguyên văn bản gốc).") +
+                               " CHỈ TRẢ VỀ ĐÚNG ĐOẠN VĂN BẢN ĐÃ XỬ LÝ, tuyệt đối không thêm lời mở đầu, không giải thích, không dùng dấu Markdown (** hay #).";
 
             SetBusy(true, useOnline ? "⏳ AI đang xử lý đoạn bôi đen (chưa thay vào Word)..." : "⏳ Đang xử lý bằng Offline AI VBTM...");
-            txtAiResult.Text = "Đang xử lý...";
+            txtAiResult.Text = "Đang gửi đoạn bôi đen tới AI xử lý...";
             btnApprove.Enabled = false;
             btnReject.Enabled = false;
 
@@ -2199,34 +2231,75 @@ namespace VBTMProSuite
             {
                 string res = "";
                 string note = "";
+                bool hadError = false;
                 if (useOnline)
                 {
                     try
                     {
                         res = CallOnlineAiDirect(provIdx, modelStr, keyStr, sysPrompt, src);
                         res = res.Replace("**", "").Replace("### ", "").Replace("## ", "").Trim();
-                        note = "✓ AI đã xử lý xong! Xem khung xanh bên trên — nếu đồng ý hãy bấm '✅ Đồng Ý — Thay Vào Đoạn Bôi Đen'.";
+                        if (string.Equals(res.Trim(), src.Trim(), StringComparison.Ordinal) && !isSpellOnly)
+                        {
+                            note = "ℹ AI đánh giá đoạn văn đã khá chuẩn. Bạn có thể gõ yêu cầu cụ thể hơn (vd: 'rút gọn còn 2 câu') rồi bấm Xử Lý lại.";
+                        }
+                        else
+                        {
+                            note = "✓ AI đã xử lý xong (" + modelStr + ")! Xem khung xanh bên trên — nếu đồng ý hãy bấm '✅ Đồng Ý — Thay Vào Đoạn Bôi Đen'.";
+                        }
                     }
                     catch (Exception ex)
                     {
-                        res = RunOfflineAiTransform(src, 1);
-                        note = "⚠ AI trực tuyến lỗi (" + ex.Message.Split('\n')[0] + ") — đã dùng Offline AI VBTM. Bấm '⚙ Kết nối AI' để kiểm tra Key.";
+                        hadError = true;
+                        string errShort = (ex.Message ?? "").Replace("\r", " ").Replace("\n", " ");
+                        if (errShort.Length > 260) errShort = errShort.Substring(0, 260) + "...";
+                        res = "⚠ KHÔNG GỌI ĐƯỢC AI TRỰC TUYẾN (" + cboProvider.SelectedItem + "):\r\n" + errShort +
+                              "\r\n\r\n👉 Cách khắc phục nhanh:\r\n" +
+                              "1. Kiểm tra lại đúng loại AI và API Key ở khung '⚙ Kết nối AI' phía trên (Key Google Gemini bắt đầu bằng AIza..., Key ChatGPT bắt đầu bằng sk-...).\r\n" +
+                              "2. Hoặc bấm nút 'Lấy Key' (Google AI Studio miễn phí) rồi bấm 'Lưu Key'.";
+                        note = "⚠ Lỗi kết nối AI — vui lòng kiểm tra lại API Key ở khung '⚙ Kết nối AI' phía trên!";
                     }
                 }
                 else
                 {
-                    res = RunOfflineAiTransform(src, 1);
-                    note = "✓ Đã xử lý (Offline AI VBTM). Để AI viết hay/gọn thông minh hơn nữa, bấm '⚙ Kết nối AI' nhập Gemini/ChatGPT Key.";
+                    res = RunOfflineSmartRewrite(src, taskInstr);
+                    note = "ℹ Đang chạy Offline AI VBTM (chỉ sửa chính tả/rút gọn cơ bản). Để AI viết lại hay & thông minh, bấm '⚙ Kết nối AI' nhập Key Gemini/ChatGPT!";
                 }
 
                 this.BeginInvoke((Action)(() =>
                 {
                     txtAiResult.Text = res.Replace("\r\n", "\n").Replace("\n", "\r\n");
-                    btnApprove.Enabled = !string.IsNullOrWhiteSpace(res);
-                    btnReject.Enabled = true;
+                    btnApprove.Enabled = !hadError && !string.IsNullOrWhiteSpace(res);
+                    btnReject.Enabled = !hadError;
+                    if (hadError)
+                    {
+                        pnlApiConfig.Visible = true;
+                        LayoutControlsBelowConfig((Panel)pnlApiConfig.Parent);
+                    }
                     SetBusy(false, note);
                 }));
             });
+        }
+
+        private string RunOfflineSmartRewrite(string text, string instruction)
+        {
+            string res = RunOfflineAiTransform(text, 1);
+            bool wantShort = instruction.IndexOf("gọn", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             instruction.IndexOf("tóm tắt", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (wantShort)
+            {
+                string[] fillers = new string[] {
+                    "tiến hành thực hiện ", "tổ chức thực hiện việc ", "thực hiện việc ", "tiến hành ",
+                    "nhằm mục đích ", "với mục đích ", "có thể nói rằng ", "một cách nghiêm túc và ",
+                    "một cách kịp thời, ", "trong thời gian tới đây ", "trên cơ sở đó "
+                };
+                foreach (string fl in fillers)
+                {
+                    res = Regex.Replace(res, Regex.Escape(fl), "", RegexOptions.IgnoreCase);
+                }
+                res = Regex.Replace(res, @"\s{2,}", " ").Trim();
+                if (res.Length > 1) res = char.ToUpper(res[0]) + res.Substring(1);
+            }
+            return res;
         }
 
         private void ApplyApprovedResultToWordSelection()
@@ -2303,12 +2376,12 @@ namespace VBTMProSuite
                 var fastPayload = new
                 {
                     contents = new object[] { new { parts = new object[] { new { text = systemPrompt + "\n\n" + userText } } } },
-                    generationConfig = new { temperature = 0.1, thinkingConfig = new { thinkingBudget = 0 } }
+                    generationConfig = new { temperature = 0.55, thinkingConfig = new { thinkingBudget = 0 } }
                 };
                 var plainPayload = new
                 {
                     contents = new object[] { new { parts = new object[] { new { text = systemPrompt + "\n\n" + userText } } } },
-                    generationConfig = new { temperature = 0.1 }
+                    generationConfig = new { temperature = 0.55 }
                 };
                 string resp = null;
                 Exception lastEx = null;
@@ -2451,24 +2524,37 @@ namespace VBTMProSuite
             string[] defs = new string[] { "0", "gemini-3.8-flash", "" };
             try
             {
-                string cfgPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM", "ai_hub_v2.ini");
+                string vbtmDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM");
+                string cfgPath = Path.Combine(vbtmDir, "ai_hub_v2.ini");
                 if (File.Exists(cfgPath))
                 {
                     string[] lines = File.ReadAllLines(cfgPath, Encoding.UTF8);
-                    for (int i = 0; i < Math.Min(lines.Length, defs.Length); i++) defs[i] = lines[i];
+                    for (int i = 0; i < Math.Min(lines.Length, defs.Length); i++) defs[i] = (lines[i] ?? "").Trim();
                 }
-                else
+
+                // Nếu Key hiện tại bị thiếu hoặc quá ngắn (<25 ký tự), tự động khôi phục Key Gemini 39 ký tự từ ai_hub_config.ini (nếu có)
+                if (defs[2].Length < 25)
                 {
-                    // Tự động kế thừa API Key cũ nếu người dùng đã lưu trước đó
-                    string oldCfg = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM", "ai_hub_config.ini");
+                    string oldCfg = Path.Combine(vbtmDir, "ai_hub_config.ini");
                     if (File.Exists(oldCfg))
                     {
                         string[] oldLines = File.ReadAllLines(oldCfg, Encoding.UTF8);
-                        if (oldLines.Length >= 3 && !string.IsNullOrWhiteSpace(oldLines[2]))
+                        if (oldLines.Length >= 3 && !string.IsNullOrWhiteSpace(oldLines[2]) && oldLines[2].Trim().Length >= 25)
                         {
                             defs[2] = oldLines[2].Trim();
+                            if (defs[2].StartsWith("AIza", StringComparison.Ordinal))
+                            {
+                                defs[0] = "0";
+                                defs[1] = "gemini-3.8-flash";
+                            }
                         }
                     }
+                }
+                else if (defs[2].StartsWith("AIza", StringComparison.Ordinal))
+                {
+                    defs[0] = "0";
+                    if (string.IsNullOrWhiteSpace(defs[1]) || !defs[1].StartsWith("gemini", StringComparison.OrdinalIgnoreCase) || defs[1].Equals("gemini-2.5-flash", StringComparison.OrdinalIgnoreCase))
+                        defs[1] = "gemini-3.8-flash";
                 }
             }
             catch { }
