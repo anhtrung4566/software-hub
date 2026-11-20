@@ -81,13 +81,24 @@ namespace VBTMProSuite
                 try { File.Copy(Application.ExecutablePath, exeDst, true); } catch { }
                 // Đồng bộ cả thư mục Programs\VBTM-Pro để mọi nút trên Ribbon Word luôn chạy bản EXE mới nhất
                 string progDir = Path.Combine(localApp, "Programs", "VBTM-Pro");
+                string progExe = Path.Combine(progDir, "VBTM-Pro.exe");
                 try
                 {
                     Directory.CreateDirectory(progDir);
-                    File.Copy(Application.ExecutablePath, Path.Combine(progDir, "VBTM-Pro.exe"), true);
+                    File.Copy(Application.ExecutablePath, progExe, true);
                 }
                 catch { }
-                WordAddinInstaller.InstallWordRibbonAddin(instDir, File.Exists(exeDst) ? exeDst : Application.ExecutablePath);
+                WordAddinInstaller.InstallWordRibbonAddin(instDir, File.Exists(progExe) ? progExe : (File.Exists(exeDst) ? exeDst : Application.ExecutablePath));
+                // Cập nhật luôn Icon Logo mới cho lối tắt Desktop & Start Menu
+                try
+                {
+                    string targetIconExe = File.Exists(progExe) ? progExe : exeDst;
+                    string desktopLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro 2.5.0.lnk");
+                    string startMenuLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro 2.5.0.lnk");
+                    SetupWizardForm.CreateShortcutStatic(desktopLnk, targetIconExe, "--app", "VBTM Pro 2.5.0 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
+                    SetupWizardForm.CreateShortcutStatic(startMenuLnk, targetIconExe, "--app", "VBTM Pro 2.5.0 - Chuan Hoa Van Ban Dang Uy & UBND Phuong");
+                }
+                catch { }
                 return;
             }
             if (unitSettingsMode)
@@ -196,6 +207,7 @@ namespace VBTMProSuite
             this.BackColor = Color.FromArgb(95, 10, 14);
             this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5f);
+            try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
             BuildUI();
         }
@@ -314,13 +326,13 @@ namespace VBTMProSuite
 
             btnInstall = new Button
             {
-                Text = "★ Cài Đặt Ngay",
-                Location = new Point(434, 384),
-                Size = new Size(170, 38),
+                Text = "★ Cài Đặt & Tích Hợp Word",
+                Location = new Point(394, 384),
+                Size = new Size(210, 38),
                 BackColor = Color.FromArgb(234, 179, 8),
                 ForeColor = Color.FromArgb(69, 10, 10),
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                Font = new Font("Segoe UI", 9.8f, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
             btnInstall.FlatAppearance.BorderSize = 0;
@@ -329,9 +341,9 @@ namespace VBTMProSuite
 
             btnPortable = new Button
             {
-                Text = "Chạy Ngay (Không Cần Cài)",
-                Location = new Point(236, 384),
-                Size = new Size(188, 38),
+                Text = "Mở Phần Mềm Ngay",
+                Location = new Point(208, 384),
+                Size = new Size(176, 38),
                 BackColor = Color.FromArgb(185, 28, 28),
                 ForeColor = Color.FromArgb(254, 240, 138),
                 FlatStyle = FlatStyle.Flat,
@@ -402,20 +414,28 @@ namespace VBTMProSuite
                 btnInstall.Text = "Mở VBTM Pro 2.5.0";
                 btnInstall.BackColor = Color.FromArgb(16, 185, 129);
 
-                MessageBox.Show(
-                    "Đã cài đặt thành công VBTM Pro 2.5.0!\n\n" +
-                    "• Thư mục cài đặt: " + installDir + "\n" +
-                    "• Lối tắt Desktop: VBTM Pro 2.5.0\n" +
+                DialogResult openWord = MessageBox.Show(
+                    "Đã cài đặt & tích hợp trực tiếp VBTM Pro 2.5.0 vào Microsoft Word thành công!\n\n" +
+                    "• Biểu tượng Desktop: VBTM Pro 2.5.0 (đã gắn logo chính thức)\n" +
                     (wordIntegrated
                         ? "• Tích hợp Word: ĐÃ CÀI SẴN Tab Ribbon 'VBTM Pro 2.5 (05-HD & ND30)' trực tiếp trong Microsoft Word!\n\n"
                         : "• Tệp Macro Word: " + Path.Combine(installDir, "VBTM_Word_Addin.bas") + "\n\n") +
-                    "Nhấn OK để mở phần mềm ngay.",
+                    "• Bấm YES để mở Microsoft Word ngay bây giờ.\n" +
+                    "• Bấm NO để mở cửa sổ VBTM Pro 2.5.0.",
                     "Cài Đặt Thành Công - VBTM Pro 2.5.0",
-                    MessageBoxButtons.OK,
+                    MessageBoxButtons.YesNo,
                     MessageBoxIcon.Information
                 );
 
-                LaunchInstalledApp();
+                if (openWord == DialogResult.Yes)
+                {
+                    try { Process.Start("winword.exe"); } catch { }
+                    this.Close();
+                }
+                else
+                {
+                    LaunchInstalledApp();
+                }
             }
             catch (Exception ex)
             {
@@ -457,6 +477,11 @@ namespace VBTMProSuite
 
         private void CreateShortcut(string shortcutPath, string targetPath, string arguments, string description)
         {
+            CreateShortcutStatic(shortcutPath, targetPath, arguments, description);
+        }
+
+        public static void CreateShortcutStatic(string shortcutPath, string targetPath, string arguments, string description)
+        {
             try
             {
                 Type shellType = Type.GetTypeFromProgID("WScript.Shell");
@@ -467,6 +492,7 @@ namespace VBTMProSuite
                 scType.InvokeMember("TargetPath", BindingFlags.SetProperty, null, shortcut, new object[] { targetPath });
                 scType.InvokeMember("Arguments", BindingFlags.SetProperty, null, shortcut, new object[] { arguments });
                 scType.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, shortcut, new object[] { Path.GetDirectoryName(targetPath) });
+                scType.InvokeMember("IconLocation", BindingFlags.SetProperty, null, shortcut, new object[] { targetPath + ",0" });
                 scType.InvokeMember("Description", BindingFlags.SetProperty, null, shortcut, new object[] { description });
                 scType.InvokeMember("Save", BindingFlags.InvokeMethod, null, shortcut, null);
             }
@@ -1741,18 +1767,15 @@ namespace VBTMProSuite
 
     public class AiWordAssistantForm : Form
     {
-        private ComboBox cboProvider, cboTask;
-        private TextBox txtModel, txtApiKey, txtCustomPrompt, txtLog;
-        private Button btnFixWholeDoc, btnFixSelection, btnSaveKey;
-        private ProgressBar prgAi;
+        private ComboBox cboScope, cboPrompt, cboInsertMode;
+        private TextBox txtPastePreview;
         private Label lblStatus;
-        private bool isBusy = false;
 
         public AiWordAssistantForm()
         {
             Rectangle wa = Screen.PrimaryScreen.WorkingArea;
-            int panelW = 390;
-            this.Text = "VBTM AI for Word";
+            int panelW = 400;
+            this.Text = "VBTM — Liên Kết AI Cho Word";
             this.StartPosition = FormStartPosition.Manual;
             this.Location = new Point(wa.Right - panelW, wa.Top);
             this.Size = new Size(panelW, wa.Height);
@@ -1761,19 +1784,18 @@ namespace VBTMProSuite
             this.BackColor = Color.White;
             this.ForeColor = Color.FromArgb(24, 24, 27);
             this.Font = new Font("Segoe UI", 9.2f);
-
-            string[] cfg = LoadAiConfig();
+            try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
             Panel host = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.White };
             this.Controls.Add(host);
 
-            int x = 22;
-            int w = panelW - 60;
-            int y = 20;
+            int x = 20;
+            int w = panelW - 58;
+            int y = 18;
 
             Label lblTitle = new Label
             {
-                Text = "AI Assistant for Word",
+                Text = "Liên Kết AI Cho Word",
                 Location = new Point(x, y),
                 Size = new Size(w, 28),
                 Font = new Font("Segoe UI", 13.5f, FontStyle.Bold),
@@ -1781,369 +1803,278 @@ namespace VBTMProSuite
                 TextAlign = ContentAlignment.MiddleCenter
             };
             host.Controls.Add(lblTitle);
-            y += 30;
+            y += 28;
 
             Label lblSub = new Label
             {
-                Text = "AI tự động đọc, sửa chính tả & nâng cấp trực tiếp\ntừng đoạn trong tài liệu Word đang mở",
+                Text = "Kết nối trực tiếp sang các AI chính chủ (không cần API Key)\nĐể AI thật tự xử lý 100%, xong dán về Word chuẩn NĐ 30",
                 Location = new Point(x, y),
                 Size = new Size(w, 34),
-                Font = new Font("Segoe UI", 8.5f),
-                ForeColor = Color.FromArgb(107, 114, 128),
+                Font = new Font("Segoe UI", 8.4f),
+                ForeColor = Color.FromArgb(100, 116, 139),
                 TextAlign = ContentAlignment.MiddleCenter
             };
             host.Controls.Add(lblSub);
+            y += 42;
+
+            Label lblStep1 = new Label { Text = "1. Nội dung tự chép từ Word khi bấm mở AI:", Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59) };
+            host.Controls.Add(lblStep1);
+            y += 22;
+
+            cboScope = new ComboBox
+            {
+                Location = new Point(x, y),
+                Size = new Size(w, 26),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(248, 250, 252)
+            };
+            cboScope.Items.AddRange(new object[] {
+                "Đoạn đang bôi đen (nếu có) hoặc toàn file Word",
+                "Toàn bộ nội dung văn bản Word đang mở",
+                "Chỉ mở trang AI (không chép nội dung)"
+            });
+            cboScope.SelectedIndex = 0;
+            host.Controls.Add(cboScope);
+            y += 32;
+
+            cboPrompt = new ComboBox
+            {
+                Location = new Point(x, y),
+                Size = new Size(w, 26),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(248, 250, 252)
+            };
+            cboPrompt.Items.AddRange(new object[] {
+                "Sửa toàn bộ lỗi chính tả, dấu câu (giữ nguyên ý)",
+                "Tóm tắt ngắn gọn văn bản (3–5 ý trọng tâm)",
+                "Chuẩn hóa văn phong Đảng (05-HD) / Hành chính (NĐ 30)",
+                "Viết lại mạch lạc, súc tích, chuyên nghiệp hơn",
+                "(Không kèm lệnh — chỉ gửi nguyên văn bản)"
+            });
+            cboPrompt.SelectedIndex = 0;
+            host.Controls.Add(cboPrompt);
+            y += 38;
+
+            Label lblStep2 = new Label { Text = "2. Bấm chọn AI để mở trực tiếp (tự chép sẵn → Ctrl+V):", Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59) };
+            host.Controls.Add(lblStep2);
+            y += 24;
+
+            int halfW = (w - 8) / 2;
+            AddAiLinkButton(host, "ChatGPT (OpenAI)", "https://chatgpt.com/", x, y, halfW, Color.FromArgb(17, 24, 39), Color.White);
+            AddAiLinkButton(host, "Google Gemini", "https://gemini.google.com/app", x + halfW + 8, y, halfW, Color.FromArgb(37, 99, 235), Color.White);
             y += 44;
 
-            // --- CHỌN NHÀ CUNG CẤP AI ---
-            Label lblProv = new Label { Text = "Chọn AI kết nối trực tiếp:", Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold), ForeColor = Color.FromArgb(55, 65, 81) };
-            host.Controls.Add(lblProv);
-            y += 22;
+            AddAiLinkButton(host, "Claude AI", "https://claude.ai/new", x, y, halfW, Color.FromArgb(180, 83, 9), Color.White);
+            AddAiLinkButton(host, "DeepSeek AI", "https://chat.deepseek.com/", x + halfW + 8, y, halfW, Color.FromArgb(67, 56, 202), Color.White);
+            y += 44;
 
-            cboProvider = new ComboBox
-            {
-                Location = new Point(x, y),
-                Size = new Size(w, 28),
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                BackColor = Color.FromArgb(249, 250, 251),
-                ForeColor = Color.FromArgb(17, 24, 39)
-            };
-            cboProvider.Items.AddRange(new object[] {
-                "Google Gemini (gemini-3.8-flash)",
-                "OpenAI ChatGPT (gpt-4o-mini)",
-                "Anthropic Claude (claude-3-5-sonnet)",
-                "DeepSeek AI (deepseek-chat)",
-                "Groq Cloud (Llama 3.3 70B - Siêu tốc)",
-                "Offline AI VBTM (Miễn phí - Không cần Key)"
-            });
-            int provIdx = 0;
-            int.TryParse(cfg[0], out provIdx);
-            if (provIdx < 0 || provIdx >= cboProvider.Items.Count) provIdx = 0;
-            cboProvider.SelectedIndex = provIdx;
-            cboProvider.SelectedIndexChanged += (s, e) => OnProviderChanged();
-            host.Controls.Add(cboProvider);
-            y += 34;
-
-            Label lblKey = new Label { Text = "API Key:", Location = new Point(x, y + 3), AutoSize = true, ForeColor = Color.FromArgb(75, 85, 99), Font = new Font("Segoe UI", 8.5f) };
-            host.Controls.Add(lblKey);
-
-            txtApiKey = new TextBox
-            {
-                Location = new Point(x + 56, y),
-                Size = new Size(w - 118, 25),
-                BackColor = Color.FromArgb(249, 250, 251),
-                ForeColor = Color.Black,
-                BorderStyle = BorderStyle.FixedSingle,
-                UseSystemPasswordChar = true,
-                Text = cfg[2]
-            };
-            host.Controls.Add(txtApiKey);
-
-            btnSaveKey = new Button
-            {
-                Text = "Lưu",
-                Location = new Point(x + w - 56, y - 1),
-                Size = new Size(56, 27),
-                BackColor = Color.FromArgb(243, 244, 246),
-                ForeColor = Color.FromArgb(17, 24, 39),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnSaveKey.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
-            btnSaveKey.Click += (s, e) =>
-            {
-                SaveAiConfig(new string[] { cboProvider.SelectedIndex.ToString(), txtModel.Text.Trim(), txtApiKey.Text.Trim() });
-                lblStatus.Text = "✓ Đã lưu API Key!";
-            };
-            host.Controls.Add(btnSaveKey);
-            y += 30;
-
-            Label lblModel = new Label { Text = "Model:", Location = new Point(x, y + 3), AutoSize = true, ForeColor = Color.FromArgb(75, 85, 99), Font = new Font("Segoe UI", 8.5f) };
-            host.Controls.Add(lblModel);
-
-            txtModel = new TextBox
-            {
-                Location = new Point(x + 56, y),
-                Size = new Size(w - 166, 24),
-                BackColor = Color.FromArgb(249, 250, 251),
-                ForeColor = Color.FromArgb(55, 65, 81),
-                BorderStyle = BorderStyle.FixedSingle,
-                Text = cfg[1]
-            };
-            host.Controls.Add(txtModel);
-
-            LinkLabel lnkGetKey = new LinkLabel
-            {
-                Text = "Lấy API Key ↗",
-                Location = new Point(x + w - 102, y + 3),
-                Size = new Size(102, 20),
-                TextAlign = ContentAlignment.MiddleRight,
-                LinkColor = Color.FromArgb(37, 99, 235),
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold)
-            };
-            lnkGetKey.Click += (s, e) => OpenProviderLoginUrl();
-            host.Controls.Add(lnkGetKey);
-            y += 34;
-
-            // --- CHẾ ĐỘ SỬA TRỰC TIẾP ---
-            Label lblMode = new Label { Text = "Yêu cầu AI tự sửa trực tiếp trên Word:", Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold), ForeColor = Color.FromArgb(55, 65, 81) };
-            host.Controls.Add(lblMode);
-            y += 22;
-
-            cboTask = new ComboBox
-            {
-                Location = new Point(x, y),
-                Size = new Size(w, 28),
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                BackColor = Color.FromArgb(249, 250, 251),
-                ForeColor = Color.FromArgb(17, 24, 39)
-            };
-            cboTask.Items.AddRange(new object[] {
-                "Sửa hết lỗi chính tả, dấu câu (giữ nguyên ý)",
-                "Nâng cấp văn phong chuẩn Đảng ủy (05-HD/VPTW)",
-                "Nâng cấp văn phong Hành chính (NĐ 30/2020)",
-                "Viết lại mạch lạc, súc tích, chuyên nghiệp hơn",
-                "Tóm tắt gọn & rút ý chính cho từng đoạn"
-            });
-            cboTask.SelectedIndex = 0;
-            host.Controls.Add(cboTask);
-            y += 34;
-
-            txtCustomPrompt = new TextBox
-            {
-                Location = new Point(x, y),
-                Size = new Size(w, 50),
-                Multiline = true,
-                BackColor = Color.FromArgb(249, 250, 251),
-                ForeColor = Color.FromArgb(55, 65, 81),
-                BorderStyle = BorderStyle.FixedSingle,
-                Text = ""
-            };
-            host.Controls.Add(txtCustomPrompt);
-            Label lblHint = new Label { Text = "(Tùy chọn) Gõ thêm chỉ dẫn riêng cho AI ở ô trên nếu cần.", Location = new Point(x, y + 52), AutoSize = true, ForeColor = Color.FromArgb(156, 163, 175), Font = new Font("Segoe UI", 7.8f) };
-            host.Controls.Add(lblHint);
-            y += 74;
-
-            // --- 2 NÚT HÀNH ĐỘNG CHÍNH (GIỐNG CHATGPT FOR WORD) ---
-            btnFixWholeDoc = new Button
-            {
-                Text = "✨ AI Tự Sửa Toàn Bộ File Word Đang Mở",
-                Location = new Point(x, y),
-                Size = new Size(w, 42),
-                BackColor = Color.FromArgb(17, 24, 39),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9.8f, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnFixWholeDoc.FlatAppearance.BorderSize = 0;
-            btnFixWholeDoc.Click += (s, e) => StartDirectWordAiEdit(true);
-            host.Controls.Add(btnFixWholeDoc);
-            y += 50;
-
-            btnFixSelection = new Button
-            {
-                Text = "✏️ AI Chỉ Sửa Đoạn Đang Bôi Đen",
-                Location = new Point(x, y),
-                Size = new Size(w, 38),
-                BackColor = Color.FromArgb(243, 244, 246),
-                ForeColor = Color.FromArgb(17, 24, 39),
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnFixSelection.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
-            btnFixSelection.Click += (s, e) => StartDirectWordAiEdit(false);
-            host.Controls.Add(btnFixSelection);
+            AddAiLinkButton(host, "Microsoft Copilot", "https://copilot.microsoft.com/", x, y, halfW, Color.FromArgb(15, 118, 110), Color.White);
+            AddAiLinkButton(host, "Perplexity AI", "https://www.perplexity.ai/", x + halfW + 8, y, halfW, Color.FromArgb(51, 65, 85), Color.White);
             y += 48;
-
-            prgAi = new ProgressBar
-            {
-                Location = new Point(x, y),
-                Size = new Size(w, 10),
-                Style = ProgressBarStyle.Continuous,
-                Minimum = 0,
-                Maximum = 100,
-                Value = 0
-            };
-            host.Controls.Add(prgAi);
-            y += 16;
 
             lblStatus = new Label
             {
-                Text = "Sẵn sàng. Bấm nút đen để AI tự sửa trực tiếp trên Word.",
+                Text = "Bấm 1 AI bất kỳ ở trên → sang trình duyệt nhấn Ctrl+V để AI tự xử lý.",
                 Location = new Point(x, y),
-                Size = new Size(w, 32),
+                Size = new Size(w, 30),
                 ForeColor = Color.FromArgb(37, 99, 235),
-                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold)
+                Font = new Font("Segoe UI", 8.3f, FontStyle.Bold)
             };
             host.Controls.Add(lblStatus);
-            y += 36;
+            y += 34;
 
-            txtLog = new TextBox
+            Label lblStep3 = new Label { Text = "3. Đưa kết quả AI đã xử lý về Word (Xem trước):", Location = new Point(x, y), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold), ForeColor = Color.FromArgb(30, 41, 59) };
+            host.Controls.Add(lblStep3);
+            y += 22;
+
+            Button btnPullClipboard = new Button
+            {
+                Text = "📋 Lấy Kết Quả Vừa Copy Từ AI Vào Ô Xem Trước",
+                Location = new Point(x, y),
+                Size = new Size(w, 32),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnPullClipboard.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            btnPullClipboard.Click += (s, e) =>
+            {
+                try
+                {
+                    if (Clipboard.ContainsText())
+                    {
+                        string t = Clipboard.GetText().Replace("**", "").Replace("### ", "").Replace("## ", "").Trim();
+                        txtPastePreview.Text = t.Replace("\r\n", "\n").Replace("\n", "\r\n");
+                        lblStatus.Text = "✓ Đã lấy kết quả từ AI (" + t.Length + " ký tự). Xem trước rồi bấm nút xanh để đưa vào Word.";
+                    }
+                    else
+                    {
+                        lblStatus.Text = "⚠ Bạn chưa Copy kết quả từ AI (hãy bấm Copy bên ChatGPT/Gemini trước).";
+                    }
+                }
+                catch { }
+            };
+            host.Controls.Add(btnPullClipboard);
+            y += 38;
+
+            txtPastePreview = new TextBox
             {
                 Location = new Point(x, y),
-                Size = new Size(w, 160),
+                Size = new Size(w, 130),
                 Multiline = true,
-                ReadOnly = true,
                 ScrollBars = ScrollBars.Vertical,
-                BackColor = Color.FromArgb(249, 250, 251),
-                ForeColor = Color.FromArgb(55, 65, 81),
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font("Consolas", 8.5f)
+                Font = new Font("Times New Roman", 11.5f),
+                BackColor = Color.FromArgb(250, 250, 252),
+                BorderStyle = BorderStyle.FixedSingle
             };
-            host.Controls.Add(txtLog);
-            y += 168;
+            host.Controls.Add(txtPastePreview);
+            y += 138;
+
+            cboInsertMode = new ComboBox
+            {
+                Location = new Point(x, y),
+                Size = new Size(w, 26),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = Color.FromArgb(248, 250, 252)
+            };
+            cboInsertMode.Items.AddRange(new object[] {
+                "Chèn tại vị trí con trỏ trong Word",
+                "Thay thế đoạn đang bôi đen trong Word",
+                "Chèn vào cuối phần nội dung (trước Nơi nhận)"
+            });
+            cboInsertMode.SelectedIndex = 0;
+            host.Controls.Add(cboInsertMode);
+            y += 32;
+
+            Button btnApplyWord = new Button
+            {
+                Text = "✅ Đưa Kết Quả AI Vào Word (Times New Roman 14pt)",
+                Location = new Point(x, y),
+                Size = new Size(w, 38),
+                BackColor = Color.FromArgb(5, 150, 105),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9.2f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnApplyWord.FlatAppearance.BorderSize = 0;
+            btnApplyWord.Click += (s, e) => InsertAiResultIntoWord();
+            host.Controls.Add(btnApplyWord);
+            y += 46;
 
             LinkLabel lnkStore = new LinkLabel
             {
-                Text = "Cài thêm ChatGPT / Copilot chính chủ trên Office Store ↗",
+                Text = "Mở kho Add-in ChatGPT / Copilot của Microsoft Office ↗",
                 Location = new Point(x, y),
                 Size = new Size(w, 20),
                 TextAlign = ContentAlignment.MiddleCenter,
-                LinkColor = Color.FromArgb(107, 114, 128),
+                LinkColor = Color.FromArgb(100, 116, 139),
                 Font = new Font("Segoe UI", 8f)
             };
             lnkStore.Click += (s, e) => { try { Process.Start("https://appsource.microsoft.com/en-us/marketplace/apps?product=word&search=ChatGPT"); } catch { } };
             host.Controls.Add(lnkStore);
-
-            if (string.IsNullOrWhiteSpace(txtModel.Text)) OnProviderChanged();
         }
 
-        private void OnProviderChanged()
+        private void AddAiLinkButton(Panel parent, string label, string url, int x, int y, int width, Color bg, Color fg)
         {
-            int p = cboProvider.SelectedIndex;
-            if (p == 0) txtModel.Text = "gemini-3.8-flash";
-            else if (p == 1) txtModel.Text = "gpt-4o-mini";
-            else if (p == 2) txtModel.Text = "claude-3-5-sonnet-latest";
-            else if (p == 3) txtModel.Text = "deepseek-chat";
-            else if (p == 4) txtModel.Text = "llama-3.3-70b-versatile";
-            else txtModel.Text = "vbtm-offline-ai";
-        }
-
-        private void OpenProviderLoginUrl()
-        {
-            int p = cboProvider.SelectedIndex;
-            string url = "https://aistudio.google.com/apikey";
-            if (p == 1) url = "https://platform.openai.com/api-keys";
-            else if (p == 2) url = "https://console.anthropic.com/settings/keys";
-            else if (p == 3) url = "https://platform.deepseek.com/api_keys";
-            else if (p == 4) url = "https://console.groq.com/keys";
-            else if (p == 5)
+            Button btn = new Button
             {
-                MessageBox.Show("Offline AI VBTM không cần API Key — bấm nút đen là chạy ngay!", "VBTM AI for Word");
-                return;
+                Text = label + " ↗",
+                Location = new Point(x, y),
+                Size = new Size(width, 36),
+                BackColor = bg,
+                ForeColor = fg,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btn.FlatAppearance.BorderSize = 0;
+            btn.Click += (s, e) => LaunchExternalAiWithWordContext(label, url);
+            parent.Controls.Add(btn);
+        }
+
+        private void LaunchExternalAiWithWordContext(string aiName, string url)
+        {
+            int scope = cboScope.SelectedIndex;
+            bool copied = false;
+            if (scope != 2)
+            {
+                string docText = ReadWordTextForAi(scope == 0);
+                if (!string.IsNullOrWhiteSpace(docText))
+                {
+                    string promptPrefix = "";
+                    int pIdx = cboPrompt.SelectedIndex;
+                    if (pIdx == 0) promptPrefix = "Hãy rà soát và sửa toàn bộ lỗi chính tả, dấu câu cho văn bản sau (giữ nguyên ý gốc, trả về văn bản thuần không dùng Markdown):\r\n\r\n";
+                    else if (pIdx == 1) promptPrefix = "Hãy tóm tắt ngắn gọn văn bản sau thành 3 đến 5 gạch đầu dòng trọng tâm (trả về văn bản thuần không dùng Markdown):\r\n\r\n";
+                    else if (pIdx == 2) promptPrefix = "Hãy chuẩn hóa văn phong Đảng (05-HD/VPTW) và Hành chính Việt Nam (Nghị định 30/2020) cho văn bản sau (trả về văn bản thuần):\r\n\r\n";
+                    else if (pIdx == 3) promptPrefix = "Hãy viết lại văn bản sau mạch lạc, súc tích, chuyên nghiệp hơn theo văn phong cơ quan Nhà nước (trả về văn bản thuần):\r\n\r\n";
+
+                    try
+                    {
+                        Clipboard.SetText(promptPrefix + docText);
+                        copied = true;
+                    }
+                    catch { }
+                }
             }
+
             try { Process.Start(url); } catch { }
+            lblStatus.Text = copied
+                ? "✓ Đã mở " + aiName + " & chép sẵn nội dung Word! Sang cửa sổ AI bấm Ctrl + V rồi Enter."
+                : "✓ Đã mở " + aiName + "! Hãy nhập yêu cầu trực tiếp để AI tự xử lý.";
         }
 
-        private void AppendLog(string msg)
+        private string ReadWordTextForAi(bool preferSelection)
         {
-            if (this.InvokeRequired) { this.BeginInvoke((Action)(() => AppendLog(msg))); return; }
-            txtLog.AppendText("[" + DateTime.Now.ToString("HH:mm:ss") + "] " + msg + "\r\n");
-        }
-
-        private void SetUiState(bool busy, string status, int progress = -1)
-        {
-            if (this.InvokeRequired) { this.BeginInvoke((Action)(() => SetUiState(busy, status, progress))); return; }
-            isBusy = busy;
-            btnFixWholeDoc.Enabled = !busy;
-            btnFixSelection.Enabled = !busy;
-            if (status != null) lblStatus.Text = status;
-            if (progress >= 0 && progress <= 100) prgAi.Value = progress;
-        }
-
-        private void StartDirectWordAiEdit(bool wholeDocument)
-        {
-            if (isBusy) return;
-            int provIdx = cboProvider.SelectedIndex;
-            string modelStr = txtModel.Text.Trim();
-            string keyStr = txtApiKey.Text.Trim();
-            int taskIdx = cboTask.SelectedIndex;
-            string taskDesc = cboTask.SelectedItem != null ? cboTask.SelectedItem.ToString() : "Sửa lỗi chính tả";
-            string extraInstr = txtCustomPrompt.Text.Trim();
-
-            if (provIdx != 5 && string.IsNullOrWhiteSpace(keyStr))
+            try
             {
-                DialogResult dr = MessageBox.Show(
-                    "Chưa có API Key cho " + cboProvider.SelectedItem.ToString() + ".\n\n" +
-                    "• Bấm YES để mở trang lấy API Key.\n" +
-                    "• Bấm NO để AI Offline VBTM tự sửa trực tiếp trên Word ngay lập tức (miễn phí 100%).",
-                    "VBTM AI for Word", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (dr == DialogResult.Yes) { OpenProviderLoginUrl(); return; }
-                provIdx = 5;
-                cboProvider.SelectedIndex = 5;
-            }
-
-            SaveAiConfig(new string[] { provIdx.ToString(), modelStr, keyStr });
-            txtLog.Clear();
-
-            string sysPrompt = "Bạn là chuyên gia biên tập văn bản Đảng (05-HD/VPTW) và Hành chính Việt Nam (NĐ 30/2020). " +
-                               "Nhiệm vụ: " + taskDesc + (string.IsNullOrEmpty(extraInstr) ? "" : (". Yêu cầu thêm: " + extraInstr)) +
-                               ". CHỈ TRẢ VỀ ĐÚNG ĐOẠN VĂN BẢN ĐÃ SỬA, tuyệt đối không thêm lời mở đầu, không giải thích, không markdown (** hoặc #).";
-
-            if (!wholeDocument)
-            {
-                // Chế độ 1: Sửa trực tiếp đoạn đang bôi đen trong Word
-                string selText = "";
-                try
-                {
-                    object wordApp = Marshal.GetActiveObject("Word.Application");
-                    object sel = wordApp.GetType().InvokeMember("Selection", BindingFlags.GetProperty, null, wordApp, null);
-                    selText = (Convert.ToString(sel.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, sel, null)) ?? "").Trim('\r', '\a', '\n');
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Hãy mở Microsoft Word và bôi đen đoạn cần sửa!\n(" + ex.Message + ")", "VBTM AI for Word");
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(selText) || selText.Length < 3)
-                {
-                    MessageBox.Show("Bạn chưa bôi đen đoạn văn bản nào trong Word! Hãy bôi đen 1 đoạn hoặc bấm nút '✨ AI Tự Sửa Toàn Bộ File Word Đang Mở'.", "VBTM AI for Word");
-                    return;
-                }
-
-                SetUiState(true, "⏳ Đang gửi đoạn bôi đen tới AI...", 30);
-                AppendLog("Đang gửi đoạn chọn (" + selText.Length + " ký tự) tới " + cboProvider.SelectedItem.ToString() + "...");
-
-                System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                if (preferSelection)
                 {
                     try
                     {
-                        string fixedSeg = CallAiProviderFast(provIdx, modelStr, keyStr, taskIdx, sysPrompt, selText);
-                        this.BeginInvoke((Action)(() =>
-                        {
-                            try
-                            {
-                                object wordApp = Marshal.GetActiveObject("Word.Application");
-                                object sel = wordApp.GetType().InvokeMember("Selection", BindingFlags.GetProperty, null, wordApp, null);
-                                sel.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, sel, new object[] { fixedSeg });
-                                object fnt = sel.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, sel, null);
-                                fnt.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, fnt, new object[] { "Times New Roman" });
-                                fnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, fnt, new object[] { 14f });
-                                AppendLog("✓ Đã tự động thay thế trực tiếp vào đoạn đang chọn trong Word!");
-                                SetUiState(false, "✓ Hoàn tất! AI đã sửa trực tiếp trong Word.", 100);
-                            }
-                            catch (Exception exW)
-                            {
-                                AppendLog("⚠ Lỗi ghi vào Word: " + exW.Message);
-                                SetUiState(false, "⚠ Không ghi được vào Word.", 0);
-                            }
-                        }));
+                        object sel = wordApp.GetType().InvokeMember("Selection", BindingFlags.GetProperty, null, wordApp, null);
+                        string st = (Convert.ToString(sel.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, sel, null)) ?? "").Trim('\r', '\a', '\n', ' ');
+                        if (st.Length >= 8) return st;
                     }
-                    catch (Exception ex)
-                    {
-                        AppendLog("⚠ Lỗi AI: " + ex.Message);
-                        SetUiState(false, "⚠ Lỗi gọi AI (xem chi tiết bên dưới).", 0);
-                    }
-                });
+                    catch { }
+                }
+                object doc = null;
+                try { doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null); }
+                catch
+                {
+                    object docs = wordApp.GetType().InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
+                    int dc = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
+                    if (dc > 0) doc = docs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, docs, new object[] { 1 });
+                }
+                if (doc != null)
+                {
+                    object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                    string all = (Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "").Trim();
+                    if (!string.IsNullOrWhiteSpace(all)) return all.Replace("\r", "\r\n");
+                }
+            }
+            catch { }
+
+            try
+            {
+                string snap = Path.Combine(Path.GetTempPath(), "vbtm_word_snapshot.txt");
+                if (File.Exists(snap)) return File.ReadAllText(snap, Encoding.Unicode).Replace("\r", "\r\n").Trim();
+            }
+            catch { }
+            return "";
+        }
+
+        private void InsertAiResultIntoWord()
+        {
+            string text = (txtPastePreview.Text ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MessageBox.Show("Ô xem trước đang trống! Hãy bấm '📋 Lấy Kết Quả Vừa Copy Từ AI' trước khi đưa vào Word.", "VBTM Pro 2.5.0");
                 return;
             }
-
-            // Chế độ 2: AI TỰ ĐỘNG DUYỆT & SỬA TRỰC TIẾP TỪNG ĐOẠN THÂN BÀI TRONG TOÀN BỘ FILE WORD (KHÔNG BAO GIỜ TIMEOUT!)
-            List<KeyValuePair<int, string>> targetParas = new List<KeyValuePair<int, string>>();
             try
             {
                 object wordApp = Marshal.GetActiveObject("Word.Application");
@@ -2157,83 +2088,57 @@ namespace VBTMProSuite
                 }
                 if (doc == null) throw new Exception("Chưa có tài liệu Microsoft Word đang mở.");
 
-                object paras = doc.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, doc, null);
-                int pCount = (int)paras.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, paras, null);
-                for (int i = 1; i <= pCount; i++)
+                object rng = null;
+                int mode = cboInsertMode.SelectedIndex;
+                if (mode == 0 || mode == 1)
                 {
-                    object p = paras.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paras, new object[] { i });
-                    object r = p.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, p, null);
-                    object tbls = r.GetType().InvokeMember("Tables", BindingFlags.GetProperty, null, r, null);
-                    if ((int)tbls.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, tbls, null) > 0) continue;
-                    string txt = (Convert.ToString(r.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, r, null)) ?? "").TrimEnd('\r', '\a', '\n').Trim();
-                    if (txt.Length < 12) continue;
-                    if (txt.StartsWith("---") || txt.StartsWith("───")) continue;
-                    targetParas.Add(new KeyValuePair<int, string>(i, txt));
+                    object sel = wordApp.GetType().InvokeMember("Selection", BindingFlags.GetProperty, null, wordApp, null);
+                    rng = sel.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, sel, null);
+                    if (mode == 0) rng.GetType().InvokeMember("Collapse", BindingFlags.InvokeMethod, null, rng, new object[] { 0 });
                 }
+                else
+                {
+                    object paras = doc.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, doc, null);
+                    int pCount = (int)paras.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, paras, null);
+                    int targetIdx = -1;
+                    for (int i = 1; i <= pCount; i++)
+                    {
+                        object p = paras.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paras, new object[] { i });
+                        object r = p.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, p, null);
+                        string t = (Convert.ToString(r.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, r, null)) ?? "").TrimEnd('\r', '\a', '\n').Trim();
+                        if (t.StartsWith("Nơi nhận", StringComparison.OrdinalIgnoreCase) || t.StartsWith("TM.", StringComparison.OrdinalIgnoreCase)) { targetIdx = i; break; }
+                    }
+                    if (targetIdx > 0)
+                    {
+                        object tp = paras.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paras, new object[] { targetIdx });
+                        rng = tp.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, tp, null);
+                        rng.GetType().InvokeMember("Collapse", BindingFlags.InvokeMethod, null, rng, new object[] { 1 });
+                    }
+                    else
+                    {
+                        object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                        int endPos = (int)content.GetType().InvokeMember("End", BindingFlags.GetProperty, null, content, null);
+                        rng = doc.GetType().InvokeMember("Range", BindingFlags.InvokeMethod, null, doc, new object[] { Math.Max(0, endPos - 1), Math.Max(0, endPos - 1) });
+                    }
+                }
+
+                string clean = text.Replace("\r\n", "\r").Replace("\n", "\r") + "\r";
+                rng.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, rng, new object[] { clean });
+                object fnt = rng.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, rng, null);
+                fnt.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, fnt, new object[] { "Times New Roman" });
+                fnt.GetType().InvokeMember("Size", BindingFlags.SetProperty, null, fnt, new object[] { 14f });
+                fnt.GetType().InvokeMember("Scaling", BindingFlags.SetProperty, null, fnt, new object[] { 100 });
+                object pf = rng.GetType().InvokeMember("ParagraphFormat", BindingFlags.GetProperty, null, rng, null);
+                pf.GetType().InvokeMember("Alignment", BindingFlags.SetProperty, null, pf, new object[] { 3 });
+                pf.GetType().InvokeMember("FirstLineIndent", BindingFlags.SetProperty, null, pf, new object[] { 36f });
+
+                lblStatus.Text = "✓ Đã đưa kết quả từ AI trực tiếp vào Word chuẩn Times New Roman 14pt!";
+                MessageBox.Show("✓ Đã đưa kết quả AI vào nội dung Microsoft Word!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Không đọc được tài liệu Microsoft Word đang mở!\n(" + ex.Message + ")", "VBTM AI for Word");
-                return;
+                MessageBox.Show("Không ghi được vào Microsoft Word: " + ex.Message, "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-
-            if (targetParas.Count == 0)
-            {
-                MessageBox.Show("Tài liệu Word chưa có đoạn nội dung thân bài nào đủ dài để AI sửa!", "VBTM AI for Word");
-                return;
-            }
-
-            SetUiState(true, "⏳ Đang dùng AI sửa trực tiếp " + targetParas.Count + " đoạn trong Word...", 5);
-            AppendLog("Tìm thấy " + targetParas.Count + " đoạn thân bài (giữ nguyên 100% Bảng Tiêu ngữ & Chữ ký).");
-
-            System.Threading.ThreadPool.QueueUserWorkItem(_ =>
-            {
-                int updatedCount = 0;
-                int total = targetParas.Count;
-                for (int idx = 0; idx < total; idx++)
-                {
-                    int paraIndex = targetParas[idx].Key;
-                    string origText = targetParas[idx].Value;
-                    int pct = Math.Min(98, Math.Max(5, (int)((idx + 1) * 100.0 / total)));
-                    SetUiState(true, "⏳ AI đang sửa đoạn " + (idx + 1) + "/" + total + "...", pct);
-
-                    try
-                    {
-                        string fixedText = CallAiProviderFast(provIdx, modelStr, keyStr, taskIdx, sysPrompt, origText);
-                        fixedText = fixedText.Replace("\r\n", " ").Replace("\n", " ").Trim();
-                        if (!string.IsNullOrWhiteSpace(fixedText) && !string.Equals(fixedText, origText, StringComparison.Ordinal))
-                        {
-                            this.Invoke((Action)(() =>
-                            {
-                                try
-                                {
-                                    object wordApp = Marshal.GetActiveObject("Word.Application");
-                                    object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
-                                    object paras = doc.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, doc, null);
-                                    object p = paras.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paras, new object[] { paraIndex });
-                                    object r = p.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, p, null);
-                                    int endPos = (int)r.GetType().InvokeMember("End", BindingFlags.GetProperty, null, r, null);
-                                    r.GetType().InvokeMember("End", BindingFlags.SetProperty, null, r, new object[] { endPos - 1 });
-                                    r.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, r, new object[] { fixedText });
-                                    updatedCount++;
-                                }
-                                catch { }
-                            }));
-                            AppendLog("✓ Đoạn " + (idx + 1) + ": Đã tự động sửa trực tiếp trong Word.");
-                        }
-                        else
-                        {
-                            AppendLog("• Đoạn " + (idx + 1) + ": Đã chuẩn.");
-                        }
-                    }
-                    catch (Exception exSeg)
-                    {
-                        AppendLog("⚠ Đoạn " + (idx + 1) + " lỗi AI: " + exSeg.Message);
-                        break;
-                    }
-                }
-                SetUiState(false, "✓ Hoàn tất! AI đã tự sửa trực tiếp " + updatedCount + "/" + total + " đoạn trong Word.", 100);
-            });
         }
 
         private string CallAiProviderFast(int prov, string model, string apiKey, int taskIdx, string systemPrompt, string userText)
@@ -2466,6 +2371,7 @@ namespace VBTMProSuite
             this.BackColor = Color.White;
             this.ForeColor = Color.FromArgb(24, 24, 27);
             this.Font = new Font("Segoe UI", 9.2f);
+            try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
             int x = 20;
             int w = 684;
@@ -2535,9 +2441,9 @@ namespace VBTMProSuite
 
             btnConfigAi = new Button
             {
-                Text = "⚙ Cấu Hình AI / API Key",
+                Text = "🔗 Liên Kết AI Ngoài (ChatGPT / Gemini)",
                 Location = new Point(x + 225, y),
-                Size = new Size(175, 32),
+                Size = new Size(235, 32),
                 BackColor = Color.FromArgb(241, 245, 249),
                 ForeColor = Color.FromArgb(15, 23, 42),
                 FlatStyle = FlatStyle.Flat,
@@ -2554,8 +2460,8 @@ namespace VBTMProSuite
 
             prgWait = new ProgressBar
             {
-                Location = new Point(x + 412, y + 6),
-                Size = new Size(272, 20),
+                Location = new Point(x + 472, y + 6),
+                Size = new Size(212, 20),
                 Style = ProgressBarStyle.Marquee,
                 Visible = false
             };
@@ -3058,6 +2964,7 @@ namespace VBTMProSuite
             this.BackColor = Color.FromArgb(95, 10, 14);
             this.ForeColor = Color.White;
             this.Font = new Font("Segoe UI", 9.5f);
+            try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
             lblSummary = new Label
             {
