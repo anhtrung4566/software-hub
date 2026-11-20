@@ -1768,16 +1768,13 @@ namespace VBTMProSuite
     public class AiWordAssistantForm : Form
     {
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
 
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
@@ -1795,13 +1792,17 @@ namespace VBTMProSuite
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
+        private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        private const uint SWP_NOACTIVATE = 0x0010;
+        private const uint SWP_FRAMECHANGED = 0x0020;
+        private const uint SWP_SHOWWINDOW = 0x0040;
         private const int GWL_STYLE = -16;
         private const int WS_CAPTION = 0x00C00000;
         private const int WS_THICKFRAME = 0x00040000;
         private const int WS_MINIMIZEBOX = 0x00020000;
         private const int WS_MAXIMIZEBOX = 0x00010000;
         private const int WS_SYSMENU = 0x00080000;
-        private const int WS_CHILD = 0x40000000;
+        private const int WS_POPUP = unchecked((int)0x80000000);
         private const int WS_VISIBLE = 0x10000000;
         private const uint WM_CLOSE = 0x0010;
 
@@ -1896,7 +1897,7 @@ namespace VBTMProSuite
             AddSendChip(pnlBottom, "✨ Hay hơn", "Hãy viết lại đoạn văn bản sau hay hơn, mạch lạc, trang trọng hơn (chỉ trả về văn bản thuần, không dùng Markdown):\r\n\r\n", x, y, chipW);
             AddSendChip(pnlBottom, "✂️ Gọn hơn", "Hãy rút gọn đoạn văn bản sau ngắn gọn, súc tích hơn nhưng giữ đủ ý chính (chỉ trả về văn bản thuần):\r\n\r\n", x + (chipW + 4), y, chipW);
             AddSendChip(pnlBottom, "✅ Chính tả", "Hãy sửa hết lỗi chính tả, dấu câu cho đoạn văn bản sau và giữ nguyên ý gốc (chỉ trả về văn bản thuần):\r\n\r\n", x + (chipW + 4) * 2, y, chipW);
-            AddSendChip(pnlBottom, "🏛️ Đảng/HC", "Hãy chuẩn hóa đoạn văn bản sau theo văn phong chuẩn Đảng (05-HD/VPTW) và Hành chính (NĐ 30/2020), chỉ trả về văn bản thuần:\r\n\r\n", x + (chipW + 4) * 3, y, chipW);
+            AddSendChip(pnlBottom, "🏛️ Chuẩn", "Hãy chuẩn hóa đoạn văn bản sau theo văn phong chuẩn Đảng (05-HD/VPTW) và Hành chính (NĐ 30/2020), chỉ trả về văn bản thuần:\r\n\r\n", x + (chipW + 4) * 3, y, chipW);
             AddSendChip(pnlBottom, "📝 Tóm tắt", "Hãy tóm tắt đoạn văn bản sau thật ngắn gọn thành 3–5 ý trọng tâm (chỉ trả về văn bản thuần):\r\n\r\n", x + (chipW + 4) * 4, y, chipW);
             y += 30;
 
@@ -2010,6 +2011,8 @@ namespace VBTMProSuite
             };
             pnlBrowserHost.Controls.Add(lblEmbedWait);
             pnlBrowserHost.Resize += (s, e) => ResizeEmbeddedBrowser();
+            this.LocationChanged += (s, e) => ResizeEmbeddedBrowser();
+            this.SizeChanged += (s, e) => ResizeEmbeddedBrowser();
 
             // Add theo đúng thứ tự Dock (Fill trước, Top & Bottom sau)
             this.Controls.Add(pnlBrowserHost);
@@ -2078,9 +2081,12 @@ namespace VBTMProSuite
 
         private void ResizeEmbeddedBrowser()
         {
-            if (embeddedHwnd != IntPtr.Zero && pnlBrowserHost != null)
+            if (embeddedHwnd != IntPtr.Zero && pnlBrowserHost != null && !this.IsDisposed && this.WindowState != FormWindowState.Minimized)
             {
-                MoveWindow(embeddedHwnd, 0, 0, pnlBrowserHost.ClientSize.Width, pnlBrowserHost.ClientSize.Height, true);
+                Point pt = pnlBrowserHost.PointToScreen(Point.Empty);
+                int cw = Math.Max(200, pnlBrowserHost.ClientSize.Width);
+                int ch = Math.Max(200, pnlBrowserHost.ClientSize.Height);
+                SetWindowPos(embeddedHwnd, HWND_TOPMOST, pt.X, pt.Y, cw, ch, SWP_NOACTIVATE | SWP_SHOWWINDOW);
             }
         }
 
@@ -2154,13 +2160,17 @@ namespace VBTMProSuite
                         if (found != IntPtr.Zero)
                         {
                             embeddedHwnd = found;
+                            // Giữ Edge ở chế độ borderless WS_POPUP bám khít tọa độ pnlBrowserHost (KHÔNG SetParent để gõ phím, bấm nút & đăng nhập Google mượt 100%!)
                             int style = GetWindowLong(found, GWL_STYLE);
-                            style = (style & ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU)) | WS_CHILD | WS_VISIBLE;
+                            style = (style & ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU)) | WS_POPUP | WS_VISIBLE;
                             SetWindowLong(found, GWL_STYLE, style);
-                            SetParent(found, pnlBrowserHost.Handle);
-                            MoveWindow(found, 0, 0, pnlBrowserHost.ClientSize.Width, pnlBrowserHost.ClientSize.Height, true);
+                            Point pt = pnlBrowserHost.PointToScreen(Point.Empty);
+                            int cw = Math.Max(200, pnlBrowserHost.ClientSize.Width);
+                            int ch = Math.Max(200, pnlBrowserHost.ClientSize.Height);
+                            SetWindowPos(found, HWND_TOPMOST, pt.X, pt.Y, cw, ch, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+                            SetForegroundWindow(found);
                             lblEmbedWait.Visible = false;
-                            lblStatus.Text = "✓ Đã nhúng " + AiNames[idx] + " ngay trong khung! Đăng nhập trực tiếp, bôi đen Word rồi bấm nút gửi.";
+                            lblStatus.Text = "✓ Đã nhúng " + AiNames[idx] + " ngay trong khung! Gõ đăng nhập & bấm nút hoàn toàn bình thường.";
                         }
                         else
                         {
