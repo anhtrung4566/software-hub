@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VBTM AI for Word</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #ffffff;
+      color: #18181b;
+      font-size: 13px;
+      line-height: 1.45;
+      padding: 12px 14px 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 10px;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; }
+    .brand img { width: 26px; height: 26px; border-radius: 6px; }
+    .brand-title { font-size: 14px; font-weight: 700; color: #111827; }
+    .brand-sub { font-size: 11px; color: #6b7280; }
+    .btn-gear {
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-gear:hover { background: #f3f4f6; }
+    .cfg-box {
+      display: none;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .cfg-box.open { display: block; }
+    .cfg-row { display: flex; gap: 6px; margin-top: 6px; }
+    select, input[type="text"], input[type="password"], textarea {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: 12.5px;
+      background: #fff;
+      color: #111827;
+    }
+    .sec-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 10px 0 5px;
+    }
+    .btn-mini {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .box-source {
+      font-family: "Times New Roman", Georgia, serif;
+      font-size: 13.5px;
+      background: #f8fafc;
+      color: #334155;
+      min-height: 74px;
+      max-height: 115px;
+      resize: vertical;
+    }
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .chips-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .chip {
+      border: 1px solid #d1d5db;
+      background: #f3f4f6;
+      color: #111827;
+      border-radius: 6px;
+      padding: 6px 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .chip:hover { background: #e5e7eb; }
+    .prompt-row { display: flex; gap: 6px; margin-top: 7px; }
+    .btn-run {
+      flex-shrink: 0;
+      border: none;
+      background: #111827;
+      color: #ffffff;
+      border-radius: 6px;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-run:disabled { opacity: 0.55; cursor: not-allowed; }
+    .box-result {
+      font-family: "Times New Roman", Georgia, serif;
+      font-size: 14px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #0f172a;
+      min-height: 135px;
+      resize: vertical;
+    }
+    .actions { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .btn-approve {
+      width: 100%;
+      border: none;
+      background: #059669;
+      color: #fff;
+      border-radius: 7px;
+      padding: 9px 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-approve:hover:not(:disabled) { background: #047857; }
+    .btn-approve:disabled { opacity: 0.45; cursor: not-allowed; }
+    .actions-sub { display: grid; grid-template-columns: 1fr 84px; gap: 6px; }
+    .btn-sec {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-sec:disabled { opacity: 0.45; cursor: not-allowed; }
+    .status {
+      margin-top: 8px;
+      font-size: 11.5px;
+      color: #2563eb;
+      font-style: italic;
+      min-height: 30px;
+    }
+    .status.err { color: #b91c1c; font-style: normal; font-weight: 600; }
+    .link-sm { font-size: 11px; color: #2563eb; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <img src="../desktop-src/VBTM-Pro/VBTM-Pro-logo.png" alt="VBTM" />
+      <div>
+        <div class="brand-title">VBTM AI for Word</div>
+        <div class="brand-sub">Tích hợp trực tiếp trong Word</div>
+      </div>
+    </div>
+    <button class="btn-gear" id="btnToggleCfg">⚙ Kết nối AI</button>
+  </div>
+
+  <div class="cfg-box" id="cfgBox">
+    <select id="cboProv">
+      <option value="gemini">Google Gemini (gemini-3.8-flash · Miễn phí)</option>
+      <option value="openai">OpenAI ChatGPT (gpt-4o-mini)</option>
+      <option value="groq">Groq Cloud (Llama 3.3 70B · Siêu tốc)</option>
+      <option value="deepseek">DeepSeek AI (deepseek-chat)</option>
+      <option value="offline">Offline AI VBTM (Miễn phí · Không cần Key)</option>
+    </select>
+    <div class="cfg-row">
+      <input type="password" id="txtKey" placeholder="Dán API Key (Gemini AIza... / ChatGPT sk-...)" />
+      <button class="btn-run" id="btnSaveCfg" style="padding:0 10px;">Lưu</button>
+    </div>
+    <div class="cfg-row" style="align-items:center; justify-content:space-between;">
+      <input type="text" id="txtModel" placeholder="Model" style="width:58%;" />
+      <a class="link-sm" id="lnkKey" href="https://aistudio.google.com/apikey" target="_blank">Lấy Key miễn phí ↗</a>
+    </div>
+  </div>
+
+  <div class="sec-label">
+    <span id="lblSel">1. Đoạn đang bôi đen trong Word:</span>
+    <button class="btn-mini" id="btnReadSel">🔄 Đọc lại</button>
+  </div>
+  <textarea id="txtSource" class="box-source" readonly placeholder="Hãy bôi đen bất kỳ đoạn văn bản nào trong Microsoft Word..."></textarea>
+
+  <div class="sec-label">
+    <span>2. Chọn kiểu AI xử lý:</span>
+  </div>
+  <div class="chips">
+    <button class="chip" data-cmd="Viết lại đoạn văn bản này hay hơn, mạch lạc, trang trọng và chuyên nghiệp hơn nhưng giữ đúng ý chính.">✨ Hay hơn</button>
+    <button class="chip" data-cmd="Rút gọn đoạn văn bản này cô đọng, ngắn gọn, súc tích hơn (giảm khoảng 30%) nhưng giữ đủ ý chính.">✂️ Gọn hơn</button>
+    <button class="chip" data-cmd="Sửa toàn bộ lỗi chính tả, dấu câu, lặp từ cho đoạn văn bản này và giữ nguyên câu chữ gốc.">✅ Chính tả</button>
+  </div>
+  <div class="chips-2">
+    <button class="chip" data-cmd="Chỉnh sửa đoạn văn bản này chuẩn văn phong Đảng (05-HD/VPTW) và Hành chính Nhà nước (NĐ 30/2020).">🏛️ Văn phong Đảng / HC</button>
+    <button class="chip" data-cmd="Tóm tắt đoạn văn bản này thật ngắn gọn thành 3 đến 5 gạch đầu dòng trọng tâm.">📝 Tóm tắt ý chính</button>
+  </div>
+
+  <div class="prompt-row">
+    <input type="text" id="txtPrompt" value="Viết lại hay hơn, gọn hơn, chuẩn văn phong cơ quan" />
+    <button class="btn-run" id="btnRun">🚀 Xử Lý</button>
+  </div>
+
+  <div class="sec-label" style="color:#059669;">
+    <span>3. Khung AI đã xử lý (Xem trước &amp; duyệt):</span>
+  </div>
+  <textarea id="txtResult" class="box-result" placeholder="Kết quả AI sẽ hiện tại đây để bạn kiểm tra trước khi đưa vào Word..."></textarea>
+
+  <div class="actions">
+    <button class="btn-approve" id="btnApprove" disabled>✅ Đồng Ý — Thay Vào Đoạn Đang Bôi Đen</button>
+    <div class="actions-sub">
+      <button class="btn-sec" id="btnInsertBelow" disabled>➕ Chèn Xuống Dưới</button>
+      <button class="btn-sec" id="btnReject" disabled>✕ Hủy</button>
+    </div>
+  </div>
+
+  <div class="status" id="lblStatus">Đang kết nối Microsoft Word...</div>
+
+  <script>
+    const els = {
+      cfgBox: document.getElementById("cfgBox"),
+      btnToggleCfg: document.getElementById("btnToggleCfg"),
+      cboProv: document.getElementById("cboProv"),
+      txtKey: document.getElementById("txtKey"),
+      txtModel: document.getElementById("txtModel"),
+      btnSaveCfg: document.getElementById("btnSaveCfg"),
+      lnkKey: document.getElementById("lnkKey"),
+      lblSel: document.getElementById("lblSel"),
+      btnReadSel: document.getElementById("btnReadSel"),
+      txtSource: document.getElementById("txtSource"),
+      txtPrompt: document.getElementById("txtPrompt"),
+      btnRun: document.getElementById("btnRun"),
+      txtResult: document.getElementById("txtResult"),
+      btnApprove: document.getElementById("btnApprove"),
+      btnInsertBelow: document.getElementById("btnInsertBelow"),
+      btnReject: document.getElementById("btnReject"),
+      lblStatus: document.getElementById("lblStatus")
+    };
+
+    const defaultModels = {
+      gemini: "gemini-3.8-flash",
+      openai: "gpt-4o-mini",
+      groq: "llama-3.3-70b-versatile",
+      deepseek: "deepseek-chat",
+      offline: "vbtm-offline"
+    };
+    const keyUrls = {
+      gemini: "https://aistudio.google.com/apikey",
+      openai: "https://platform.openai.com/api-keys",
+      groq: "https://console.groq.com/keys",
+      deepseek: "https://platform.deepseek.com/api_keys",
+      offline: "#"
+    };
+
+    function setStatus(msg, isErr) {
+      els.lblStatus.textContent = msg;
+      els.lblStatus.className = isErr ? "status err" : "status";
+    }
+
+    function updateActionButtons() {
+      const has = els.txtResult.value.trim().length > 0;
+      els.btnApprove.disabled = !has;
+      els.btnInsertBelow.disabled = !has;
+      els.btnReject.disabled = !has;
+    }
+
+    function loadCfg() {
+      const prov = localStorage.getItem("vbtm_ai_prov") || "gemini";
+      const key = localStorage.getItem("vbtm_ai_key") || "";
+      const model = localStorage.getItem("vbtm_ai_model") || defaultModels[prov] || "gemini-3.8-flash";
+      els.cboProv.value = prov;
+      els.txtKey.value = key;
+      els.txtModel.value = model;
+      els.lnkKey.href = keyUrls[prov] || keyUrls.gemini;
+      if (!key && prov !== "offline") els.cfgBox.classList.add("open");
+    }
+
+    function saveCfg() {
+      let prov = els.cboProv.value;
+      const key = els.txtKey.value.trim();
+      let model = els.txtModel.value.trim() || defaultModels[prov];
+      if (key.startsWith("AIza")) { prov = "gemini"; model = model.startsWith("gemini") ? model : "gemini-3.8-flash"; }
+      else if (key.startsWith("gsk_")) { prov = "groq"; model = defaultModels.groq; }
+      els.cboProv.value = prov;
+      els.txtModel.value = model;
+      localStorage.setItem("vbtm_ai_prov", prov);
+      localStorage.setItem("vbtm_ai_key", key);
+      localStorage.setItem("vbtm_ai_model", model);
+      els.cfgBox.classList.remove("open");
+      setStatus("✓ Đã lưu kết nối AI (" + prov.toUpperCase() + "). Bôi đen đoạn văn bản trong Word rồi bấm xử lý!", false);
+    }
+
+    els.cboProv.addEventListener("change", () => {
+      const p = els.cboProv.value;
+      els.txtModel.value = defaultModels[p] || "";
+      els.lnkKey.href = keyUrls[p] || keyUrls.gemini;
+    });
+    els.btnToggleCfg.addEventListener("click", () => els.cfgBox.classList.toggle("open"));
+    els.btnSaveCfg.addEventListener("click", saveCfg);
+    els.txtResult.addEventListener("input", updateActionButtons);
+
+    async function readSelectionFromWord() {
+      if (typeof Word === "undefined") {
+        setStatus("Đang xem trên trình duyệt (mở trong Microsoft Word để kết nối trực tiếp).", false);
+        return "";
+      }
+      try {
+        let text = "";
+        await Word.run(async (context) => {
+          const sel = context.document.getSelection();
+          sel.load("text");
+          await context.sync();
+          text = (sel.text || "").trim();
+        });
+        if (text.length >= 2) {
+          els.txtSource.value = text;
+          els.lblSel.textContent = "1. Đang bôi đen trong Word (" + text.length + " ký tự):";
+        }
+        return text;
+      } catch (e) {
+        return els.txtSource.value.trim();
+      }
+    }
+
+    function offlineRewrite(text, instruction) {
+      let res = text
+        .replace(/\bbổ xung\b/gi, "bổ sung")
+        .replace(/\bsử lý\b/gi, "xử lý")
+        .replace(/\bxử dụng\b/gi, "sử dụng")
+        .replace(/\bchính sác\b/gi, "chính xác")
+        .replace(/\bhổ trợ\b/gi, "hỗ trợ")
+        .replace(/\bchuẫn\b/gi, "chuẩn")
+        .replace(/\bchiển khai\b/gi, "triển khai")
+        .replace(/\blàm gấp\b/gi, "khẩn trương triển khai thực hiện")
+        .replace(/\bbáo lại\b/gi, "báo cáo kết quả về")
+        .replace(/\bmọi người\b/gi, "các đồng chí và cán bộ, công chức")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      if (/gọn|tóm tắt/i.test(instruction)) {
+        const fillers = ["tiến hành thực hiện ", "tổ chức thực hiện việc ", "thực hiện việc ", "tiến hành ", "nhằm mục đích ", "với mục đích ", "một cách nghiêm túc và ", "trên cơ sở đó "];
+        fillers.forEach(f => { res = res.replace(new RegExp(f, "gi"), ""); });
+        res = res.replace(/\s{2,}/g, " ").trim();
+      }
+      return res;
+    }
+
+    async function callAiOnline(prov, model, key, sysPrompt, userText) {
+      if (prov === "gemini") {
+        const tryModels = Array.from(new Set([model || "gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.0-flash", "gemini-2.0-flash"]));
+        let lastErr = null;
+        for (const m of tryModels) {
+          const url = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(m) + ":generateContent?key=" + encodeURIComponent(key);
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: sysPrompt + "\n\n" + userText }] }],
+              generationConfig: { temperature: 0.55, maxOutputTokens: 1024 }
+            })
+          });
+          const data = await resp.json();
+          if (resp.ok && data.candidates && data.candidates[0]) {
+            return data.candidates[0].content.parts[0].text.trim();
+          }
+          lastErr = (data && data.error && data.error.message) ? data.error.message : ("HTTP " + resp.status);
+          if (!/404|NOT_FOUND|no longer available/i.test(lastErr)) throw new Error(lastErr);
+        }
+        throw new Error(lastErr || "Không gọi được Gemini");
+      } else {
+        const url = prov === "groq" ? "https://api.groq.com/openai/v1/chat/completions"
+                  : prov === "deepseek" ? "https://api.deepseek.com/chat/completions"
+                  : "https://api.openai.com/v1/chat/completions";
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+          body: JSON.stringify({
+            model: model || defaultModels[prov],
+            messages: [
+              { role: "system", content: sysPrompt },
+              { role: "user", content: userText }
+            ]
+          })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error((data && data.error && data.error.message) || ("HTTP " + resp.status));
+        return data.choices[0].message.content.trim();
+      }
+    }
+
+    async function runAi(instruction) {
+      const src = (await readSelectionFromWord()) || els.txtSource.value.trim();
+      if (src.length < 3) {
+        setStatus("⚠ Hãy bôi đen 1 đoạn văn bản trong Microsoft Word trước!", true);
+        return;
+      }
+      let prov = els.cboProv.value;
+      const key = els.txtKey.value.trim();
+      let model = els.txtModel.value.trim() || defaultModels[prov];
+      if (key.startsWith("AIza")) prov = "gemini";
+      else if (key.startsWith("gsk_")) prov = "groq";
+
+      const useOnline = (prov !== "offline" && key.length > 0);
+      const isSpell = /chính tả/i.test(instruction) && !/hay hơn|gọn hơn/i.test(instruction);
+      const sysPrompt = "Bạn là chuyên gia biên tập văn bản Đảng (05-HD/VPTW) và Hành chính Việt Nam (NĐ 30/2020). " +
+        "Yêu cầu: " + instruction +
+        (isSpell ? " Chỉ sửa lỗi chính tả, dấu câu, giữ sát câu chữ gốc." : " PHẢI biên tập, trau chuốt hoặc rút gọn rõ rệt theo yêu cầu, không chép lại y nguyên.") +
+        " CHỈ TRẢ VỀ VĂN BẢN THUẦN ĐÃ XỬ LÝ, không lời chào, không giải thích, không Markdown (** hay #).";
+
+      els.btnRun.disabled = true;
+      els.txtResult.value = "⏳ Đang xử lý...";
+      updateActionButtons();
+      const t0 = performance.now();
+      setStatus(useOnline ? "⏳ AI đang xử lý trực tiếp đoạn bôi đen..." : "⏳ Đang xử lý bằng Offline AI VBTM...", false);
+
+      try {
+        let out = "";
+        if (useOnline) {
+          out = await callAiOnline(prov, model, key, sysPrompt, src);
+          out = out.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").trim();
+          const sec = ((performance.now() - t0) / 1000).toFixed(1) + "s";
+          setStatus("✓ Xong trong " + sec + "! Xem trước ở khung xanh — đồng ý thì bấm '✅ Đồng Ý — Thay Vào Đoạn Đang Bôi Đen'.", false);
+        } else {
+          out = offlineRewrite(src, instruction);
+          setStatus("ℹ Đã xử lý (Offline AI VBTM). Nhập API Key Gemini miễn phí 1 lần trong '⚙ Kết nối AI' để AI viết hay hơn nữa!", false);
+        }
+        els.txtResult.value = out;
+      } catch (err) {
+        els.txtResult.value = "";
+        els.cfgBox.classList.add("open");
+        setStatus("⚠ Lỗi AI: " + err.message + " (Kiểm tra lại API Key trong '⚙ Kết nối AI')", true);
+      } finally {
+        els.btnRun.disabled = false;
+        updateActionButtons();
+      }
+    }
+
+    async function applyToWord(mode) {
+      const text = els.txtResult.value.trim();
+      if (!text) return;
+      try {
+        await Word.run(async (context) => {
+          const sel = context.document.getSelection();
+          let target;
+          if (mode === "replace") {
+            target = sel.insertText(text, Word.InsertLocation.replace);
+          } else {
+            target = sel.insertParagraph(text, Word.InsertLocation.after);
+          }
+          target.font.name = "Times New Roman";
+          target.font.size = 14;
+          await context.sync();
+        });
+        els.txtSource.value = text;
+        els.txtResult.value = "";
+        updateActionButtons();
+        setStatus("✓ Đã đưa kết quả AI trực tiếp vào Microsoft Word (Times New Roman 14pt)!", false);
+      } catch (e) {
+        setStatus("⚠ Không ghi được vào Word: " + e.message, true);
+      }
+    }
+
+    document.querySelectorAll(".chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const cmd = btn.getAttribute("data-cmd");
+        els.txtPrompt.value = cmd;
+        runAi(cmd);
+      });
+    });
+    els.btnRun.addEventListener("click", () => runAi(els.txtPrompt.value.trim()));
+    els.btnReadSel.addEventListener("click", readSelectionFromWord);
+    els.btnApprove.addEventListener("click", () => applyToWord("replace"));
+    els.btnInsertBelow.addEventListener("click", () => applyToWord("below"));
+    els.btnReject.addEventListener("click", () => {
+      els.txtResult.value = "";
+      updateActionButtons();
+      setStatus("Đã hủy — văn bản gốc trong Word giữ nguyên 100%.", false);
+    });
+
+    loadCfg();
+    if (typeof Office !== "undefined") {
+      Office.onReady((info) => {
+        if (info.host === Office.HostType.Word) {
+          setStatus("✓ Đã tích hợp trực tiếp vào Microsoft Word! Bôi đen đoạn văn bản để bắt đầu.", false);
+          readSelectionFromWord();
+          try {
+            Office.context.document.addHandlerAsync(Office.EventType.DocumentSelectionChanged, () => {
+              readSelectionFromWord();
+            });
+          } catch (e) {}
+        } else {
+          setStatus("Mở trong Microsoft Word để kết nối trực tiếp với văn bản.", false);
+        }
+      });
+    } else {
+      setStatus("Đang xem bản xem trước web (mở trong Word để chạy trực tiếp).", false);
+    }
+  </script>
+</body>
+</html>
