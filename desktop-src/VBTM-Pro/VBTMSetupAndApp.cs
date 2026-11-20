@@ -1387,8 +1387,8 @@ namespace VBTMProSuite
                     catch { }
                 }
 
-                // 0. Đăng ký luôn Native Word Office.js Task-Pane Add-in (khung AI tích hợp thẳng bên trong Microsoft Word)
-                InstallNativeWordWebAddin();
+                // 0. Dọn sạch Web Add-in AI soạn thảo cũ (nếu có) để Word gọn nhẹ
+                RemoveNativeWordWebAddin();
 
                 // 2. Tạo tệp VBTM_Pro_Addin.dotm bằng Word COM Automation và nạp Macro VBA
                 Type wordType = Type.GetTypeFromProgID("Word.Application");
@@ -1454,8 +1454,7 @@ namespace VBTMProSuite
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
                 "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 2.5 (05-HD &amp; ND30)\">" +
-                "<group id=\"grpVbtmTemplates\" label=\"1. AI &amp; 16 Mẫu Văn Bản\">" +
-                "<button id=\"btnVbtmAiDraft\" label=\"Trợ Lý Đa AI (Gemini / GPT / Claude)\" size=\"large\" imageMso=\"SmartArtInsert\" onAction=\"Ribbon_AISoanThao\" supertip=\"Kết nối trực tiếp Google Gemini, ChatGPT, Claude, DeepSeek, Groq, Ollama hoặc AI Offline để sửa chính tả, viết lại, tóm tắt và soạn thảo trực tiếp trên file Word đang mở.\"/>" +
+                "<group id=\"grpVbtmTemplates\" label=\"1. 16 Mẫu Chuẩn &amp; Đơn Vị\">" +
                 "<menu id=\"mnuVbtm16\" label=\"16 Mẫu Chuẩn (Đảng &amp; UBND)\" size=\"large\" imageMso=\"FileNewBlogPost\">" +
                 "<menuSeparator id=\"sepUbnd\" title=\"I. Khối HĐND &amp; UBND Phường (Nghị định 30/2020/NĐ-CP)\"/>" +
                 "<button id=\"btnTpl0\" label=\"1. Công văn UBND Phường\" tag=\"0\" onAction=\"Ribbon_InsertTpl\"/>" +
@@ -1497,7 +1496,7 @@ namespace VBTMProSuite
                 "<button id=\"btnVbtmMargins\" label=\"Căn Lề A4 (30-15-20-20)\" size=\"normal\" imageMso=\"PageMarginsGallery\" onAction=\"Ribbon_CanLeA4\"/>" +
                 "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang (Từ Tr.2)\" size=\"normal\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\"/>" +
                 "</group>" +
-                "<group id=\"grpVbtmStudio\" label=\"4. AI Nâng Cao &amp; Công Cụ 2026\">" +
+                "<group id=\"grpVbtmStudio\" label=\"4. Công Cụ Văn Bản Nâng Cao\">" +
                 "<button id=\"btnVbtmSummary\" label=\"AI Tóm Tắt Văn Bản\" size=\"normal\" imageMso=\"OutlineShowDetail\" onAction=\"Ribbon_AiTomTatVanBan\" supertip=\"AI đọc nhanh văn bản đang mở và trích xuất các điểm trọng tâm.\"/>" +
                 "<button id=\"btnVbtmConvert\" label=\"Đổi Đảng &lt;-&gt; Hành Chính\" size=\"normal\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\" supertip=\"Chuyển đổi tự động thể thức &amp; thuật ngữ qua lại giữa Khối Đảng (05-HD) và UBND (NĐ 30).\"/>" +
                 "<button id=\"btnVbtmAudit\" label=\"Kiểm Định Thể Thức (%)\" size=\"normal\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\" supertip=\"Chấm điểm tuân thủ thể thức 05-HD/VPTW &amp; NĐ 30/2020/NĐ-CP và chỉ ra lỗi thiếu sót.\"/>" +
@@ -1558,78 +1557,23 @@ namespace VBTMProSuite
             }
         }
 
-        public static void InstallNativeWordWebAddin()
+        public static void RemoveNativeWordWebAddin()
         {
             try
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VBTMPro", "WordWebAddin");
-                Directory.CreateDirectory(dir);
-                string manifestPath = Path.Combine(dir, "manifest.xml");
-                string manifestXml =
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n" +
-                    "<OfficeApp xmlns=\"http://schemas.microsoft.com/office/appforoffice/1.1\" " +
-                    "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                    "xmlns:bt=\"http://schemas.microsoft.com/office/officeappbasictypes/1.0\" " +
-                    "xmlns:ov=\"http://schemas.microsoft.com/office/taskpaneappversionoverrides\" " +
-                    "xsi:type=\"TaskPaneApp\">\r\n" +
-                    "  <Id>7b4e9c21-8f3a-4d12-9a6e-5c1f8e2b40a1</Id>\r\n" +
-                    "  <Version>2.5.0.0</Version>\r\n" +
-                    "  <ProviderName>VBTM Pro</ProviderName>\r\n" +
-                    "  <DefaultLocale>vi-VN</DefaultLocale>\r\n" +
-                    "  <DisplayName DefaultValue=\"VBTM AI\"/>\r\n" +
-                    "  <Description DefaultValue=\"Tro ly AI bien tap va chuan hoa van ban Dang (05-HD/VPTW) va Hanh chinh (ND 30/2020) truc tiep trong Microsoft Word.\"/>\r\n" +
-                    "  <IconUrl DefaultValue=\"https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png\"/>\r\n" +
-                    "  <HighResolutionIconUrl DefaultValue=\"https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png\"/>\r\n" +
-                    "  <SupportUrl DefaultValue=\"https://anhtrung4566.github.io/software-hub/products/vbtm-pro.html\"/>\r\n" +
-                    "  <AppDomains><AppDomain>https://anhtrung4566.github.io</AppDomain></AppDomains>\r\n" +
-                    "  <Hosts><Host Name=\"Document\"/></Hosts>\r\n" +
-                    "  <DefaultSettings><SourceLocation DefaultValue=\"https://anhtrung4566.github.io/software-hub/word-addin/taskpane.html\"/></DefaultSettings>\r\n" +
-                    "  <Permissions>ReadWriteDocument</Permissions>\r\n" +
-                    "  <VersionOverrides xmlns=\"http://schemas.microsoft.com/office/taskpaneappversionoverrides\" xsi:type=\"VersionOverridesV1_0\">\r\n" +
-                    "    <Hosts><Host xsi:type=\"Document\"><DesktopFormFactor>\r\n" +
-                    "      <GetStarted><Title resid=\"GetStarted.Title\"/><Description resid=\"GetStarted.Description\"/><LearnMoreUrl resid=\"GetStarted.LearnMoreUrl\"/></GetStarted>\r\n" +
-                    "      <ExtensionPoint xsi:type=\"PrimaryCommandSurface\"><OfficeTab id=\"TabHome\">\r\n" +
-                    "        <Group id=\"VbtmAiGroup\"><Label resid=\"CommandsGroup.Label\"/>\r\n" +
-                    "          <Icon><bt:Image size=\"16\" resid=\"Icon.16x16\"/><bt:Image size=\"32\" resid=\"Icon.32x32\"/><bt:Image size=\"80\" resid=\"Icon.80x80\"/></Icon>\r\n" +
-                    "          <Control xsi:type=\"Button\" id=\"VbtmAiTaskpaneBtn\"><Label resid=\"TaskpaneButton.Label\"/>\r\n" +
-                    "            <Supertip><Title resid=\"TaskpaneButton.Label\"/><Description resid=\"TaskpaneButton.Tooltip\"/></Supertip>\r\n" +
-                    "            <Icon><bt:Image size=\"16\" resid=\"Icon.16x16\"/><bt:Image size=\"32\" resid=\"Icon.32x32\"/><bt:Image size=\"80\" resid=\"Icon.80x80\"/></Icon>\r\n" +
-                    "            <Action xsi:type=\"ShowTaskpane\"><TaskpaneId>VbtmAiTaskpaneId</TaskpaneId><SourceLocation resid=\"Taskpane.Url\"/></Action>\r\n" +
-                    "          </Control>\r\n" +
-                    "        </Group>\r\n" +
-                    "      </OfficeTab></ExtensionPoint>\r\n" +
-                    "    </DesktopFormFactor></Host></Hosts>\r\n" +
-                    "    <Resources>\r\n" +
-                    "      <bt:Images>\r\n" +
-                    "        <bt:Image id=\"Icon.16x16\" DefaultValue=\"https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png\"/>\r\n" +
-                    "        <bt:Image id=\"Icon.32x32\" DefaultValue=\"https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png\"/>\r\n" +
-                    "        <bt:Image id=\"Icon.80x80\" DefaultValue=\"https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png\"/>\r\n" +
-                    "      </bt:Images>\r\n" +
-                    "      <bt:Urls>\r\n" +
-                    "        <bt:Url id=\"GetStarted.LearnMoreUrl\" DefaultValue=\"https://anhtrung4566.github.io/software-hub/products/vbtm-pro.html\"/>\r\n" +
-                    "        <bt:Url id=\"Taskpane.Url\" DefaultValue=\"https://anhtrung4566.github.io/software-hub/word-addin/taskpane.html\"/>\r\n" +
-                    "      </bt:Urls>\r\n" +
-                    "      <bt:ShortStrings>\r\n" +
-                    "        <bt:String id=\"GetStarted.Title\" DefaultValue=\"VBTM AI cho Microsoft Word\"/>\r\n" +
-                    "        <bt:String id=\"CommandsGroup.Label\" DefaultValue=\"VBTM AI\"/>\r\n" +
-                    "        <bt:String id=\"TaskpaneButton.Label\" DefaultValue=\"VBTM AI\"/>\r\n" +
-                    "      </bt:ShortStrings>\r\n" +
-                    "      <bt:LongStrings>\r\n" +
-                    "        <bt:String id=\"GetStarted.Description\" DefaultValue=\"Boi den doan van ban, xem truoc ban sua AI roi bam Dong Y de thay truc tiep trong Word.\"/>\r\n" +
-                    "        <bt:String id=\"TaskpaneButton.Tooltip\" DefaultValue=\"Mo khung Tro ly AI tich hop truc tiep ben phai Microsoft Word.\"/>\r\n" +
-                    "      </bt:LongStrings>\r\n" +
-                    "    </Resources>\r\n" +
-                    "  </VersionOverrides>\r\n" +
-                    "</OfficeApp>";
-                File.WriteAllText(manifestPath, manifestXml, new UTF8Encoding(false));
-
-                using (RegistryKey devKey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Office\16.0\WEF\Developer"))
+                using (RegistryKey devKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Office\16.0\WEF\Developer", true))
                 {
                     if (devKey != null)
                     {
-                        devKey.SetValue("7b4e9c21-8f3a-4d12-9a6e-5c1f8e2b40a1", manifestPath, RegistryValueKind.String);
+                        devKey.DeleteValue("7b4e9c21-8f3a-4d12-9a6e-5c1f8e2b40a1", false);
                     }
                 }
+            }
+            catch { }
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VBTMPro", "WordWebAddin");
+                if (Directory.Exists(dir)) Directory.Delete(dir, true);
             }
             catch { }
         }
