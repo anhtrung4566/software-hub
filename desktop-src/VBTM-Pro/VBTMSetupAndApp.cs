@@ -2636,7 +2636,7 @@ namespace VBTMProSuite
             return defs;
         }
 
-        private static void SaveAiConfig(string[] vals)
+        public static void SaveAiConfig(string[] vals)
         {
             try
             {
@@ -3484,7 +3484,7 @@ namespace VBTMProSuite
             {
                 Text = "🧠 Quét Sâu Bằng AI (Ngữ Cảnh && Câu Từ)",
                 Location = new Point(x + 233, y),
-                Size = new Size(265, 32),
+                Size = new Size(255, 32),
                 BackColor = Color.FromArgb(37, 99, 235),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
@@ -3495,10 +3495,25 @@ namespace VBTMProSuite
             btnDeepAi.Click += (s, e) => RunDeepAiSpellScanAsync();
             this.Controls.Add(btnDeepAi);
 
+            Button btnKeyCfg = new Button
+            {
+                Text = "⚙ Key AI",
+                Location = new Point(x + 494, y),
+                Size = new Size(76, 32),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnKeyCfg.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            btnKeyCfg.Click += (s, e) => ShowQuickAiKeyDialog();
+            this.Controls.Add(btnKeyCfg);
+
             prgScan = new ProgressBar
             {
-                Location = new Point(x + 508, y + 6),
-                Size = new Size(320, 18),
+                Location = new Point(x + 578, y + 6),
+                Size = new Size(250, 18),
                 Style = ProgressBarStyle.Marquee,
                 Visible = false,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -3507,9 +3522,10 @@ namespace VBTMProSuite
 
             lblAiStatus = new Label
             {
-                Text = "Bấm 'Quét Sâu Bằng AI' để phát hiện thêm lỗi ngữ cảnh & câu chữ lủng củng.",
-                Location = new Point(x + 508, y + 7),
-                Size = new Size(320, 20),
+                Text = "Tự động dùng AI rà soát ngữ cảnh & gợi ý sửa đổi.",
+                UseMnemonic = false,
+                Location = new Point(x + 578, y + 7),
+                Size = new Size(250, 20),
                 Font = new Font("Segoe UI", 8.2f, FontStyle.Italic),
                 ForeColor = Color.FromArgb(71, 85, 105),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -3955,7 +3971,28 @@ namespace VBTMProSuite
                 List<string[]> aiFound = new List<string[]>();
                 try
                 {
-                    string resp = AiWordAssistantForm.CallOnlineAiDirect(provIdx, modelStr, apiKey, sysPrompt, clipped);
+                    string resp = null;
+                    try
+                    {
+                        resp = AiWordAssistantForm.CallOnlineAiDirect(provIdx, modelStr, apiKey, sysPrompt, clipped);
+                    }
+                    catch (Exception exPrimary)
+                    {
+                        // Nếu OpenAI/API trả phí hết tiền (credit_balance_exhausted / billing / 401), tự động chuyển sang Key Google Gemini miễn phí đã lưu trên máy!
+                        string backupGeminiKey = TryFindBackupGeminiKey();
+                        if (provIdx != 0 && !string.IsNullOrEmpty(backupGeminiKey))
+                        {
+                            provIdx = 0;
+                            modelStr = "gemini-3.8-flash";
+                            apiKey = backupGeminiKey;
+                            AiWordAssistantForm.SaveAiConfig(new string[] { "0", modelStr, apiKey });
+                            resp = AiWordAssistantForm.CallOnlineAiDirect(0, modelStr, apiKey, sysPrompt, clipped);
+                        }
+                        else
+                        {
+                            throw exPrimary;
+                        }
+                    }
                     if (!string.IsNullOrWhiteSpace(resp) && resp.IndexOf("KHONG_CO_LOI", StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         string[] lines = resp.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -4014,6 +4051,63 @@ namespace VBTMProSuite
                     UpdateSummaryHeader();
                 }));
             });
+        }
+
+        private static string TryFindBackupGeminiKey()
+        {
+            try
+            {
+                string oldCfg = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VBTM", "ai_hub_config.ini");
+                if (File.Exists(oldCfg))
+                {
+                    foreach (string line in File.ReadAllLines(oldCfg, Encoding.UTF8))
+                    {
+                        string t = (line ?? "").Trim();
+                        if (t.StartsWith("AIza", StringComparison.Ordinal) && t.Length >= 30) return t;
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        private void ShowQuickAiKeyDialog()
+        {
+            string[] cfg = AiWordAssistantForm.LoadAiConfig();
+            Form dlg = new Form
+            {
+                Text = "Cấu Hình API Key Cho Rà Soát Chính Tả AI (Khuyên dùng Google Gemini Miễn Phí)",
+                ClientSize = new Size(490, 175),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                TopMost = true,
+                BackColor = Color.White,
+                Font = new Font("Segoe UI", 9.2f)
+            };
+            Label l1 = new Label { Text = "Dán API Key Google Gemini (miễn phí, bắt đầu bằng AIza...) hoặc Groq/OpenAI:", Location = new Point(16, 14), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold) };
+            TextBox tbKey = new TextBox { Location = new Point(16, 40), Size = new Size(456, 26), Text = cfg[2], BorderStyle = BorderStyle.FixedSingle };
+            LinkLabel lnk = new LinkLabel { Text = "Chưa có Key? Bấm vào đây lấy API Key Google Gemini miễn phí 100% ↗", Location = new Point(16, 74), AutoSize = true, LinkColor = Color.FromArgb(37, 99, 235) };
+            lnk.Click += (s, e) => { try { Process.Start("https://aistudio.google.com/apikey"); } catch { } };
+            Button bSave = new Button { Text = "💾 Lưu & Quét Sâu AI Ngay", Location = new Point(252, 118), Size = new Size(220, 36), BackColor = Color.FromArgb(5, 150, 105), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9.2f, FontStyle.Bold), Cursor = Cursors.Hand };
+            bSave.FlatAppearance.BorderSize = 0;
+            bSave.Click += (s, e) =>
+            {
+                string k = tbKey.Text.Trim();
+                int p = k.StartsWith("AIza", StringComparison.Ordinal) ? 0 : (k.StartsWith("gsk_", StringComparison.Ordinal) ? 4 : 1);
+                string m = p == 0 ? "gemini-3.8-flash" : (p == 4 ? "llama-3.3-70b-versatile" : "gpt-4o-mini");
+                AiWordAssistantForm.SaveAiConfig(new string[] { p.ToString(), m, k });
+                dlg.DialogResult = DialogResult.OK;
+                dlg.Close();
+            };
+            Button bCancel = new Button { Text = "Đóng", Location = new Point(156, 118), Size = new Size(88, 36), BackColor = Color.FromArgb(241, 245, 249), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            bCancel.Click += (s, e) => dlg.Close();
+            dlg.Controls.AddRange(new Control[] { l1, tbKey, lnk, bSave, bCancel });
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                RunDeepAiSpellScanAsync();
+            }
         }
 
         private void LocateSelectedInWord()
