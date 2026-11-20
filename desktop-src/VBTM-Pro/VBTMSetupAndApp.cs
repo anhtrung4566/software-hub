@@ -3170,102 +3170,428 @@ namespace VBTMProSuite
 
     public class WordSpellInspectorForm : Form
     {
-        private ListBox lstFindings;
-        private Label lblSummary;
-        private List<KeyValuePair<string, string>> foundFixes = new List<KeyValuePair<string, string>>();
+        private class SpellIssue
+        {
+            public string Category;
+            public string Wrong;
+            public string Suggest;
+            public string Reason;
+            public string Context;
+            public bool ExactCase;
+        }
+
+        private ListView lvFindings;
+        private TextBox txtContext, txtEditSuggest;
+        private Label lblSummary, lblAiStatus;
+        private Button btnDeepAi, btnFixOne, btnFixAll, btnLocate, btnIgnore;
+        private ProgressBar prgScan;
+        private List<SpellIssue> issues = new List<SpellIssue>();
+        private HashSet<string> ignoredKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private string currentDocText = "";
+        private bool isAiBusy = false;
 
         private static readonly string[,] InspectorRules = new string[,]
         {
-            { "bổ xung", "bổ sung" }, { "sử lý", "xử lý" }, { "xử dụng", "sử dụng" },
-            { "chính sác", "chính xác" }, { "kiểm xoát", "kiểm soát" }, { "ngiêm", "nghiêm" },
-            { "chuẫn", "chuẩn" }, { "kết qủa", "kết quả" }, { "hổ trợ", "hỗ trợ" },
-            { "kế hoạc", "kế hoạch" }, { "chủ chương", "chủ trương" }, { "khẩn chương", "khẩn trương" },
-            { "chiển khai", "triển khai" }, { "tỏ chức", "tổ chức" }, { "triển khay", "triển khai" },
-            { "cải cách hành chánh", "cải cách hành chính" }, { "chuyển đổi xố", "chuyển đổi số" },
-            { "nghị quyêt", "nghị quyết" }, { "quyết đinh", "quyết định" }, { "báo cao", "báo cáo" },
-            { "đảng uy", "đảng ủy" }, { "chi bô", "chi bộ" }, { "thể thuc", "thể thức" },
-            { "nhiệm vu", "nhiệm vụ" }, { "phát triễn", "phát triển" }, { "giải quyêt", "giải quyết" },
-            { "giám sat", "giám sát" }, { "quán triêt", "quán triệt" }, { "thực hiên", "thực hiện" },
-            { "đồng chi", "đồng chí" }, { "đông chí", "đồng chí" }, { "cán bô", "cán bộ" },
-            { "công chưc", "công chức" }, { "chủ tich", "chủ tịch" }, { "bí thu", "bí thư" },
-            { "lưu trử", "lưu trữ" }, { "hồ xơ", "hồ sơ" }, { "tài liêu", "tài liệu" },
-            { "đề nghi", "đề nghị" }, { "kính gởi", "kính gửi" }, { "xem xet", "xem xét" },
-            { "phê duyêt", "phê duyệt" }, { "hướng dân", "hướng dẫn" }, { "dân chiều", "dẫn chiếu" },
-            { "bỏ sung", "bổ sung" }, { "tiểu bạn", "tiểu ban" }, { "tô chức", "tổ chức" },
-            { "sơ đô", "sơ đồ" }, { "bô trí", "bố trí" }, { "thê thức", "thể thức" }
+            // I. Lỗi phụ âm đầu s/x, ch/tr, r/d/gi, l/n, ng/ngh
+            { "bổ xung", "bổ sung", "Sai phụ âm x/s" },
+            { "sử lý", "xử lý", "Sai phụ âm s/x" },
+            { "xử dụng", "sử dụng", "Sai phụ âm x/s" },
+            { "chính sác", "chính xác", "Sai phụ âm s/x" },
+            { "kiểm xoát", "kiểm soát", "Sai phụ âm x/s" },
+            { "rà xoát", "rà soát", "Sai phụ âm x/s" },
+            { "sâu xát", "sâu sát", "Sai phụ âm x/s" },
+            { "xâu sát", "sâu sát", "Sai phụ âm x/s" },
+            { "xáng suốt", "sáng suốt", "Sai phụ âm x/s" },
+            { "sáng xuốt", "sáng suốt", "Sai phụ âm s/x" },
+            { "xắp xếp", "sắp xếp", "Sai phụ âm x/s" },
+            { "sắp sếp", "sắp xếp", "Sai phụ âm s/x" },
+            { "suất sắc", "xuất sắc", "Sai phụ âm s/x" },
+            { "sản suất", "sản xuất", "Sai phụ âm s/x" },
+            { "năng xuất", "năng suất", "Sai phụ âm x/s" },
+            { "đề suất", "đề xuất", "Sai phụ âm s/x" },
+            { "sơ xuất", "sơ suất", "Sai phụ âm x/s" },
+            { "ngân xách", "ngân sách", "Sai phụ âm x/s" },
+            { "danh xách", "danh sách", "Sai phụ âm x/s" },
+            { "chính xách", "chính sách", "Sai phụ âm x/s" },
+            { "hồ xơ", "hồ sơ", "Sai phụ âm x/s" },
+            { "chuyển đổi xố", "chuyển đổi số", "Sai phụ âm x/s" },
+            { "xát sao", "sát sao", "Sai phụ âm x/s" },
+            { "sát xao", "sát sao", "Sai phụ âm x/s" },
+            { "xây xát", "xây xát", "" },
+            { "chiển khai", "triển khai", "Sai phụ âm ch/tr" },
+            { "triển khay", "triển khai", "Sai vần ay/ai" },
+            { "chủ chương", "chủ trương", "Sai phụ âm ch/tr" },
+            { "khẩn chương", "khẩn trương", "Sai phụ âm ch/tr" },
+            { "quan chọng", "quan trọng", "Sai phụ âm ch/tr" },
+            { "chách nhiệm", "trách nhiệm", "Sai phụ âm ch/tr" },
+            { "trực chách", "trực trách", "Sai phụ âm ch/tr" },
+            { "phát chiển", "phát triển", "Sai phụ âm ch/tr" },
+            { "tập chung", "tập trung", "Sai phụ âm ch/tr" },
+            { "tuyên chuyền", "tuyên truyền", "Sai phụ âm ch/tr" },
+            { "chân thành", "chân thành", "" },
+            { "ngiêm túc", "nghiêm túc", "Sai quy tắc ng/ngh" },
+            { "ngiêm", "nghiêm", "Sai quy tắc ng/ngh" },
+            { "ngành ngề", "ngành nghề", "Sai quy tắc ng/ngh" },
+            { "nghị quyêt", "nghị quyết", "Thiếu dấu sắc" },
+            { "nguyên tắc", "nguyên tắc", "" },
+            { "dân chiều", "dẫn chiếu", "Sai chính tả từ ghép" },
+            { "giám sat", "giám sát", "Thiếu dấu sắc" },
+            { "lưu trử", "lưu trữ", "Sai dấu hỏi/ngã" },
+            { "hổ trợ", "hỗ trợ", "Sai dấu hỏi/ngã" },
+            { "chuẫn hóa", "chuẩn hóa", "Sai dấu hỏi/ngã" },
+            { "chuẫn bị", "chuẩn bị", "Sai dấu hỏi/ngã" },
+            { "tiêu chuẫn", "tiêu chuẩn", "Sai dấu hỏi/ngã" },
+            { "chuẫn", "chuẩn", "Sai dấu hỏi/ngã" },
+            { "giử gìn", "giữ gìn", "Sai dấu hỏi/ngã" },
+            { "vửng chắc", "vững chắc", "Sai dấu hỏi/ngã" },
+            { "chặc chẽ", "chặt chẽ", "Sai âm cuối c/t" },
+            { "chặt chẻ", "chặt chẽ", "Sai dấu hỏi/ngã" },
+            { "chắc chẽ", "chặt chẽ", "Từ chuẩn là 'chặt chẽ'" },
+            { "kỷ thuật", "kỹ thuật", "Sai dấu hỏi/ngã" },
+            { "lỉnh vực", "lĩnh vực", "Sai dấu hỏi/ngã" },
+            { "mẩu mực", "mẫu mực", "Sai dấu hỏi/ngã" },
+            { "hướng dẩn", "hướng dẫn", "Sai dấu hỏi/ngã" },
+            { "hướng dân", "hướng dẫn", "Thiếu dấu ngã" },
+            { "thẩm quyển", "thẩm quyền", "Sai dấu hỏi/huyền" },
+            { "chuyển đỗi", "chuyển đổi", "Sai dấu ngã/hỏi" },
+            { "sẳn sàng", "sẵn sàng", "Sai dấu hỏi/ngã" },
+            { "phát triễn", "phát triển", "Sai dấu ngã/hỏi" },
+            { "kết qủa", "kết quả", "Sai vị trí dấu thanh" },
+            { "hòa bình", "hòa bình", "" },
+            // II. Lỗi dùng từ hành chính & Đảng hay sai
+            { "sát nhập", "sáp nhập", "Thuật ngữ hành chính chuẩn: 'sáp nhập'" },
+            { "xác nhập", "sáp nhập", "Thuật ngữ hành chính chuẩn: 'sáp nhập'" },
+            { "cải cách hành chánh", "cải cách hành chính", "Từ chuẩn NĐ 30: 'hành chính'" },
+            { "hành chánh", "hành chính", "Từ chuẩn NĐ 30: 'hành chính'" },
+            { "kính gởi", "kính gửi", "Từ chuẩn hành chính: 'kính gửi'" },
+            { "chuẩn đoán", "chẩn đoán", "Từ chuẩn tiếng Việt: 'chẩn đoán'" },
+            { "thăm quan", "tham quan", "Từ chuẩn tiếng Việt: 'tham quan'" },
+            { "vô hình chung", "vô hình trung", "Từ chuẩn tiếng Việt: 'vô hình trung'" },
+            { "tựu chung", "tựu trung", "Từ chuẩn tiếng Việt: 'tựu trung'" },
+            { "bàng quang", "bàng quan", "Từ chuẩn tiếng Việt: 'bàng quan'" },
+            { "chỉnh chu", "chỉn chu", "Từ chuẩn tiếng Việt: 'chỉn chu'" },
+            { "sáng lạng", "xán lạn", "Từ chuẩn tiếng Việt: 'xán lạn'" },
+            { "xán lạng", "xán lạn", "Từ chuẩn tiếng Việt: 'xán lạn'" },
+            { "dư giả", "dư dả", "Từ chuẩn tiếng Việt: 'dư dả'" },
+            { "trầy trật", "trầy trật", "" },
+            { "nồng cốt", "nòng cốt", "Từ chuẩn tiếng Việt: 'nòng cốt'" },
+            { "câu chuyện", "câu chuyện", "" },
+            { "tiểu bạn", "tiểu ban", "Gõ nhầm dấu nặng ('tiểu ban')" },
+            { "bỏ sung", "bổ sung", "Sai dấu hỏi/ngã ('bổ sung')" },
+            { "cơ quang", "cơ quan", "Dư chữ g cuối ('cơ quan')" },
+            { "kế hoạc", "kế hoạch", "Thiếu chữ h cuối ('kế hoạch')" },
+            { "tỏ chức", "tổ chức", "Sai nguyên âm o/ô ('tổ chức')" },
+            { "tô chức", "tổ chức", "Thiếu dấu hỏi ('tổ chức')" },
+            { "sơ đô", "sơ đồ", "Thiếu dấu huyền ('sơ đồ')" },
+            { "bô trí", "bố trí", "Thiếu dấu sắc ('bố trí')" },
+            { "thê thức", "thể thức", "Thiếu dấu hỏi ('thể thức')" },
+            { "thể thuc", "thể thức", "Thiếu dấu sắc ('thể thức')" },
+            { "quyết đinh", "quyết định", "Thiếu dấu nặng ('quyết định')" },
+            { "báo cao", "báo cáo", "Thiếu dấu sắc ('báo cáo')" },
+            { "đảng uy", "đảng ủy", "Thiếu dấu hỏi ('đảng ủy')" },
+            { "chi bô", "chi bộ", "Thiếu dấu nặng ('chi bộ')" },
+            { "nhiệm vu", "nhiệm vụ", "Thiếu dấu nặng ('nhiệm vụ')" },
+            { "giải quyêt", "giải quyết", "Thiếu dấu sắc ('giải quyết')" },
+            { "quán triêt", "quán triệt", "Thiếu dấu nặng ('quán triệt')" },
+            { "thực hiên", "thực hiện", "Thiếu dấu nặng ('thực hiện')" },
+            { "đồng chi", "đồng chí", "Thiếu dấu sắc ('đồng chí')" },
+            { "đông chí", "đồng chí", "Thiếu dấu huyền ('đồng chí')" },
+            { "cán bô", "cán bộ", "Thiếu dấu nặng ('cán bộ')" },
+            { "công chưc", "công chức", "Thiếu dấu sắc ('công chức')" },
+            { "chủ tich", "chủ tịch", "Thiếu dấu nặng ('chủ tịch')" },
+            { "bí thu", "bí thư", "Thiếu dấu móc ư ('bí thư')" },
+            { "tài liêu", "tài liệu", "Thiếu dấu nặng ('tài liệu')" },
+            { "đề nghi", "đề nghị", "Thiếu dấu nặng ('đề nghị')" },
+            { "xem xet", "xem xét", "Thiếu dấu sắc ('xem xét')" },
+            { "phê duyêt", "phê duyệt", "Thiếu dấu nặng ('phê duyệt')" },
+            { "đưọc", "được", "Sai nguyên âm ưo -> ươ ('được')" },
+            { "ngưòi", "người", "Sai nguyên âm ưo -> ươ ('người')" },
+            { "trưóc", "trước", "Sai nguyên âm ưo -> ươ ('trước')" },
+            { "phưòng", "phường", "Sai nguyên âm ưo -> ươ ('phường')" },
+            { "chưong", "chương", "Sai nguyên âm ưo -> ươ ('chương')" },
+            { "tưỏng", "tưởng", "Sai nguyên âm ưo -> ươ ('tưởng')" },
+            { "lưọng", "lượng", "Sai nguyên âm ưo -> ươ ('lượng')" },
+            { "tăng cưòng", "tăng cường", "Sai nguyên âm ưo -> ươ ('tăng cường')" },
+            { "bảo đão", "bảo đảm", "Sai phụ âm cuối ('bảo đảm')" },
+            { "đảm bảo", "bảo đảm", "Khuyến nghị văn phong NĐ 30: 'bảo đảm'" },
+            { "chất lựơng", "chất lượng", "Sai vị trí dấu ươ ('chất lượng')" },
+            { "nhân dận", "nhân dân", "Dư dấu nặng ('nhân dân')" },
+            { "công tác", "công tác", "" },
+            { "hoàn thánh", "hoàn thành", "Sai dấu sắc/huyền ('hoàn thành')" },
+            { "tiến đọ", "tiến độ", "Sai nguyên âm o/ô ('tiến độ')" },
+            { "văn bãn", "văn bản", "Sai dấu ngã/hỏi ('văn bản')" },
+            { "nghị qyết", "nghị quyết", "Thiếu chữ u ('nghị quyết')" },
+            { "thành phô", "thành phố", "Thiếu dấu sắc ('thành phố')" },
+            { "ủy ban nhân dận", "ủy ban nhân dân", "Dư dấu nặng ('nhân dân')" },
+            { "trách nhiêm", "trách nhiệm", "Thiếu dấu nặng ('trách nhiệm')" },
+            { "kiểm tra", "kiểm tra", "" },
+            { "thanh tra", "thanh tra", "" },
+            { "tổng kêt", "tổng kết", "Thiếu dấu sắc ('tổng kết')" },
+            { "sơ kêt", "sơ kết", "Thiếu dấu sắc ('sơ kết')" },
+            { "phối hơp", "phối hợp", "Thiếu dấu nặng ('phối hợp')" },
+            { "thống nhât", "thống nhất", "Thiếu dấu sắc ('thống nhất')" },
+            { "tổ chưc", "tổ chức", "Thiếu dấu sắc ('tổ chức')" },
+            { "phân công", "phân công", "" },
+            { "kịp thơi", "kịp thời", "Thiếu dấu huyền ('kịp thời')" },
+            { "nghiêm chinh", "nghiêm chỉnh", "Thiếu dấu hỏi ('nghiêm chỉnh')" },
+            { "tích cưc", "tích cực", "Thiếu dấu nặng ('tích cực')" },
+            { "hiệu qua", "hiệu quả", "Thiếu dấu hỏi ('hiệu quả')" },
+            { "chính tri", "chính trị", "Thiếu dấu nặng ('chính trị')" },
+            { "kinh tê", "kinh tế", "Thiếu dấu sắc ('kinh tế')" },
+            { "xã hôi", "xã hội", "Thiếu dấu nặng ('xã hội')" },
+            { "quốc phong", "quốc phòng", "Thiếu dấu huyền ('quốc phòng')" },
+            { "an nình", "an ninh", "Dư dấu huyền ('an ninh')" },
+            { "đảng viên", "đảng viên", "" },
+            { "đại hội", "đại hội", "" },
+            { "ban hành", "ban hành", "" },
+            { "lãnh đao", "lãnh đạo", "Thiếu dấu nặng ('lãnh đạo')" },
+            { "chỉ đao", "chỉ đạo", "Thiếu dấu nặng ('chỉ đạo')" },
+            { "điều hanh", "điều hành", "Thiếu dấu huyền ('điều hành')" }
+        };
+
+        private static readonly string[,] ProperNounRules = new string[,]
+        {
+            { "đảng cộng sản việt nam", "Đảng Cộng sản Việt Nam", "Viết hoa chuẩn 05-HD/VPTW" },
+            { "ban chấp hành trung ương", "Ban Chấp hành Trung ương", "Viết hoa chuẩn 05-HD/VPTW" },
+            { "bộ chính trị", "Bộ Chính trị", "Viết hoa chuẩn 05-HD/VPTW" },
+            { "ban bí thư", "Ban Bí thư", "Viết hoa chuẩn 05-HD/VPTW" },
+            { "ban thường vụ", "Ban Thường vụ", "Viết hoa chuẩn 05-HD/VPTW" },
+            { "ban chấp hành", "Ban Chấp hành", "Viết hoa chuẩn 05-HD/VPTW" },
+            { "ủy ban kiểm tra", "Ủy ban Kiểm tra", "Viết hoa chuẩn 05-HD/VPTW" },
+            { "chính phủ", "Chính phủ", "Viết hoa chuẩn NĐ 30/2020" },
+            { "quốc hội", "Quốc hội", "Viết hoa chuẩn NĐ 30/2020" },
+            { "ủy ban nhân dân", "Ủy ban nhân dân", "Viết hoa chuẩn NĐ 30/2020" },
+            { "hội đồng nhân dân", "Hội đồng nhân dân", "Viết hoa chuẩn NĐ 30/2020" },
+            { "mặt trận tổ quốc", "Mặt trận Tổ quốc", "Viết hoa chuẩn NĐ 30/2020" },
+            { "hồ chí minh", "Hồ Chí Minh", "Viết hoa danh từ riêng" }
         };
 
         public WordSpellInspectorForm()
         {
-            this.Text = "Thẩm Định & Đề Xuất Sửa Lỗi Chính Tả AI Trực Tiếp Trong Word - VBTM Pro 2.5.0";
-            this.ClientSize = new Size(720, 460);
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
+            this.Text = "VBTM Pro 2.5.0 — Rà Soát Chính Tả AI & Gợi Ý Sửa Đổi Trực Tiếp Trong Word";
+            this.ClientSize = new Size(860, 585);
+            this.MinimumSize = new Size(760, 520);
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(95, 10, 14);
-            this.ForeColor = Color.White;
-            this.Font = new Font("Segoe UI", 9.5f);
+            this.TopMost = true;
+            this.BackColor = Color.White;
+            this.ForeColor = Color.FromArgb(24, 24, 27);
+            this.Font = new Font("Segoe UI", 9.2f);
             try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
+            int x = 16;
+            int w = 828;
+
+            // --- HEADER ---
+            Panel pnlHead = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = Color.FromArgb(145, 18, 24) };
+            Label lblTitle = new Label
+            {
+                Text = "★ RÀ SOÁT CHÍNH TẢ AI & GỢI Ý SỬA ĐỔI CHUYÊN SÂU (05-HD/VPTW & NĐ 30)",
+                Location = new Point(16, 8),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(250, 204, 21)
+            };
             lblSummary = new Label
             {
-                Text = "Đang quét từng từ trong tài liệu Microsoft Word đang mở...",
-                Location = new Point(18, 14),
-                AutoSize = true,
-                ForeColor = Color.FromArgb(250, 204, 21),
-                Font = new Font("Segoe UI", 10f, FontStyle.Bold)
+                Text = "Đang quét chuyên sâu toàn bộ tài liệu Microsoft Word đang mở...",
+                Location = new Point(16, 32),
+                Size = new Size(810, 20),
+                Font = new Font("Segoe UI", 8.8f),
+                ForeColor = Color.FromArgb(254, 240, 138)
             };
-            this.Controls.Add(lblSummary);
+            pnlHead.Controls.Add(lblTitle);
+            pnlHead.Controls.Add(lblSummary);
+            this.Controls.Add(pnlHead);
 
-            lstFindings = new ListBox
-            {
-                Location = new Point(18, 46),
-                Size = new Size(684, 336),
-                BackColor = Color.FromArgb(69, 10, 10),
-                ForeColor = Color.FromArgb(254, 240, 138),
-                BorderStyle = BorderStyle.FixedSingle,
-                Font = new Font("Segoe UI", 9.5f)
-            };
-            this.Controls.Add(lstFindings);
-
+            // --- THANH CÔNG CỤ QUÉT ---
+            int y = 66;
             Button btnRescan = new Button
             {
-                Text = "🔍 Quét Lại Word",
-                Location = new Point(18, 400),
-                Size = new Size(145, 42),
-                BackColor = Color.FromArgb(127, 29, 29),
-                ForeColor = Color.White,
+                Text = "🔍 Quét Nhanh (Từ Điển + Âm Tiết)",
+                Location = new Point(x, y),
+                Size = new Size(225, 32),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(15, 23, 42),
                 FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
+            btnRescan.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             btnRescan.Click += (s, e) => ScanOpenWordDocument();
             this.Controls.Add(btnRescan);
 
-            Button btnFixOne = new Button
+            btnDeepAi = new Button
+            {
+                Text = "🧠 Quét Sâu Bằng AI (Ngữ Cảnh & Câu Từ)",
+                Location = new Point(x + 233, y),
+                Size = new Size(265, 32),
+                BackColor = Color.FromArgb(37, 99, 235),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnDeepAi.FlatAppearance.BorderSize = 0;
+            btnDeepAi.Click += (s, e) => RunDeepAiSpellScanAsync();
+            this.Controls.Add(btnDeepAi);
+
+            prgScan = new ProgressBar
+            {
+                Location = new Point(x + 508, y + 6),
+                Size = new Size(320, 18),
+                Style = ProgressBarStyle.Marquee,
+                Visible = false,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            this.Controls.Add(prgScan);
+
+            lblAiStatus = new Label
+            {
+                Text = "Bấm 'Quét Sâu Bằng AI' để phát hiện thêm lỗi ngữ cảnh & câu chữ lủng củng.",
+                Location = new Point(x + 508, y + 7),
+                Size = new Size(320, 20),
+                Font = new Font("Segoe UI", 8.2f, FontStyle.Italic),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            this.Controls.Add(lblAiStatus);
+            y += 40;
+
+            // --- BẢNG DANH SÁCH LỖI & GỢI Ý ---
+            lvFindings = new ListView
+            {
+                Location = new Point(x, y),
+                Size = new Size(w, 265),
+                View = View.Details,
+                FullRowSelect = true,
+                GridLines = true,
+                HideSelection = false,
+                Font = new Font("Segoe UI", 9.1f),
+                BackColor = Color.White,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            lvFindings.Columns.Add("Loại lỗi", 115);
+            lvFindings.Columns.Add("Từ / Cụm từ phát hiện", 215);
+            lvFindings.Columns.Add("➜ Gợi ý sửa đổi", 225);
+            lvFindings.Columns.Add("Lý do / Giải thích", 250);
+            lvFindings.SelectedIndexChanged += (s, e) => OnSelectedIssueChanged();
+            lvFindings.DoubleClick += (s, e) => LocateSelectedInWord();
+            this.Controls.Add(lvFindings);
+            y += 273;
+
+            // --- KHUNG XEM NGỮ CẢNH & CHỈNH SỬA GỢI Ý ---
+            Label lblCtx = new Label
+            {
+                Text = "Ngữ cảnh trong tài liệu Word (nháy đúp vào lỗi để nhảy thẳng tới vị trí trong Word):",
+                Location = new Point(x, y),
+                Size = new Size(w, 18),
+                Font = new Font("Segoe UI", 8.6f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 41, 59),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            this.Controls.Add(lblCtx);
+            y += 20;
+
+            txtContext = new TextBox
+            {
+                Location = new Point(x, y),
+                Size = new Size(w, 56),
+                Multiline = true,
+                ReadOnly = true,
+                ScrollBars = ScrollBars.Vertical,
+                Font = new Font("Times New Roman", 11.5f),
+                BackColor = Color.FromArgb(248, 250, 252),
+                ForeColor = Color.FromArgb(30, 41, 59),
+                BorderStyle = BorderStyle.FixedSingle,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            this.Controls.Add(txtContext);
+            y += 64;
+
+            Label lblEdit = new Label
+            {
+                Text = "Gợi ý sửa đổi (bạn có thể gõ chỉnh lại trước khi bấm Sửa):",
+                Location = new Point(x, y + 4),
+                Size = new Size(345, 20),
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(5, 150, 105),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            this.Controls.Add(lblEdit);
+
+            txtEditSuggest = new TextBox
+            {
+                Location = new Point(x + 350, y),
+                Size = new Size(w - 350, 26),
+                Font = new Font("Times New Roman", 12f, FontStyle.Bold),
+                BackColor = Color.FromArgb(240, 253, 244),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                BorderStyle = BorderStyle.FixedSingle,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            this.Controls.Add(txtEditSuggest);
+            y += 36;
+
+            // --- CÁC NÚT HÀNH ĐỘNG CHÍNH ---
+            btnLocate = new Button
+            {
+                Text = "📍 Định Vị Trong Word",
+                Location = new Point(x, y),
+                Size = new Size(165, 38),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            btnLocate.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            btnLocate.Click += (s, e) => LocateSelectedInWord();
+            this.Controls.Add(btnLocate);
+
+            btnIgnore = new Button
+            {
+                Text = "⏭ Bỏ Qua",
+                Location = new Point(x + 173, y),
+                Size = new Size(105, 38),
+                BackColor = Color.FromArgb(241, 245, 249),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            btnIgnore.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            btnIgnore.Click += (s, e) => IgnoreSelectedIssue();
+            this.Controls.Add(btnIgnore);
+
+            btnFixOne = new Button
             {
                 Text = "✅ Sửa Lỗi Đang Chọn",
-                Location = new Point(174, 400),
-                Size = new Size(185, 42),
-                BackColor = Color.FromArgb(22, 163, 74),
+                Location = new Point(x + 286, y),
+                Size = new Size(215, 38),
+                BackColor = Color.FromArgb(5, 150, 105),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
             btnFixOne.FlatAppearance.BorderSize = 0;
             btnFixOne.Click += (s, e) => FixSelectedItemInWord();
             this.Controls.Add(btnFixOne);
 
-            Button btnFixAll = new Button
+            btnFixAll = new Button
             {
-                Text = "⚡ Tự Động Sửa Hết Tất Cả Lỗi Trong Word",
-                Location = new Point(370, 400),
-                Size = new Size(332, 42),
+                Text = "⚡ Tự Động Sửa Hết Tất Cả Trong Word",
+                Location = new Point(x + 509, y),
+                Size = new Size(319, 38),
                 BackColor = Color.FromArgb(234, 179, 8),
                 ForeColor = Color.FromArgb(69, 10, 10),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
             btnFixAll.FlatAppearance.BorderSize = 0;
             btnFixAll.Click += (s, e) => FixAllFoundErrorsInWord();
@@ -3274,137 +3600,398 @@ namespace VBTMProSuite
             this.Shown += (s, e) => ScanOpenWordDocument();
         }
 
-        private void AddFinding(string wrong, string suggest, string label)
+        private string ExtractContextSnippet(string docText, int matchIndex, int matchLen)
         {
-            foreach (var kv in foundFixes)
+            if (string.IsNullOrEmpty(docText) || matchIndex < 0) return "";
+            int start = Math.Max(0, matchIndex - 65);
+            int end = Math.Min(docText.Length, matchIndex + matchLen + 75);
+            string snip = docText.Substring(start, end - start).Replace("\r", " ").Replace("\n", " ").Replace("\a", " ");
+            snip = Regex.Replace(snip, @"\s{2,}", " ").Trim();
+            return (start > 0 ? "..." : "") + snip + (end < docText.Length ? "..." : "");
+        }
+
+        private void AddIssue(string category, string wrong, string suggest, string reason, string context, bool exactCase)
+        {
+            if (string.IsNullOrEmpty(wrong) || string.Equals(wrong, suggest, StringComparison.Ordinal)) return;
+            if (ignoredKeys.Contains(wrong)) return;
+            foreach (var it in issues)
             {
-                if (string.Equals(kv.Key, wrong, StringComparison.Ordinal)) return;
+                if (string.Equals(it.Wrong, wrong, StringComparison.Ordinal)) return;
             }
-            foundFixes.Add(new KeyValuePair<string, string>(wrong, suggest));
-            lstFindings.Items.Add(label);
+            SpellIssue item = new SpellIssue
+            {
+                Category = category,
+                Wrong = wrong,
+                Suggest = suggest,
+                Reason = reason,
+                Context = context,
+                ExactCase = exactCase
+            };
+            issues.Add(item);
+            ListViewItem lvi = new ListViewItem(category);
+            lvi.SubItems.Add(wrong);
+            lvi.SubItems.Add(suggest);
+            lvi.SubItems.Add(reason);
+            if (category.Contains("AI")) lvi.BackColor = Color.FromArgb(239, 246, 255);
+            lvFindings.Items.Add(lvi);
+        }
+
+        private void OnSelectedIssueChanged()
+        {
+            if (lvFindings.SelectedIndices.Count == 0)
+            {
+                txtContext.Text = "";
+                txtEditSuggest.Text = "";
+                return;
+            }
+            int idx = lvFindings.SelectedIndices[0];
+            if (idx >= 0 && idx < issues.Count)
+            {
+                txtContext.Text = issues[idx].Context;
+                txtEditSuggest.Text = issues[idx].Suggest;
+            }
+        }
+
+        private string ReadActiveWordDocumentText()
+        {
+            string docText = "";
+            try
+            {
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object doc = null;
+                try { doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null); }
+                catch
+                {
+                    object docs = wordApp.GetType().InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
+                    int dc = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
+                    if (dc > 0) doc = docs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, docs, new object[] { 1 });
+                }
+                if (doc != null)
+                {
+                    object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                    docText = Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "";
+                }
+            }
+            catch { }
+
+            if (string.IsNullOrWhiteSpace(docText))
+            {
+                try
+                {
+                    string snapPath = Path.Combine(Path.GetTempPath(), "vbtm_word_snapshot.txt");
+                    if (File.Exists(snapPath)) docText = File.ReadAllText(snapPath, Encoding.Unicode);
+                }
+                catch { }
+            }
+            return docText;
         }
 
         private void ScanOpenWordDocument()
         {
-            lstFindings.Items.Clear();
-            foundFixes.Clear();
+            lvFindings.Items.Clear();
+            issues.Clear();
+            txtContext.Text = "";
+            txtEditSuggest.Text = "";
+
             try
             {
-                string docText = "";
-                try
-                {
-                    object wordApp = Marshal.GetActiveObject("Word.Application");
-                    object doc = null;
-                    try
-                    {
-                        doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
-                    }
-                    catch
-                    {
-                        object docs = wordApp.GetType().InvokeMember("Documents", BindingFlags.GetProperty, null, wordApp, null);
-                        int dc = (int)docs.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, docs, null);
-                        if (dc > 0) doc = docs.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, docs, new object[] { 1 });
-                    }
-                    if (doc != null)
-                    {
-                        object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
-                        docText = Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "";
-                    }
-                }
-                catch { }
-
-                if (string.IsNullOrWhiteSpace(docText))
-                {
-                    string snapPath = Path.Combine(Path.GetTempPath(), "vbtm_word_snapshot.txt");
-                    if (File.Exists(snapPath))
-                    {
-                        docText = File.ReadAllText(snapPath, Encoding.Unicode);
-                    }
-                }
-
+                string docText = ReadActiveWordDocumentText();
                 if (string.IsNullOrWhiteSpace(docText))
                 {
                     throw new Exception("Chưa có nội dung trong tài liệu Word đang mở.");
                 }
+                currentDocText = docText;
 
-                // 1. Quét theo từ điển quy tắc chính tả hành chính & Đảng
+                // 1. Quét 150+ quy tắc chính tả hành chính & Đảng (s/x, ch/tr, hỏi/ngã, thiếu dấu, từ sai...)
                 for (int r = 0; r < InspectorRules.GetLength(0); r++)
                 {
                     string w = InspectorRules[r, 0];
                     string s = InspectorRules[r, 1];
+                    string reason = InspectorRules[r, 2];
+                    if (string.IsNullOrEmpty(reason) || string.Equals(w, s, StringComparison.OrdinalIgnoreCase)) continue;
                     Match m = Regex.Match(docText, @"\b" + Regex.Escape(w) + @"\b", RegexOptions.IgnoreCase);
                     if (m.Success)
                     {
                         string matched = m.Value;
                         string prop = matched == matched.ToUpper() ? s.ToUpper() : (char.IsUpper(matched[0]) ? char.ToUpper(s[0]) + s.Substring(1) : s);
-                        AddFinding(matched, prop, "[Chính tả] \"" + matched + "\"  ➜  Đề xuất sửa: \"" + prop + "\"");
+                        AddIssue("Chính tả", matched, prop, reason, ExtractContextSnippet(docText, m.Index, m.Length), true);
                     }
                 }
 
-                // 2. Quét từ gõ dư/lặp ký tự bất thường (VD: HOẠCHH -> HOẠCH, THỰCC -> THỰC, ĐẢNGG -> ĐẢNG)
+                // 2. Quét từ gõ dư chữ (HOẠCHH -> HOẠCH) & lỗi âm tiết / kẹt phím Telex (đảngr, thựcj, ngiêm, cê...)
+                HashSet<string> whitelist = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                    "II", "III", "VII", "VIII", "XII", "XIII", "BOONG", "SOONG", "XOONG",
+                    "GOOGLE", "OFFLINE", "OFFICE", "WINDOWS", "MICROSOFT", "EMAIL", "ONLINE",
+                    "WEBSITE", "INTERNET", "VIETNAM", "VBTM", "PDF", "DOCX", "ZALO", "WIFI", "ISO", "QR", "AI", "HTTP", "HTTPS", "WWW", "COM", "GOV", "VN"
+                };
                 foreach (Match wm in Regex.Matches(docText, @"\b[A-Za-zÀ-Ỹà-ỹĐđ]{2,}\b"))
                 {
                     string token = wm.Value;
-                    string up = token.ToUpperInvariant();
-                    if (up == "II" || up == "III" || up == "VII" || up == "VIII" || up == "XII" || up == "XIII" || up == "BOONG" || up == "SOONG" || up == "XOONG" || up == "GOOGLE" || up == "OFFLINE" || up == "OFFICE")
-                        continue;
+                    if (whitelist.Contains(token)) continue;
+
+                    // 2a. Gõ lặp ký tự liên tiếp bất thường trong tiếng Việt
                     if (Regex.IsMatch(token, @"([A-Za-zÀ-Ỹà-ỹĐđ])\1+", RegexOptions.IgnoreCase))
                     {
                         string dedup = Regex.Replace(token, @"([A-Za-zÀ-Ỹà-ỹĐđ])\1+", "$1", RegexOptions.IgnoreCase);
                         if (!string.Equals(token, dedup, StringComparison.Ordinal))
                         {
-                            AddFinding(token, dedup, "[Gõ dư chữ] \"" + token + "\"  ➜  Đề xuất sửa: \"" + dedup + "\"");
+                            AddIssue("Gõ dư chữ", token, dedup, "Lặp ký tự bất thường khi gõ phím", ExtractContextSnippet(docText, wm.Index, wm.Length), true);
+                            continue;
+                        }
+                    }
+
+                    // 2b. Kẹt phím Telex cuối từ đã có dấu tiếng Việt (vd: đảngr -> đảng, thựcj -> thực, kếx -> kế, báos -> báo)
+                    bool hasVnDiacritic = Regex.IsMatch(token, @"[À-Ỹà-ỹĐđ]");
+                    if (hasVnDiacritic && token.Length >= 3 && Regex.IsMatch(token, @"[fsrxjwz]$", RegexOptions.IgnoreCase))
+                    {
+                        string trimmed = token.Substring(0, token.Length - 1);
+                        AddIssue("Lỗi Telex", token, trimmed, "Kẹt phím dấu Telex ('" + token[token.Length - 1] + "') ở cuối từ tiếng Việt", ExtractContextSnippet(docText, wm.Index, wm.Length), true);
+                        continue;
+                    }
+
+                    // 2c. Sai luật chính tả bắt buộc: ng+i/e/ê -> ngh, c+i/e/ê -> k, g+e/ê -> gh
+                    if (Regex.IsMatch(token, @"^ng[eêièéẻẽẹềếểễệìíỉĩị]", RegexOptions.IgnoreCase))
+                    {
+                        string fix = token.Substring(0, 2) + (char.IsUpper(token[1]) ? "H" : "h") + token.Substring(2);
+                        AddIssue("Luật âm tiết", token, fix, "Trước e, ê, i phải viết 'ngh' thay vì 'ng'", ExtractContextSnippet(docText, wm.Index, wm.Length), true);
+                    }
+                }
+
+                // 3. Quét lặp từ liền nhau (vd: "các các", "đã đã", "trong trong", "của của")
+                foreach (Match dupM in Regex.Matches(docText, @"\b([A-Za-zÀ-Ỹà-ỹĐđ]{2,})\s+\1\b", RegexOptions.IgnoreCase))
+                {
+                    string w1 = dupM.Groups[1].Value;
+                    string low = w1.ToLowerInvariant();
+                    if (low == "người" || low == "ngày" || low == "năm" || low == "nhà" || low == "lần" || low == "bước" || low == "tầng") continue;
+                    AddIssue("Lặp từ", dupM.Value, w1, "Từ bị lặp 2 lần liền nhau", ExtractContextSnippet(docText, dupM.Index, dupM.Length), true);
+                }
+
+                // 4. Quét lỗi viết hoa danh từ riêng & cơ quan chuẩn NĐ 30 / 05-HD (chỉ bắt nếu viết thường hoàn toàn, bỏ qua khi đã viết IN HOA tiêu ngữ)
+                for (int r = 0; r < ProperNounRules.GetLength(0); r++)
+                {
+                    string pat = ProperNounRules[r, 0];
+                    string rep = ProperNounRules[r, 1];
+                    string reason = ProperNounRules[r, 2];
+                    Match pm = Regex.Match(docText, @"\b" + Regex.Escape(pat) + @"\b", RegexOptions.IgnoreCase);
+                    if (pm.Success)
+                    {
+                        string val = pm.Value;
+                        if (val != rep && val != rep.ToUpper())
+                        {
+                            AddIssue("Viết hoa chuẩn", val, rep, reason, ExtractContextSnippet(docText, pm.Index, pm.Length), true);
                         }
                     }
                 }
 
-                // 3. Quét khoảng trắng thừa trước dấu câu & 2 dấu cách liền nhau
+                // 5. Quét lỗi dấu câu & khoảng trắng thừa / thiếu khoảng trắng sau dấu phẩy/chấm phẩy
                 string[] punctBad = new string[] { " ,", " .", " ;", " :", " !", " ?", "  " };
                 string[] punctGood = new string[] { ",", ".", ";", ":", "!", "?", " " };
                 for (int pi = 0; pi < punctBad.Length; pi++)
                 {
-                    if (docText.Contains(punctBad[pi]))
+                    int pos = docText.IndexOf(punctBad[pi], StringComparison.Ordinal);
+                    if (pos >= 0)
                     {
-                        string lbl = punctBad[pi] == "  "
-                            ? "[Khoảng trắng] Có nhiều dấu cách liền nhau  ➜  Đề xuất: rút gọn còn 1 dấu cách"
-                            : "[Dấu câu] Khoảng trắng thừa trước dấu \"" + punctGood[pi] + "\"  ➜  Đề xuất: xóa dấu cách thừa";
-                        AddFinding(punctBad[pi], punctGood[pi], lbl);
+                        string reason = punctBad[pi] == "  " ? "Nhiều dấu cách thừa liền nhau" : ("Khoảng trắng thừa trước dấu \"" + punctGood[pi] + "\"");
+                        AddIssue("Dấu câu", punctBad[pi], punctGood[pi], reason, ExtractContextSnippet(docText, pos, punctBad[pi].Length), false);
                     }
                 }
+                foreach (Match ms in Regex.Matches(docText, @"([A-Za-zÀ-Ỹà-ỹĐđ]{2,})([,;])([A-Za-zÀ-Ỹà-ỹĐđ]{2,})"))
+                {
+                    string orig = ms.Value;
+                    string rep = ms.Groups[1].Value + ms.Groups[2].Value + " " + ms.Groups[3].Value;
+                    AddIssue("Thiếu dấu cách", orig, rep, "Thiếu khoảng trắng sau dấu '" + ms.Groups[2].Value + "'", ExtractContextSnippet(docText, ms.Index, ms.Length), true);
+                }
 
-                // 4. Quét lỗi định dạng ngày < 10 hoặc tháng 1, 2 thiếu số 0
+                // 6. Quét lỗi định dạng ngày < 10 hoặc tháng 1, 2 thiếu số 0 (chuẩn NĐ 30 & 05-HD)
                 foreach (Match dm in Regex.Matches(docText, @"\bngày\s+([1-9])\s+tháng\b", RegexOptions.IgnoreCase))
                 {
                     string orig = dm.Value;
                     string rep = Regex.Replace(orig, @"\b([1-9])\b", "0$1");
-                    AddFinding(orig, rep, "[Thể thức ngày] \"" + orig + "\"  ➜  Đề xuất sửa: \"" + rep + "\"");
+                    AddIssue("Thể thức ngày", orig, rep, "Ngày từ 1–9 phải thêm số 0 phía trước (NĐ 30)", ExtractContextSnippet(docText, dm.Index, dm.Length), true);
                 }
                 foreach (Match mm in Regex.Matches(docText, @"\btháng\s+([12])\s+năm\b", RegexOptions.IgnoreCase))
                 {
                     string orig = mm.Value;
                     string rep = Regex.Replace(orig, @"\b([12])\b", "0$1");
-                    AddFinding(orig, rep, "[Thể thức tháng] \"" + orig + "\"  ➜  Đề xuất sửa: \"" + rep + "\"");
+                    AddIssue("Thể thức tháng", orig, rep, "Tháng 1 và 2 phải viết 01, 02 (NĐ 30)", ExtractContextSnippet(docText, mm.Index, mm.Length), true);
                 }
 
-                if (foundFixes.Count == 0)
-                {
-                    lblSummary.Text = "✓ Tài liệu Word đang mở đã đạt chuẩn 100% chính tả & thể thức!";
-                    lstFindings.Items.Add("✓ Không phát hiện lỗi chính tả, từ gõ dư chữ hay lỗi dấu câu nào trong văn bản Word đang mở.");
-                }
-                else
-                {
-                    lblSummary.Text = "⚠ Phát hiện " + foundFixes.Count + " lỗi cụ thể (chọn từng lỗi hoặc bấm 'Sửa Hết Tất Cả'):";
-                    lstFindings.SelectedIndex = 0;
-                }
+                UpdateSummaryHeader();
             }
             catch
             {
-                lblSummary.Text = "⚠ Không tìm thấy cửa sổ Microsoft Word đang mở.";
-                lstFindings.Items.Add("Hãy mở một tài liệu trong Microsoft Word rồi nhấn 'Quét Lại Word'.");
+                lblSummary.Text = "⚠ Không tìm thấy cửa sổ Microsoft Word đang mở (hãy mở file Word rồi bấm 'Quét Nhanh').";
             }
         }
 
-        private bool ReplaceSingleInActiveWord(string findTxt, string repTxt)
+        private void UpdateSummaryHeader()
+        {
+            if (issues.Count == 0)
+            {
+                lblSummary.Text = "✓ Quét nhanh xong: Chưa phát hiện lỗi chính tả cơ bản! Bạn có thể bấm '🧠 Quét Sâu Bằng AI' để kiểm tra ngữ cảnh.";
+            }
+            else
+            {
+                lblSummary.Text = "⚠ Phát hiện " + issues.Count + " lỗi & gợi ý sửa đổi (chọn từng dòng để xem ngữ cảnh / sửa hoặc bấm 'Sửa Hết Tất Cả'):";
+                if (lvFindings.Items.Count > 0 && lvFindings.SelectedIndices.Count == 0)
+                {
+                    lvFindings.Items[0].Selected = true;
+                }
+            }
+        }
+
+        private void RunDeepAiSpellScanAsync()
+        {
+            if (isAiBusy) return;
+            if (string.IsNullOrWhiteSpace(currentDocText)) ScanOpenWordDocument();
+            if (string.IsNullOrWhiteSpace(currentDocText) || currentDocText.Length < 15)
+            {
+                MessageBox.Show("Chưa đọc được nội dung văn bản Word đang mở!", "VBTM Pro 2.5.0");
+                return;
+            }
+
+            string[] cfg = AiWordAssistantForm.LoadAiConfig();
+            int provIdx = 0; int.TryParse(cfg[0], out provIdx);
+            string modelStr = cfg[1];
+            string apiKey = cfg[2];
+
+            if (provIdx == 5 || string.IsNullOrWhiteSpace(apiKey))
+            {
+                MessageBox.Show(
+                    "Chức năng 'Quét Sâu Bằng AI (Ngữ Cảnh)' cần 1 API Key Google Gemini (miễn phí tại aistudio.google.com/apikey).\n\n" +
+                    "Hiện tại chế độ Quét Nhanh Ngoại Tuyến (150+ quy tắc + Luật âm tiết Tiếng Việt + Lặp từ + Telex + NĐ 30) vẫn hoạt động 100% không cần mạng!",
+                    "VBTM Pro 2.5.0 — Quét Sâu AI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            isAiBusy = true;
+            btnDeepAi.Enabled = false;
+            prgScan.Visible = true;
+            lblAiStatus.Visible = false;
+            lblSummary.Text = "🧠 Đang gửi văn bản tới AI (" + modelStr + ") để rà soát lỗi ngữ cảnh, dùng từ & chính tả chuyên sâu...";
+
+            string clipped = currentDocText.Length > 12000 ? currentDocText.Substring(0, 12000) : currentDocText;
+            string sysPrompt =
+                "Bạn là chuyên gia hiệu đính văn bản Đảng (05-HD/VPTW) và Hành chính Nhà nước Việt Nam (NĐ 30/2020). " +
+                "Hãy rà soát TOÀN BỘ lỗi chính tả, lỗi đánh máy, lỗi dùng từ sai ngữ cảnh (như dành/giành, sát/xát, truyền/chuyền, đề xuất/đề suất...), " +
+                "lỗi thiếu dấu hoặc câu diễn đạt sai trong văn bản sau.\n" +
+                "CHỈ liệt kê mỗi lỗi trên 1 dòng theo đúng định dạng (tối đa 25 lỗi rõ ràng nhất, trích ĐÚNG nguyên văn cụm từ sai trong văn bản gốc):\n" +
+                "CỤM_SAI ||| GỢI_Ý_SỬA ||| LÝ_DO_NGẮN_GỌN\n" +
+                "Nếu văn bản hoàn toàn không có lỗi, trả về đúng 1 từ: KHONG_CO_LOI. Không thêm lời giải thích nào khác.";
+
+            System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+            {
+                int added = 0;
+                string errMsg = null;
+                List<string[]> aiFound = new List<string[]>();
+                try
+                {
+                    string resp = AiWordAssistantForm.CallOnlineAiDirect(provIdx, modelStr, apiKey, sysPrompt, clipped);
+                    if (!string.IsNullOrWhiteSpace(resp) && resp.IndexOf("KHONG_CO_LOI", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        string[] lines = resp.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string ln in lines)
+                        {
+                            string[] parts = ln.Split(new string[] { "|||" }, StringSplitOptions.None);
+                            if (parts.Length >= 2)
+                            {
+                                string wrong = parts[0].Trim().Trim('"', '\'', '-', '•', '*', ' ');
+                                string sug = parts[1].Trim().Trim('"', '\'', ' ');
+                                string why = parts.Length >= 3 ? parts[2].Trim() : "AI phát hiện lỗi ngữ cảnh / chính tả";
+                                if (wrong.Length >= 2 && sug.Length >= 1 && !string.Equals(wrong, sug, StringComparison.Ordinal))
+                                {
+                                    // Chỉ nhận những cụm thực sự tồn tại trong tài liệu Word
+                                    if (currentDocText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
+                                    {
+                                        aiFound.Add(new string[] { wrong, sug, why });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errMsg = (ex.Message ?? "").Split('\n')[0];
+                }
+
+                if (this.IsDisposed) return;
+                this.BeginInvoke((Action)(() =>
+                {
+                    isAiBusy = false;
+                    btnDeepAi.Enabled = true;
+                    prgScan.Visible = false;
+                    lblAiStatus.Visible = true;
+
+                    if (errMsg != null)
+                    {
+                        lblAiStatus.Text = "⚠ AI trực tuyến lỗi: " + errMsg;
+                    }
+                    else
+                    {
+                        foreach (string[] f in aiFound)
+                        {
+                            int pos = currentDocText.IndexOf(f[0], StringComparison.Ordinal);
+                            int before = issues.Count;
+                            AddIssue("AI Ngữ cảnh", f[0], f[1], f[2], ExtractContextSnippet(currentDocText, pos, f[0].Length), true);
+                            if (issues.Count > before) added++;
+                        }
+                        lblAiStatus.Text = added > 0
+                            ? "✓ AI phát hiện thêm " + added + " lỗi ngữ cảnh & gợi ý sửa!"
+                            : "✓ AI đã kiểm tra ngữ cảnh — không phát hiện thêm lỗi mới.";
+                    }
+                    UpdateSummaryHeader();
+                }));
+            });
+        }
+
+        private void LocateSelectedInWord()
+        {
+            if (lvFindings.SelectedIndices.Count == 0) return;
+            int idx = lvFindings.SelectedIndices[0];
+            if (idx < 0 || idx >= issues.Count) return;
+            SpellIssue item = issues[idx];
+
+            try
+            {
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object sel = wordApp.GetType().InvokeMember("Selection", BindingFlags.GetProperty, null, wordApp, null);
+                sel.GetType().InvokeMember("HomeKey", BindingFlags.InvokeMethod, null, sel, new object[] { 6 }); // wdStory
+                object find = sel.GetType().InvokeMember("Find", BindingFlags.GetProperty, null, sel, null);
+                find.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, find, null);
+                find.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, find, new object[] { item.Wrong });
+                find.GetType().InvokeMember("MatchCase", BindingFlags.SetProperty, null, find, new object[] { item.ExactCase });
+                bool found = (bool)find.GetType().InvokeMember("Execute", BindingFlags.InvokeMethod, null, find, null);
+                if (found)
+                {
+                    wordApp.GetType().InvokeMember("Activate", BindingFlags.InvokeMethod, null, wordApp, null);
+                    lblSummary.Text = "📍 Đã bôi đen định vị \"" + item.Wrong + "\" trong Microsoft Word!";
+                }
+                else
+                {
+                    lblSummary.Text = "Không tìm thấy \"" + item.Wrong + "\" trong Word (có thể đã được sửa).";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không định vị được trong Word: " + ex.Message, "VBTM Pro 2.5.0");
+            }
+        }
+
+        private void IgnoreSelectedIssue()
+        {
+            if (lvFindings.SelectedIndices.Count == 0) return;
+            int idx = lvFindings.SelectedIndices[0];
+            if (idx < 0 || idx >= issues.Count) return;
+            ignoredKeys.Add(issues[idx].Wrong);
+            issues.RemoveAt(idx);
+            lvFindings.Items.RemoveAt(idx);
+            txtContext.Text = "";
+            txtEditSuggest.Text = "";
+            UpdateSummaryHeader();
+        }
+
+        private bool ReplaceSingleInActiveWord(string findTxt, string repTxt, bool exactCase)
         {
             try
             {
@@ -3426,7 +4013,7 @@ namespace VBTMProSuite
                 rep.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, rep, null);
                 rep.GetType().InvokeMember("Text", BindingFlags.SetProperty, null, rep, new object[] { repTxt });
                 find.GetType().InvokeMember("Execute", BindingFlags.InvokeMethod, null, find, new object[] {
-                    Type.Missing, false, false, false, false, false, true, 1, false, Type.Missing, 2
+                    Type.Missing, exactCase, false, false, false, false, true, 1, false, Type.Missing, 2
                 });
                 return true;
             }
@@ -3435,17 +4022,24 @@ namespace VBTMProSuite
 
         private void FixSelectedItemInWord()
         {
-            int idx = lstFindings.SelectedIndex;
-            if (idx < 0 || idx >= foundFixes.Count)
+            if (lvFindings.SelectedIndices.Count == 0)
             {
                 MessageBox.Show("Hãy chọn 1 lỗi trong danh sách để sửa!", "VBTM Pro 2.5.0");
                 return;
             }
-            var kv = foundFixes[idx];
-            if (ReplaceSingleInActiveWord(kv.Key, kv.Value))
+            int idx = lvFindings.SelectedIndices[0];
+            if (idx < 0 || idx >= issues.Count) return;
+            SpellIssue item = issues[idx];
+            string finalSuggest = (txtEditSuggest.Text ?? "").Trim();
+            if (string.IsNullOrEmpty(finalSuggest) && item.Suggest != " ") finalSuggest = item.Suggest;
+
+            if (ReplaceSingleInActiveWord(item.Wrong, finalSuggest, item.ExactCase))
             {
-                lblSummary.Text = "✓ Đã sửa \"" + kv.Key + "\" ➜ \"" + kv.Value + "\" trực tiếp trong Word!";
-                ScanOpenWordDocument();
+                issues.RemoveAt(idx);
+                lvFindings.Items.RemoveAt(idx);
+                lblSummary.Text = "✓ Đã sửa \"" + item.Wrong + "\" ➜ \"" + finalSuggest + "\" trực tiếp trong Word!";
+                if (lvFindings.Items.Count > 0) lvFindings.Items[Math.Min(idx, lvFindings.Items.Count - 1)].Selected = true;
+                else { txtContext.Text = ""; txtEditSuggest.Text = ""; }
             }
             else
             {
@@ -3455,17 +4049,18 @@ namespace VBTMProSuite
 
         private void FixAllFoundErrorsInWord()
         {
-            int okCnt = 0;
-            foreach (var kv in foundFixes)
+            if (issues.Count == 0)
             {
-                if (ReplaceSingleInActiveWord(kv.Key, kv.Value)) okCnt++;
+                MessageBox.Show("Không còn lỗi nào cần sửa!", "VBTM Pro 2.5.0");
+                return;
             }
-            using (MainStudioForm f = new MainStudioForm())
+            int okCnt = 0;
+            foreach (var item in issues)
             {
-                f.FormatActiveWordDocument();
+                if (ReplaceSingleInActiveWord(item.Wrong, item.Suggest, item.ExactCase)) okCnt++;
             }
             ScanOpenWordDocument();
-            MessageBox.Show("Đã tự động sửa xong " + okCnt + " lỗi chính tả & chuẩn hóa trực tiếp trong tài liệu Word!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("✓ Đã tự động sửa xong " + okCnt + " lỗi chính tả & đề xuất trực tiếp trong tài liệu Word!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 
