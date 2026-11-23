@@ -1375,82 +1375,12 @@ function autoFixVietnameseSpellingInString(inputStr) {
   return { text: str, fixedCount };
 }
 
-// Chuẩn hóa toàn diện: vừa chuẩn hóa thể thức NĐ30/Đảng ủy vừa tự động sửa toàn bộ lỗi chính tả AI
+// Chức năng tự động chỉnh thể thức đã được gỡ bỏ hoàn toàn để bảo toàn nguyên vẹn nội dung và định dạng gốc.
 function standardizeAndFixEverything() {
-  const bodyEl = document.getElementById('vbtmDocBody');
-  const subjEl = document.getElementById('vbtmDocSubject');
-  if (!bodyEl) return;
-
-  // 1. Tự động sửa toàn bộ lỗi chính tả tiếng Việt trên cả Nội dung & Trích yếu
-  const fixedBodyObj = autoFixVietnameseSpellingInString(bodyEl.value);
-  let text = fixedBodyObj.text;
-  let fixedSpells = fixedBodyObj.fixedCount;
-
-  if (subjEl && subjEl.value) {
-    const fixedSubjObj = autoFixVietnameseSpellingInString(subjEl.value);
-    subjEl.value = fixedSubjObj.text.trim().replace(/\s+/g, ' ').replace(/\.+$/, '');
-    fixedSpells += fixedSubjObj.fixedCount;
-  }
-
-  // 2. Xóa khoảng trắng thừa, chuẩn hóa dấu câu & cách viết ngày tháng chuẩn Nghị định 30/2020/NĐ-CP
-  text = normalizeVietnameseDateExpressions(text)
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\s+([,.;:!?])/g, '$1')
-    .replace(/([,.;:!?])([^\s\d/.)])/g, '$1 $2')
-    .replace(/\(\s+/g, '(')
-    .replace(/\s+\)/g, ')')
-    .replace(/“\s+/g, '“')
-    .replace(/\s+”/g, '”')
-    .replace(/\n{3,}/g, '\n\n');
-
-  // 3. Viết hoa chữ cái đầu mỗi đoạn và thêm dấu kết thúc "./."
-  const lines = text.split('\n').map(line => {
-    let trimmed = line.trim();
-    if (!trimmed) return '';
-    trimmed = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-    return trimmed;
-  }).filter((l, idx, arr) => !(l === '' && arr[idx - 1] === ''));
-
-  let result = lines.join('\n').trim();
-  if (result && !result.endsWith('./.')) {
-    result = result.replace(/\.+$/, '') + './.';
-  }
-  bodyEl.value = result;
-
-  // 4. Chuẩn hóa tự động theo Hướng dẫn 05-HD/VPTW (Khối Đảng) hoặc Nghị định 30/2020/NĐ-CP (Khối Hành chính)
-  const isPartyStd = document.getElementById('vbtmStandard')?.value === 'hd05';
-  const docNumEl = document.getElementById('vbtmDocNum');
-  if (docNumEl && docNumEl.value) {
-    docNumEl.value = docNumEl.value.trim().replace(/^Số\s*:?\s*/i, '');
-  }
-
-  const recEl = document.getElementById('vbtmRecipients');
-  if (recEl) {
-    let recLines = recEl.value
-      .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean)
-      .map(l => (l.startsWith('-') ? l : `- ${l}`));
-    if (!recLines.some(l => /Lưu/i.test(l))) {
-      recLines.push(isPartyStd ? '- Lưu Văn phòng Đảng ủy.' : '- Lưu: VT, VP.');
-    }
-    if (recLines.length > 0) {
-      recLines = recLines.map((l, idx) => {
-        const clean = l.replace(/[;.]+\s*$/, '');
-        return idx < recLines.length - 1 ? `${clean};` : `${clean}.`;
-      });
-      recEl.value = recLines.join('\n');
-    }
-  }
-
-  updateQrCanvas();
-  renderA4Preview();
-  runSpellAndFormatCheck();
-  updateVbtmLiveStats();
-
-  if (window.showToast) {
-    window.showToast(`✓ Đã chuẩn hóa tự động ${isPartyStd ? 'Hướng dẫn 05-HD/VPTW' : 'Nghị định 30/2020/NĐ-CP'} & sửa ${fixedSpells} lỗi chính tả!`);
-  }
+  // Chỉ làm mới bản xem trước ở chế độ chỉ đọc, KHÔNG tự ý sửa văn bản, phông chữ, căn lề hay thể thức.
+  if (typeof updateQrCanvas === 'function') updateQrCanvas();
+  if (typeof renderA4Preview === 'function') renderA4Preview();
+  if (typeof updateVbtmLiveStats === 'function') updateVbtmLiveStats();
 }
 
 function standardizeTextContent() {
