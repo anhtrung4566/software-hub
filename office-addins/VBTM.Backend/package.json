@@ -1,0 +1,12 @@
+{
+  "name": "vbtm-backend-gateway",
+  "version": "3.0.0",
+  "description": "VBTM Pro Office AI Gateway (Gemini proxy with failover, rate limiting, technical logging)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
