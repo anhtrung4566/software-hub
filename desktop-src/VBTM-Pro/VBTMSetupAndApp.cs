@@ -2520,54 +2520,67 @@ namespace VBTMProSuite
 
         private static string HttpPostJson(string url, string jsonBody, Dictionary<string, string> headers)
         {
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-            req.Method = "POST";
-            req.ContentType = "application/json; charset=utf-8";
-            req.Proxy = null; // Tắt dò WPAD Proxy của Windows (loại bỏ độ trễ 5–15 giây!)
-            req.KeepAlive = true;
-            req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-            req.Timeout = 20000;
-            req.ReadWriteTimeout = 20000;
-            if (headers != null)
-            {
-                foreach (var kv in headers) req.Headers[kv.Key] = kv.Value;
-            }
             byte[] bytes = Encoding.UTF8.GetBytes(jsonBody);
-            req.ContentLength = bytes.Length;
-            using (Stream st = req.GetRequestStream()) st.Write(bytes, 0, bytes.Length);
-            try
+            int maxRetries = 2;
+            for (int attempt = 0; attempt <= maxRetries; attempt++)
             {
-                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
-                using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                req.Method = "POST";
+                req.ContentType = "application/json; charset=utf-8";
+                req.Proxy = null; // Tắt dò WPAD Proxy của Windows (loại bỏ độ trễ 5–15 giây!)
+                req.KeepAlive = true;
+                req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                req.Timeout = 22000;
+                req.ReadWriteTimeout = 22000;
+                if (headers != null)
                 {
-                    return sr.ReadToEnd();
+                    foreach (var kv in headers) req.Headers[kv.Key] = kv.Value;
                 }
-            }
-            catch (WebException wex)
-            {
-                string detail = wex.Message;
-                if (wex.Response != null)
+                req.ContentLength = bytes.Length;
+                try
                 {
-                    using (StreamReader sr = new StreamReader(wex.Response.GetResponseStream(), Encoding.UTF8))
-                        detail = sr.ReadToEnd();
-                    try
+                    using (Stream st = req.GetRequestStream()) st.Write(bytes, 0, bytes.Length);
+                    using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                    using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
                     {
-                        JavaScriptSerializer jsErr = new JavaScriptSerializer();
-                        var eObj = jsErr.Deserialize<Dictionary<string, object>>(detail);
-                        if (eObj != null && eObj.ContainsKey("error"))
+                        return sr.ReadToEnd();
+                    }
+                }
+                catch (WebException wex)
+                {
+                    int httpCode = 0;
+                    string detail = wex.Message;
+                    if (wex.Response != null)
+                    {
+                        try { httpCode = (int)((HttpWebResponse)wex.Response).StatusCode; } catch { }
+                        using (StreamReader sr = new StreamReader(wex.Response.GetResponseStream(), Encoding.UTF8))
+                            detail = sr.ReadToEnd();
+                        try
                         {
-                            var inner = eObj["error"] as Dictionary<string, object>;
-                            if (inner != null && inner.ContainsKey("message"))
+                            JavaScriptSerializer jsErr = new JavaScriptSerializer();
+                            var eObj = jsErr.Deserialize<Dictionary<string, object>>(detail);
+                            if (eObj != null && eObj.ContainsKey("error"))
                             {
-                                string code = inner.ContainsKey("code") ? ("[" + inner["code"] + "] ") : "";
-                                detail = code + Convert.ToString(inner["message"]);
+                                var inner = eObj["error"] as Dictionary<string, object>;
+                                if (inner != null && inner.ContainsKey("message"))
+                                {
+                                    string code = inner.ContainsKey("code") ? ("[" + inner["code"] + "] ") : "";
+                                    detail = code + Convert.ToString(inner["message"]);
+                                }
                             }
                         }
+                        catch { }
                     }
-                    catch { }
+                    bool retryable = (httpCode == 429 || httpCode == 500 || httpCode == 503 || wex.Status == WebExceptionStatus.Timeout);
+                    if (retryable && attempt < maxRetries)
+                    {
+                        System.Threading.Thread.Sleep(800 * (attempt + 1));
+                        continue;
+                    }
+                    throw new Exception(detail);
                 }
-                throw new Exception(detail);
             }
+            throw new Exception("Không nhận được phản hồi từ máy chủ AI sau khi thử lại.");
         }
 
         private string RunOfflineAiTransform(string text, int taskIdx)
@@ -3236,6 +3249,7 @@ namespace VBTMProSuite
             public string Reason;
             public string Context;
             public bool ExactCase;
+            public bool NeedsConfirm;
         }
 
         private ListView lvFindings;
@@ -3694,6 +3708,16 @@ namespace VBTMProSuite
             return (start > 0 ? "..." : "") + snip + (end < docText.Length ? "..." : "");
         }
 
+        private static bool IsProtectedEntityText(string wrong)
+        {
+            if (string.IsNullOrWhiteSpace(wrong)) return false;
+            if (Regex.IsMatch(wrong, @"\d+\s*(%|đồng|vnđ|triệu|tỷ|tỉ)", RegexOptions.IgnoreCase)) return true;
+            if (Regex.IsMatch(wrong, @"\b(Điều|Khoản|Điểm|Luật|Nghị định|Thông tư|Hướng dẫn)\s+(số\s+)?\d+", RegexOptions.IgnoreCase)) return true;
+            if (Regex.IsMatch(wrong, @"\b\d+[A-Za-zÀ-ỹĐđ\-]*/[A-ZÀ-ỸĐ]", RegexOptions.None)) return true;
+            if (Regex.IsMatch(wrong, @"\d") && !Regex.IsMatch(wrong, @"^(ngày\s+[1-9]\s+tháng|tháng\s+[12]\s+năm)$", RegexOptions.IgnoreCase)) return true;
+            return false;
+        }
+
         private void AddIssue(string category, string wrong, string suggest, string reason, string context, bool exactCase)
         {
             if (string.IsNullOrEmpty(wrong) || string.Equals(wrong, suggest, StringComparison.Ordinal)) return;
@@ -3702,21 +3726,24 @@ namespace VBTMProSuite
             {
                 if (string.Equals(it.Wrong, wrong, StringComparison.Ordinal)) return;
             }
+            bool needsConf = IsProtectedEntityText(wrong);
             SpellIssue item = new SpellIssue
             {
-                Category = category,
+                Category = needsConf ? (category + " [Cần duyệt]") : category,
                 Wrong = wrong,
                 Suggest = suggest,
-                Reason = reason,
+                Reason = needsConf ? (reason + " (Bảo vệ số liệu/căn cứ)") : reason,
                 Context = context,
-                ExactCase = exactCase
+                ExactCase = exactCase,
+                NeedsConfirm = needsConf
             };
             issues.Add(item);
-            ListViewItem lvi = new ListViewItem(category);
+            ListViewItem lvi = new ListViewItem(item.Category);
             lvi.SubItems.Add(wrong);
             lvi.SubItems.Add(suggest);
-            lvi.SubItems.Add(reason);
-            if (category.Contains("AI")) lvi.BackColor = Color.FromArgb(239, 246, 255);
+            lvi.SubItems.Add(item.Reason);
+            if (needsConf) lvi.BackColor = Color.FromArgb(254, 243, 199);
+            else if (category.Contains("AI")) lvi.BackColor = Color.FromArgb(239, 246, 255);
             lvFindings.Items.Add(lvi);
         }
 
@@ -4220,12 +4247,16 @@ namespace VBTMProSuite
                 return;
             }
             int okCnt = 0;
+            int skippedProt = 0;
             foreach (var item in issues)
             {
+                if (item.NeedsConfirm) { skippedProt++; continue; }
                 if (ReplaceSingleInActiveWord(item.Wrong, item.Suggest, item.ExactCase)) okCnt++;
             }
             ScanOpenWordDocument();
-            MessageBox.Show("✓ Đã tự động sửa xong " + okCnt + " lỗi chính tả & đề xuất trực tiếp trong tài liệu Word!", "VBTM Pro 2.5.0", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("✓ Đã tự động sửa xong " + okCnt + " lỗi an toàn trực tiếp trong Word!" +
+                (skippedProt > 0 ? ("\n(Đã bảo vệ & bỏ qua " + skippedProt + " mục liên quan số liệu/căn cứ pháp lý để bạn tự duyệt.)") : ""),
+                "VBTM Pro 3.0 Ultimate", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 
