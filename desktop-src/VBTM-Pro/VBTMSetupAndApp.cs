@@ -66,6 +66,11 @@ namespace VBTMProSuite
                     qrWordMode = true;
                 else if (a.Equals("--test-ai-network", StringComparison.OrdinalIgnoreCase))
                     testAiNetMode = true;
+                else if (a.Equals("--bench-desktop-ai", StringComparison.OrdinalIgnoreCase))
+                {
+                    RunDesktopBenchmark();
+                    return;
+                }
                 else if (a.Equals("--insert-tpl", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
                     int.TryParse(args[++idx], out insertTplIdx);
             }
@@ -188,6 +193,67 @@ namespace VBTMProSuite
             {
                 MessageBox.Show("Thông báo khi gỡ cài đặt: " + ex.Message, "VBTM Pro 2.5.0");
             }
+        }
+
+        private static void RunDesktopBenchmark()
+        {
+            StringBuilder sb = new StringBuilder();
+            string outFile = Path.Combine(Path.GetTempPath(), "vbtm_desktop_bench.txt");
+            sb.AppendLine("=== VBTM PRO DESKTOP v3.5.0 REAL BENCHMARK (OLLAMA STREAMING + CACHE + FORMAT + UNDO) ===");
+            try
+            {
+                // 1. Streaming Ollama test (Nhanh)
+                DesktopAiGateway.ActiveProvider = "ollama";
+                DesktopAiGateway.SpeedMode = "Nhanh";
+                int tokenCount = 0;
+                long ttft1, total1; bool cached1; string model1;
+                string r1 = DesktopAiGateway.GenerateStreaming(
+                    "Chỉ sửa lỗi chính tả tiếng Việt, giữ nguyên tên riêng và số liệu.",
+                    "Đồng chí Nguyễn Văn An đề suất bổ xung 15% kinh phí và xử dụng ngân xách đúng kế hoạc.",
+                    (t) => { tokenCount++; },
+                    out ttft1, out total1, out cached1, out model1);
+                sb.AppendLine(string.Format("[PASS] AI-Stream-Spell: model={0} | tokens={1} | TTFT={2}ms | Total={3}ms | Cached={4}", model1, tokenCount, ttft1, total1, cached1));
+                sb.AppendLine("  Reply: " + r1);
+
+                // 2. Cache hit test (identical request -> <1ms)
+                long ttft2, total2; bool cached2; string model2;
+                System.Diagnostics.Stopwatch swCache = System.Diagnostics.Stopwatch.StartNew();
+                string r2 = DesktopAiGateway.GenerateStreaming(
+                    "Chỉ sửa lỗi chính tả tiếng Việt, giữ nguyên tên riêng và số liệu.",
+                    "Đồng chí Nguyễn Văn An đề suất bổ xung 15% kinh phí và xử dụng ngân xách đúng kế hoạc.",
+                    null, out ttft2, out total2, out cached2, out model2);
+                swCache.Stop();
+                sb.AppendLine(string.Format("[PASS] AI-Cache-Hit: Cached={0} | Elapsed={1}ms | Match={2}", cached2, swCache.ElapsedMilliseconds, r1 == r2));
+
+                // 3. Rewrite test (Nhanh)
+                long ttft3, total3; bool cached3; string model3;
+                string r3 = DesktopAiGateway.GenerateStreaming(
+                    "Viết lại ngắn gọn, trang trọng theo văn phong hành chính.",
+                    "Mấy tổ dân phố nhớ nộp báo cáo tháng 11 trước ngày 25 nhé.",
+                    null, out ttft3, out total3, out cached3, out model3);
+                sb.AppendLine(string.Format("[PASS] AI-Stream-Rewrite: TTFT={0}ms | Total={1}ms | Reply={2}", ttft3, total3, r3));
+
+                // 4. Real MainStudioForm Format + 05-HD/VPTW + ND30 + Undo test
+                using (MainStudioForm f = new MainStudioForm())
+                {
+                    f.ApplyFontChange("Arial", 16f);
+                    f.ToggleFontStyle(FontStyle.Bold);
+                    f.ApplyAlignment(HorizontalAlignment.Center);
+                    f.ToggleFirstLineIndent();
+                    string audit05 = f.AuditFormatStandardDesktop(true);
+                    bool applied05 = f.ApplyFormatStandardDesktop(true, true);
+                    bool applied30 = f.ApplyFormatStandardDesktop(false, true);
+                    bool undo1 = f.UndoBodyEdit();
+                    bool undo2 = f.UndoBodyEdit();
+                    sb.AppendLine(string.Format("[PASS] Format-05HD-ND30-Undo: Audit05Len={0} | Applied05={1} | Applied30={2} | Undo1={3} | Undo2={4}",
+                        audit05.Length, applied05, applied30, undo1, undo2));
+                }
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine("[ERROR] " + ex.Message);
+            }
+            File.WriteAllText(outFile, sb.ToString(), Encoding.UTF8);
         }
 
         private static void RunAiNetworkSelfTest()
@@ -5151,17 +5217,255 @@ namespace VBTMProSuite
     }
 
     // =========================================================================
-    // 2. PHẦN MỀM CHÍNH: VBTM PRO 2.2.4 STUDIO + MICROSOFT WORD AUTOMATION
+    // 1.9. DESKTOP AI GATEWAY — OLLAMA STREAMING, CACHE, 3 CHẾ ĐỘ TỐC ĐỘ & HỦY
+    // =========================================================================
+    public static class DesktopAiGateway
+    {
+        public static string ActiveProvider = "ollama"; // "ollama" (mặc định) | "gemini"
+        public static string OllamaBaseUrl = "http://127.0.0.1:11434";
+        public static string SelectedOllamaModel = "";
+        public static string SpeedMode = "Nhanh"; // "Nhanh" | "Tiêu chuẩn" | "Chuyên sâu"
+
+        private static readonly Dictionary<string, string> ResultCache = new Dictionary<string, string>();
+        private static readonly object CacheLock = new object();
+        private static HttpWebRequest _activeRequest = null;
+        private static volatile bool _cancelRequested = false;
+
+        public static void CancelActive()
+        {
+            _cancelRequested = true;
+            try
+            {
+                HttpWebRequest req = _activeRequest;
+                if (req != null) req.Abort();
+            }
+            catch { }
+        }
+
+        public static List<string> FetchOllamaModels(out string error)
+        {
+            error = null;
+            List<string> models = new List<string>();
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(OllamaBaseUrl.TrimEnd('/') + "/api/tags");
+                req.Method = "GET";
+                req.Proxy = null;
+                req.KeepAlive = false;
+                req.Timeout = 3500;
+                req.ReadWriteTimeout = 3500;
+                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
+                {
+                    JavaScriptSerializer js = new JavaScriptSerializer();
+                    var obj = js.Deserialize<Dictionary<string, object>>(sr.ReadToEnd());
+                    var arr = obj != null && obj.ContainsKey("models") ? obj["models"] as System.Collections.ArrayList : null;
+                    if (arr != null)
+                    {
+                        foreach (object item in arr)
+                        {
+                            var d = item as Dictionary<string, object>;
+                            if (d != null && d.ContainsKey("name"))
+                            {
+                                string n = Convert.ToString(d["name"]).Trim();
+                                if (!string.IsNullOrEmpty(n)) models.Add(n);
+                            }
+                        }
+                    }
+                }
+                if (models.Count > 0 && (string.IsNullOrEmpty(SelectedOllamaModel) || !models.Contains(SelectedOllamaModel)))
+                {
+                    SelectedOllamaModel = models[0];
+                }
+            }
+            catch (Exception ex)
+            {
+                error = "Không kết nối được Ollama Local tại " + OllamaBaseUrl + " (" + ex.Message + ")";
+            }
+            return models;
+        }
+
+        private static void GetSpeedParams(string mode, out int numPredict, out int numCtx, out double temp)
+        {
+            if (mode == "Chuyên sâu") { numPredict = 1200; numCtx = 8192; temp = 0.4; }
+            else if (mode == "Tiêu chuẩn") { numPredict = 600; numCtx = 4096; temp = 0.3; }
+            else { numPredict = 280; numCtx = 2048; temp = 0.2; }
+        }
+
+        public static string GenerateStreaming(
+            string systemPrompt,
+            string userText,
+            Action<string> onToken,
+            out long ttftMs,
+            out long totalMs,
+            out bool fromCache,
+            out string usedModel)
+        {
+            _cancelRequested = false;
+            ttftMs = 0;
+            totalMs = 0;
+            fromCache = false;
+            usedModel = SelectedOllamaModel;
+
+            string cacheKey = ActiveProvider + "|" + SelectedOllamaModel + "|" + SpeedMode + "|" + systemPrompt + "|" + userText;
+            lock (CacheLock)
+            {
+                string cached;
+                if (ResultCache.TryGetValue(cacheKey, out cached))
+                {
+                    fromCache = true;
+                    if (onToken != null) onToken(cached);
+                    return cached;
+                }
+            }
+
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+
+            if (ActiveProvider == "gemini")
+            {
+                string[] cfg = AiWordAssistantForm.LoadAiConfig();
+                if (cfg.Length < 3 || string.IsNullOrWhiteSpace(cfg[2]))
+                    throw new Exception("Bạn đang chọn Google Gemini nhưng chưa nhập API Key. Hãy chuyển về Ollama Local (không cần Key) hoặc nhập Gemini Key.");
+                usedModel = string.IsNullOrWhiteSpace(cfg[1]) ? "gemini-flash-lite-latest" : cfg[1];
+                string txt = AiWordAssistantForm.CallOnlineAiDirect(0, usedModel, cfg[2], systemPrompt, userText, false);
+                sw.Stop();
+                ttftMs = sw.ElapsedMilliseconds;
+                totalMs = sw.ElapsedMilliseconds;
+                if (onToken != null) onToken(txt);
+                StoreCache(cacheKey, txt);
+                return txt;
+            }
+
+            // Mặc định: Ollama Local với STREAMING thực sự (hiển thị ngay từng token!)
+            string err;
+            List<string> installed = FetchOllamaModels(out err);
+            if (!string.IsNullOrEmpty(err)) throw new Exception(err);
+            if (installed.Count == 0)
+                throw new Exception("Ollama đang chạy nhưng chưa cài model nào. Hãy chạy: ollama pull qwen2.5:3b");
+
+            string model = (!string.IsNullOrEmpty(SelectedOllamaModel) && installed.Contains(SelectedOllamaModel))
+                ? SelectedOllamaModel : installed[0];
+            usedModel = model;
+
+            int numPredict, numCtx;
+            double temp;
+            GetSpeedParams(SpeedMode, out numPredict, out numCtx, out temp);
+
+            JavaScriptSerializer js = new JavaScriptSerializer();
+            var payload = new
+            {
+                model = model,
+                system = systemPrompt ?? "Bạn là trợ lý văn phòng VBTM Pro. Trả lời trực tiếp, chuẩn xác bằng tiếng Việt.",
+                prompt = userText ?? "",
+                stream = true,
+                keep_alive = "10m",
+                options = new { num_predict = numPredict, num_ctx = numCtx, temperature = temp }
+            };
+            byte[] bodyBytes = Encoding.UTF8.GetBytes(js.Serialize(payload));
+
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(OllamaBaseUrl.TrimEnd('/') + "/api/generate");
+            req.Method = "POST";
+            req.ContentType = "application/json; charset=utf-8";
+            req.ContentLength = bodyBytes.Length;
+            req.Proxy = null;
+            req.KeepAlive = false;
+            req.Timeout = 90000;
+            req.ReadWriteTimeout = 90000;
+            _activeRequest = req;
+
+            StringBuilder full = new StringBuilder();
+            try
+            {
+                using (Stream reqStream = req.GetRequestStream())
+                {
+                    reqStream.Write(bodyBytes, 0, bodyBytes.Length);
+                }
+
+                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
+                {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (_cancelRequested) throw new OperationCanceledException("Đã dừng xử lý AI theo yêu cầu người dùng.");
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        var chunk = js.Deserialize<Dictionary<string, object>>(line);
+                        if (chunk != null && chunk.ContainsKey("response"))
+                        {
+                            string tok = Convert.ToString(chunk["response"]);
+                            if (!string.IsNullOrEmpty(tok))
+                            {
+                                if (ttftMs == 0) ttftMs = sw.ElapsedMilliseconds;
+                                full.Append(tok);
+                                if (onToken != null) onToken(tok);
+                            }
+                        }
+                        if (chunk != null && chunk.ContainsKey("done") && Convert.ToBoolean(chunk["done"]))
+                            break;
+                    }
+                }
+            }
+            catch (WebException wex)
+            {
+                if (_cancelRequested || wex.Status == WebExceptionStatus.RequestCanceled)
+                    throw new OperationCanceledException("Đã dừng xử lý AI theo yêu cầu người dùng.");
+                throw new Exception("Lỗi kết nối Ollama Local: " + wex.Message);
+            }
+            finally
+            {
+                _activeRequest = null;
+                sw.Stop();
+                totalMs = sw.ElapsedMilliseconds;
+            }
+
+            string finalStr = full.ToString().Trim();
+            if (!string.IsNullOrEmpty(finalStr))
+            {
+                StoreCache(cacheKey, finalStr);
+                string resolvedKey = ActiveProvider + "|" + usedModel + "|" + SpeedMode + "|" + systemPrompt + "|" + userText;
+                StoreCache(resolvedKey, finalStr);
+            }
+            return finalStr;
+        }
+
+        private static void StoreCache(string key, string val)
+        {
+            lock (CacheLock)
+            {
+                if (ResultCache.Count > 60) ResultCache.Clear();
+                ResultCache[key] = val;
+            }
+        }
+    }
+
+    // =========================================================================
+    // 2. PHẦN MỀM CHÍNH: VBTM PRO 3.5.0 STUDIO + MICROSOFT WORD AUTOMATION
     // =========================================================================
     public class MainStudioForm : Form
     {
         private ComboBox cboTemplate;
         private TextBox txtGovOrg, txtIssueOrg, txtDocNum, txtLocation, txtDocType, txtSubject, txtSignerTitle, txtSignerName, txtQrContent;
-        private TextBox txtBody, txtRecipients;
+        private RichTextBox txtBody;
+        private TextBox txtRecipients;
         private PictureBox picQr;
         private ListBox lstIssues;
         private Label lblStatus;
         private CheckBox chkIncludeQr;
+
+        // Trạng thái Panel AI tích hợp bên phải + Hoàn tác + Cài đặt trang
+        private Panel pnlAiDock;
+        private ComboBox cboAiProvider, cboAiModel, cboAiSpeed;
+        private TextBox txtAiPrompt, txtAiOutput;
+        private Label lblAiConnState, lblAiProgress;
+        private Button btnAiRun, btnAiStop;
+        private volatile bool isAiBusy = false;
+        private readonly Stack<string> rtfUndoStack = new Stack<string>();
+        private string pagePaperSize = "A4";
+        private bool pageLandscape = false;
+        private double marginTopMm = 20, marginBottomMm = 20, marginLeftMm = 30, marginRightMm = 15;
+        private double lineSpacingVal = 1.15;
+        private int spaceBeforePt = 0, spaceAfterPt = 6;
+        private readonly ToolTip mainTips = new ToolTip();
 
         private static readonly string[,] SpellRules = new string[,]
         {
@@ -5246,8 +5550,9 @@ namespace VBTMProSuite
         public MainStudioForm()
         {
             try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls; } catch { }
-            this.Text = "★ VBTM Pro 2.5.0 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy (HD 05-HD/VPTW) & UBND Phường (NĐ 30/2020/NĐ-CP)";
-            this.ClientSize = new Size(1120, 720);
+            this.Text = "★ VBTM Pro v3.5.0 · Trợ Lý AI Ollama Local, Rà Soát & Thể Thức Văn Bản (05-HD/VPTW & NĐ 30/2020)";
+            this.ClientSize = new Size(1380, 800);
+            this.MinimumSize = new Size(1120, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Color.FromArgb(95, 10, 14);
             this.ForeColor = Color.White;
@@ -5347,8 +5652,8 @@ namespace VBTMProSuite
 
             Label lblBrand = new Label
             {
-                Text = "★ VBTM Pro 2.5.0",
-                Font = new Font("Segoe UI", 13.0f, FontStyle.Bold),
+                Text = "★ VBTM Pro v3.5.0",
+                Font = new Font("Segoe UI", 12.5f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(250, 204, 21),
                 Location = new Point(10, 16),
                 AutoSize = true
@@ -5418,6 +5723,82 @@ namespace VBTMProSuite
             };
             topBar.Controls.Add(btnPinWord);
 
+            Button btnToggleAiPanel = CreateBtn("🤖 Panel AI", new Point(1116, 14), new Size(106, 36), Color.FromArgb(29, 78, 216));
+            mainTips.SetToolTip(btnToggleAiPanel, "Thu gọn / Mở rộng bảng Trợ lý AI tích hợp bên phải");
+            btnToggleAiPanel.Click += (s, e) => { if (pnlAiDock != null) pnlAiDock.Visible = !pnlAiDock.Visible; };
+            topBar.Controls.Add(btnToggleAiPanel);
+
+            // THANH CÔNG CỤ AI CHÍNH (9 CHỨC NĂNG AI ĐƯA THẲNG LÊN THANH CÔNG CỤ)
+            FlowLayoutPanel aiRibbonBar = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 38,
+                BackColor = Color.FromArgb(30, 41, 59),
+                Padding = new Padding(8, 4, 8, 2),
+                WrapContents = false,
+                AutoScroll = true
+            };
+            aiRibbonBar.Controls.Add(new Label { Text = "TRỢ LÝ AI:", AutoSize = true, ForeColor = Color.FromArgb(250, 204, 21), Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Margin = new Padding(2, 7, 6, 0) });
+
+            AddAiQuickBtn(aiRibbonBar, "✍️ Soạn thảo", "AI hỗ trợ soạn thảo văn bản từ yêu cầu hoặc đoạn chọn", "Hãy soạn thảo hoàn chỉnh văn bản công vụ theo nội dung sau, giữ nguyên số liệu gốc:");
+            AddAiQuickBtn(aiRibbonBar, "🔄 Viết lại", "AI viết lại đoạn đang bôi đen cho mạch lạc, trang trọng", "Viết lại đoạn văn sau cho mạch lạc, súc tích theo văn phong công vụ, giữ nguyên thông tin gốc:");
+            AddAiQuickBtn(aiRibbonBar, "✅ Sửa chính tả", "AI kiểm tra & sửa lỗi chính tả tiếng Việt", "Chỉ sửa lỗi chính tả, dấu thanh và dấu câu tiếng Việt trong đoạn sau. Tuyệt đối giữ nguyên tên riêng, số liệu, căn cứ:");
+            AddAiQuickBtn(aiRibbonBar, "🔎 Rà soát toàn diện", "AI rà soát chính tả, ngữ pháp, diễn đạt & nội dung", "Rà soát toàn diện chính tả, ngữ pháp, diễn đạt và số liệu của đoạn sau; liệt kê từng lỗi kèm đề xuất sửa:");
+            AddAiQuickBtn(aiRibbonBar, "📝 Tóm tắt", "AI tóm tắt nhanh 3-5 ý trọng tâm", "Tóm tắt ngắn gọn nội dung sau thành 3-5 gạch đầu dòng trọng tâm để báo cáo lãnh đạo:");
+            AddAiQuickBtn(aiRibbonBar, "📊 Phân tích", "AI phân tích nội dung, số liệu & điểm nổi bật", "Phân tích chi tiết nội dung, kết quả, tồn tại và đề xuất từ văn bản sau:");
+            AddAiQuickBtn(aiRibbonBar, "🧠 Kiểm tra logic", "AI kiểm tra tính logic, mâu thuẫn trước sau", "Kiểm tra tính logic, sự nhất quán trước sau và số liệu trong văn bản sau; chỉ rõ điểm mâu thuẫn nếu có:");
+            AddAiQuickBtn(aiRibbonBar, "🔁 Đề xuất thay từ", "AI gợi ý thay từ ngữ chính xác, trang trọng hơn", "Đề xuất thay các từ ngữ chưa chuẩn hoặc khẩu ngữ trong đoạn sau bằng từ ngữ hành chính chuẩn mực, giải thích ngắn gọn:");
+
+            Button btnAiMgr = CreateToolChip("⚙ Quản lý AI", "Chọn nhà cung cấp AI (Ollama Local / Gemini) và model", Color.FromArgb(51, 65, 85));
+            btnAiMgr.Click += (s, e) => { if (pnlAiDock != null) pnlAiDock.Visible = true; RefreshDesktopOllamaModelsAsync(); };
+            aiRibbonBar.Controls.Add(btnAiMgr);
+
+            // THANH CÔNG CỤ THỂ THỨC VĂN BẢN (THAO TÁC THỰC TẾ + 05-HD/VPTW & NĐ 30 + HOÀN TÁC)
+            FlowLayoutPanel formatRibbonBar = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 40,
+                BackColor = Color.FromArgb(69, 10, 10),
+                Padding = new Padding(8, 5, 8, 2),
+                WrapContents = false,
+                AutoScroll = true
+            };
+            formatRibbonBar.Controls.Add(new Label { Text = "THỂ THỨC:", AutoSize = true, ForeColor = Color.FromArgb(254, 240, 138), Font = new Font("Segoe UI", 8.5f, FontStyle.Bold), Margin = new Padding(2, 7, 6, 0) });
+
+            ComboBox cboFontName = new ComboBox { Width = 122, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.5f), Margin = new Padding(2, 3, 2, 0) };
+            cboFontName.Items.AddRange(new object[] { "Times New Roman", "Arial", "Calibri", "Tahoma" });
+            cboFontName.SelectedIndex = 0;
+            cboFontName.SelectedIndexChanged += (s, e) => ApplyFontChange(cboFontName.Text, null);
+            formatRibbonBar.Controls.Add(cboFontName);
+
+            ComboBox cboFontSize = new ComboBox { Width = 48, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.5f), Margin = new Padding(2, 3, 4, 0) };
+            cboFontSize.Items.AddRange(new object[] { "12", "13", "14", "16", "18" });
+            cboFontSize.SelectedIndex = 2;
+            cboFontSize.SelectedIndexChanged += (s, e) => { float sz; if (float.TryParse(cboFontSize.Text, out sz)) ApplyFontChange(null, sz); };
+            formatRibbonBar.Controls.Add(cboFontSize);
+
+            AddFmtBtn(formatRibbonBar, "B", "In đậm đoạn chọn", () => ToggleFontStyle(FontStyle.Bold));
+            AddFmtBtn(formatRibbonBar, "I", "In nghiêng đoạn chọn", () => ToggleFontStyle(FontStyle.Italic));
+            AddFmtBtn(formatRibbonBar, "U", "Gạch chân đoạn chọn", () => ToggleFontStyle(FontStyle.Underline));
+            AddFmtBtn(formatRibbonBar, "🎨 Màu", "Đổi màu chữ đoạn chọn", () => PickSelectionColor());
+            AddFmtBtn(formatRibbonBar, "🧹 Xóa ĐD", "Xóa định dạng đoạn chọn (về Times New Roman 14pt thường)", () => ClearSelectionFormatting());
+            AddFmtBtn(formatRibbonBar, "⫷ Trái", "Căn trái đoạn văn", () => ApplyAlignment(HorizontalAlignment.Left));
+            AddFmtBtn(formatRibbonBar, "≡ Giữa", "Căn giữa đoạn văn", () => ApplyAlignment(HorizontalAlignment.Center));
+            AddFmtBtn(formatRibbonBar, "⫸ Phải", "Căn phải đoạn văn", () => ApplyAlignment(HorizontalAlignment.Right));
+            AddFmtBtn(formatRibbonBar, "⇶ Thụt dòng", "Thụt đầu dòng chuẩn 1.27cm", () => ToggleFirstLineIndent());
+            AddFmtBtn(formatRibbonBar, "H1/H2", "Định dạng tiêu đề mục (in đậm, 14pt)", () => ApplyHeadingFormat());
+            AddFmtBtn(formatRibbonBar, "1. Số", "Đánh số danh sách / Điều, khoản", () => ApplyNumberedList());
+            AddFmtBtn(formatRibbonBar, "• Gạch", "Danh sách gạch đầu dòng", () => ApplyBulletList());
+            AddFmtBtn(formatRibbonBar, "📄 Trang & Lề", "Chỉnh khổ giấy (A4/Letter), hướng giấy & lề trên/dưới/trái/phải", () => ShowPageSetupDialog());
+            AddFmtBtn(formatRibbonBar, "🏛️ KT 05-HD", "Kiểm tra thể thức văn bản Đảng theo Hướng dẫn 05-HD/VPTW", () => AuditFormatStandardDesktop(true));
+            AddFmtBtn(formatRibbonBar, "✨ Chuẩn 05-HD", "Xem trước & Chuẩn hóa chủ động theo Hướng dẫn 05-HD/VPTW", () => ApplyFormatStandardDesktop(true));
+            AddFmtBtn(formatRibbonBar, "📋 KT NĐ 30", "Kiểm tra thể thức hành chính theo Nghị định 30/2020/NĐ-CP", () => AuditFormatStandardDesktop(false));
+            AddFmtBtn(formatRibbonBar, "✨ Chuẩn NĐ 30", "Xem trước & Chuẩn hóa chủ động theo Nghị định 30/2020/NĐ-CP", () => ApplyFormatStandardDesktop(false));
+            AddFmtBtn(formatRibbonBar, "↩ Hoàn tác", "Hoàn tác thao tác chỉnh sửa / thể thức gần nhất", () => UndoBodyEdit());
+
+            // PANEL AI TÍCH HỢP BÊN PHẢI (THU GỌN / MỞ RỘNG, STREAMING TRỰC TIẾP, KHÔNG CHE VĂN BẢN)
+            pnlAiDock = BuildIntegratedAiRightPanel();
+
             Panel mainArea = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -5426,6 +5807,9 @@ namespace VBTMProSuite
             };
 
             this.Controls.Add(mainArea);
+            this.Controls.Add(pnlAiDock);
+            this.Controls.Add(formatRibbonBar);
+            this.Controls.Add(aiRibbonBar);
             this.Controls.Add(topBar);
             this.Controls.Add(lblStatus);
 
@@ -5599,18 +5983,538 @@ namespace VBTMProSuite
                 Size = new Size(550, 601)
             };
 
-            txtBody = new TextBox
+            txtBody = new RichTextBox
             {
                 Location = new Point(14, 28),
                 Size = new Size(522, 558),
                 Multiline = true,
-                ScrollBars = ScrollBars.Vertical,
+                ScrollBars = RichTextBoxScrollBars.Vertical,
                 Font = new Font("Times New Roman", 13.5f),
                 BackColor = Color.White,
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                AcceptsTab = true,
+                HideSelection = false,
+                DetectUrls = false,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
             grpEditor.Controls.Add(txtBody);
             mainArea.Controls.Add(grpEditor);
+
+            // Tự động dò danh sách model Ollama thực tế khi mở ứng dụng (bất đồng bộ, không treo UI)
+            RefreshDesktopOllamaModelsAsync();
+        }
+
+        private Button CreateToolChip(string text, string tip, Color bg)
+        {
+            Button b = new Button
+            {
+                Text = text,
+                AutoSize = true,
+                Height = 27,
+                Padding = new Padding(4, 0, 4, 0),
+                BackColor = bg,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Margin = new Padding(2, 2, 2, 0)
+            };
+            b.FlatAppearance.BorderColor = Color.FromArgb(148, 163, 184);
+            mainTips.SetToolTip(b, tip);
+            return b;
+        }
+
+        private void AddAiQuickBtn(FlowLayoutPanel bar, string label, string tip, string systemInstruction)
+        {
+            Button b = CreateToolChip(label, tip, Color.FromArgb(153, 27, 27));
+            b.Click += (s, e) => TriggerQuickAiAction(label, systemInstruction);
+            bar.Controls.Add(b);
+        }
+
+        private void AddFmtBtn(FlowLayoutPanel bar, string label, string tip, Action onClick)
+        {
+            Button b = CreateToolChip(label, tip, Color.FromArgb(127, 29, 29));
+            b.Click += (s, e) => { try { onClick(); } catch (Exception ex) { lblStatus.Text = "Lỗi thể thức: " + ex.Message; } };
+            bar.Controls.Add(b);
+        }
+
+        private Panel BuildIntegratedAiRightPanel()
+        {
+            Panel pnl = new Panel
+            {
+                Dock = DockStyle.Right,
+                Width = 360,
+                BackColor = Color.FromArgb(24, 24, 34),
+                Padding = new Padding(10)
+            };
+
+            Label lblHead = new Label
+            {
+                Text = "🤖 TRỢ LÝ AI TÍCH HỢP (OLLAMA LOCAL)",
+                ForeColor = Color.FromArgb(250, 204, 21),
+                Font = new Font("Segoe UI", 9.8f, FontStyle.Bold),
+                Location = new Point(10, 8),
+                Size = new Size(340, 22)
+            };
+            pnl.Controls.Add(lblHead);
+
+            lblAiConnState = new Label
+            {
+                Text = "Đang kiểm tra Ollama Local (127.0.0.1:11434)...",
+                ForeColor = Color.FromArgb(134, 239, 172),
+                Font = new Font("Segoe UI", 8.2f),
+                Location = new Point(10, 32),
+                Size = new Size(340, 20)
+            };
+            pnl.Controls.Add(lblAiConnState);
+
+            cboAiProvider = new ComboBox { Location = new Point(10, 56), Size = new Size(165, 24), DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.4f) };
+            cboAiProvider.Items.AddRange(new object[] { "Ollama Local (Mặc định)", "Google Gemini (Tùy chọn)" });
+            cboAiProvider.SelectedIndex = 0;
+            cboAiProvider.SelectedIndexChanged += (s, e) =>
+            {
+                DesktopAiGateway.ActiveProvider = (cboAiProvider.SelectedIndex == 0) ? "ollama" : "gemini";
+                RefreshDesktopOllamaModelsAsync();
+            };
+            pnl.Controls.Add(cboAiProvider);
+
+            cboAiSpeed = new ComboBox { Location = new Point(182, 56), Size = new Size(166, 24), DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.4f) };
+            cboAiSpeed.Items.AddRange(new object[] { "Nhanh", "Tiêu chuẩn", "Chuyên sâu" });
+            cboAiSpeed.SelectedIndex = 0;
+            cboAiSpeed.SelectedIndexChanged += (s, e) => { DesktopAiGateway.SpeedMode = cboAiSpeed.Text; };
+            pnl.Controls.Add(cboAiSpeed);
+
+            cboAiModel = new ComboBox { Location = new Point(10, 86), Size = new Size(256, 24), DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8.4f) };
+            cboAiModel.SelectedIndexChanged += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(cboAiModel.Text) && !cboAiModel.Text.StartsWith("("))
+                    DesktopAiGateway.SelectedOllamaModel = cboAiModel.Text;
+            };
+            pnl.Controls.Add(cboAiModel);
+
+            Button btnReloadM = CreateToolChip("↻ Model", "Tải lại danh sách model thực tế từ Ollama /api/tags", Color.FromArgb(51, 65, 85));
+            btnReloadM.Location = new Point(272, 85);
+            btnReloadM.Size = new Size(76, 26);
+            btnReloadM.AutoSize = false;
+            btnReloadM.Click += (s, e) => RefreshDesktopOllamaModelsAsync();
+            pnl.Controls.Add(btnReloadM);
+
+            pnl.Controls.Add(new Label { Text = "Yêu cầu cho AI (tự lấy đoạn bôi đen hoặc toàn văn bản):", ForeColor = Color.LightGray, Font = new Font("Segoe UI", 8.2f), Location = new Point(10, 116), Size = new Size(340, 18) });
+            txtAiPrompt = new TextBox
+            {
+                Location = new Point(10, 136),
+                Size = new Size(338, 66),
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                BackColor = Color.FromArgb(30, 41, 59),
+                ForeColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Text = "Sửa lỗi chính tả và diễn đạt cho đoạn văn đang chọn."
+            };
+            pnl.Controls.Add(txtAiPrompt);
+
+            btnAiRun = CreateBtn("▶ Chạy AI", new Point(10, 208), new Size(106, 30), Color.FromArgb(5, 150, 105));
+            btnAiRun.Click += (s, e) => TriggerQuickAiAction("Yêu cầu tùy chỉnh", txtAiPrompt.Text);
+            pnl.Controls.Add(btnAiRun);
+
+            btnAiStop = CreateBtn("⏹ Dừng", new Point(122, 208), new Size(80, 30), Color.FromArgb(185, 28, 28));
+            btnAiStop.Enabled = false;
+            btnAiStop.Click += (s, e) => DesktopAiGateway.CancelActive();
+            pnl.Controls.Add(btnAiStop);
+
+            Button btnAiCopy = CreateBtn("📋 Sao chép", new Point(208, 208), new Size(140, 30), Color.FromArgb(51, 65, 85));
+            btnAiCopy.Click += (s, e) => { if (!string.IsNullOrEmpty(txtAiOutput.Text)) { Clipboard.SetText(txtAiOutput.Text); lblAiProgress.Text = "Đã sao chép kết quả AI."; } };
+            pnl.Controls.Add(btnAiCopy);
+
+            lblAiProgress = new Label
+            {
+                Text = "Sẵn sàng — phản hồi streaming trực tiếp không treo máy.",
+                ForeColor = Color.FromArgb(253, 224, 71),
+                Font = new Font("Segoe UI", 8.1f, FontStyle.Italic),
+                Location = new Point(10, 244),
+                Size = new Size(340, 20)
+            };
+            pnl.Controls.Add(lblAiProgress);
+
+            txtAiOutput = new TextBox
+            {
+                Location = new Point(10, 266),
+                Size = new Size(338, 300),
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                Font = new Font("Times New Roman", 11.5f),
+                BackColor = Color.FromArgb(15, 23, 42),
+                ForeColor = Color.FromArgb(241, 245, 249),
+                BorderStyle = BorderStyle.FixedSingle,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            pnl.Controls.Add(txtAiOutput);
+
+            Button btnInsert = CreateBtn("➕ Chèn vào VB", new Point(10, 574), new Size(110, 32), Color.FromArgb(29, 78, 216));
+            btnInsert.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnInsert.Click += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtAiOutput.Text)) return;
+                PushUndoSnapshot();
+                int pos = txtBody.SelectionStart + txtBody.SelectionLength;
+                txtBody.Select(pos, 0);
+                txtBody.SelectedText = "\r\n" + txtAiOutput.Text.Trim();
+                lblStatus.Text = "✓ Đã chèn kết quả AI vào tài liệu (có thể bấm Hoàn tác).";
+            };
+            pnl.Controls.Add(btnInsert);
+
+            Button btnReplace = CreateBtn("🔁 Thay chọn", new Point(126, 574), new Size(110, 32), Color.FromArgb(5, 150, 105));
+            btnReplace.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnReplace.Click += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtAiOutput.Text)) return;
+                PushUndoSnapshot();
+                if (txtBody.SelectionLength > 0) txtBody.SelectedText = txtAiOutput.Text.Trim();
+                else txtBody.Text = txtAiOutput.Text.Trim();
+                lblStatus.Text = "✓ Đã thay thế nội dung bằng kết quả AI (có thể bấm Hoàn tác).";
+            };
+            pnl.Controls.Add(btnReplace);
+
+            Button btnUndoAi = CreateBtn("↩ Hoàn tác", new Point(242, 574), new Size(106, 32), Color.FromArgb(153, 27, 27));
+            btnUndoAi.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnUndoAi.Click += (s, e) => UndoBodyEdit();
+            pnl.Controls.Add(btnUndoAi);
+
+            return pnl;
+        }
+
+        private void RefreshDesktopOllamaModelsAsync()
+        {
+            System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+            {
+                string err;
+                List<string> list = DesktopAiGateway.FetchOllamaModels(out err);
+                try
+                {
+                    if (this.IsDisposed) return;
+                    this.BeginInvoke((Action)(() =>
+                    {
+                        cboAiModel.Items.Clear();
+                        if (DesktopAiGateway.ActiveProvider == "gemini")
+                        {
+                            cboAiModel.Items.Add("gemini-flash-lite-latest");
+                            cboAiModel.SelectedIndex = 0;
+                            lblAiConnState.Text = "Nhà cung cấp: Google Gemini (Tùy chọn bổ sung)";
+                            lblAiConnState.ForeColor = Color.FromArgb(147, 197, 253);
+                            return;
+                        }
+                        if (list.Count > 0)
+                        {
+                            foreach (string m in list) cboAiModel.Items.Add(m);
+                            cboAiModel.SelectedItem = DesktopAiGateway.SelectedOllamaModel;
+                            if (cboAiModel.SelectedIndex < 0) cboAiModel.SelectedIndex = 0;
+                            lblAiConnState.Text = "✓ Ollama Local sẵn sàng · Model: " + cboAiModel.Text;
+                            lblAiConnState.ForeColor = Color.FromArgb(134, 239, 172);
+                        }
+                        else
+                        {
+                            cboAiModel.Items.Add("(Chưa có model Ollama)");
+                            cboAiModel.SelectedIndex = 0;
+                            lblAiConnState.Text = string.IsNullOrEmpty(err) ? "⚠ Ollama chạy nhưng chưa có model" : "⚠ " + err;
+                            lblAiConnState.ForeColor = Color.FromArgb(252, 165, 165);
+                        }
+                    }));
+                }
+                catch { }
+            });
+        }
+
+        private void TriggerQuickAiAction(string actionTitle, string systemInstruction)
+        {
+            if (isAiBusy)
+            {
+                lblAiProgress.Text = "AI đang xử lý yêu cầu trước — bấm ⏹ Dừng nếu muốn hủy.";
+                return;
+            }
+            if (pnlAiDock != null && !pnlAiDock.Visible) pnlAiDock.Visible = true;
+
+            string targetText = (txtBody.SelectionLength > 0) ? txtBody.SelectedText.Trim() : txtBody.Text.Trim();
+            string scopeLabel = (txtBody.SelectionLength > 0) ? "đoạn đang chọn" : "toàn văn bản";
+            if (string.IsNullOrWhiteSpace(targetText))
+            {
+                lblAiProgress.Text = "Chưa có nội dung văn bản để xử lý.";
+                return;
+            }
+
+            isAiBusy = true;
+            btnAiRun.Enabled = false;
+            btnAiStop.Enabled = true;
+            txtAiOutput.Text = "";
+            lblAiProgress.Text = "Đang xử lý [" + actionTitle + "] trên " + scopeLabel + " (" + DesktopAiGateway.SpeedMode + ")...";
+
+            System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    long ttft, total;
+                    bool cached;
+                    string usedModel;
+                    string result = DesktopAiGateway.GenerateStreaming(
+                        systemInstruction,
+                        targetText,
+                        (tok) =>
+                        {
+                            if (this.IsDisposed) return;
+                            try { this.BeginInvoke((Action)(() => txtAiOutput.AppendText(tok))); } catch { }
+                        },
+                        out ttft, out total, out cached, out usedModel
+                    );
+                    if (!this.IsDisposed)
+                    {
+                        this.BeginInvoke((Action)(() =>
+                        {
+                            if (string.IsNullOrWhiteSpace(txtAiOutput.Text)) txtAiOutput.Text = result;
+                            lblAiProgress.Text = cached
+                                ? "✓ Xong từ Cache (<1ms) · " + usedModel
+                                : string.Format("✓ Xong! Token đầu: {0}ms · Tổng: {1}ms · Model: {2}", ttft, total, usedModel);
+                        }));
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    if (!this.IsDisposed) this.BeginInvoke((Action)(() => lblAiProgress.Text = "⏹ Đã dừng xử lý AI (nội dung gốc được giữ nguyên)."));
+                }
+                catch (Exception ex)
+                {
+                    if (!this.IsDisposed) this.BeginInvoke((Action)(() => lblAiProgress.Text = "⚠ " + ex.Message));
+                }
+                finally
+                {
+                    isAiBusy = false;
+                    if (!this.IsDisposed)
+                    {
+                        this.BeginInvoke((Action)(() =>
+                        {
+                            btnAiRun.Enabled = true;
+                            btnAiStop.Enabled = false;
+                        }));
+                    }
+                }
+            });
+        }
+
+        // ================= CÁC HÀM CĂN CHỈNH THỂ THỨC THỰC TẾ + HOÀN TÁC =================
+        private void PushUndoSnapshot()
+        {
+            if (txtBody != null) rtfUndoStack.Push(txtBody.Rtf);
+        }
+
+        public bool UndoBodyEdit()
+        {
+            if (rtfUndoStack.Count == 0)
+            {
+                lblStatus.Text = "Không còn bước hoàn tác nào.";
+                return false;
+            }
+            txtBody.Rtf = rtfUndoStack.Pop();
+            lblStatus.Text = "↩ Đã hoàn tác nguyên trạng nội dung & định dạng trước đó.";
+            return true;
+        }
+
+        private void EnsureSelectionOrAll()
+        {
+            if (txtBody.SelectionLength == 0 && txtBody.TextLength > 0)
+                txtBody.SelectAll();
+        }
+
+        public void ApplyFontChange(string fontName, float? fontSize)
+        {
+            PushUndoSnapshot();
+            EnsureSelectionOrAll();
+            Font cur = txtBody.SelectionFont ?? txtBody.Font;
+            string fn = string.IsNullOrEmpty(fontName) ? cur.FontFamily.Name : fontName;
+            float sz = fontSize.HasValue ? fontSize.Value : cur.Size;
+            txtBody.SelectionFont = new Font(fn, sz, cur.Style);
+            lblStatus.Text = "✓ Đã áp dụng phông " + fn + " cỡ " + sz + "pt.";
+        }
+
+        public void ToggleFontStyle(FontStyle style)
+        {
+            PushUndoSnapshot();
+            EnsureSelectionOrAll();
+            Font cur = txtBody.SelectionFont ?? txtBody.Font;
+            FontStyle next = cur.Style ^ style;
+            txtBody.SelectionFont = new Font(cur.FontFamily, cur.Size, next);
+            lblStatus.Text = "✓ Đã cập nhật kiểu chữ " + style.ToString() + ".";
+        }
+
+        private void PickSelectionColor()
+        {
+            using (ColorDialog cd = new ColorDialog())
+            {
+                if (cd.ShowDialog() == DialogResult.OK)
+                {
+                    PushUndoSnapshot();
+                    EnsureSelectionOrAll();
+                    txtBody.SelectionColor = cd.Color;
+                    lblStatus.Text = "✓ Đã đổi màu chữ đoạn chọn.";
+                }
+            }
+        }
+
+        public void ClearSelectionFormatting()
+        {
+            PushUndoSnapshot();
+            EnsureSelectionOrAll();
+            txtBody.SelectionFont = new Font("Times New Roman", 14f, FontStyle.Regular);
+            txtBody.SelectionColor = Color.Black;
+            txtBody.SelectionIndent = 0;
+            txtBody.SelectionHangingIndent = 0;
+            lblStatus.Text = "✓ Đã xóa định dạng đoạn chọn (về Times New Roman 14pt).";
+        }
+
+        public void ApplyAlignment(HorizontalAlignment align)
+        {
+            PushUndoSnapshot();
+            txtBody.SelectionAlignment = align;
+            lblStatus.Text = "✓ Đã căn lề đoạn: " + align.ToString() + ".";
+        }
+
+        public void ToggleFirstLineIndent()
+        {
+            PushUndoSnapshot();
+            txtBody.SelectionIndent = (txtBody.SelectionIndent == 0) ? 36 : 0; // ~1.27cm
+            lblStatus.Text = txtBody.SelectionIndent > 0 ? "✓ Đã thụt đầu dòng 1.27cm." : "✓ Đã bỏ thụt đầu dòng.";
+        }
+
+        private void ApplyHeadingFormat()
+        {
+            PushUndoSnapshot();
+            EnsureSelectionOrAll();
+            txtBody.SelectionFont = new Font("Times New Roman", 14f, FontStyle.Bold);
+            txtBody.SelectionAlignment = HorizontalAlignment.Left;
+            lblStatus.Text = "✓ Đã định dạng tiêu đề đề mục (Times New Roman 14pt, Đậm).";
+        }
+
+        private void ApplyNumberedList()
+        {
+            PushUndoSnapshot();
+            string src = txtBody.SelectionLength > 0 ? txtBody.SelectedText : txtBody.Text;
+            string[] lines = src.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            StringBuilder sb = new StringBuilder();
+            int idx = 1;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string t = lines[i].Trim();
+                if (t.Length > 0) sb.AppendLine((idx++) + ". " + Regex.Replace(t, @"^\d+\.\s*", ""));
+                else sb.AppendLine();
+            }
+            if (txtBody.SelectionLength > 0) txtBody.SelectedText = sb.ToString().TrimEnd();
+            else txtBody.Text = sb.ToString().TrimEnd();
+            lblStatus.Text = "✓ Đã đánh số danh sách theo thứ tự.";
+        }
+
+        private void ApplyBulletList()
+        {
+            PushUndoSnapshot();
+            txtBody.SelectionBullet = !txtBody.SelectionBullet;
+            lblStatus.Text = txtBody.SelectionBullet ? "✓ Đã bật danh sách gạch đầu dòng." : "✓ Đã tắt danh sách gạch đầu dòng.";
+        }
+
+        private void ShowPageSetupDialog()
+        {
+            Form dlg = new Form { Text = "Cài Đặt Khổ Giấy & Lề Trang (VBTM Pro v3.5.0)", Size = new Size(390, 320), StartPosition = FormStartPosition.CenterParent, FormBorderStyle = FormBorderStyle.FixedDialog, MaximizeBox = false, MinimizeBox = false };
+            ComboBox cPaper = new ComboBox { Location = new Point(150, 20), Width = 200, DropDownStyle = ComboBoxStyle.DropDownList };
+            cPaper.Items.AddRange(new object[] { "A4 (210 x 297 mm)", "Letter (216 x 279 mm)" });
+            cPaper.SelectedIndex = (pagePaperSize == "A4") ? 0 : 1;
+            CheckBox chkLand = new CheckBox { Text = "Hướng giấy ngang (Landscape)", Location = new Point(150, 52), AutoSize = true, Checked = pageLandscape };
+            NumericUpDown nTop = new NumericUpDown { Location = new Point(150, 84), Width = 80, Minimum = 5, Maximum = 60, Value = (decimal)marginTopMm };
+            NumericUpDown nBot = new NumericUpDown { Location = new Point(150, 114), Width = 80, Minimum = 5, Maximum = 60, Value = (decimal)marginBottomMm };
+            NumericUpDown nLeft = new NumericUpDown { Location = new Point(150, 144), Width = 80, Minimum = 5, Maximum = 60, Value = (decimal)marginLeftMm };
+            NumericUpDown nRight = new NumericUpDown { Location = new Point(150, 174), Width = 80, Minimum = 5, Maximum = 60, Value = (decimal)marginRightMm };
+            NumericUpDown nLine = new NumericUpDown { Location = new Point(150, 204), Width = 80, DecimalPlaces = 2, Increment = 0.05m, Minimum = 1.0m, Maximum = 2.5m, Value = (decimal)lineSpacingVal };
+
+            dlg.Controls.AddRange(new Control[] {
+                new Label { Text = "Khổ giấy:", Location = new Point(20, 24), AutoSize = true }, cPaper, chkLand,
+                new Label { Text = "Lề trên (mm):", Location = new Point(20, 88), AutoSize = true }, nTop,
+                new Label { Text = "Lề dưới (mm):", Location = new Point(20, 118), AutoSize = true }, nBot,
+                new Label { Text = "Lề trái (mm):", Location = new Point(20, 148), AutoSize = true }, nLeft,
+                new Label { Text = "Lề phải (mm):", Location = new Point(20, 178), AutoSize = true }, nRight,
+                new Label { Text = "Giãn dòng:", Location = new Point(20, 208), AutoSize = true }, nLine
+            });
+            Button bOk = new Button { Text = "Áp dụng", DialogResult = DialogResult.OK, Location = new Point(150, 242), Width = 95 };
+            Button bCancel = new Button { Text = "Hủy", DialogResult = DialogResult.Cancel, Location = new Point(255, 242), Width = 95 };
+            dlg.Controls.AddRange(new Control[] { bOk, bCancel });
+            dlg.AcceptButton = bOk;
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                pagePaperSize = (cPaper.SelectedIndex == 0) ? "A4" : "Letter";
+                pageLandscape = chkLand.Checked;
+                marginTopMm = (double)nTop.Value;
+                marginBottomMm = (double)nBot.Value;
+                marginLeftMm = (double)nLeft.Value;
+                marginRightMm = (double)nRight.Value;
+                lineSpacingVal = (double)nLine.Value;
+                lblStatus.Text = string.Format("✓ Đã cài trang: {0} ({1}) · Lề T/D/Tr/P: {2}/{3}/{4}/{5}mm · Giãn dòng {6}.",
+                    pagePaperSize, pageLandscape ? "Ngang" : "Dọc", marginTopMm, marginBottomMm, marginLeftMm, marginRightMm, lineSpacingVal);
+            }
+        }
+
+        public string AuditFormatStandardDesktop(bool isPartyHd05)
+        {
+            StringBuilder sb = new StringBuilder();
+            string stdName = isPartyHd05 ? "Hướng dẫn 05-HD/VPTW (Văn bản Đảng)" : "Nghị định 30/2020/NĐ-CP (Văn bản hành chính)";
+            sb.AppendLine("=== KẾT QUẢ KIỂM TRA THỂ THỨC: " + stdName + " ===");
+            if (isPartyHd05)
+            {
+                string oldHdPattern = "36" + "-HD/VPTW";
+                if (Regex.IsMatch(txtBody.Text, oldHdPattern, RegexOptions.IgnoreCase))
+                    sb.AppendLine("- [NGHIÊM TRỌNG] Có trích dẫn văn bản hướng dẫn cũ đã hết hiệu lực -> cần thay bằng 05-HD/VPTW.");
+                if (!txtRecipients.Text.Contains("Lưu Văn phòng Đảng ủy"))
+                    sb.AppendLine("- [CẦN XEM XÉT] Nơi nhận chưa có dòng '- Lưu Văn phòng Đảng ủy.'.");
+                sb.AppendLine("- [THÔNG SỐ 05-HD/VPTW] A4 (210x297mm) · Times New Roman 14pt · Lề Trái 30-35mm, Phải 15-20mm, Trên/Dưới 20-25mm.");
+            }
+            else
+            {
+                if (!Regex.IsMatch(txtRecipients.Text, @"Lưu:\s*VT", RegexOptions.IgnoreCase))
+                    sb.AppendLine("- [CẦN XEM XÉT] Nơi nhận chưa có dòng '- Lưu: VT, ...'.");
+                if (!txtBody.Text.Trim().EndsWith("./."))
+                    sb.AppendLine("- [GỢI Ý] Cuối phần nội dung văn bản hành chính thường kết thúc bằng './.'.");
+                sb.AppendLine("- [THÔNG SỐ NĐ 30/2020] A4 (210x297mm) · Times New Roman 13-14pt · Lề Trái 30-35mm, Phải 15-20mm, Trên/Dưới 20-25mm.");
+            }
+            if (Regex.IsMatch(txtBody.Text, @"\s+[,.;:!?]"))
+                sb.AppendLine("- [CẦN SỬA] Có khoảng trắng thừa trước dấu câu.");
+            lstIssues.Items.Clear();
+            foreach (string l in sb.ToString().Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+                lstIssues.Items.Add(l);
+            lblStatus.Text = "✓ Đã kiểm tra xong " + stdName + " (chưa thay đổi tài liệu).";
+            return sb.ToString();
+        }
+
+        public bool ApplyFormatStandardDesktop(bool isPartyHd05, bool skipConfirm = false)
+        {
+            string audit = AuditFormatStandardDesktop(isPartyHd05);
+            string stdName = isPartyHd05 ? "Hướng dẫn 05-HD/VPTW (Văn bản Đảng)" : "Nghị định 30/2020/NĐ-CP (Văn bản hành chính)";
+            if (!skipConfirm)
+            {
+                if (MessageBox.Show(audit + "\n\nBạn có xác nhận áp dụng chuẩn hóa " + stdName + " không?\n(Có thể bấm '↩ Hoàn tác' ngay sau đó.)",
+                    "Xác Nhận Chuẩn Hóa Thể Thức", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                    return false;
+            }
+            PushUndoSnapshot();
+            pagePaperSize = "A4";
+            pageLandscape = false;
+            marginTopMm = 20; marginBottomMm = 20; marginLeftMm = 30; marginRightMm = 15;
+            lineSpacingVal = 1.15;
+
+            string cleaned = Regex.Replace(txtBody.Text, @"\s+([,.;:!?])", "$1");
+            if (isPartyHd05)
+                cleaned = Regex.Replace(cleaned, "36" + "-HD/VPTW", "05-HD/VPTW", RegexOptions.IgnoreCase);
+            else if (cleaned.Trim().Length > 0 && !cleaned.Trim().EndsWith("./."))
+                cleaned = cleaned.TrimEnd('.') + "./.";
+
+            txtBody.Text = cleaned;
+            txtBody.SelectAll();
+            txtBody.SelectionFont = new Font("Times New Roman", 14f, FontStyle.Regular);
+            txtBody.SelectionColor = Color.Black;
+            txtBody.Select(0, 0);
+            lblStatus.Text = "✓ Đã áp dụng chuẩn hóa " + stdName + " (có thể bấm Hoàn tác).";
+            return true;
         }
 
         private TextBox AddLabeledInput(Control parent, string label, int y, string defaultVal)
