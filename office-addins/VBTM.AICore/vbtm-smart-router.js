@@ -1,83 +1,50 @@
 /**
- * VBTM.SmartRouter — VBTM AI Gateway & Trung tâm điều phối AI mặc định KHÔNG CẦN API KEY
- * Thứ tự ưu tiên mặc định:
- *   1. Ollama Local (http://localhost:11434) — KHÔNG CẦN API KEY, chạy trực tiếp trên Windows
- *   2. Google Gemini API (chỉ dùng nếu người dùng đã chủ động cấu hình Key và chính sách cho phép)
- *   3. OpenAI API chính thức (chỉ dùng nếu người dùng đã cấu hình Key và xác nhận cho phép trả phí)
+ * VBTM.SmartRouter — VBTM AI Gateway duy nhất (Mặc định: Ollama Local http://127.0.0.1:11434)
  *
- * Bảo mật & Trung thực:
- * - Chế độ 'local-only': TUYỆT ĐỐI không gửi dữ liệu sang Cloud (Gemini/OpenAI).
- * - Không tự ý tải model dung lượng lớn khi chưa có xác nhận người dùng.
- * - Không giả lập phản hồi AI; không báo lỗi chặn "Chưa nhập Gemini API Key" cho toàn hệ thống.
+ * Nguyên tắc kiến trúc bắt buộc:
+ * 1. Provider mặc định là 'ollama' (Ollama Local tại http://127.0.0.1:11434) — KHÔNG cần Gemini API Key.
+ * 2. Khi đang chọn 'ollama': TUYỆT ĐỐI KHÔNG gọi Gemini/OpenAI, KHÔNG chuyển ngầm sang Gemini khi Ollama lỗi.
+ * 3. Chỉ sử dụng model thực sự tồn tại trên máy (lấy trực tiếp từ GET /api/tags), không tự đoán tên model.
+ * 4. Circuit Breaker quản lý ĐỘC LẬP cho từng provider; lỗi Gemini cũ KHÔNG BAO GIỜ khóa Ollama.
+ * 5. Đổi provider, sửa cấu hình hoặc bấm Kiểm tra kết nối sẽ tự động reset Circuit Breaker của provider đó.
+ * 6. Không giả lập câu trả lời AI; luôn trả lỗi thật, rõ ràng và giữ nguyên nội dung người dùng.
  */
 (function (global) {
   'use strict';
 
   const KEYS = {
-    POLICY: 'vbtm_router_policy',           // 'ollama-first' (mặc định) | 'local-only' | 'gemini-first' | 'ask-before-paid' | 'manual'
-    MANUAL_PROV: 'vbtm_router_manual_prov', // 'ollama' | 'gemini' | 'openai'
+    PROVIDER: 'vbtm_active_provider_v4',     // 'ollama' (mặc định) | 'gemini' | 'openai'
+    OLLAMA_URL: 'vbtm_office_ollama_url',    // mặc định http://127.0.0.1:11434
+    OLLAMA_MODEL: 'vbtm_office_ollama_model',
     OPENAI_KEY: 'vbtm_office_openai_key',
     OPENAI_MODEL: 'vbtm_office_openai_model',
-    OLLAMA_URL: 'vbtm_office_ollama_url',
-    OLLAMA_MODEL: 'vbtm_office_ollama_model',
-    ALLOW_PAID: 'vbtm_router_allow_paid'
+    LEGACY_POLICY: 'vbtm_router_policy'
   };
 
-  // Danh mục model tiếng Việt được đánh giá theo cấu hình máy & loại tác vụ
-  const MODEL_CATALOG = [
-    {
-      name: 'qwen2.5:3b',
-      sizeGb: 1.9,
-      minRamGb: 6,
-      tier: 'low',
-      viQuality: 'Khá tốt (nhanh)',
-      bestFor: ['spell', 'summary', 'extract'],
-      note: 'Máy cấu hình thấp (RAM ≤ 8GB): soát lỗi chính tả nhanh, tóm tắt ngắn.'
-    },
-    {
-      name: 'qwen2.5:7b',
-      sizeGb: 4.7,
-      minRamGb: 10,
-      tier: 'medium',
-      viQuality: 'Rất tốt (chuẩn tiếng Việt công vụ)',
-      bestFor: ['draft', 'spell', 'summary', 'table', 'extract'],
-      note: 'Máy cấu hình trung bình (RAM 12–16GB): khuyến nghị mặc định cho soạn thảo, soát lỗi ngữ cảnh & phân tích bảng.'
-    },
-    {
-      name: 'gemma2:9b',
-      sizeGb: 5.5,
-      minRamGb: 12,
-      tier: 'medium',
-      viQuality: 'Tốt (văn phong mạch lạc)',
-      bestFor: ['draft', 'summary', 'rewrite'],
-      note: 'Máy RAM 16GB: văn phong mượt, tóm tắt rõ ý.'
-    },
-    {
-      name: 'qwen2.5:14b',
-      sizeGb: 9.0,
-      minRamGb: 16,
-      tier: 'high',
-      viQuality: 'Xuất sắc (tài liệu dài & tham mưu)',
-      bestFor: ['long_analysis', 'draft', 'table', 'spell'],
-      note: 'Máy cấu hình cao (RAM ≥ 24GB / VRAM ≥ 12GB): phân tích tài liệu dài, tham mưu chuyên sâu.'
+  // Dọn chính sách cũ có thể kéo về Gemini từ localStorage cũ
+  try {
+    const oldPol = localStorage.getItem(KEYS.LEGACY_POLICY);
+    if (oldPol && !localStorage.getItem(KEYS.PROVIDER)) {
+      localStorage.setItem(KEYS.PROVIDER, 'ollama');
     }
-  ];
+    if (oldPol) localStorage.removeItem(KEYS.LEGACY_POLICY);
+  } catch (e) {}
 
+  // Circuit Breaker riêng biệt hoàn toàn cho từng provider
   const circuitState = {
     ollama: { fails: 0, openUntil: 0, lastLatencyMs: 0, lastError: '' },
     gemini: { fails: 0, openUntil: 0, lastLatencyMs: 0, lastError: '' },
     openai: { fails: 0, openUntil: 0, lastLatencyMs: 0, lastError: '' }
   };
 
-  const runtimeDiscovery = {
-    status: 'checking', // 'ready' | 'no_model' | 'not_running' | 'pulling' | 'checking'
-    ollamaRunning: false,
-    installedModels: [],
-    selectedModel: '',
-    estimatedRamGb: (typeof navigator !== 'undefined' && navigator.deviceMemory) ? navigator.deviceMemory : 8,
-    lastCheckAt: 0,
-    errorDetail: ''
+  const ollamaCache = {
+    running: false,
+    models: [],
+    lastError: '',
+    checkedAt: 0
   };
+
+  const requestAuditLog = []; // Ghi nhận provider nào thực sự được gọi (để kiểm chứng 0 request sang Gemini khi chọn Ollama)
 
   function getStr(k, def) {
     try { return (localStorage.getItem(k) || def).trim(); } catch (e) { return def; }
@@ -89,47 +56,63 @@
     } catch (e) {}
   }
 
-  function getPolicy() { return getStr(KEYS.POLICY, 'ollama-first'); }
-  function setPolicy(p) { setStr(KEYS.POLICY, p); }
-  function getManualProvider() { return getStr(KEYS.MANUAL_PROV, 'ollama'); }
-  function setManualProvider(p) { setStr(KEYS.MANUAL_PROV, p); }
+  function getActiveProvider() {
+    const p = getStr(KEYS.PROVIDER, 'ollama').toLowerCase();
+    return (p === 'gemini' || p === 'openai') ? p : 'ollama';
+  }
+
+  function setActiveProvider(prov) {
+    const clean = (prov === 'gemini' || prov === 'openai') ? prov : 'ollama';
+    setStr(KEYS.PROVIDER, clean);
+    // Reset Circuit Breaker của provider mới chọn để không dùng lỗi cũ trong cache
+    resetCircuitBreaker(clean);
+  }
+
+  function getOllamaUrl() {
+    const u = getStr(KEYS.OLLAMA_URL, 'http://127.0.0.1:11434');
+    return u.replace(/\/+$/, '');
+  }
+  function setOllamaUrl(u) {
+    setStr(KEYS.OLLAMA_URL, u || 'http://127.0.0.1:11434');
+    resetCircuitBreaker('ollama');
+  }
+
+  function getOllamaModel() { return getStr(KEYS.OLLAMA_MODEL, ''); }
+  function setOllamaModel(m) {
+    setStr(KEYS.OLLAMA_MODEL, m || '');
+    resetCircuitBreaker('ollama');
+  }
+
   function getOpenAiKey() { return getStr(KEYS.OPENAI_KEY, ''); }
-  function setOpenAiKey(k) { setStr(KEYS.OPENAI_KEY, k); }
+  function setOpenAiKey(k) { setStr(KEYS.OPENAI_KEY, k); resetCircuitBreaker('openai'); }
   function getOpenAiModel() { return getStr(KEYS.OPENAI_MODEL, 'gpt-4o-mini'); }
-  function setOpenAiModel(m) { setStr(KEYS.OPENAI_MODEL, m); }
-  function getOllamaUrl() { return getStr(KEYS.OLLAMA_URL, 'http://localhost:11434'); }
-  function setOllamaUrl(u) { setStr(KEYS.OLLAMA_URL, u); }
-  function getOllamaModel() { return getStr(KEYS.OLLAMA_MODEL, runtimeDiscovery.selectedModel || 'qwen2.5:7b'); }
-  function setOllamaModel(m) { setStr(KEYS.OLLAMA_MODEL, m); runtimeDiscovery.selectedModel = m; }
-
-  function recommendModelForHardware(ramGb) {
-    const r = Number(ramGb) || runtimeDiscovery.estimatedRamGb || 8;
-    if (r >= 24) return MODEL_CATALOG.find(m => m.name === 'qwen2.5:14b') || MODEL_CATALOG[1];
-    if (r >= 10) return MODEL_CATALOG.find(m => m.name === 'qwen2.5:7b') || MODEL_CATALOG[1];
-    return MODEL_CATALOG.find(m => m.name === 'qwen2.5:3b') || MODEL_CATALOG[0];
-  }
-
-  function pickBestInstalledModelForTask(installedModels, taskType) {
-    if (!Array.isArray(installedModels) || !installedModels.length) return '';
-    const saved = getStr(KEYS.OLLAMA_MODEL, '');
-    if (saved && installedModels.includes(saved)) return saved;
-
-    // Ưu tiên model tiếng Việt phù hợp loại tác vụ
-    const task = String(taskType || 'general').toLowerCase();
-    const preferList = (task === 'spell' || task === 'summary')
-      ? ['qwen2.5:7b', 'qwen2.5:3b', 'gemma2:9b', 'qwen2.5:14b']
-      : ['qwen2.5:14b', 'qwen2.5:7b', 'gemma2:9b', 'qwen2.5:3b'];
-
-    for (const pref of preferList) {
-      const hit = installedModels.find(m => m.toLowerCase().startsWith(pref.toLowerCase()));
-      if (hit) return hit;
-    }
-    return installedModels[0];
-  }
+  function setOpenAiModel(m) { setStr(KEYS.OPENAI_MODEL, m || 'gpt-4o-mini'); resetCircuitBreaker('openai'); }
 
   function isCircuitOpen(prov) {
     const c = circuitState[prov];
     return !!(c && c.openUntil > Date.now());
+  }
+
+  function resetCircuitBreaker(prov) {
+    if (prov && circuitState[prov]) {
+      circuitState[prov].fails = 0;
+      circuitState[prov].openUntil = 0;
+      circuitState[prov].lastError = '';
+      return;
+    }
+    Object.keys(circuitState).forEach(k => {
+      circuitState[k].fails = 0;
+      circuitState[k].openUntil = 0;
+      circuitState[k].lastError = '';
+    });
+  }
+
+  function tripCircuitForTest(prov, ms) {
+    if (circuitState[prov]) {
+      circuitState[prov].fails = 3;
+      circuitState[prov].openUntil = Date.now() + (ms || 60000);
+      circuitState[prov].lastError = 'Circuit tripped for isolation test';
+    }
   }
 
   function recordSuccess(prov, ms) {
@@ -146,113 +129,87 @@
     if (c.fails >= 3) c.openUntil = Date.now() + 60000;
   }
 
+  function logAudit(prov, model, status, ms, note) {
+    requestAuditLog.unshift({
+      ts: new Date().toISOString(),
+      provider: prov,
+      model: model || '-',
+      status: status || 'ok',
+      latencyMs: ms || 0,
+      note: String(note || '').slice(0, 160)
+    });
+    if (requestAuditLog.length > 50) requestAuditLog.length = 50;
+  }
+
+  function getRequestAuditLog() { return requestAuditLog.slice(); }
+
+  // API chính thức của Ollama: GET /api/tags
   async function checkOllamaStatus() {
-    const base = getOllamaUrl().replace(/\/+$/, '');
+    const base = getOllamaUrl();
     const t0 = Date.now();
     try {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 3500);
+      const timer = setTimeout(() => ctrl.abort(), 4000);
       const res = await fetch(base + '/api/tags', { method: 'GET', signal: ctrl.signal });
       clearTimeout(timer);
       if (!res.ok) {
-        runtimeDiscovery.status = 'not_running';
-        runtimeDiscovery.ollamaRunning = false;
-        runtimeDiscovery.errorDetail = 'Ollama phản hồi HTTP ' + res.status;
-        return { running: false, status: 'not_running', models: [], error: runtimeDiscovery.errorDetail };
+        ollamaCache.running = false;
+        ollamaCache.models = [];
+        ollamaCache.lastError = `Ollama phản hồi lỗi HTTP ${res.status} tại ${base}/api/tags.`;
+        return { running: false, status: 'error', models: [], selectedModel: '', error: ollamaCache.lastError };
       }
       const data = await res.json();
-      const models = (data && Array.isArray(data.models)) ? data.models.map(m => m.name) : [];
-      runtimeDiscovery.ollamaRunning = true;
-      runtimeDiscovery.installedModels = models;
-      runtimeDiscovery.lastCheckAt = Date.now();
+      const models = (data && Array.isArray(data.models)) ? data.models.map(m => String(m.name || '')).filter(Boolean) : [];
+      ollamaCache.running = true;
+      ollamaCache.models = models;
+      ollamaCache.checkedAt = Date.now();
+      ollamaCache.lastError = '';
+
+      // Chỉ chọn model thực sự tồn tại trên máy, không tự đoán tên model
+      let activeModel = getOllamaModel();
+      if (!activeModel || !models.includes(activeModel)) {
+        activeModel = models.length > 0 ? models[0] : '';
+        if (activeModel) setStr(KEYS.OLLAMA_MODEL, activeModel);
+      }
+
       if (models.length > 0) {
-        runtimeDiscovery.status = 'ready';
-        runtimeDiscovery.selectedModel = pickBestInstalledModelForTask(models, 'general');
-        if (!getStr(KEYS.OLLAMA_MODEL, '')) setOllamaModel(runtimeDiscovery.selectedModel);
+        resetCircuitBreaker('ollama');
         recordSuccess('ollama', Date.now() - t0);
-      } else {
-        runtimeDiscovery.status = 'no_model';
+        return { running: true, status: 'ready', models, selectedModel: activeModel, latencyMs: Date.now() - t0 };
       }
       return {
         running: true,
-        status: runtimeDiscovery.status,
-        models,
-        selectedModel: runtimeDiscovery.selectedModel,
-        recommended: recommendModelForHardware(),
-        latencyMs: Date.now() - t0
-      };
-    } catch (e) {
-      runtimeDiscovery.ollamaRunning = false;
-      runtimeDiscovery.status = 'not_running';
-      runtimeDiscovery.installedModels = [];
-      runtimeDiscovery.errorDetail = 'Chưa phát hiện dịch vụ Ollama tại ' + base + ' (chưa cài đặt hoặc dịch vụ chưa khởi chạy).';
-      return {
-        running: false,
-        status: 'not_running',
+        status: 'no_model',
         models: [],
-        recommended: recommendModelForHardware(),
-        error: runtimeDiscovery.errorDetail
+        selectedModel: '',
+        latencyMs: Date.now() - t0,
+        error: 'Ollama đang chạy nhưng chưa cài model nào. Hãy tải model bằng lệnh: ollama pull qwen2.5:3b (hoặc qwen2.5:7b).'
       };
+    } catch (err) {
+      ollamaCache.running = false;
+      ollamaCache.models = [];
+      ollamaCache.lastError = `Không kết nối được tới Ollama Local tại ${base}. Kiểm tra đã cài đặt và khởi chạy Ollama chưa.`;
+      return { running: false, status: 'not_running', models: [], selectedModel: '', error: ollamaCache.lastError };
     }
   }
 
-  // Tải model Ollama có xác nhận người dùng & theo dõi tiến trình thực
-  async function pullOllamaModel(modelName, onProgress) {
-    const m = String(modelName || recommendModelForHardware().name).trim();
-    const base = getOllamaUrl().replace(/\/+$/, '');
-    // Không tải lại nếu máy đã có model tương thích
-    const st = await checkOllamaStatus();
-    if (!st.running) throw new Error('Ollama chưa chạy tại ' + base + '. Hãy cài đặt và khởi động Ollama trước khi tải model.');
-    if (st.models.some(x => x === m || x.startsWith(m + ':'))) {
-      setOllamaModel(m);
-      return { alreadyInstalled: true, model: m };
-    }
-
-    runtimeDiscovery.status = 'pulling';
-    const res = await fetch(base + '/api/pull', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: m, stream: true })
-    });
-    if (!res.ok) throw new Error('Không thể tải model "' + m + '" (HTTP ' + res.status + ').');
-
-    const reader = res.body && res.body.getReader ? res.body.getReader() : null;
-    if (reader) {
-      const dec = new TextDecoder();
-      let buf = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop() || '';
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          try {
-            const j = JSON.parse(line);
-            const pct = (j.total && j.completed) ? Math.round((j.completed / j.total) * 100) : null;
-            if (typeof onProgress === 'function') onProgress({ status: j.status || 'Đang tải...', percent: pct });
-          } catch (e) {}
-        }
-      }
-    }
-    setOllamaModel(m);
-    await checkOllamaStatus();
-    return { alreadyInstalled: false, model: m };
-  }
-
+  // API chính thức của Ollama: POST /api/generate (hoặc /api/chat)
   async function callOllamaLocal(systemPrompt, userText, opts) {
+    // Luôn kiểm tra trạng thái thực tế trước khi gửi (không dựa vào lỗi cũ trong cache)
     const st = await checkOllamaStatus();
     if (!st.running) {
-      throw new Error('Ollama Local chưa chạy tại ' + getOllamaUrl() + '. Mở Trung tâm AI để cài đặt hoặc khởi động Ollama (không cần API Key).');
+      recordFailure('ollama', st.error);
+      logAudit('ollama', '-', 'error', 0, st.error);
+      throw new Error(st.error);
     }
-    if (!st.models.length) {
-      const rec = recommendModelForHardware();
-      throw new Error(`Ollama đã chạy nhưng chưa có model tiếng Việt. Mở Trung tâm AI để tải model đề xuất "${rec.name}" (~${rec.sizeGb}GB, RAM ≥ ${rec.minRamGb}GB).`);
+    if (!st.models.length || !st.selectedModel) {
+      const msg = st.error || 'Ollama chưa có model nào được cài đặt. Hãy chạy "ollama pull qwen2.5:3b" trên máy.';
+      logAudit('ollama', '-', 'no_model', 0, msg);
+      throw new Error(msg);
     }
 
-    const base = getOllamaUrl().replace(/\/+$/, '');
-    const model = pickBestInstalledModelForTask(st.models, opts && opts.taskType);
+    const base = getOllamaUrl();
+    const model = st.selectedModel;
     const t0 = Date.now();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), (opts && opts.timeoutMs) || 60000);
@@ -261,27 +218,41 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model,
-          prompt: (systemPrompt ? systemPrompt + '\n\n' : '') + userText,
+          model: model,
+          system: systemPrompt || 'Bạn là trợ lý văn phòng VBTM Pro. Trả lời trực tiếp bằng tiếng Việt chuẩn mực.',
+          prompt: userText,
           stream: false
         }),
         signal: ctrl.signal
       });
       if (!res.ok) {
         const errBody = await res.text().catch(() => '');
-        if (/memory|ram|oom/i.test(errBody)) {
-          throw new Error(`Model "${model}" vượt quá RAM khả dụng. Hãy chuyển sang model nhẹ hơn "qwen2.5:3b" trong Trung tâm AI.`);
-        }
-        throw new Error(`[Ollama HTTP ${res.status}] ${errBody.slice(0, 160)}`);
+        const msg = /memory|ram|oom/i.test(errBody)
+          ? `Model "${model}" vượt quá RAM khả dụng trên máy. Hãy chọn model nhẹ hơn (ví dụ qwen2.5:3b).`
+          : `Ollama lỗi HTTP ${res.status} khi chạy model "${model}": ${errBody.slice(0, 160)}`;
+        recordFailure('ollama', msg);
+        logAudit('ollama', model, 'error', Date.now() - t0, msg);
+        throw new Error(msg);
       }
       const data = await res.json();
-      const out = String((data && data.response) || '').trim();
-      if (!out) throw new Error('Ollama trả về nội dung rỗng.');
+      const text = String((data && data.response) || '').trim();
+      if (!text) {
+        const msg = `Model "${model}" trả về nội dung rỗng.`;
+        recordFailure('ollama', msg);
+        logAudit('ollama', model, 'empty', Date.now() - t0, msg);
+        throw new Error(msg);
+      }
       const ms = Date.now() - t0;
       recordSuccess('ollama', ms);
-      return { provider: 'ollama', connectionType: 'Local (Ngoại tuyến)', model, text: out, latencyMs: ms };
+      logAudit('ollama', model, 'ok', ms, 'len=' + text.length);
+      return { provider: 'ollama', connectionType: 'Local (127.0.0.1:11434)', model, text, latencyMs: ms };
     } catch (err) {
-      recordFailure('ollama', err.message);
+      if (err && err.name === 'AbortError') {
+        const msg = `Quá thời gian chờ phản hồi từ model "${model}" trên Ollama Local.`;
+        recordFailure('ollama', msg);
+        logAudit('ollama', model, 'timeout', Date.now() - t0, msg);
+        throw new Error(msg);
+      }
       throw err;
     } finally {
       clearTimeout(timer);
@@ -289,8 +260,11 @@
   }
 
   async function callOpenAiDirect(systemPrompt, userText, opts) {
+    if (isCircuitOpen('openai')) {
+      throw new Error('OpenAI API đang tạm ngắt mạch 60s do lỗi liên tiếp. Bấm "Kiểm tra kết nối" để đặt lại.');
+    }
     const key = getOpenAiKey();
-    if (!key) throw new Error('OpenAI API chưa được cấu hình Key.');
+    if (!key) throw new Error('Chưa cấu hình OpenAI API Key (tùy chọn trả phí). Hãy chuyển sang Ollama Local hoặc nhập Key OpenAI.');
     const model = getOpenAiModel();
     const t0 = Date.now();
     const ctrl = new AbortController();
@@ -321,139 +295,111 @@
       if (!out) throw new Error('OpenAI trả về nội dung rỗng.');
       const ms = Date.now() - t0;
       recordSuccess('openai', ms);
+      logAudit('openai', model, 'ok', ms, 'len=' + out.length);
       return { provider: 'openai', connectionType: 'Cloud (OpenAI)', model, text: out, latencyMs: ms };
     } catch (err) {
       recordFailure('openai', err.message);
+      logAudit('openai', model, 'error', Date.now() - t0, err.message);
       throw err;
     } finally {
       clearTimeout(timer);
     }
   }
 
-  function hasGeminiConfigured() {
-    return !!(global.VBTM_AICore && (global.VBTM_AICore.getMode() === 'gateway' || global.VBTM_AICore.getApiKey()));
-  }
-
-  function resolveProviderOrder(opts) {
-    const policy = (opts && opts.policy) || getPolicy();
-    if (policy === 'local-only' || (opts && opts.sensitiveDocument)) return ['ollama'];
-    if (policy === 'manual') return [getManualProvider()];
-    if (policy === 'gemini-first') {
-      return hasGeminiConfigured() ? ['gemini', 'ollama'] : ['ollama'];
-    }
-    // Mặc định 'ollama-first': Ưu tiên Ollama Local không cần API Key -> Gemini (nếu đã cấu hình Key) -> OpenAI (chỉ khi ask-before-paid)
-    const order = ['ollama'];
-    if (hasGeminiConfigured()) order.push('gemini');
-    if (policy === 'ask-before-paid' && getOpenAiKey()) order.push('openai');
-    return order;
-  }
-
+  // Điểm gọi AI DUY NHẤT cho toàn bộ hệ thống (KHÔNG chuyển ngầm sang Gemini khi chọn Ollama!)
   async function route(systemPrompt, userText, opts) {
     opts = opts || {};
-    const policy = opts.policy || getPolicy();
-    const order = resolveProviderOrder(opts);
-    let lastErr = null;
+    const prov = (opts.forceProvider || getActiveProvider()).toLowerCase();
 
-    for (const prov of order) {
-      if (isCircuitOpen(prov)) {
-        lastErr = new Error(`Nhà cung cấp "${prov}" đang tạm ngắt mạch 60s do lỗi liên tiếp.`);
-        continue;
+    if (prov === 'ollama') {
+      // Lỗi Circuit Breaker của Gemini tuyệt đối không ảnh hưởng tới Ollama
+      return await callOllamaLocal(systemPrompt, userText, opts);
+    }
+
+    if (prov === 'gemini') {
+      if (isCircuitOpen('gemini')) {
+        throw new Error('Google Gemini đang tạm ngắt mạch 60s do lỗi liên tiếp. Bạn có thể chuyển sang Ollama Local (không cần Key) hoặc bấm "Kiểm tra kết nối" để đặt lại.');
       }
-
-      if (prov === 'openai') {
-        if (policy === 'local-only' || policy === 'ollama-first') continue;
-        const allowPaid = getStr(KEYS.ALLOW_PAID, 'false') === 'true';
-        if (policy === 'ask-before-paid' && !allowPaid) {
-          const ok = typeof confirm === 'function'
-            ? confirm('Ollama Local và Gemini chưa sẵn sàng. Bạn có đồng ý gửi dữ liệu lên OpenAI API (có tính phí) không?')
-            : false;
-          if (!ok) throw new Error('Người dùng từ chối chuyển sang OpenAI trả phí.');
-        }
+      if (!global.VBTM_AICore) throw new Error('VBTM_AICore chưa được nạp.');
+      if (!global.VBTM_AICore.getApiKey() && global.VBTM_AICore.getMode() !== 'gateway') {
+        throw new Error('Bạn đang chọn nhà cung cấp bổ sung Google Gemini nhưng chưa nhập Gemini API Key. Hãy nhập Key hoặc chuyển về mặc định Ollama Local.');
       }
-
       try {
-        if (prov === 'ollama') {
-          return await callOllamaLocal(systemPrompt, userText, opts);
-        }
-        if (prov === 'gemini') {
-          if (!hasGeminiConfigured()) continue; // KHÔNG báo lỗi chặn hệ thống khi chưa nhập Gemini Key!
-          const r = await global.VBTM_AICore.generate(systemPrompt, userText, opts);
-          recordSuccess('gemini', r.latencyMs);
-          return Object.assign({ provider: 'gemini', connectionType: 'Cloud (Google Gemini)' }, r);
-        }
-        if (prov === 'openai') {
-          return await callOpenAiDirect(systemPrompt, userText, opts);
-        }
+        const r = await global.VBTM_AICore.generate(systemPrompt, userText, opts);
+        recordSuccess('gemini', r.latencyMs);
+        logAudit('gemini', r.model, 'ok', r.latencyMs, 'len=' + r.text.length);
+        return Object.assign({ provider: 'gemini', connectionType: 'Cloud (Google Gemini)' }, r);
       } catch (err) {
-        lastErr = err;
-        if (prov === 'gemini') recordFailure('gemini', err.message);
-        if ((err && err.name === 'AbortError') || policy === 'manual' || policy === 'local-only') throw err;
+        recordFailure('gemini', err.message);
+        logAudit('gemini', '-', 'error', 0, err.message);
+        throw err;
       }
     }
 
-    throw lastErr || new Error('Ollama Local chưa sẵn sàng và chưa có AI Cloud bổ sung. Hãy mở Trung tâm AI để cài đặt Ollama (miễn phí, không cần API Key) hoặc nhập Key bổ sung.');
+    if (prov === 'openai') {
+      return await callOpenAiDirect(systemPrompt, userText, opts);
+    }
+
+    return await callOllamaLocal(systemPrompt, userText, opts);
   }
 
   async function testActiveConnection(host) {
-    return await route('Chỉ trả lời đúng 1 từ: OK', 'Kiểm tra kết nối VBTM AI Gateway.', {
+    const prov = getActiveProvider();
+    // Reset Circuit Breaker của provider đang chọn trước khi kiểm tra thủ công
+    resetCircuitBreaker(prov);
+    return await route('Chỉ trả lời đúng 1 từ: OK', 'Xin chào, hãy trả lời OK để xác nhận kết nối.', {
       host: host || 'office',
-      taskType: 'spell',
       expectJson: false,
-      timeoutMs: 25000
+      timeoutMs: 30000
     });
   }
 
   function getProviderStatuses() {
-    return [
-      {
-        id: 'ollama',
-        name: 'Ollama Local (Mặc định — Không cần API Key)',
-        connectionType: 'Local',
-        status: runtimeDiscovery.status,
-        running: runtimeDiscovery.ollamaRunning,
-        models: runtimeDiscovery.installedModels,
-        activeModel: getOllamaModel(),
+    const geminiKeySet = !!(global.VBTM_AICore && global.VBTM_AICore.getApiKey());
+    return {
+      activeProvider: getActiveProvider(),
+      ollama: {
+        running: ollamaCache.running,
         endpoint: getOllamaUrl(),
-        recommended: recommendModelForHardware(),
+        models: ollamaCache.models,
+        selectedModel: getOllamaModel(),
+        circuitOpen: isCircuitOpen('ollama'),
         lastLatencyMs: circuitState.ollama.lastLatencyMs,
-        lastError: circuitState.ollama.lastError || runtimeDiscovery.errorDetail
+        lastError: circuitState.ollama.lastError || ollamaCache.lastError
       },
-      {
-        id: 'gemini',
-        name: 'Google Gemini API (Tùy chọn bổ sung)',
-        connectionType: 'Cloud',
-        configured: hasGeminiConfigured(),
-        status: hasGeminiConfigured() ? 'configured' : 'optional_not_set',
+      gemini: {
+        configured: geminiKeySet,
+        circuitOpen: isCircuitOpen('gemini'),
         lastLatencyMs: circuitState.gemini.lastLatencyMs,
         lastError: circuitState.gemini.lastError
       },
-      {
-        id: 'openai',
-        name: 'OpenAI API (Tùy chọn trả phí)',
-        connectionType: 'Cloud',
+      openai: {
         configured: !!getOpenAiKey(),
-        status: getOpenAiKey() ? 'configured' : 'optional_not_set',
+        circuitOpen: isCircuitOpen('openai'),
         lastLatencyMs: circuitState.openai.lastLatencyMs,
         lastError: circuitState.openai.lastError
       }
-    ];
+    };
   }
 
+  // Giữ tương thích ngược cho các hàm getPolicy/setPolicy nếu module cũ gọi
+  function getPolicy() { return getActiveProvider(); }
+  function setPolicy(p) { setActiveProvider(p === 'gemini-first' ? 'gemini' : (p === 'openai' ? 'openai' : 'ollama')); }
+
   global.VBTM_SmartRouter = {
-    MODEL_CATALOG,
     route,
     testActiveConnection,
-    resolveProviderOrder,
     checkOllamaStatus,
-    pullOllamaModel,
-    recommendModelForHardware,
-    pickBestInstalledModelForTask,
-    getProviderStatuses,
-    getPolicy, setPolicy,
-    getManualProvider, setManualProvider,
+    getActiveProvider, setActiveProvider,
+    getOllamaUrl, setOllamaUrl,
+    getOllamaModel, setOllamaModel,
     getOpenAiKey, setOpenAiKey,
     getOpenAiModel, setOpenAiModel,
-    getOllamaUrl, setOllamaUrl,
-    getOllamaModel, setOllamaModel
+    resetCircuitBreaker,
+    tripCircuitForTest,
+    isCircuitOpen,
+    getProviderStatuses,
+    getRequestAuditLog,
+    getPolicy, setPolicy
   };
 })(typeof window !== 'undefined' ? window : globalThis);
