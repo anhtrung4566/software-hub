@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace VBTM.OfficeIntegration
 {
@@ -33,6 +34,14 @@ namespace VBTM.OfficeIntegration
                     string msg;
                     bool ok = PersonalInstallerEngine.InstallOrUpdate(out msg);
                     File.WriteAllText(Path.Combine(Path.GetTempPath(), "vbtm_office_install_result.txt"), msg, Encoding.UTF8);
+                    return ok ? 0 : 1;
+                }
+                if (flag == "--register-office")
+                {
+                    string msg1, msg2;
+                    PersonalInstallerEngine.InstallOrUpdate(out msg1);
+                    bool ok = PersonalInstallerEngine.RegisterOfficeAddinsCurrentUser(out msg2);
+                    File.WriteAllText(Path.Combine(Path.GetTempPath(), "vbtm_office_register_result.txt"), msg1 + Environment.NewLine + msg2, Encoding.UTF8);
                     return ok ? 0 : 1;
                 }
                 if (flag == "--uninstall")
@@ -171,14 +180,72 @@ namespace VBTM.OfficeIntegration
             }
         }
 
+        private static readonly string[] RegisteredGuidMap = new string[] {
+            "9c1f4a20-3b7e-4e82-9a11-7d5c2b8f3001|vbtm-word-manifest.xml|Microsoft Word",
+            "9c1f4a20-3b7e-4e82-9a11-7d5c2b8f3002|vbtm-excel-manifest.xml|Microsoft Excel",
+            "9c1f4a20-3b7e-4e82-9a11-7d5c2b8f3003|vbtm-powerpoint-manifest.xml|Microsoft PowerPoint"
+        };
+
+        public static bool RegisterOfficeAddinsCurrentUser(out string report)
+        {
+            StringBuilder sb = new StringBuilder();
+            try
+            {
+                if (!Directory.Exists(ManifestsDir))
+                {
+                    string tmp;
+                    InstallOrUpdate(out tmp);
+                }
+                using (RegistryKey devKey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Office\16.0\WEF\Developer"))
+                {
+                    if (devKey == null) throw new Exception("Không mở được khóa HKCU\\Software\\Microsoft\\Office\\16.0\\WEF\\Developer");
+                    foreach (string row in RegisteredGuidMap)
+                    {
+                        string[] p = row.Split('|');
+                        string guid = p[0];
+                        string filePath = Path.Combine(ManifestsDir, p[1]);
+                        string appName = p[2];
+                        if (!File.Exists(filePath)) throw new FileNotFoundException("Thiếu tệp manifest: " + filePath);
+                        devKey.SetValue(guid, filePath, RegistryValueKind.String);
+                        sb.AppendLine("[OK] Đã đăng ký " + appName + " -> " + filePath);
+                    }
+                }
+                sb.AppendLine("[LƯU Ý] Khởi động lại Word / Excel / PowerPoint -> vào tab Insert (Chèn) -> My Add-ins -> chọn VBTM PRO AI (sau lần đầu nút sẽ nằm ngay trên tab Home).");
+                sb.AppendLine("[OUTLOOK] Mở Outlook -> Get Add-ins (hoặc https://aka.ms/olksideload) -> My Add-ins -> Add from file -> chọn vbtm-outlook-manifest.xml.");
+                report = sb.ToString();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine("[LỖI ĐĂNG KÝ] " + ex.Message);
+                report = sb.ToString();
+                return false;
+            }
+        }
+
         public static bool CleanUninstall(out string report)
         {
             try
             {
+                try
+                {
+                    using (RegistryKey devKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Office\16.0\WEF\Developer", true))
+                    {
+                        if (devKey != null)
+                        {
+                            foreach (string row in RegisteredGuidMap)
+                            {
+                                string guid = row.Split('|')[0];
+                                if (devKey.GetValue(guid) != null) devKey.DeleteValue(guid, false);
+                            }
+                        }
+                    }
+                }
+                catch { }
                 if (Directory.Exists(InstallRoot))
                 {
                     Directory.Delete(InstallRoot, true);
-                    report = "Đã gỡ cài đặt sạch thư mục VBTMProOffice (không ảnh hưởng tài liệu Word/Excel/PowerPoint và không xóa API Key của VBTM Desktop).";
+                    report = "Đã gỡ cài đặt sạch thư mục VBTMProOffice và hủy đăng ký Add-in khỏi HKCU Office (không ảnh hưởng tài liệu và không xóa API Key của VBTM Desktop).";
                 }
                 else
                 {
@@ -296,19 +363,29 @@ namespace VBTM.OfficeIntegration
                 FlowDirection = FlowDirection.LeftToRight
             };
 
-            btnCheck = MakeBtn("1. Kiểm tra Office & HTTPS", Color.FromArgb(29, 78, 216), Color.White);
+            btnCheck = MakeBtn("1. Kiểm tra Office", Color.FromArgb(29, 78, 216), Color.White);
             btnInstall = MakeBtn("2. Cài đặt / Cập nhật", Color.FromArgb(153, 27, 27), Color.White);
-            btnOpenDir = MakeBtn("3. Mở thư mục Manifest", Color.FromArgb(5, 150, 105), Color.White);
-            btnRollback = MakeBtn("Khôi phục bản cũ", Color.FromArgb(241, 245, 249), Color.FromArgb(15, 23, 42));
-            btnUninstall = MakeBtn("Gỡ cài đặt sạch", Color.FromArgb(254, 226, 226), Color.FromArgb(153, 27, 27));
+            Button btnRegister = MakeBtn("3. Đăng ký hiện trên Office", Color.FromArgb(217, 119, 6), Color.White);
+            btnOpenDir = MakeBtn("4. Mở thư mục Manifest", Color.FromArgb(5, 150, 105), Color.White);
+            btnRollback = MakeBtn("Khôi phục", Color.FromArgb(241, 245, 249), Color.FromArgb(15, 23, 42));
+            btnUninstall = MakeBtn("Gỡ sạch", Color.FromArgb(254, 226, 226), Color.FromArgb(153, 27, 27));
 
             btnCheck.Click += (s, e) => RunCheck();
             btnInstall.Click += (s, e) => RunInstall();
+            btnRegister.Click += (s, e) =>
+            {
+                if (MessageBox.Show("Bạn có đồng ý đăng ký 3 Add-in VBTM PRO AI (Word, Excel, PowerPoint) vào phạm vi tài khoản Windows hiện tại (HKCU\\Software\\Microsoft\\Office\\16.0\\WEF\\Developer)?\nKhông cần quyền Admin và sẽ tự động gỡ sạch khi bấm 'Gỡ sạch'.",
+                    "Xác nhận đăng ký Office Add-in", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                string rmsg;
+                bool rok = PersonalInstallerEngine.RegisterOfficeAddinsCurrentUser(out rmsg);
+                txtLog.AppendText(Environment.NewLine + Environment.NewLine + "=== ĐĂNG KÝ OFFICE ADD-IN ===" + Environment.NewLine + rmsg);
+                lblStatus.Text = rok ? "Đã đăng ký xong! Hãy khởi động lại Word / Excel / PowerPoint." : "Đăng ký gặp lỗi — xem chi tiết.";
+            };
             btnOpenDir.Click += (s, e) => OpenManifestFolder();
             btnRollback.Click += (s, e) => RunRollback();
             btnUninstall.Click += (s, e) => RunUninstall();
 
-            toolbar.Controls.AddRange(new Control[] { btnCheck, btnInstall, btnOpenDir, btnRollback, btnUninstall });
+            toolbar.Controls.AddRange(new Control[] { btnCheck, btnInstall, btnRegister, btnOpenDir, btnRollback, btnUninstall });
             this.Controls.Add(toolbar);
 
             txtLog = new TextBox
