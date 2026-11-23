@@ -1,0 +1,171 @@
+{
+  "ecosystem": {
+    "name": "VBTM PRO – UNIFIED AI OFFICE ECOSYSTEM",
+    "shortName": "VBTM Pro",
+    "version": "3.5.0",
+    "releaseDate": "2026-11-23",
+    "tagline": "Hệ sinh thái văn phòng AI thống nhất phục vụ Đảng ủy & UBND phường: Soạn thảo, Soát lỗi 15 nhóm, Chuẩn hóa 05-HD/VPTW & NĐ 30/2020, PDF/OCR, Kho tri thức RAG và Tích hợp trực tiếp Microsoft Office.",
+    "standards": [
+      "Hướng dẫn số 05-HD/VPTW (Văn bản Đảng)",
+      "Nghị định 30/2020/NĐ-CP (Văn bản hành chính nhà nước)"
+    ]
+  },
+  "installers": {
+    "unified": {
+      "name": "VBTM-Pro-Unified-Setup.exe",
+      "path": "downloads/VBTM-Pro-Unified-Setup.exe",
+      "scope": "CurrentUser (không yêu cầu quyền Admin)",
+      "security": "Mã hóa API Key bằng Windows DPAPI (ProtectedData), không tự ý sửa Registry Office khi chưa xác nhận",
+      "includes": [
+        "VBTM Pro Desktop Windows",
+        "VBTM Compatibility Checker (Office 2016–M365, 32/64-bit, WebView2)",
+        "Tích hợp trực tiếp Microsoft Word, Excel, PowerPoint, Outlook (Add-in-only XML Manifest)",
+        "Cơ chế Cài đặt / Cập nhật có sao lưu / Sửa chữa / Gỡ sạch"
+      ]
+    },
+    "legacyDesktop": {
+      "name": "VBTM-Setup-2.5.0.exe",
+      "path": "downloads/VBTM-Setup-2.5.0.exe",
+      "note": "Bản tương thích ngược cho liên kết cũ"
+    },
+    "legacyOfficeOnly": {
+      "name": "VBTM_Pro_Office_Setup.exe",
+      "path": "downloads/VBTM_Pro_Office_Setup.exe",
+      "note": "Bộ cài riêng thành phần Office Add-in (đã tích hợp vào bản Unified)"
+    }
+  },
+  "aiProviders": [
+    {
+      "id": "gemini",
+      "name": "Google Gemini API",
+      "type": "cloud-official",
+      "freeTierAvailable": true,
+      "defaultModel": "gemini-flash-lite-latest",
+      "models": ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash", "gemini-2.5-flash"]
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI API (Chính thức — trả phí theo token)",
+      "type": "cloud-paid",
+      "freeTierAvailable": false,
+      "defaultModel": "gpt-4o-mini",
+      "models": ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1"]
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama Local (Chạy ngoại tuyến trên Windows)",
+      "type": "local",
+      "freeTierAvailable": true,
+      "endpoint": "http://127.0.0.1:11434",
+      "defaultModel": "qwen2.5:7b",
+      "models": ["qwen2.5:7b", "llama3.1:8b", "gemma2:9b"]
+    }
+  ],
+  "officeIntegrations": [
+    {
+      "host": "Word",
+      "title": "Tích hợp Microsoft Word",
+      "role": "Điểm tích hợp soạn thảo, soát lỗi 15 nhóm & chuẩn hóa thể thức của VBTM Pro",
+      "manifest": "office-addins/VBTM.WordAddin/manifest.xml",
+      "taskpane": "office-addins/VBTM.WordAddin/taskpane.html",
+      "supportedOffice": "Office 2016 / 2019 / 2021 / 2024 / Microsoft 365",
+      "status": "Đã triển khai & kiểm định Manifest + API",
+      "features": [
+        "18 nghiệp vụ soạn thảo, tóm tắt, viết lại, kiểm tra căn cứ pháp lý & số liệu",
+        "Soát lỗi 15 nhóm & 4 mức độ nghiêm trọng, bảo vệ từ chuyên ngành",
+        "Quét toàn văn bản theo ID đoạn, xác minh nội dung gốc trước khi sửa, Hoàn tác"
+      ]
+    },
+    {
+      "host": "Excel",
+      "title": "Tích hợp Microsoft Excel",
+      "role": "Điểm tích hợp phân tích bảng tính & tổng hợp số liệu của VBTM Pro",
+      "manifest": "office-addins/VBTM.ExcelAddin/manifest.xml",
+      "taskpane": "office-addins/VBTM.ExcelAddin/taskpane.html",
+      "supportedOffice": "Office 2016 / 2019 / 2021 / 2024 / Microsoft 365",
+      "status": "Đã triển khai & kiểm định Manifest + API",
+      "features": [
+        "11 nghiệp vụ phân tích bảng tính, viết/sửa công thức, phát hiện bất thường",
+        "Chuyển bảng số liệu thành nhận xét báo cáo hành chính",
+        "Tổng hợp nhiều Sheet (ExcelApi 1.4+), luôn yêu cầu xác nhận trước khi ghi ô"
+      ]
+    },
+    {
+      "host": "PowerPoint",
+      "title": "Tích hợp Microsoft PowerPoint",
+      "role": "Điểm tích hợp trình chiếu hội nghị & tổng kết của VBTM Pro",
+      "manifest": "office-addins/VBTM.PowerPointAddin/manifest.xml",
+      "taskpane": "office-addins/VBTM.PowerPointAddin/taskpane.html",
+      "supportedOffice": "Office 2016 / 2019 / 2021 / 2024 / Microsoft 365",
+      "status": "Đã triển khai & kiểm định Manifest + API",
+      "features": [
+        "8 nghiệp vụ tạo dàn ý slide từ báo cáo Word/Excel, hội nghị, tổng kết",
+        "Viết lời thuyết trình (Speaker Notes) & cô đọng nội dung slide",
+        "Không bao giờ tự động xóa slide hiện có"
+      ]
+    },
+    {
+      "host": "Outlook",
+      "title": "Tích hợp Microsoft Outlook",
+      "role": "Điểm tích hợp xử lý thư công vụ & trích xuất nhiệm vụ của VBTM Pro",
+      "manifest": "office-addins/VBTM.OutlookAddin/manifest.xml",
+      "taskpane": "office-addins/VBTM.OutlookAddin/taskpane.html",
+      "supportedOffice": "Classic Outlook (Win32) & New Outlook / Outlook on the Web",
+      "status": "Đã triển khai & kiểm định Manifest + API",
+      "features": [
+        "Tự động phân biệt Classic Outlook và New Outlook",
+        "8 nghiệp vụ soạn email, tóm tắt chuỗi thư, trích xuất nhiệm vụ, chuyển thành Công văn",
+        "Không bao giờ tự động gửi thư khi chưa xác nhận"
+      ]
+    }
+  ],
+  "workspaces": [
+    "Trang chủ & Dashboard",
+    "Trợ lý AI tổng hợp",
+    "Soạn thảo văn bản",
+    "Kiểm tra chính tả (15 nhóm)",
+    "Kiểm tra thể thức (05-HD & NĐ 30)",
+    "Chuẩn hóa văn bản",
+    "PDF & OCR tiếng Việt",
+    "Kho văn bản",
+    "Kho tri thức RAG",
+    "Tra cứu pháp luật",
+    "Tích hợp Excel",
+    "Tích hợp PowerPoint",
+    "Tích hợp Outlook",
+    "Báo cáo tổng hợp",
+    "Tham mưu công vụ",
+    "Theo dõi nhiệm vụ",
+    "Thư ký cuộc họp",
+    "Quản lý biểu mẫu",
+    "Trung tâm AI (Multi-Provider Router)",
+    "Cài đặt & Đồng bộ dữ liệu"
+  ],
+  "systemRequirements": {
+    "os": "Windows 10 / Windows 11 (32-bit hoặc 64-bit)",
+    "office": "Microsoft Office 2016, 2019, 2021, 2024 hoặc Microsoft 365",
+    "webview": "Microsoft Edge WebView2 Runtime",
+    "network": "HTTPS tới GitHub Pages & API AI (hoặc chạy cục bộ qua Ollama Local)"
+  },
+  "changelog": [
+    {
+      "version": "3.5.0",
+      "date": "2026-11-23",
+      "highlights": [
+        "Hợp nhất thành hệ sinh thái VBTM PRO – UNIFIED AI OFFICE ECOSYSTEM với 1 nguồn cấu hình product-config.json",
+        "Xây dựng Trung tâm AI đa nhà cung cấp (Gemini, OpenAI, Ollama Local) kèm Smart AI Router, Circuit Breaker & chính sách bảo vệ chi phí",
+        "Nâng cấp bộ soát lỗi 15 nhóm, 4 mức độ nghiêm trọng, bảo vệ từ chuyên ngành, xác minh nội dung gốc trước khi sửa",
+        "Bổ sung Kho tri thức RAG trích dẫn nguồn (chống bịa căn cứ) & VBTM Sync Engine đồng bộ không chứa API Key thuần",
+        "Phát hành bộ cài thống nhất VBTM-Pro-Unified-Setup.exe tích hợp mã hóa DPAPI"
+      ]
+    },
+    {
+      "version": "3.0.0",
+      "date": "2026-11-22",
+      "highlights": [
+        "Tích hợp trực tiếp Microsoft Word, Excel, PowerPoint, Outlook qua Office.js & Add-in-only XML Manifest",
+        "Sửa triệt để lỗi KeepAliveFailure trên .NET Framework 4.x HttpWebRequest & bổ sung log kỹ thuật không lộ Key"
+      ]
+    }
+  ]
+}
