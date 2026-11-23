@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VBTM PRO AI FOR POWERPOINT</title>
+  <link rel="stylesheet" href="../VBTM.AICore/vbtm-taskpane.css"/>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+</head>
+<body>
+  <header class="vbtm-header">
+    <div class="vbtm-brand">
+      <img src="../../desktop-src/VBTM-Pro/VBTM-Pro-logo.png" alt="VBTM Pro"/>
+      <div>
+        <div class="vbtm-brand-title">VBTM PRO AI FOR POWERPOINT</div>
+        <div class="vbtm-brand-sub">Tạo Slide Hội nghị, Tổng kết &amp; Thuyết trình</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="vbtm-status-bar">
+    <span id="aiStatusBadge" class="badge badge-idle">Đang khởi tạo...</span>
+    <span id="tierBadge" class="badge badge-tier">Đang kiểm tra PowerPoint...</span>
+    <span id="aiModelLabel" class="muted"></span>
+  </div>
+
+  <nav class="vbtm-tabs">
+    <button class="vbtm-tab active" data-tab="tabAssist">Tạo Slide AI</button>
+    <button class="vbtm-tab" data-tab="tabHistory">Lịch sử</button>
+    <button class="vbtm-tab" data-tab="tabSettings">Cài đặt</button>
+  </nav>
+
+  <main class="vbtm-main">
+    <div id="compatWarnBox" class="hidden"></div>
+
+    <section id="tabAssist" class="tab-panel active">
+      <div class="card">
+        <div class="card-title">
+          <span>Nghiệp vụ PowerPoint AI (8 chế độ)</span>
+          <button id="btnReadPptSel" class="btn btn-secondary" type="button">Đọc khung đang chọn</button>
+        </div>
+        <select id="pptActionSelect"></select>
+
+        <label class="field-label" for="txtPptInput">Nội dung báo cáo Word / số liệu Excel / nội dung Slide:</label>
+        <textarea id="txtPptInput" rows="5" placeholder="Dán nội dung báo cáo hoặc bấm 'Đọc khung đang chọn' trên Slide..."></textarea>
+
+        <div class="btn-row">
+          <button id="btnRunPptAi" class="btn btn-primary" type="button">Tạo nội dung Slide bằng AI</button>
+          <button id="btnCancelPptAi" class="btn btn-danger hidden" type="button">Hủy</button>
+        </div>
+      </div>
+
+      <div id="pptAlert" class="hidden"></div>
+
+      <div id="pptResultCard" class="card hidden">
+        <div class="card-title">
+          <span>Dàn ý / Nội dung đề xuất (không tự ý xóa slide hiện có)</span>
+          <span id="pptResultMeta" class="muted"></span>
+        </div>
+        <textarea id="txtPptOutput" class="diff-prop" rows="8"></textarea>
+        <div class="btn-row">
+          <button id="btnAddSlidesPpt" class="btn btn-success" type="button">Thêm Slide mới (PowerPointApi)</button>
+          <button id="btnInsertPptBox" class="btn btn-blue" type="button">Chèn vào khung đang chọn</button>
+          <button id="btnCopyPptOut" class="btn btn-secondary" type="button">Sao chép</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tabHistory" class="tab-panel">
+      <div class="card"><div class="card-title">Lịch sử thao tác AI trên PowerPoint</div><div id="historyList"></div></div>
+    </section>
+
+    <section id="tabSettings" class="tab-panel">
+      <div class="card">
+        <div class="card-title">Cấu hình kết nối VBTM AI Gateway / Gemini</div>
+        <label class="field-label" for="cfgMode">Phương thức kết nối:</label>
+        <select id="cfgMode">
+          <option value="byok">Cá nhân — Tự nhập Gemini API Key (BYOK)</option>
+          <option value="gateway">Cơ quan — Qua VBTM.Backend AI Gateway (khuyên dùng)</option>
+        </select>
+        <div id="gatewayGroup" class="hidden">
+          <label class="field-label" for="cfgGatewayUrl">URL VBTM.Backend AI Gateway:</label>
+          <input id="cfgGatewayUrl" type="text"/>
+        </div>
+        <div id="byokGroup">
+          <label class="field-label" for="cfgApiKey">Google Gemini API Key cá nhân:</label>
+          <input id="cfgApiKey" type="password" placeholder="AIza..."/>
+        </div>
+        <div id="byokNotice" class="alert-warn" style="margin-top:6px;">
+          <strong>Lưu ý bảo mật:</strong> Key cá nhân lưu cục bộ trong <code>localStorage</code> của Office WebView2 và gửi qua HTTPS tới Gemini API.
+        </div>
+        <label class="field-label" for="cfgModel">Model Gemini ưu tiên:</label>
+        <select id="cfgModel"></select>
+        <div class="btn-row">
+          <button id="btnSaveSettings" class="btn btn-primary" type="button">Lưu cấu hình</button>
+          <button id="btnTestAi" class="btn btn-success" type="button">Kiểm tra kết nối</button>
+          <button id="btnClearKey" class="btn btn-danger" type="button">Xóa Key</button>
+        </div>
+        <div id="cfgFeedback" class="hidden" style="margin-top:8px;"></div>
+      </div>
+      <div class="card"><div class="card-title">Nhật ký kỹ thuật</div><div id="techLogList"></div></div>
+    </section>
+  </main>
+
+  <script src="../VBTM.AICore/vbtm-ai-core.js"></script>
+  <script src="../VBTM.AICore/vbtm-compat.js"></script>
+  <script src="../VBTM.AICore/vbtm-prompts.js"></script>
+  <script src="../VBTM.AICore/vbtm-settings-ui.js"></script>
+  <script src="powerpoint-addin.js"></script>
+</body>
+</html>
