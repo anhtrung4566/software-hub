@@ -126,9 +126,12 @@
       btnRun.disabled = true;
       btnCancel.classList.remove('hidden');
       try {
-        const res = await window.VBTM_AICore.generate(act.prompt, userPrompt, { host: 'Excel', historyTitle: act.label });
+        const bridge = window.VBTM_OfficeBridge ? window.VBTM_OfficeBridge.createBridge('Excel') : null;
+        const res = bridge
+          ? await bridge.runTask(act.id, act.prompt, userPrompt, { historyTitle: act.label })
+          : await window.VBTM_AICore.generate(act.prompt, userPrompt, { host: 'Excel', historyTitle: act.label });
         document.getElementById('txtExcelOutput').value = res.text;
-        document.getElementById('excelResultMeta').textContent = `${res.model} · ${res.latencyMs}ms`;
+        document.getElementById('excelResultMeta').textContent = `${res.provider || 'gemini'} · ${res.model} · ${res.latencyMs}ms`;
         document.getElementById('excelResultCard').classList.remove('hidden');
       } catch (err) {
         showAlert('err', err.message || 'Lỗi gọi AI.');
