@@ -252,7 +252,11 @@
           }, timeoutMs, outerSignal);
         } else {
           const key = getApiKey();
-          if (!key) throw new Error('Chưa nhập Gemini API Key trong Cài đặt.');
+          if (!key) {
+            const noKeyErr = new Error('Gemini API chưa được cấu hình Key bổ sung (hệ thống ưu tiên dùng Ollama Local không cần API Key).');
+            noKeyErr.info = { code: 'GEMINI_KEY_OPTIONAL', retryable: false, failover: true, message: noKeyErr.message };
+            throw noKeyErr;
+          }
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
           res = await fetchWithTimeout(url, {
             method: 'POST',
@@ -347,6 +351,9 @@
   }
 
   async function testConnection(host) {
+    if (global.VBTM_SmartRouter && global.VBTM_SmartRouter.testActiveConnection) {
+      return await global.VBTM_SmartRouter.testActiveConnection(host);
+    }
     const res = await generate('Chỉ trả lời đúng 1 từ: OK', 'Kiểm tra kết nối VBTM Pro Office AI.', {
       host: host || 'office',
       expectJson: false,
