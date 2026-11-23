@@ -11,7 +11,7 @@
     { id: 'draft', label: '1. Soạn văn bản bằng AI', prompt: BASE_OFFICE_RULE + ' Hãy soạn thảo hoàn chỉnh văn bản hành chính/Đảng theo yêu cầu dưới đây, bố cục rõ ràng, văn phong trang trọng.' },
     { id: 'spell', label: '2. Sửa chính tả', prompt: BASE_OFFICE_RULE + ' Chỉ sửa lỗi chính tả, dấu câu, khoảng trắng tiếng Việt. Không thay đổi ý nghĩa và cấu trúc câu.' },
     { id: 'grammar', label: '3. Kiểm tra ngữ pháp', prompt: BASE_OFFICE_RULE + ' Rà soát và sửa lỗi ngữ pháp, câu cụt, lặp từ, diễn đạt lủng củng; trả về bản đã chỉnh sửa mạch lạc.' },
-    { id: 'format', label: '4. Chuẩn hóa thể thức (05-HD / NĐ 30)', prompt: BASE_OFFICE_RULE + ' Chuẩn hóa bố cục, trích yếu, căn cứ, đánh mục I/1/a, viết hoa chuẩn Hướng dẫn 05-HD/VPTW (văn bản Đảng) và Nghị định 30/2020/NĐ-CP (văn bản hành chính).' },
+    { id: 'consistency', label: '4. Kiểm tra nhất quán câu chữ & thuật ngữ', prompt: BASE_OFFICE_RULE + ' Kiểm tra tính nhất quán của thuật ngữ, tên cơ quan, chức danh và câu chữ trong đoạn văn; chỉ đề xuất sửa nội dung chữ, KHÔNG thay đổi định dạng, bố cục hay thể thức tài liệu.' },
     { id: 'style', label: '5. Nâng cấp văn phong công vụ', prompt: BASE_OFFICE_RULE + ' Viết lại theo văn phong công vụ trang trọng, chính xác, khách quan, loại bỏ khẩu ngữ.' },
     { id: 'summary', label: '6. Tóm tắt văn bản', prompt: BASE_OFFICE_RULE + ' Tóm tắt ngắn gọn nội dung sau thành 3-5 ý trọng tâm rõ ràng để báo cáo lãnh đạo.' },
     { id: 'rewrite', label: '7. Viết lại đoạn được chọn', prompt: BASE_OFFICE_RULE + ' Viết lại đoạn văn sau cho mạch lạc, súc tích hơn nhưng giữ nguyên đầy đủ thông tin và số liệu gốc.' },
