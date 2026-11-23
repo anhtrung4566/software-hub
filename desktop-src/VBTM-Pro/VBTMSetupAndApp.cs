@@ -1618,7 +1618,7 @@ namespace VBTMProSuite
             string ribbonXml =
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
-                "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 2.5 (05-HD &amp; ND30)\">" +
+                "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 3.5 (05-HD &amp; NĐ30)\">" +
                 "<group id=\"grpVbtmTemplates\" label=\"1. 16 Mẫu Chuẩn &amp; Đơn Vị\">" +
                 "<menu id=\"mnuVbtm16\" label=\"16 Mẫu Chuẩn (Đảng &amp; UBND)\" size=\"large\" imageMso=\"FileNewBlogPost\">" +
                 "<menuSeparator id=\"sepUbnd\" title=\"I. Khối HĐND &amp; UBND Phường (Nghị định 30/2020/NĐ-CP)\"/>" +
@@ -1640,33 +1640,29 @@ namespace VBTMProSuite
                 "<button id=\"btnTpl14\" label=\"15. Chương trình công tác Đảng ủy\" tag=\"14\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl15\" label=\"16. Quyết định Đảng ủy Phường\" tag=\"15\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "</menu>" +
-                "<button id=\"btnVbtmUnitCfg\" label=\"Cài Đặt Tiêu Ngữ Đơn Vị\" size=\"large\" imageMso=\"FileDocumentManagementInformation\" onAction=\"Ribbon_CaiDatDonVi\" supertip=\"Thiết lập tên Đảng ủy, Chi bộ, UBND Phường, Tiêu ngữ, Địa danh và Người ký mặc định.\"/>" +
+                "<button id=\"btnVbtmUnitCfg\" label=\"Cài Đặt Đơn Vị\" size=\"large\" imageMso=\"FileDocumentManagementInformation\" onAction=\"Ribbon_CaiDatDonVi\" supertip=\"Thiết lập tên Đảng ủy, Chi bộ, UBND Phường, Tiêu ngữ, Địa danh và Người ký mặc định.\"/>" +
                 "</group>" +
-                "<group id=\"grpVbtmFormat\" label=\"2. Chỉnh Thể Thức Nhanh\">" +
-                "<button id=\"btnVbtmDangFast\" label=\"Chỉnh Thể Thức Đảng Nhanh (05-HD)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\" supertip=\"1 Bấm chỉnh toàn bộ văn bản Word đang mở đúng chuẩn Hướng dẫn số 05-HD/VPTW và sửa lỗi chính tả.\"/>" +
-                "<button id=\"btnVbtmAuto\" label=\"Chuẩn Hóa Tự Động\" size=\"large\" imageMso=\"ReviewTrackChanges\" onAction=\"Ribbon_ChuanHoaTuDong\" supertip=\"Tự động nhận diện văn bản Đảng (05-HD/VPTW) hoặc Hành chính (NĐ 30) và chuẩn hóa toàn bộ văn bản đang mở.\"/>" +
-                "<menu id=\"mnuVbtmTieuNgu\" label=\"Tự Động Hóa Tiêu Ngữ\" size=\"normal\" imageMso=\"HeaderFooterInsert\" supertip=\"Chọn chèn nhanh Tiêu ngữ Khối UBND / Hành chính (NĐ 30), Khối Đảng (05-HD/VPTW) hoặc tự động chuẩn hóa.\">" +
-                "<button id=\"btnTnAuto\" label=\"⚡ Tự Động Nhận Diện &amp; Chuẩn Hóa\" tag=\"auto\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
-                "<button id=\"btnTnUbnd\" label=\"🏛️ Chèn Tiêu Ngữ Khối UBND / Hành Chính (NĐ 30)\" tag=\"ubnd\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<group id=\"grpVbtmFormat\" label=\"2. Thể Thức (05-HD &amp; NĐ 30)\">" +
+                "<button id=\"btnVbtmDangFast\" label=\"Chuẩn Hóa Đảng (05-HD/VPTW)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\" supertip=\"Chuẩn hóa văn bản Word đang mở theo Hướng dẫn số 05-HD/VPTW (khổ A4, Times New Roman 14pt, lề chuẩn, số trang từ trang 2).\"/>" +
+                "<button id=\"btnVbtmNd30\" label=\"Chuẩn Hóa NĐ 30/2020\" size=\"large\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\" supertip=\"Chuẩn hóa văn bản hành chính đang mở theo Nghị định 30/2020/NĐ-CP.\"/>" +
+                "<menu id=\"mnuVbtmTieuNgu\" label=\"Chèn Tiêu Ngữ\" size=\"normal\" imageMso=\"HeaderFooterInsert\" supertip=\"Chèn nhanh Tiêu ngữ Khối Đảng (05-HD/VPTW) hoặc Khối UBND (NĐ 30/2020).\">" +
                 "<button id=\"btnTnDang\" label=\"⭐ Chèn Tiêu Ngữ Khối Đảng (05-HD/VPTW)\" tag=\"dang\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
-                "<menuSeparator id=\"sepTnCfg\" title=\"Tùy chỉnh cơ quan &amp; tiêu ngữ\"/>" +
-                "<button id=\"btnTnCfg\" label=\"⚙️ Cài Đặt / Đổi Tiêu Ngữ Khối Đảng &amp; UBND\" onAction=\"Ribbon_CaiDatDonVi\"/>" +
+                "<button id=\"btnTnUbnd\" label=\"🏛️ Chèn Tiêu Ngữ Khối UBND / Hành Chính (NĐ 30)\" tag=\"ubnd\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
                 "</menu>" +
-                "<button id=\"btnVbtmNd30\" label=\"Chuẩn NĐ 30/2020\" size=\"normal\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\"/>" +
-                "</group>" +
-                "<group id=\"grpVbtmTools\" label=\"3. Chính Tả AI &amp; Trình Bày\">" +
-                "<button id=\"btnVbtmSpellAI\" label=\"Rà Soát &amp; Sửa Chính Tả AI\" size=\"large\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_RaSoatChinhTaAI\" supertip=\"Mở bảng Thẩm Định Chính Tả &amp; Thể Thức AI quét trực tiếp tài liệu Word đang mở và tự động sửa hết lỗi.\"/>" +
-                "<button id=\"btnVbtmSpell\" label=\"Sửa Lỗi Tự Động (1-Click)\" size=\"normal\" imageMso=\"AcceptChanges\" onAction=\"Ribbon_SuaChinhTa\"/>" +
-                "<button id=\"btnVbtmMergePdf\" label=\"Nối Dòng PDF Bị Ngắt\" size=\"normal\" imageMso=\"WrapText\" onAction=\"Ribbon_NoiDongPDF\"/>" +
+                "<button id=\"btnVbtmAudit\" label=\"Kiểm Định Thể Thức (%)\" size=\"normal\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\" supertip=\"Kiểm tra tuân thủ thể thức 05-HD/VPTW &amp; NĐ 30/2020/NĐ-CP mà không tự ý sửa nội dung.\"/>" +
+                "<button id=\"btnVbtmConvert\" label=\"Đổi Đảng &lt;-&gt; Hành Chính\" size=\"normal\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\" supertip=\"Chuyển đổi thể thức &amp; thuật ngữ qua lại giữa Khối Đảng (05-HD) và UBND (NĐ 30).\"/>" +
                 "<button id=\"btnVbtmMargins\" label=\"Căn Lề A4 (30-15-20-20)\" size=\"normal\" imageMso=\"PageMarginsGallery\" onAction=\"Ribbon_CanLeA4\"/>" +
                 "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang (Từ Tr.2)\" size=\"normal\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\"/>" +
                 "</group>" +
-                "<group id=\"grpVbtmStudio\" label=\"4. Công Cụ Văn Bản Nâng Cao\">" +
-                "<button id=\"btnVbtmSummary\" label=\"AI Tóm Tắt Văn Bản\" size=\"normal\" imageMso=\"OutlineShowDetail\" onAction=\"Ribbon_AiTomTatVanBan\" supertip=\"AI đọc nhanh văn bản đang mở và trích xuất các điểm trọng tâm.\"/>" +
-                "<button id=\"btnVbtmConvert\" label=\"Đổi Đảng &lt;-&gt; Hành Chính\" size=\"normal\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\" supertip=\"Chuyển đổi tự động thể thức &amp; thuật ngữ qua lại giữa Khối Đảng (05-HD) và UBND (NĐ 30).\"/>" +
-                "<button id=\"btnVbtmAudit\" label=\"Kiểm Định Thể Thức (%)\" size=\"normal\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\" supertip=\"Chấm điểm tuân thủ thể thức 05-HD/VPTW &amp; NĐ 30/2020/NĐ-CP và chỉ ra lỗi thiếu sót.\"/>" +
+                "<group id=\"grpVbtmTools\" label=\"3. Rà Soát &amp; Trợ Lý AI\">" +
+                "<button id=\"btnVbtmSpellAI\" label=\"Rà Soát Chính Tả AI\" size=\"large\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_RaSoatChinhTaAI\" supertip=\"Rà soát lỗi chính tả &amp; gợi ý sửa đổi trực tiếp trong tài liệu Word đang mở.\"/>" +
+                "<button id=\"btnVbtmSummary\" label=\"AI Tóm Tắt Văn Bản\" size=\"large\" imageMso=\"OutlineShowDetail\" onAction=\"Ribbon_AiTomTatVanBan\" supertip=\"AI đọc nhanh văn bản đang mở và trích xuất các điểm trọng tâm.\"/>" +
+                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (AI Local)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở ứng dụng VBTM Pro v3.5.0 với thanh công cụ AI 9 nút (Ollama Local) và Panel AI streaming.\"/>" +
+                "</group>" +
+                "<group id=\"grpVbtmStudio\" label=\"4. Trình Bày &amp; Xuất Bản\">" +
+                "<button id=\"btnVbtmMergePdf\" label=\"Nối Dòng PDF Bị Ngắt\" size=\"normal\" imageMso=\"WrapText\" onAction=\"Ribbon_NoiDongPDF\"/>" +
                 "<button id=\"btnVbtmTbl\" label=\"Chèn Bảng Chuẩn 13pt\" size=\"normal\" imageMso=\"TableInsert\" onAction=\"Ribbon_ChenBangChuan\" supertip=\"Chèn bảng thống kê Times New Roman 13pt tự động lặp dòng tiêu đề khi sang trang.\"/>" +
-                "<menu id=\"mnuVbtmKhanMat\" label=\"Dấu Khẩn / Mật\" size=\"normal\" imageMso=\"HighImportance\" supertip=\"Chèn nhanh khung đóng dấu Độ Khẩn (KHẨN, THƯỢNG KHẨN, HỎA TỐC) hoặc Độ Mật (MẬT, TỐI MẬT, TUYỆT MẬT) chuẩn Unicode 100%.\">" +
+                "<menu id=\"mnuVbtmKhanMat\" label=\"Dấu Khẩn / Mật\" size=\"normal\" imageMso=\"HighImportance\" supertip=\"Chèn nhanh khung đóng dấu Độ Khẩn hoặc Độ Mật chuẩn Unicode.\">" +
                 "<menuSeparator id=\"sepKhan\" title=\"I. Dấu Độ Khẩn\"/>" +
                 "<button id=\"btnKm1\" label=\"KHẨN\" tag=\"1\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm2\" label=\"THƯỢNG KHẨN\" tag=\"2\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
@@ -1676,15 +1672,14 @@ namespace VBTMProSuite
                 "<button id=\"btnKm5\" label=\"MẬT\" tag=\"5\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm6\" label=\"TỐI MẬT\" tag=\"6\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm7\" label=\"TUYỆT MẬT\" tag=\"7\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
-                "<menuSeparator id=\"sepPos\" title=\"III. Đặt Vị Trí Khung (Hoặc Kéo Chuột Tự Do)\"/>" +
+                "<menuSeparator id=\"sepPos\" title=\"III. Đặt Vị Trí Khung\"/>" +
                 "<button id=\"btnKmPos1\" label=\"↖ Đặt Góc Trên Trái Trang\" tag=\"pos1\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKmPos2\" label=\"↙ Đặt Dưới Số Ký Hiệu\" tag=\"pos2\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKmPos3\" label=\"↗ Đặt Góc Trên Phải Trang\" tag=\"pos3\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "</menu>" +
-                "<button id=\"btnVbtmPdf\" label=\"Xuất PDF Ký Số (1-Click)\" size=\"normal\" imageMso=\"FileSaveAsPdfOrXps\" onAction=\"Ribbon_XuatPDFNhanh\" supertip=\"Xuất ngay tài liệu Word đang mở sang file PDF chuẩn A4 để in ấn hoặc trình ký số.\"/>" +
-                "<button id=\"btnVbtmStat\" label=\"Thống Kê Trang &amp; Từ\" size=\"normal\" imageMso=\"WordCount\" onAction=\"Ribbon_ThongKeVanBan\" supertip=\"Thống kê nhanh số trang A4, số từ, số ký tự và thời gian đọc của báo cáo.\"/>" +
-                "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Văn Bản\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 để gắn vào văn bản Word.\"/>" +
-                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (AI 7.578 Từ)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở phần mềm VBTM Pro 2.5.0 để rà soát lỗi chính tả AI (7.578 âm tiết), tạo mã QR và chuyển PDF sang Word.\"/>" +
+                "<button id=\"btnVbtmPdf\" label=\"Xuất PDF Ký Số\" size=\"normal\" imageMso=\"FileSaveAsPdfOrXps\" onAction=\"Ribbon_XuatPDFNhanh\"/>" +
+                "<button id=\"btnVbtmStat\" label=\"Thống Kê Trang &amp; Từ\" size=\"normal\" imageMso=\"WordCount\" onAction=\"Ribbon_ThongKeVanBan\"/>" +
+                "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Văn Bản\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 gắn vào văn bản Word.\"/>" +
                 "</group>" +
                 "</tab></tabs></ribbon></customUI>";
 
