@@ -1,10 +1,9 @@
 /**
- * VBTM.AICore — Unified AI Center (TRUNG TÂM AI) & Task Pane Controller
+ * VBTM.AICore — Giao diện Quản lý AI Thống nhất (Mặc định: Ollama Local http://127.0.0.1:11434)
  * Dùng chung cho Word, Excel, PowerPoint, Outlook Add-ins.
- * - Tự động kiểm tra Ollama Local khi mở lần đầu (không đòi Gemini API Key)
- * - Hiển thị trạng thái rõ ràng: Đang hoạt động | Chưa tải model | Chưa cài đặt | Đang tải
- * - Cho phép chọn chính sách Local Only / Ollama First / Gemini bổ sung / OpenAI trả phí
- * - Tải model Ollama có xác nhận dung lượng & theo dõi tiến trình thực
+ * - Chỉ hiển thị danh sách model thực tế lấy từ GET /api/tags (không đoán tên model)
+ * - Nút Kiểm tra kết nối, Tải lại danh sách model, Chọn model, Thử AI bằng câu hỏi mẫu
+ * - Gemini & OpenAI chỉ là tùy chọn bổ sung, KHÔNG bao giờ báo thiếu Gemini API Key khi đang dùng Ollama
  */
 (function (global) {
   'use strict';
@@ -18,99 +17,77 @@
     if (!tabSettings || document.getElementById('vbtmAiCenterCard')) return;
 
     const router = global.VBTM_SmartRouter;
-    const rec = router ? router.recommendModelForHardware() : { name: 'qwen2.5:7b', sizeGb: 4.7, minRamGb: 10 };
-    const catalogOpts = router
-      ? router.MODEL_CATALOG.map(m => `<option value="${m.name}">${m.name} (${m.sizeGb}GB · RAM ≥ ${m.minRamGb}GB · ${m.viQuality})</option>`).join('')
-      : '<option value="qwen2.5:7b">qwen2.5:7b (4.7GB)</option>';
-
     const card = document.createElement('div');
     card.id = 'vbtmAiCenterCard';
     card.className = 'card';
     card.innerHTML = `
       <div class="card-title">
-        <span>TRUNG TÂM AI (Mặc định không cần API Key)</span>
-        <span id="ollamaStatePill" class="badge badge-connecting">Đang kiểm tra Ollama...</span>
-      </div>
-      <div id="ollamaDetailBox" class="alert-warn" style="margin-bottom:8px;">
-        Đang tự động kiểm tra dịch vụ Ollama Local tại <code>http://localhost:11434</code>...
+        <span>QUẢN LÝ AI — OLLAMA LOCAL (MẶC ĐỊNH)</span>
+        <span id="ollamaStatePill" class="badge badge-connecting">Đang kiểm tra...</span>
       </div>
 
-      <label class="field-label" for="routerPolicySel">Chính sách điều phối AI (Smart AI Router):</label>
-      <select id="routerPolicySel">
-        <option value="ollama-first">Mặc định — Ưu tiên Ollama Local (Không cần API Key)</option>
-        <option value="local-only">Chỉ dùng AI cục bộ (Local Only — không gửi dữ liệu ra Cloud)</option>
-        <option value="gemini-first">Ưu tiên Google Gemini (nếu đã nhập Key bổ sung), dự phòng Ollama</option>
-        <option value="ask-before-paid">Hỏi trước khi dùng OpenAI trả phí</option>
+      <label class="field-label" for="activeProviderSel">Nhà cung cấp AI đang chọn:</label>
+      <select id="activeProviderSel">
+        <option value="ollama">Ollama Local — http://127.0.0.1:11434 (Mặc định, không cần API Key)</option>
+        <option value="gemini">Google Gemini API (Tùy chọn bổ sung — cần API Key)</option>
+        <option value="openai">OpenAI API (Tùy chọn trả phí — cần API Key)</option>
       </select>
 
-      <label class="field-label" for="ollamaModelSel">Model tiếng Việt chạy cục bộ (Đề xuất cho máy này: <strong>${escapeHtml(rec.name)}</strong>):</label>
-      <select id="ollamaModelSel">${catalogOpts}</select>
+      <div id="ollamaDetailBox" class="alert-warn" style="margin-top:8px;margin-bottom:8px;">
+        Đang kiểm tra kết nối tới Ollama Local tại <code>http://127.0.0.1:11434/api/tags</code>...
+      </div>
+
+      <label class="field-label" for="ollamaInstalledModelSel">Model thực tế đã cài trên máy (từ /api/tags):</label>
+      <select id="ollamaInstalledModelSel">
+        <option value="">-- Đang tải danh sách model thực tế --</option>
+      </select>
 
       <div class="btn-row">
-        <button id="btnRecheckOllama" class="btn btn-secondary" type="button">Kiểm tra Ollama</button>
-        <button id="btnPullOllamaModel" class="btn btn-blue" type="button">Tải model đề xuất</button>
-        <button id="btnTestGatewayAi" class="btn btn-success" type="button">Kiểm tra kết nối AI</button>
-        <a href="https://ollama.com/download/windows" target="_blank" class="btn btn-secondary" style="text-decoration:none;">Cài đặt Ollama</a>
+        <button id="btnCheckOllamaConn" class="btn btn-primary" type="button">Kiểm tra kết nối</button>
+        <button id="btnReloadOllamaModels" class="btn btn-secondary" type="button">Tải lại danh sách model</button>
+        <button id="btnSampleTestAi" class="btn btn-success" type="button">Thử AI câu mẫu</button>
       </div>
-      <div id="ollamaPullProgress" class="muted" style="margin-top:6px;"></div>
+      <div id="sampleAiOutput" class="hidden" style="margin-top:8px;"></div>
     `;
     tabSettings.insertBefore(card, tabSettings.firstChild);
 
-    // Wire events
-    const policySel = document.getElementById('routerPolicySel');
-    const modelSel = document.getElementById('ollamaModelSel');
-    if (router) {
-      policySel.value = router.getPolicy();
-      modelSel.value = router.getOllamaModel() || rec.name;
-    }
+    const provSel = document.getElementById('activeProviderSel');
+    const modelSel = document.getElementById('ollamaInstalledModelSel');
+    if (router) provSel.value = router.getActiveProvider();
 
-    policySel.addEventListener('change', () => {
-      if (router) router.setPolicy(policySel.value);
+    provSel.addEventListener('change', () => {
+      if (router) router.setActiveProvider(provSel.value);
       refreshOllamaUi(hostName);
     });
+
     modelSel.addEventListener('change', () => {
-      if (router) router.setOllamaModel(modelSel.value);
+      if (router && modelSel.value) router.setOllamaModel(modelSel.value);
+      refreshOllamaUi(hostName);
     });
 
-    document.getElementById('btnRecheckOllama').addEventListener('click', () => refreshOllamaUi(hostName));
+    document.getElementById('btnCheckOllamaConn').addEventListener('click', async () => {
+      if (router) router.resetCircuitBreaker();
+      await refreshOllamaUi(hostName);
+    });
 
-    document.getElementById('btnPullOllamaModel').addEventListener('click', async () => {
+    document.getElementById('btnReloadOllamaModels').addEventListener('click', async () => {
+      await refreshOllamaUi(hostName);
+    });
+
+    document.getElementById('btnSampleTestAi').addEventListener('click', async () => {
       if (!router) return;
-      const chosenName = modelSel.value || rec.name;
-      const info = router.MODEL_CATALOG.find(m => m.name === chosenName) || rec;
-      if (!confirm(`Xác nhận tải model tiếng Việt "${chosenName}" (~${info.sizeGb}GB, yêu cầu RAM ≥ ${info.minRamGb}GB) về Ollama cục bộ trên máy này?`)) return;
-      const progEl = document.getElementById('ollamaPullProgress');
-      const btnPull = document.getElementById('btnPullOllamaModel');
-      btnPull.disabled = true;
-      progEl.textContent = `Đang bắt đầu tải ${chosenName}...`;
-      try {
-        const res = await router.pullOllamaModel(chosenName, (p) => {
-          progEl.textContent = p.percent != null ? `${p.status} (${p.percent}%)` : p.status;
-        });
-        progEl.textContent = res.alreadyInstalled
-          ? `Model "${chosenName}" đã có sẵn trên máy — không cần tải lại.`
-          : `Đã tải xong model "${chosenName}"! Đang tự động kiểm tra sẵn sàng...`;
-        await refreshOllamaUi(hostName);
-      } catch (err) {
-        progEl.textContent = 'Lỗi tải model: ' + (err.message || err);
-      } finally {
-        btnPull.disabled = false;
-      }
-    });
-
-    document.getElementById('btnTestGatewayAi').addEventListener('click', async () => {
-      const box = document.getElementById('ollamaDetailBox');
-      const btn = document.getElementById('btnTestGatewayAi');
+      const outEl = document.getElementById('sampleAiOutput');
+      const btn = document.getElementById('btnSampleTestAi');
       btn.disabled = true;
-      box.className = 'alert-warn';
-      box.textContent = 'Đang gửi câu thử nghiệm thực tế qua VBTM AI Gateway...';
+      outEl.className = 'alert-warn';
+      outEl.textContent = `Đang gửi câu hỏi mẫu tới ${router.getActiveProvider().toUpperCase()}...`;
       try {
-        const r = await router.testActiveConnection(hostName);
-        box.className = 'alert-ok';
-        box.textContent = `Kết nối thành công! AI: ${r.provider} (${r.connectionType || 'Local'}) · Model: ${r.model} · Độ trễ: ${r.latencyMs}ms · Phản hồi: "${r.text}"`;
+        const res = await router.testActiveConnection(hostName);
+        outEl.className = 'alert-ok';
+        outEl.textContent = `Thành công! [${res.provider}] Model: ${res.model} (${res.latencyMs}ms) → "${res.text}"`;
       } catch (err) {
-        box.className = 'alert-err';
-        box.textContent = 'Chưa kết nối được AI: ' + (err.message || err);
+        outEl.className = 'alert-err';
+        outEl.textContent = 'Lỗi thực tế: ' + (err.message || err);
       } finally {
         btn.disabled = false;
         renderLogs();
@@ -123,37 +100,57 @@
     if (!router) return;
     const pill = document.getElementById('ollamaStatePill');
     const box = document.getElementById('ollamaDetailBox');
+    const modelSel = document.getElementById('ollamaInstalledModelSel');
     const statusBadge = document.getElementById('aiStatusBadge');
     const modelLabel = document.getElementById('aiModelLabel');
+    const activeProv = router.getActiveProvider();
 
     const st = await router.checkOllamaStatus();
-    const hasGem = !!(global.VBTM_AICore && global.VBTM_AICore.getApiKey());
+
+    if (modelSel) {
+      if (st.models && st.models.length > 0) {
+        modelSel.innerHTML = st.models.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+        modelSel.value = st.selectedModel || st.models[0];
+      } else {
+        modelSel.innerHTML = '<option value="">(Chưa có model nào được cài trên máy)</option>';
+      }
+    }
 
     if (st.running && st.models.length > 0) {
-      if (pill) { pill.className = 'badge badge-connected'; pill.textContent = 'Ollama: Đang hoạt động (Local)'; }
+      if (pill) { pill.className = 'badge badge-connected'; pill.textContent = 'Ollama: Đang hoạt động'; }
       if (box) {
         box.className = 'alert-ok';
-        box.innerHTML = `<strong>Sẵn sàng sử dụng AI không cần API Key!</strong><br/>Ollama Local đang chạy tại <code>${escapeHtml(router.getOllamaUrl())}</code> · Model sẵn sàng: <strong>${escapeHtml(st.selectedModel)}</strong> (${st.models.length} model đã cài).`;
+        box.innerHTML = `<strong>Ollama Local đang hoạt động (${st.latencyMs}ms)!</strong><br/>Địa chỉ: <code>${escapeHtml(router.getOllamaUrl())}</code> · Model đang dùng: <strong>${escapeHtml(st.selectedModel)}</strong> (${st.models.length} model đã cài).`;
       }
-      if (statusBadge) { statusBadge.className = 'badge badge-connected'; statusBadge.textContent = 'AI Local sẵn sàng'; }
-      if (modelLabel) modelLabel.textContent = `${st.selectedModel} · Ollama Local (Không cần Key)`;
+      if (activeProv === 'ollama') {
+        if (statusBadge) { statusBadge.className = 'badge badge-connected'; statusBadge.textContent = 'Ollama Local sẵn sàng'; }
+        if (modelLabel) modelLabel.textContent = `${st.selectedModel} · Local`;
+      }
     } else if (st.running && st.models.length === 0) {
-      const rec = st.recommended || router.recommendModelForHardware();
-      if (pill) { pill.className = 'badge badge-connecting'; pill.textContent = 'Ollama: Chưa tải model'; }
+      if (pill) { pill.className = 'badge badge-connecting'; pill.textContent = 'Ollama: Chưa cài model'; }
       if (box) {
         box.className = 'alert-warn';
-        box.innerHTML = `<strong>Ollama đã chạy nhưng chưa có model tiếng Việt.</strong> Bấm <em>"Tải model đề xuất"</em> để tải <strong>${escapeHtml(rec.name)}</strong> (~${rec.sizeGb}GB, RAM ≥ ${rec.minRamGb}GB) và dùng AI miễn phí không cần API Key.`;
+        box.innerHTML = `<strong>Ollama đang chạy nhưng chưa có model nào.</strong><br/>Mở PowerShell/CMD và chạy lệnh: <code>ollama pull qwen2.5:3b</code> (hoặc <code>ollama pull qwen2.5:7b</code>), sau đó bấm <strong>Tải lại danh sách model</strong>.`;
       }
-      if (statusBadge) { statusBadge.className = 'badge badge-connecting'; statusBadge.textContent = 'Chưa tải model Ollama'; }
+      if (activeProv === 'ollama' && statusBadge) {
+        statusBadge.className = 'badge badge-connecting';
+        statusBadge.textContent = 'Ollama: Chưa có model';
+      }
     } else {
-      if (pill) { pill.className = 'badge badge-idle'; pill.textContent = 'Ollama: Chưa cài / Chưa chạy'; }
+      if (pill) { pill.className = 'badge badge-error'; pill.textContent = 'Ollama: Không kết nối được'; }
       if (box) {
-        box.className = hasGem ? 'alert-ok' : 'alert-warn';
-        box.innerHTML = hasGem
-          ? `Ollama Local chưa chạy, nhưng bạn đã cấu hình <strong>Google Gemini API Key bổ sung</strong> — hệ thống vẫn dùng được AI Cloud bình thường.`
-          : `<strong>Chưa phát hiện Ollama tại <code>http://localhost:11434</code>.</strong> Để dùng AI miễn phí <strong>không cần API Key</strong>: bấm <em>"Cài đặt Ollama"</em> (hoặc chạy <code>VBTM-Pro-Unified-Setup.exe</code>) rồi khởi chạy Ollama. Hoặc nhập Gemini Key bổ sung bên dưới nếu muốn dùng Cloud.`;
+        box.className = 'alert-err';
+        box.innerHTML = `<strong>${escapeHtml(st.error || 'Không kết nối được Ollama Local tại http://127.0.0.1:11434.')}</strong><br/>Hướng dẫn: Cài Ollama từ <a href="https://ollama.com/download/windows" target="_blank">ollama.com/download/windows</a>, khởi chạy Ollama, rồi chạy <code>ollama pull qwen2.5:3b</code> và bấm <strong>Kiểm tra kết nối</strong>.`;
       }
-      if (statusBadge && !hasGem) { statusBadge.className = 'badge badge-idle'; statusBadge.textContent = 'Cần cài Ollama (không cần Key)'; }
+      if (activeProv === 'ollama' && statusBadge) {
+        statusBadge.className = 'badge badge-error';
+        statusBadge.textContent = 'Ollama chưa chạy';
+      }
+    }
+
+    if (activeProv !== 'ollama' && statusBadge) {
+      statusBadge.className = 'badge badge-idle';
+      statusBadge.textContent = `Đang chọn: ${activeProv.toUpperCase()} (tùy chọn)`;
     }
   }
 
@@ -162,7 +159,6 @@
     const compat = global.VBTM_Compat;
     const runtime = compat.detectRuntime(hostName);
 
-    // 1. Compatibility Tier badge & warnings
     const tierEl = document.getElementById('tierBadge');
     if (tierEl) tierEl.textContent = runtime.tierLabel;
     const compatBox = document.getElementById('compatWarnBox');
@@ -175,10 +171,8 @@
       }
     }
 
-    // 2. Inject Unified AI Center card
     injectAiCenterCard(hostName);
 
-    // 3. Tabs
     document.querySelectorAll('.vbtm-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         const target = btn.getAttribute('data-tab');
@@ -189,27 +183,7 @@
       });
     });
 
-    // 4. Status bar subscription
-    const statusBadge = document.getElementById('aiStatusBadge');
-    const modelLabel = document.getElementById('aiModelLabel');
-    function updateStatus(snap) {
-      if (statusBadge && snap.status === 'connecting') {
-        statusBadge.className = 'badge badge-connecting';
-        statusBadge.textContent = 'Đang gọi AI...';
-      } else if (statusBadge && snap.status === 'connected') {
-        statusBadge.className = 'badge badge-connected';
-        statusBadge.textContent = `Đã kết nối (${snap.lastLatencyMs}ms)`;
-      } else if (statusBadge && snap.status === 'error') {
-        statusBadge.className = 'badge badge-error';
-        statusBadge.textContent = 'AI chưa sẵn sàng';
-      }
-      if (modelLabel && snap.status === 'connected') {
-        modelLabel.textContent = `${snap.activeModel} · ${snap.mode === 'gateway' ? 'Gateway' : 'Cloud bổ sung'}`;
-      }
-    }
-    core.onStateChange(updateStatus);
-
-    // 5. Optional Cloud Settings controls (Gemini Key is OPTIONAL, never mandatory)
+    // Optional Cloud Settings (Gemini/OpenAI — chỉ dùng khi người dùng chủ động chọn)
     const selMode = document.getElementById('cfgMode');
     const inpGw = document.getElementById('cfgGatewayUrl');
     const inpKey = document.getElementById('cfgApiKey');
@@ -225,7 +199,7 @@
     }
     if (selMode) selMode.value = core.getMode();
     if (inpGw) inpGw.value = core.getGatewayUrl();
-    if (inpKey) inpKey.placeholder = core.getApiKey() ? ('Đang lưu: ' + core.maskKey(core.getApiKey())) : '(Tùy chọn — không bắt buộc nếu dùng Ollama Local)';
+    if (inpKey) inpKey.placeholder = core.getApiKey() ? ('Đang lưu: ' + core.maskKey(core.getApiKey())) : '(Tùy chọn bổ sung — không bắt buộc khi dùng Ollama)';
 
     function toggleModeFields() {
       const m = selMode ? selMode.value : 'byok';
@@ -247,11 +221,11 @@
           inpKey.placeholder = 'Đang lưu: ' + core.maskKey(core.getApiKey());
         }
         if (selModel) core.setModel(selModel.value);
+        if (global.VBTM_SmartRouter) global.VBTM_SmartRouter.resetCircuitBreaker('gemini');
         if (cfgFeedback) {
           cfgFeedback.className = 'alert-ok';
-          cfgFeedback.textContent = 'Đã lưu cấu hình AI.';
+          cfgFeedback.textContent = 'Đã lưu cấu hình bổ sung và đặt lại trạng thái kết nối.';
         }
-        refreshOllamaUi(hostName);
       });
     }
 
@@ -259,30 +233,30 @@
     if (btnClearKey) {
       btnClearKey.addEventListener('click', () => {
         core.setApiKey('');
-        if (inpKey) { inpKey.value = ''; inpKey.placeholder = '(Tùy chọn — không bắt buộc nếu dùng Ollama Local)'; }
+        if (inpKey) { inpKey.value = ''; inpKey.placeholder = '(Tùy chọn bổ sung)'; }
+        if (global.VBTM_SmartRouter) global.VBTM_SmartRouter.resetCircuitBreaker('gemini');
         if (cfgFeedback) {
           cfgFeedback.className = 'alert-warn';
-          cfgFeedback.textContent = 'Đã xóa Gemini API Key (vẫn dùng được AI qua Ollama Local).';
+          cfgFeedback.textContent = 'Đã xóa Gemini API Key — Ollama Local vẫn hoạt động bình thường.';
         }
-        refreshOllamaUi(hostName);
       });
     }
 
     const btnTest = document.getElementById('btnTestAi');
     if (btnTest) {
       btnTest.addEventListener('click', async () => {
-        if (cfgFeedback) { cfgFeedback.className = 'alert-warn'; cfgFeedback.textContent = 'Đang kiểm tra kết nối qua VBTM AI Gateway...'; }
+        if (cfgFeedback) { cfgFeedback.className = 'alert-warn'; cfgFeedback.textContent = 'Đang kiểm tra kết nối qua AI Gateway...'; }
         btnTest.disabled = true;
         try {
           const r = await core.testConnection(hostName);
           if (cfgFeedback) {
             cfgFeedback.className = 'alert-ok';
-            cfgFeedback.textContent = `Kết nối thành công! AI: ${r.provider || 'gateway'} · Model: ${r.model} · Độ trễ: ${r.latencyMs}ms · Phản hồi: "${r.text}"`;
+            cfgFeedback.textContent = `Kết nối thành công! [${r.provider}] Model: ${r.model} (${r.latencyMs}ms) → "${r.text}"`;
           }
         } catch (err) {
           if (cfgFeedback) {
             cfgFeedback.className = 'alert-err';
-            cfgFeedback.textContent = 'Chưa kết nối được AI: ' + (err.message || err);
+            cfgFeedback.textContent = 'Lỗi kết nối: ' + (err.message || err);
           }
         } finally {
           btnTest.disabled = false;
@@ -291,7 +265,6 @@
       });
     }
 
-    // Tự động kiểm tra Ollama ngay khi mở Add-in lần đầu
     refreshOllamaUi(hostName);
     renderHistory(hostName);
     renderLogs();
@@ -303,7 +276,7 @@
     if (!box) return;
     const list = global.VBTM_SyncEngine ? global.VBTM_SyncEngine.getHistory(hostName) : global.VBTM_AICore.getHistory(hostName);
     if (!list.length) {
-      box.innerHTML = '<div class="muted">Chưa có lịch sử thao tác AI trong phiên làm việc này.</div>';
+      box.innerHTML = '<div class="muted">Chưa có lịch sử thao tác AI.</div>';
       return;
     }
     box.innerHTML = list.map(h => `
@@ -317,14 +290,14 @@
   function renderLogs() {
     const box = document.getElementById('techLogList');
     if (!box) return;
-    const logs = global.VBTM_AICore.getTechLogs().slice(0, 12);
-    if (!logs.length) {
-      box.innerHTML = '<div class="muted">Chưa có log kỹ thuật.</div>';
+    const audit = global.VBTM_SmartRouter ? global.VBTM_SmartRouter.getRequestAuditLog().slice(0, 12) : [];
+    if (!audit.length) {
+      box.innerHTML = '<div class="muted">Chưa có nhật ký gọi AI.</div>';
       return;
     }
-    box.innerHTML = logs.map(l => `
+    box.innerHTML = audit.map(l => `
       <div class="log-item">
-        <div><strong>[${escapeHtml(l.code)}]</strong> ${escapeHtml(l.model)} · HTTP ${l.status} · ${l.latencyMs}ms (retry=${l.retry})</div>
+        <div><strong>[${escapeHtml(l.provider.toUpperCase())} · ${escapeHtml(l.status)}]</strong> ${escapeHtml(l.model)} · ${l.latencyMs}ms</div>
         <div class="muted">${escapeHtml(l.ts.slice(11, 19))} · ${escapeHtml(l.note)}</div>
       </div>
     `).join('');
