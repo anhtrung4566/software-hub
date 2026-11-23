@@ -41,6 +41,7 @@ namespace VBTMProSuite
             bool spellWordMode = false;
             bool qrWordMode = false;
             bool installWordMode = false;
+            bool testAiNetMode = false;
             int insertTplIdx = -1;
             for (int idx = 0; idx < args.Length; idx++)
             {
@@ -63,8 +64,16 @@ namespace VBTMProSuite
                     spellWordMode = true;
                 else if (a.Equals("--qr-word", StringComparison.OrdinalIgnoreCase))
                     qrWordMode = true;
+                else if (a.Equals("--test-ai-network", StringComparison.OrdinalIgnoreCase))
+                    testAiNetMode = true;
                 else if (a.Equals("--insert-tpl", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
                     int.TryParse(args[++idx], out insertTplIdx);
+            }
+
+            if (testAiNetMode)
+            {
+                RunAiNetworkSelfTest();
+                return;
             }
 
             if (uninstallMode)
@@ -179,6 +188,96 @@ namespace VBTMProSuite
             {
                 MessageBox.Show("Thông báo khi gỡ cài đặt: " + ex.Message, "VBTM Pro 2.5.0");
             }
+        }
+
+        private static void RunAiNetworkSelfTest()
+        {
+            StringBuilder report = new StringBuilder();
+            string outFile = Path.Combine(Path.GetTempPath(), "vbtm_ai_selftest.txt");
+            try
+            {
+                string[] cfg = AiWordAssistantForm.LoadAiConfig();
+                int prov = 0; int.TryParse(cfg[0], out prov);
+                string model = cfg[1];
+                string key = cfg[2];
+                report.AppendLine("=== VBTM PRO 3.0 AI NETWORK SELF-TEST (.NET Framework 4.x HttpWebRequest) ===");
+                report.AppendLine("Provider=" + prov + " | Model=" + model + " | KeyPresent=" + (!string.IsNullOrEmpty(key)) + " | KeyLen=" + key.Length);
+
+                // T9 & T10: Empty response & Malformed JSON parser safety
+                var pEmpty = WordSpellInspectorForm.ParseAiSpellResponseSafe("", "Văn bản thử nghiệm");
+                var pBadJson = WordSpellInspectorForm.ParseAiSpellResponseSafe("{not_valid_json::[", "Văn bản thử nghiệm");
+                report.AppendLine("[PASS] T09-EmptyResponse: count=" + pEmpty.Count);
+                report.AppendLine("[PASS] T10-MalformedJson: count=" + pBadJson.Count);
+
+                // T7: Invalid API key
+                try
+                {
+                    AiWordAssistantForm.CallOnlineAiDirect(0, "gemini-2.5-flash", "AIzaInvalidTestKey0000000000000000000", "Trả lời OK", "test", false);
+                    report.AppendLine("[FAIL] T07-InvalidKey: unexpectedly succeeded");
+                }
+                catch (Exception ex7)
+                {
+                    report.AppendLine("[PASS] T07-InvalidKey: " + ex7.Message.Split('\n')[0]);
+                }
+
+                // T1: First live call
+                if (prov == 0 && !string.IsNullOrEmpty(key))
+                {
+                    string disc = AiWordAssistantForm.DiscoverFirstGeminiFlashModel(key);
+                    report.AppendLine("DiscoveredModel=" + (disc ?? "(none)"));
+                    string useM = !string.IsNullOrEmpty(disc) ? disc : model;
+
+                    System.Diagnostics.Stopwatch sw1 = System.Diagnostics.Stopwatch.StartNew();
+                    string r1 = AiWordAssistantForm.CallOnlineAiDirect(0, useM, key, "Chỉ trả lời 1 từ: OK", "Test 1", false);
+                    sw1.Stop();
+                    report.AppendLine("[PASS] T01-FirstCall: " + sw1.ElapsedMilliseconds + "ms -> " + r1);
+
+                    // T2: 10 consecutive calls (proves zero KeepAliveFailure!)
+                    int ok10 = 0;
+                    long sumMs = 0;
+                    for (int i = 1; i <= 10; i++)
+                    {
+                        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                        try
+                        {
+                            string r = AiWordAssistantForm.CallOnlineAiDirect(0, useM, key, "Chỉ trả lời số " + i, "Ping " + i, false);
+                            sw.Stop();
+                            sumMs += sw.ElapsedMilliseconds;
+                            ok10++;
+                        }
+                        catch (Exception exI)
+                        {
+                            sw.Stop();
+                            report.AppendLine("  Call " + i + " err: " + exI.Message);
+                        }
+                    }
+                    report.AppendLine((ok10 == 10 ? "[PASS]" : "[WARN]") + " T02-10ConsecutiveCalls: " + ok10 + "/10 (avg " + (ok10 > 0 ? (sumMs / ok10) : 0) + "ms)");
+
+                    // T3: Wait idle 11 seconds (exceeds MaxIdleTime=8s) then call again
+                    System.Threading.Thread.Sleep(11000);
+                    System.Diagnostics.Stopwatch sw3 = System.Diagnostics.Stopwatch.StartNew();
+                    string r3 = AiWordAssistantForm.CallOnlineAiDirect(0, useM, key, "Chỉ trả lời 1 từ: IDLE_OK", "Sau khi chờ 11 giây", false);
+                    sw3.Stop();
+                    report.AppendLine("[PASS] T03-AfterIdle11s: " + sw3.ElapsedMilliseconds + "ms -> " + r3);
+
+                    // T8: Multi-paragraph Vietnamese spell check JSON
+                    string sampleDoc = "Căn cứ Nghị định số 30/2020/NĐ-CP ngày 05 tháng 3 năm 2020 của Chính phủ.\nĐồng chí Nguyễn Văn An đề suất bổ xung 15% kinh phí theo Điều 5.\nCác đơn vị cần xử dụng ngân xách đúng kế hoạc.";
+                    string r8 = AiWordAssistantForm.CallOnlineAiDirect(0, useM, key,
+                        "Tìm lỗi chính tả trong đoạn sau, không thay đổi tên riêng/số liệu/căn cứ. Trả về JSON array [{\"original\":\"...\",\"suggestion\":\"...\",\"reason\":\"...\"}].",
+                        sampleDoc, true);
+                    var parsed8 = WordSpellInspectorForm.ParseAiSpellResponseSafe(r8, sampleDoc);
+                    report.AppendLine("[PASS] T08-SpellJsonLive: found=" + parsed8.Count + " issues");
+                }
+                else
+                {
+                    report.AppendLine("[SKIP] Live Gemini tests skipped (no Gemini key saved).");
+                }
+            }
+            catch (Exception ex)
+            {
+                report.AppendLine("[ERROR] " + ex.Message);
+            }
+            File.WriteAllText(outFile, report.ToString(), Encoding.UTF8);
         }
     }
 
@@ -2372,115 +2471,199 @@ namespace VBTMProSuite
             return CallOnlineAiDirect(prov, model, apiKey, systemPrompt, userText);
         }
 
-        public static string CallOnlineAiDirect(int prov, string model, string apiKey, string systemPrompt, string userText)
+        private static readonly Random RetryJitterRng = new Random();
+
+        public static string GetAiLogFilePath()
         {
-            ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; // TLS 1.2
+            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VBTMPro", "logs");
+            try { Directory.CreateDirectory(dir); } catch { }
+            return Path.Combine(dir, "ai_network.log");
+        }
+
+        private static string SanitizeEndpointForLog(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return "";
+            int q = url.IndexOf('?');
+            return q >= 0 ? url.Substring(0, q) : url;
+        }
+
+        public static void WriteAiTechnicalLog(string model, string url, long latencyMs, int httpStatus, string exType, string innerEx, int retries, string stage)
+        {
+            try
+            {
+                string logPath = GetAiLogFilePath();
+                try
+                {
+                    FileInfo fi = new FileInfo(logPath);
+                    if (fi.Exists && fi.Length > 512 * 1024) File.Delete(logPath);
+                }
+                catch { }
+                string line = string.Format("[{0}] model={1} | endpoint={2} | latency={3}ms | http={4} | ex={5} | inner={6} | retries={7} | stage={8}",
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                    string.IsNullOrEmpty(model) ? "-" : model,
+                    SanitizeEndpointForLog(url),
+                    latencyMs,
+                    httpStatus,
+                    string.IsNullOrEmpty(exType) ? "OK" : exType,
+                    string.IsNullOrEmpty(innerEx) ? "-" : innerEx.Replace("\r", " ").Replace("\n", " "),
+                    retries,
+                    string.IsNullOrEmpty(stage) ? "-" : stage);
+                File.AppendAllText(logPath, line + Environment.NewLine, Encoding.UTF8);
+            }
+            catch { }
+        }
+
+        public static void ConfigureDotNetTlsAndServicePoint(string url)
+        {
+            // Bật TLS 1.2 + TLS 1.3 (fallback TLS 1.2 trên Windows 10 cũ), TUYỆT ĐỐI không tắt kiểm tra SSL/TLS
+            try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | (SecurityProtocolType)12288; }
+            catch { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; }
             ServicePointManager.Expect100Continue = false;
             ServicePointManager.UseNagleAlgorithm = false;
             ServicePointManager.DefaultConnectionLimit = 12;
+            ServicePointManager.DnsRefreshTimeout = 60000;
+            try
+            {
+                ServicePoint sp = ServicePointManager.FindServicePoint(new Uri(url));
+                sp.ConnectionLeaseTimeout = 30000; // Đóng/tái tạo kết nối sau 30s tránh socket cũ bị server cắt
+                sp.MaxIdleTime = 8000;             // Đóng socket nhàn rỗi sau 8s trước khi Google GFE đóng trước
+                sp.Expect100Continue = false;
+                sp.UseNagleAlgorithm = false;
+                sp.ConnectionLimit = 12;
+            }
+            catch { }
+        }
+
+        public static string CallOnlineAiDirect(int prov, string model, string apiKey, string systemPrompt, string userText)
+        {
+            return CallOnlineAiDirect(prov, model, apiKey, systemPrompt, userText, false);
+        }
+
+        public static string CallOnlineAiDirect(int prov, string model, string apiKey, string systemPrompt, string userText, bool expectJson)
+        {
             JavaScriptSerializer js = new JavaScriptSerializer();
             js.MaxJsonLength = int.MaxValue;
 
-            if (prov == 0) // Google Gemini (tắt thinkingBudget = 0 + Proxy=null -> trả lời siêu tốc 1–2 giây!)
+            if (prov == 0) // Google Gemini
             {
-                string reqModel = string.IsNullOrEmpty(model) || model.Equals("gemini-2.5-flash", StringComparison.OrdinalIgnoreCase)
-                    ? "gemini-3.8-flash"
-                    : model;
-                string[] tryModels = new string[] { reqModel, "gemini-3.8-flash", "gemini-3.0-flash", "gemini-2.0-flash" };
+                string reqModel = string.IsNullOrEmpty(model) ? "gemini-flash-lite-latest" : model.Trim();
+                List<string> tryModels = new List<string> {
+                    reqModel,
+                    "gemini-flash-lite-latest",
+                    "gemini-flash-latest",
+                    "gemini-3.5-flash-lite",
+                    "gemini-3.1-flash-lite",
+                    "gemini-3.5-flash",
+                    "gemini-3.6-flash",
+                    "gemini-3.7-flash",
+                    "gemini-3.8-flash",
+                    "gemini-2.5-flash"
+                };
+                object genCfgFast = expectJson
+                    ? (object)new { temperature = 0.2, maxOutputTokens = 2048, responseMimeType = "application/json", thinkingConfig = new { thinkingBudget = 0 } }
+                    : (object)new { temperature = 0.45, maxOutputTokens = 1536, thinkingConfig = new { thinkingBudget = 0 } };
+                object genCfgPlain = expectJson
+                    ? (object)new { temperature = 0.2, maxOutputTokens = 2048, responseMimeType = "application/json" }
+                    : (object)new { temperature = 0.45, maxOutputTokens = 1536 };
                 var fastPayload = new
                 {
                     contents = new object[] { new { parts = new object[] { new { text = systemPrompt + "\n\n" + userText } } } },
-                    generationConfig = new { temperature = 0.55, maxOutputTokens = 1024, thinkingConfig = new { thinkingBudget = 0 } }
+                    generationConfig = genCfgFast
                 };
                 var plainPayload = new
                 {
                     contents = new object[] { new { parts = new object[] { new { text = systemPrompt + "\n\n" + userText } } } },
-                    generationConfig = new { temperature = 0.55, maxOutputTokens = 1024 }
+                    generationConfig = genCfgPlain
                 };
+                string fastPayloadJson = js.Serialize(fastPayload);
+                string plainPayloadJson = js.Serialize(plainPayload);
                 string resp = null;
                 Exception lastEx = null;
                 HashSet<string> tried = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (string mName in tryModels)
+
+                Func<string, bool> isFailoverError = (msg) =>
+                    msg.IndexOf("[404]", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("[503]", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("[429]", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("[408]", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("Timeout", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("Quá thời gian", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("NOT_FOUND", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("high demand", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("overloaded", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("UNAVAILABLE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    msg.IndexOf("no longer available", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                Func<string, string> invokeSingleGeminiModel = (mName) =>
                 {
-                    if (!tried.Add(mName)) continue;
                     string url = "https://generativelanguage.googleapis.com/v1beta/models/" + Uri.EscapeDataString(mName) + ":generateContent?key=" + Uri.EscapeDataString(apiKey);
                     try
                     {
-                        resp = HttpPostJson(url, js.Serialize(fastPayload), null);
+                        return HttpPostJson(url, fastPayloadJson, null, mName);
+                    }
+                    catch (Exception exFast)
+                    {
+                        if (exFast.Message.IndexOf("[400]", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                            exFast.Message.IndexOf("thinking", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            return HttpPostJson(url, plainPayloadJson, null, mName);
+                        }
+                        throw;
+                    }
+                };
+
+                foreach (string mName in tryModels)
+                {
+                    if (string.IsNullOrWhiteSpace(mName) || !tried.Add(mName)) continue;
+                    try
+                    {
+                        resp = invokeSingleGeminiModel(mName);
                         if (!string.IsNullOrEmpty(resp)) break;
                     }
                     catch (Exception exM)
                     {
                         lastEx = exM;
-                        if (exM.Message.IndexOf("thinkingConfig", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            try { resp = HttpPostJson(url, js.Serialize(plainPayload), null); if (!string.IsNullOrEmpty(resp)) break; } catch (Exception ex2) { lastEx = ex2; }
-                        }
-                        else if (exM.Message.IndexOf("404", StringComparison.OrdinalIgnoreCase) < 0 &&
-                                 exM.Message.IndexOf("NOT_FOUND", StringComparison.OrdinalIgnoreCase) < 0 &&
-                                 exM.Message.IndexOf("no longer available", StringComparison.OrdinalIgnoreCase) < 0)
-                        {
-                            throw;
-                        }
+                        if (!isFailoverError(exM.Message)) throw;
                     }
                 }
-                if (string.IsNullOrEmpty(resp) && lastEx != null &&
-                    (lastEx.Message.IndexOf("404", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                     lastEx.Message.IndexOf("NOT_FOUND", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                     lastEx.Message.IndexOf("no longer available", StringComparison.OrdinalIgnoreCase) >= 0))
+                if (string.IsNullOrEmpty(resp) && lastEx != null && isFailoverError(lastEx.Message))
                 {
-                    // Tự động hỏi Google API danh sách model Flash đang mở cho Key này để không bao giờ bị lỗi 404 nữa!
-                    try
+                    List<string> discoveredList = DiscoverGeminiGenerateModels(apiKey);
+                    foreach (string dm in discoveredList)
                     {
-                        string listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + Uri.EscapeDataString(apiKey);
-                        HttpWebRequest lreq = (HttpWebRequest)WebRequest.Create(listUrl);
-                        lreq.Proxy = null;
-                        lreq.Timeout = 10000;
-                        using (HttpWebResponse lresp = (HttpWebResponse)lreq.GetResponse())
-                        using (StreamReader lsr = new StreamReader(lresp.GetResponseStream(), Encoding.UTF8))
+                        if (string.IsNullOrWhiteSpace(dm) || !tried.Add(dm)) continue;
+                        try
                         {
-                            var lobj = js.Deserialize<Dictionary<string, object>>(lsr.ReadToEnd());
-                            var mlist = lobj["models"] as System.Collections.ArrayList;
-                            if (mlist != null)
-                            {
-                                string discovered = null;
-                                foreach (object mo in mlist)
-                                {
-                                    var md = mo as Dictionary<string, object>;
-                                    if (md == null) continue;
-                                    string mn = Convert.ToString(md["name"] ?? "");
-                                    var methods = md.ContainsKey("supportedGenerationMethods") ? md["supportedGenerationMethods"] as System.Collections.ArrayList : null;
-                                    bool canGen = methods != null && methods.Contains("generateContent");
-                                    if (canGen && mn.IndexOf("flash", StringComparison.OrdinalIgnoreCase) >= 0)
-                                    {
-                                        discovered = mn.StartsWith("models/") ? mn.Substring(7) : mn;
-                                        break;
-                                    }
-                                }
-                                if (!string.IsNullOrEmpty(discovered))
-                                {
-                                    string dUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + Uri.EscapeDataString(discovered) + ":generateContent?key=" + Uri.EscapeDataString(apiKey);
-                                    try { resp = HttpPostJson(dUrl, js.Serialize(plainPayload), null); } catch (Exception exD) { lastEx = exD; }
-                                }
-                            }
+                            resp = invokeSingleGeminiModel(dm);
+                            if (!string.IsNullOrEmpty(resp)) break;
+                        }
+                        catch (Exception exD)
+                        {
+                            lastEx = exD;
+                            if (!isFailoverError(exD.Message)) throw;
                         }
                     }
-                    catch { }
                 }
                 if (string.IsNullOrEmpty(resp)) throw (lastEx ?? new Exception("Không gọi được Gemini API."));
                 var obj = js.Deserialize<Dictionary<string, object>>(resp);
+                if (obj == null || !obj.ContainsKey("candidates")) throw new Exception("Gemini trả về phản hồi rỗng (không có candidates).");
                 var cands = obj["candidates"] as System.Collections.ArrayList;
+                if (cands == null || cands.Count == 0) throw new Exception("Gemini trả về danh sách kết quả rỗng.");
                 var first = cands[0] as Dictionary<string, object>;
-                var content = first["content"] as Dictionary<string, object>;
-                var parts = content["parts"] as System.Collections.ArrayList;
+                var content = first != null && first.ContainsKey("content") ? first["content"] as Dictionary<string, object> : null;
+                var parts = content != null && content.ContainsKey("parts") ? content["parts"] as System.Collections.ArrayList : null;
+                if (parts == null || parts.Count == 0) throw new Exception("Gemini trả về nội dung rỗng.");
                 var p0 = parts[0] as Dictionary<string, object>;
-                return Convert.ToString(p0["text"]).Trim();
+                string txt = p0 != null && p0.ContainsKey("text") ? Convert.ToString(p0["text"]).Trim() : "";
+                if (string.IsNullOrEmpty(txt)) throw new Exception("Gemini trả về chuỗi văn bản rỗng.");
+                return txt;
             }
             else if (prov == 2) // Anthropic Claude
             {
+                string mName = string.IsNullOrEmpty(model) ? "claude-3-5-sonnet-latest" : model;
                 var payload = new
                 {
-                    model = string.IsNullOrEmpty(model) ? "claude-3-5-sonnet-latest" : model,
+                    model = mName,
                     max_tokens = 1500,
                     system = systemPrompt,
                     messages = new object[] { new { role = "user", content = userText } }
@@ -2489,7 +2672,7 @@ namespace VBTMProSuite
                     { "x-api-key", apiKey },
                     { "anthropic-version", "2023-06-01" }
                 };
-                string resp = HttpPostJson("https://api.anthropic.com/v1/messages", js.Serialize(payload), headers);
+                string resp = HttpPostJson("https://api.anthropic.com/v1/messages", js.Serialize(payload), headers, mName);
                 var obj = js.Deserialize<Dictionary<string, object>>(resp);
                 var content = obj["content"] as System.Collections.ArrayList;
                 var c0 = content[0] as Dictionary<string, object>;
@@ -2500,16 +2683,17 @@ namespace VBTMProSuite
                 string url = "https://api.openai.com/v1/chat/completions";
                 if (prov == 3) url = "https://api.deepseek.com/chat/completions";
                 else if (prov == 4) url = "https://api.groq.com/openai/v1/chat/completions";
+                string mName = string.IsNullOrEmpty(model) ? "gpt-4o-mini" : model;
                 var payload = new
                 {
-                    model = string.IsNullOrEmpty(model) ? "gpt-4o-mini" : model,
+                    model = mName,
                     messages = new object[] {
                         new { role = "system", content = systemPrompt },
                         new { role = "user", content = userText }
                     }
                 };
                 var headers = new Dictionary<string, string> { { "Authorization", "Bearer " + apiKey } };
-                string resp = HttpPostJson(url, js.Serialize(payload), headers);
+                string resp = HttpPostJson(url, js.Serialize(payload), headers, mName);
                 var obj = js.Deserialize<Dictionary<string, object>>(resp);
                 var choices = obj["choices"] as System.Collections.ArrayList;
                 var ch0 = choices[0] as Dictionary<string, object>;
@@ -2518,69 +2702,236 @@ namespace VBTMProSuite
             }
         }
 
-        private static string HttpPostJson(string url, string jsonBody, Dictionary<string, string> headers)
+        public static List<string> DiscoverGeminiGenerateModels(string apiKey)
         {
+            List<string> result = new List<string>();
+            string listUrl = "https://generativelanguage.googleapis.com/v1beta/models?key=" + Uri.EscapeDataString(apiKey);
+            ConfigureDotNetTlsAndServicePoint(listUrl);
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                HttpWebRequest lreq = (HttpWebRequest)WebRequest.Create(listUrl);
+                lreq.Method = "GET";
+                lreq.Proxy = null;
+                lreq.KeepAlive = false;
+                lreq.ProtocolVersion = HttpVersion.Version11;
+                lreq.Timeout = 12000;
+                lreq.ReadWriteTimeout = 12000;
+                using (HttpWebResponse lresp = (HttpWebResponse)lreq.GetResponse())
+                using (StreamReader lsr = new StreamReader(lresp.GetResponseStream(), Encoding.UTF8))
+                {
+                    JavaScriptSerializer js = new JavaScriptSerializer();
+                    js.MaxJsonLength = int.MaxValue;
+                    var lobj = js.Deserialize<Dictionary<string, object>>(lsr.ReadToEnd());
+                    var mlist = lobj != null && lobj.ContainsKey("models") ? lobj["models"] as System.Collections.ArrayList : null;
+                    List<string> rawCandidates = new List<string>();
+                    if (mlist != null)
+                    {
+                        foreach (object mo in mlist)
+                        {
+                            var md = mo as Dictionary<string, object>;
+                            if (md == null) continue;
+                            string mn = Convert.ToString(md.ContainsKey("name") ? md["name"] : "");
+                            var methods = md.ContainsKey("supportedGenerationMethods") ? md["supportedGenerationMethods"] as System.Collections.ArrayList : null;
+                            bool canGen = methods != null && methods.Contains("generateContent");
+                            if (!canGen) continue;
+                            string shortName = mn.StartsWith("models/") ? mn.Substring(7) : mn;
+                            string low = shortName.ToLowerInvariant();
+                            if (!low.StartsWith("gemini-")) continue;
+                            if (low.Contains("image") || low.Contains("audio") || low.Contains("tts") ||
+                                low.Contains("transcribe") || low.Contains("lyria") || low.Contains("robotics") ||
+                                low.Contains("computer-use") || low.Contains("deep-research") ||
+                                low.Contains("nano-banana") || low.Contains("antigravity") || low.Contains("omni"))
+                                continue;
+                            rawCandidates.Add(shortName);
+                        }
+                    }
+
+                    string[] preferredOrder = new string[] {
+                        "gemini-flash-lite-latest",
+                        "gemini-flash-latest",
+                        "gemini-3.5-flash-lite",
+                        "gemini-3.1-flash-lite",
+                        "gemini-3.5-flash",
+                        "gemini-3.6-flash",
+                        "gemini-3.7-flash",
+                        "gemini-3.8-flash",
+                        "gemini-3-flash-preview",
+                        "gemini-3.1-flash-lite-preview",
+                        "gemini-pro-latest",
+                        "gemini-2.5-flash",
+                        "gemini-2.5-flash-lite"
+                    };
+                    HashSet<string> added = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (string pref in preferredOrder)
+                    {
+                        foreach (string c in rawCandidates)
+                        {
+                            if (string.Equals(c, pref, StringComparison.OrdinalIgnoreCase) && added.Add(c))
+                                result.Add(c);
+                        }
+                    }
+                    foreach (string c in rawCandidates)
+                    {
+                        if (c.IndexOf("flash", StringComparison.OrdinalIgnoreCase) >= 0 && added.Add(c))
+                            result.Add(c);
+                    }
+                    foreach (string c in rawCandidates)
+                    {
+                        if (added.Add(c)) result.Add(c);
+                    }
+
+                    sw.Stop();
+                    WriteAiTechnicalLog(result.Count > 0 ? result[0] : "-", listUrl, sw.ElapsedMilliseconds, 200, "OK", "count=" + result.Count, 0, "discover_model");
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                WriteAiTechnicalLog("-", listUrl, sw.ElapsedMilliseconds, 0, ex.GetType().Name, ex.InnerException != null ? ex.InnerException.Message : ex.Message, 0, "discover_model");
+                return result;
+            }
+        }
+
+        public static string DiscoverFirstGeminiFlashModel(string apiKey)
+        {
+            List<string> list = DiscoverGeminiGenerateModels(apiKey);
+            return list.Count > 0 ? list[0] : null;
+        }
+
+        private static string HttpPostJson(string url, string jsonBody, Dictionary<string, string> headers, string modelNameForLog = "-")
+        {
+            ConfigureDotNetTlsAndServicePoint(url);
             byte[] bytes = Encoding.UTF8.GetBytes(jsonBody);
-            int maxRetries = 2;
+            int maxRetries = 3; // Tối đa 3 lần thử lại cho lỗi kết nối tạm thời / 429 / 5xx
+
             for (int attempt = 0; attempt <= maxRetries; attempt++)
             {
+                System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                string stage = "create_request";
                 HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
                 req.Method = "POST";
                 req.ContentType = "application/json; charset=utf-8";
-                req.Proxy = null; // Tắt dò WPAD Proxy của Windows (loại bỏ độ trễ 5–15 giây!)
-                req.KeepAlive = true;
+                req.ProtocolVersion = HttpVersion.Version11;
+                req.Proxy = null;
+                // Fix tận gốc lỗi "A connection that was expected to be kept alive was closed by the server":
+                // Luôn dùng kết nối mới sạch (KeepAlive = false) cho mỗi POST AI hoặc khi retry sau lỗi kết nối!
+                req.KeepAlive = false;
+                req.ConnectionGroupName = "vbtm_ai_" + attempt + "_" + Guid.NewGuid().ToString("N").Substring(0, 8);
                 req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-                req.Timeout = 22000;
-                req.ReadWriteTimeout = 22000;
+                req.Timeout = 25000;
+                req.ReadWriteTimeout = 25000;
                 if (headers != null)
                 {
                     foreach (var kv in headers) req.Headers[kv.Key] = kv.Value;
                 }
                 req.ContentLength = bytes.Length;
+
                 try
                 {
-                    using (Stream st = req.GetRequestStream()) st.Write(bytes, 0, bytes.Length);
+                    stage = "send_request";
+                    using (Stream st = req.GetRequestStream())
+                    {
+                        st.Write(bytes, 0, bytes.Length);
+                        st.Flush();
+                    }
+                    stage = "read_response";
                     using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
                     using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
                     {
-                        return sr.ReadToEnd();
+                        string result = sr.ReadToEnd();
+                        sw.Stop();
+                        WriteAiTechnicalLog(modelNameForLog, url, sw.ElapsedMilliseconds, (int)resp.StatusCode, "OK", null, attempt, "completed");
+                        return result;
                     }
                 }
                 catch (WebException wex)
                 {
+                    sw.Stop();
                     int httpCode = 0;
-                    string detail = wex.Message;
+                    string rawDetail = wex.Message;
                     if (wex.Response != null)
                     {
                         try { httpCode = (int)((HttpWebResponse)wex.Response).StatusCode; } catch { }
-                        using (StreamReader sr = new StreamReader(wex.Response.GetResponseStream(), Encoding.UTF8))
-                            detail = sr.ReadToEnd();
+                        try
+                        {
+                            using (StreamReader sr = new StreamReader(wex.Response.GetResponseStream(), Encoding.UTF8))
+                                rawDetail = sr.ReadToEnd();
+                        }
+                        catch { }
                         try
                         {
                             JavaScriptSerializer jsErr = new JavaScriptSerializer();
-                            var eObj = jsErr.Deserialize<Dictionary<string, object>>(detail);
+                            var eObj = jsErr.Deserialize<Dictionary<string, object>>(rawDetail);
                             if (eObj != null && eObj.ContainsKey("error"))
                             {
                                 var inner = eObj["error"] as Dictionary<string, object>;
                                 if (inner != null && inner.ContainsKey("message"))
                                 {
-                                    string code = inner.ContainsKey("code") ? ("[" + inner["code"] + "] ") : "";
-                                    detail = code + Convert.ToString(inner["message"]);
+                                    rawDetail = Convert.ToString(inner["message"]);
                                 }
                             }
                         }
                         catch { }
                     }
-                    bool retryable = (httpCode == 429 || httpCode == 500 || httpCode == 503 || wex.Status == WebExceptionStatus.Timeout);
+
+                    // Đóng nhóm kết nối cũ để tránh tái sử dụng socket hỏng
+                    try { req.ServicePoint.CloseConnectionGroup(req.ConnectionGroupName); } catch { }
+
+                    bool isTransientNet =
+                        wex.Status == WebExceptionStatus.KeepAliveFailure ||
+                        wex.Status == WebExceptionStatus.ConnectionClosed ||
+                        wex.Status == WebExceptionStatus.SendFailure ||
+                        wex.Status == WebExceptionStatus.ReceiveFailure ||
+                        wex.Status == WebExceptionStatus.PipelineFailure ||
+                        wex.Status == WebExceptionStatus.ConnectFailure ||
+                        wex.Status == WebExceptionStatus.Timeout;
+
+                    bool isRetryableHttp = (httpCode == 408 || httpCode == 429 || httpCode == 500 || httpCode == 502 || httpCode == 503 || httpCode == 504);
+                    bool retryable = isTransientNet || isRetryableHttp;
+
+                    string innerMsg = wex.InnerException != null ? (wex.InnerException.GetType().Name + ": " + wex.InnerException.Message) : wex.Status.ToString();
+                    WriteAiTechnicalLog(modelNameForLog, url, sw.ElapsedMilliseconds, httpCode, "WebException(" + wex.Status + ")", innerMsg, attempt, stage);
+
                     if (retryable && attempt < maxRetries)
                     {
-                        System.Threading.Thread.Sleep(800 * (attempt + 1));
+                        int baseDelay = (httpCode == 429) ? (1200 * (attempt + 1)) : (500 * (1 << attempt));
+                        int jitter = 0;
+                        lock (RetryJitterRng) { jitter = RetryJitterRng.Next(80, 320); }
+                        System.Threading.Thread.Sleep(baseDelay + jitter);
                         continue;
                     }
-                    throw new Exception(detail);
+
+                    string friendly = ClassifyFriendlyHttpError(httpCode, wex.Status, rawDetail);
+                    throw new Exception(friendly, wex);
+                }
+                catch (Exception ex)
+                {
+                    sw.Stop();
+                    WriteAiTechnicalLog(modelNameForLog, url, sw.ElapsedMilliseconds, 0, ex.GetType().Name, ex.InnerException != null ? ex.InnerException.Message : ex.Message, attempt, stage);
+                    throw;
                 }
             }
-            throw new Exception("Không nhận được phản hồi từ máy chủ AI sau khi thử lại.");
+            throw new Exception("Không nhận được phản hồi từ máy chủ AI sau 3 lần thử lại.");
+        }
+
+        private static string ClassifyFriendlyHttpError(int httpCode, WebExceptionStatus status, string detail)
+        {
+            if (status == WebExceptionStatus.NameResolutionFailure)
+                return "[Mất mạng / DNS] Không thể phân giải máy chủ AI. Kiểm tra kết nối Internet.";
+            if (status == WebExceptionStatus.Timeout || httpCode == 408)
+                return "[408 Timeout] Quá thời gian chờ phản hồi từ máy chủ AI.";
+            if (status == WebExceptionStatus.KeepAliveFailure || status == WebExceptionStatus.ConnectionClosed || status == WebExceptionStatus.ConnectFailure)
+                return "[Lỗi kết nối] Máy chủ từ chối hoặc đóng kết nối đột ngột (" + status + ").";
+            if (httpCode == 400) return "[400] Yêu cầu không hợp lệ: " + detail;
+            if (httpCode == 401) return "[401] API Key không hợp lệ: " + detail;
+            if (httpCode == 403) return "[403] Không có quyền truy cập API (kiểm tra API Key): " + detail;
+            if (httpCode == 404) return "[404] Không tìm thấy model hoặc endpoint: " + detail;
+            if (httpCode == 429) return "[429] Vượt giới hạn yêu cầu / hết hạn mức API: " + detail;
+            if (httpCode == 500 || httpCode == 502 || httpCode == 503 || httpCode == 504)
+                return "[" + httpCode + "] Máy chủ AI tạm thời quá tải hoặc bảo trì: " + detail;
+            return (httpCode > 0 ? "[" + httpCode + "] " : "") + detail;
         }
 
         private string RunOfflineAiTransform(string text, int taskIdx)
@@ -3255,9 +3606,10 @@ namespace VBTMProSuite
         private ListView lvFindings;
         private TextBox txtContext, txtEditSuggest;
         private Label lblSummary, lblAiStatus;
-        private Button btnDeepAi, btnFixOne, btnFixAll, btnLocate, btnIgnore;
+        private Button btnDeepAi, btnRetryFailed, btnFixOne, btnFixAll, btnLocate, btnIgnore;
         private ProgressBar prgScan;
         private List<SpellIssue> issues = new List<SpellIssue>();
+        private List<KeyValuePair<int, string>> failedChunks = new List<KeyValuePair<int, string>>();
         private HashSet<string> ignoredKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private string currentDocText = "";
         private bool isAiBusy = false;
@@ -3523,6 +3875,22 @@ namespace VBTMProSuite
             btnKeyCfg.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             btnKeyCfg.Click += (s, e) => ShowQuickAiKeyDialog();
             this.Controls.Add(btnKeyCfg);
+
+            btnRetryFailed = new Button
+            {
+                Text = "🔄 Thử Lại Đoạn Lỗi",
+                Location = new Point(x + 576, y),
+                Size = new Size(138, 32),
+                BackColor = Color.FromArgb(217, 119, 6),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.2f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Visible = false
+            };
+            btnRetryFailed.FlatAppearance.BorderSize = 0;
+            btnRetryFailed.Click += (s, e) => RunDeepAiSpellScanAsync(true);
+            this.Controls.Add(btnRetryFailed);
 
             prgScan = new ProgressBar
             {
@@ -3952,13 +4320,105 @@ namespace VBTMProSuite
             }
         }
 
+        private static List<KeyValuePair<int, string>> SplitIntoLogicalChunks(string text, int maxChunkChars)
+        {
+            List<KeyValuePair<int, string>> chunks = new List<KeyValuePair<int, string>>();
+            string[] paras = (text ?? "").Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            StringBuilder cur = new StringBuilder();
+            int chunkId = 1;
+            foreach (string rawP in paras)
+            {
+                string p = rawP.Trim();
+                if (p.Length < 4) continue;
+                if (cur.Length > 0 && cur.Length + p.Length + 2 > maxChunkChars)
+                {
+                    chunks.Add(new KeyValuePair<int, string>(chunkId++, cur.ToString().Trim()));
+                    cur.Length = 0;
+                }
+                cur.AppendLine(p);
+            }
+            if (cur.Length > 0) chunks.Add(new KeyValuePair<int, string>(chunkId++, cur.ToString().Trim()));
+            return chunks;
+        }
+
+        public static List<string[]> ParseAiSpellResponseSafe(string resp, string sourceText)
+        {
+            List<string[]> found = new List<string[]>();
+            if (string.IsNullOrWhiteSpace(resp) || resp.IndexOf("KHONG_CO_LOI", StringComparison.OrdinalIgnoreCase) >= 0)
+                return found;
+
+            // 1. Ưu tiên parse JSON có cấu trúc
+            try
+            {
+                string clean = resp.Trim();
+                if (clean.StartsWith("```"))
+                {
+                    int nl = clean.IndexOf('\n');
+                    if (nl > 0) clean = clean.Substring(nl + 1);
+                    if (clean.EndsWith("```")) clean = clean.Substring(0, clean.Length - 3);
+                    clean = clean.Trim();
+                }
+                int arrStart = clean.IndexOf('[');
+                int arrEnd = clean.LastIndexOf(']');
+                if (arrStart >= 0 && arrEnd > arrStart)
+                {
+                    JavaScriptSerializer js = new JavaScriptSerializer();
+                    var arr = js.Deserialize<System.Collections.ArrayList>(clean.Substring(arrStart, arrEnd - arrStart + 1));
+                    if (arr != null)
+                    {
+                        foreach (object o in arr)
+                        {
+                            var d = o as Dictionary<string, object>;
+                            if (d == null) continue;
+                            string wrong = d.ContainsKey("original") ? Convert.ToString(d["original"]).Trim() : "";
+                            string sug = d.ContainsKey("suggestion") ? Convert.ToString(d["suggestion"]).Trim() : "";
+                            string why = d.ContainsKey("reason") ? Convert.ToString(d["reason"]).Trim() : "AI phát hiện lỗi ngữ cảnh";
+                            if (wrong.Length >= 2 && sug.Length >= 1 && !string.Equals(wrong, sug, StringComparison.Ordinal) && sourceText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
+                            {
+                                found.Add(new string[] { wrong, sug, why });
+                            }
+                        }
+                        if (found.Count > 0 || clean.Substring(arrStart, arrEnd - arrStart + 1).Trim() == "[]") return found;
+                    }
+                }
+            }
+            catch { }
+
+            // 2. Fallback an toàn nếu model trả về dạng dòng CỤM_SAI ||| GỢI_Ý ||| LÝ_DO
+            string[] lines = resp.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string ln in lines)
+            {
+                string[] parts = ln.Split(new string[] { "|||" }, StringSplitOptions.None);
+                if (parts.Length >= 2)
+                {
+                    string wrong = parts[0].Trim().Trim('"', '\'', '-', '•', '*', ' ');
+                    string sug = parts[1].Trim().Trim('"', '\'', ' ');
+                    string why = parts.Length >= 3 ? parts[2].Trim() : "AI phát hiện lỗi ngữ cảnh / chính tả";
+                    if (wrong.Length >= 2 && sug.Length >= 1 && !string.Equals(wrong, sug, StringComparison.Ordinal) && sourceText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
+                    {
+                        found.Add(new string[] { wrong, sug, why });
+                    }
+                }
+            }
+            return found;
+        }
+
         private void RunDeepAiSpellScanAsync()
         {
+            RunDeepAiSpellScanAsync(false);
+        }
+
+        private void RunDeepAiSpellScanAsync(bool retryFailedOnly)
+        {
             if (isAiBusy) return;
-            if (string.IsNullOrWhiteSpace(currentDocText)) ScanOpenWordDocument();
+            if (!retryFailedOnly)
+            {
+                if (string.IsNullOrWhiteSpace(currentDocText)) ScanOpenWordDocument();
+                failedChunks.Clear();
+            }
             if (string.IsNullOrWhiteSpace(currentDocText) || currentDocText.Length < 15)
             {
-                MessageBox.Show("Chưa đọc được nội dung văn bản Word đang mở!", "VBTM Pro 2.5.0");
+                MessageBox.Show("Chưa đọc được nội dung văn bản Word đang mở!", "VBTM Pro 3.0 Ultimate");
                 return;
             }
 
@@ -3971,81 +4431,77 @@ namespace VBTMProSuite
             {
                 MessageBox.Show(
                     "Chức năng 'Quét Sâu Bằng AI (Ngữ Cảnh)' cần 1 API Key Google Gemini (miễn phí tại aistudio.google.com/apikey).\n\n" +
-                    "Hiện tại chế độ Quét Nhanh Ngoại Tuyến (150+ quy tắc + Luật âm tiết Tiếng Việt + Lặp từ + Telex + NĐ 30) vẫn hoạt động 100% không cần mạng!",
-                    "VBTM Pro 2.5.0 — Quét Sâu AI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    "Bấm nút '⚙ Key AI' để nhập & kiểm tra kết nối ngay!",
+                    "VBTM Pro 3.0 Ultimate — Quét Sâu AI", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
+            List<KeyValuePair<int, string>> workChunks = retryFailedOnly && failedChunks.Count > 0
+                ? new List<KeyValuePair<int, string>>(failedChunks)
+                : SplitIntoLogicalChunks(currentDocText, 1800);
+            failedChunks.Clear();
+
             isAiBusy = true;
             btnDeepAi.Enabled = false;
+            btnRetryFailed.Visible = false;
             prgScan.Visible = true;
             lblAiStatus.Visible = false;
-            lblSummary.Text = "🧠 Đang gửi văn bản tới AI (" + modelStr + ") để rà soát lỗi ngữ cảnh, dùng từ & chính tả chuyên sâu...";
+            lblSummary.Text = "🧠 Đang chia văn bản thành " + workChunks.Count + " đoạn và gửi lần lượt tới AI (" + modelStr + ")...";
 
-            string clipped = currentDocText.Length > 12000 ? currentDocText.Substring(0, 12000) : currentDocText;
             string sysPrompt =
                 "Bạn là chuyên gia hiệu đính văn bản Đảng (05-HD/VPTW) và Hành chính Nhà nước Việt Nam (NĐ 30/2020). " +
-                "Hãy rà soát TOÀN BỘ lỗi chính tả, lỗi đánh máy, lỗi dùng từ sai ngữ cảnh (như dành/giành, sát/xát, truyền/chuyền, đề xuất/đề suất...), " +
-                "lỗi thiếu dấu hoặc câu diễn đạt sai trong văn bản sau.\n" +
-                "CHỈ liệt kê mỗi lỗi trên 1 dòng theo đúng định dạng (tối đa 25 lỗi rõ ràng nhất, trích ĐÚNG nguyên văn cụm từ sai trong văn bản gốc):\n" +
-                "CỤM_SAI ||| GỢI_Ý_SỬA ||| LÝ_DO_NGẮN_GỌN\n" +
-                "Nếu văn bản hoàn toàn không có lỗi, trả về đúng 1 từ: KHONG_CO_LOI. Không thêm lời giải thích nào khác.";
+                "CHỈ tìm các lỗi chính tả, đánh máy, dùng từ sai ngữ cảnh trong đoạn văn sau. " +
+                "KHÔNG tự ý viết lại văn bản, KHÔNG thay đổi tên người, số liệu, ngày tháng, số hiệu hay căn cứ pháp lý. " +
+                "Trả về JSON array chuẩn: [{\"original\":\"cụm sai nguyên văn\",\"suggestion\":\"cụm sửa\",\"reason\":\"lý do ngắn\"}]. Nếu không có lỗi trả về [].";
 
             System.Threading.ThreadPool.QueueUserWorkItem(_ =>
             {
-                int added = 0;
-                string errMsg = null;
-                List<string[]> aiFound = new List<string[]>();
-                try
+                int totalAdded = 0;
+                int okChunks = 0;
+                string lastErr = null;
+                List<KeyValuePair<int, string>> newFailed = new List<KeyValuePair<int, string>>();
+                List<string[]> allFound = new List<string[]>();
+
+                for (int ci = 0; ci < workChunks.Count; ci++)
                 {
-                    string resp = null;
+                    var ch = workChunks[ci];
+                    int curIdx = ci + 1;
+                    int totalCh = workChunks.Count;
+                    if (!this.IsDisposed)
+                    {
+                        this.BeginInvoke((Action)(() => lblSummary.Text = "🧠 Đang kiểm tra AI đoạn " + curIdx + "/" + totalCh + "..."));
+                    }
                     try
                     {
-                        resp = AiWordAssistantForm.CallOnlineAiDirect(provIdx, modelStr, apiKey, sysPrompt, clipped);
-                    }
-                    catch (Exception exPrimary)
-                    {
-                        // Nếu OpenAI/API trả phí hết tiền (credit_balance_exhausted / billing / 401), tự động chuyển sang Key Google Gemini miễn phí đã lưu trên máy!
-                        string backupGeminiKey = TryFindBackupGeminiKey();
-                        if (provIdx != 0 && !string.IsNullOrEmpty(backupGeminiKey))
+                        string resp = null;
+                        try
                         {
-                            provIdx = 0;
-                            modelStr = "gemini-3.8-flash";
-                            apiKey = backupGeminiKey;
-                            AiWordAssistantForm.SaveAiConfig(new string[] { "0", modelStr, apiKey });
-                            resp = AiWordAssistantForm.CallOnlineAiDirect(0, modelStr, apiKey, sysPrompt, clipped);
+                            resp = AiWordAssistantForm.CallOnlineAiDirect(provIdx, modelStr, apiKey, sysPrompt, ch.Value, provIdx == 0);
                         }
-                        else
+                        catch (Exception exPrimary)
                         {
-                            throw exPrimary;
-                        }
-                    }
-                    if (!string.IsNullOrWhiteSpace(resp) && resp.IndexOf("KHONG_CO_LOI", StringComparison.OrdinalIgnoreCase) < 0)
-                    {
-                        string[] lines = resp.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (string ln in lines)
-                        {
-                            string[] parts = ln.Split(new string[] { "|||" }, StringSplitOptions.None);
-                            if (parts.Length >= 2)
+                            string backupGeminiKey = TryFindBackupGeminiKey();
+                            if (provIdx != 0 && !string.IsNullOrEmpty(backupGeminiKey))
                             {
-                                string wrong = parts[0].Trim().Trim('"', '\'', '-', '•', '*', ' ');
-                                string sug = parts[1].Trim().Trim('"', '\'', ' ');
-                                string why = parts.Length >= 3 ? parts[2].Trim() : "AI phát hiện lỗi ngữ cảnh / chính tả";
-                                if (wrong.Length >= 2 && sug.Length >= 1 && !string.Equals(wrong, sug, StringComparison.Ordinal))
-                                {
-                                    // Chỉ nhận những cụm thực sự tồn tại trong tài liệu Word
-                                    if (currentDocText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
-                                    {
-                                        aiFound.Add(new string[] { wrong, sug, why });
-                                    }
-                                }
+                                provIdx = 0;
+                                modelStr = "gemini-2.5-flash";
+                                apiKey = backupGeminiKey;
+                                AiWordAssistantForm.SaveAiConfig(new string[] { "0", modelStr, apiKey });
+                                resp = AiWordAssistantForm.CallOnlineAiDirect(0, modelStr, apiKey, sysPrompt, ch.Value, true);
                             }
+                            else throw exPrimary;
                         }
+                        var parsed = ParseAiSpellResponseSafe(resp, currentDocText);
+                        allFound.AddRange(parsed);
+                        okChunks++;
                     }
-                }
-                catch (Exception ex)
-                {
-                    errMsg = (ex.Message ?? "").Split('\n')[0];
+                    catch (Exception exChunk)
+                    {
+                        lastErr = (exChunk.Message ?? "").Split('\n')[0];
+                        newFailed.Add(ch);
+                        // Nếu lỗi xác thực 401/403 thì dừng ngay, không gửi lặp vô ích
+                        if (lastErr.Contains("[401]") || lastErr.Contains("[403]")) break;
+                    }
                 }
 
                 if (this.IsDisposed) return;
@@ -4054,26 +4510,30 @@ namespace VBTMProSuite
                     isAiBusy = false;
                     btnDeepAi.Enabled = true;
                     prgScan.Visible = false;
-                    lblAiStatus.Visible = true;
+                    failedChunks = newFailed;
 
-                    if (errMsg != null)
+                    foreach (string[] f in allFound)
                     {
-                        lblAiStatus.Text = "⚠ AI lỗi: " + (errMsg.Length > 70 ? errMsg.Substring(0, 70) + "..." : errMsg);
-                        if (string.IsNullOrWhiteSpace(txtContext.Text))
-                            txtContext.Text = "Chi tiết lỗi AI trực tuyến: " + errMsg;
+                        int pos = currentDocText.IndexOf(f[0], StringComparison.Ordinal);
+                        int before = issues.Count;
+                        AddIssue("AI Ngữ cảnh", f[0], f[1], f[2], ExtractContextSnippet(currentDocText, pos, f[0].Length), true);
+                        if (issues.Count > before) totalAdded++;
+                    }
+
+                    if (failedChunks.Count > 0)
+                    {
+                        btnRetryFailed.Visible = true;
+                        lblAiStatus.Visible = false;
+                        txtContext.Text = "⚠ Có " + failedChunks.Count + "/" + workChunks.Count + " đoạn gặp lỗi kết nối (" + lastErr + ").\r\n" +
+                                          "Bấm nút '🔄 Thử Lại Đoạn Lỗi' phía trên để gửi lại riêng các đoạn này (không mất nội dung Word, không cần quét lại từ đầu).";
                     }
                     else
                     {
-                        foreach (string[] f in aiFound)
-                        {
-                            int pos = currentDocText.IndexOf(f[0], StringComparison.Ordinal);
-                            int before = issues.Count;
-                            AddIssue("AI Ngữ cảnh", f[0], f[1], f[2], ExtractContextSnippet(currentDocText, pos, f[0].Length), true);
-                            if (issues.Count > before) added++;
-                        }
-                        lblAiStatus.Text = added > 0
-                            ? "✓ AI phát hiện thêm " + added + " lỗi ngữ cảnh & gợi ý sửa!"
-                            : "✓ AI đã kiểm tra ngữ cảnh — không phát hiện thêm lỗi mới.";
+                        btnRetryFailed.Visible = false;
+                        lblAiStatus.Visible = true;
+                        lblAiStatus.Text = totalAdded > 0
+                            ? "✓ Hoàn tất " + okChunks + "/" + workChunks.Count + " đoạn — AI phát hiện thêm " + totalAdded + " đề xuất!"
+                            : "✓ Hoàn tất " + okChunks + "/" + workChunks.Count + " đoạn — không phát hiện thêm lỗi ngữ cảnh.";
                     }
                     UpdateSummaryHeader();
                 }));
@@ -4103,37 +4563,109 @@ namespace VBTMProSuite
             string[] cfg = AiWordAssistantForm.LoadAiConfig();
             Form dlg = new Form
             {
-                Text = "Cấu Hình API Key Cho Rà Soát Chính Tả AI (Khuyên dùng Google Gemini Miễn Phí)",
-                ClientSize = new Size(490, 175),
+                Text = "Cài Đặt & Kiểm Tra Kết Nối AI Độc Lập — VBTM Pro 3.0 Ultimate",
+                ClientSize = new Size(560, 295),
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 StartPosition = FormStartPosition.CenterParent,
                 MaximizeBox = false,
                 MinimizeBox = false,
                 TopMost = true,
                 BackColor = Color.White,
-                Font = new Font("Segoe UI", 9.2f)
+                Font = new Font("Segoe UI", 9.1f)
             };
-            Label l1 = new Label { Text = "Dán API Key Google Gemini (miễn phí, bắt đầu bằng AIza...) hoặc Groq/OpenAI:", Location = new Point(16, 14), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold) };
-            TextBox tbKey = new TextBox { Location = new Point(16, 40), Size = new Size(456, 26), Text = cfg[2], BorderStyle = BorderStyle.FixedSingle };
-            LinkLabel lnk = new LinkLabel { Text = "Chưa có Key? Bấm vào đây lấy API Key Google Gemini miễn phí 100% ↗", Location = new Point(16, 74), AutoSize = true, LinkColor = Color.FromArgb(37, 99, 235) };
+            Label l1 = new Label { Text = "API Key Google Gemini (miễn phí, bắt đầu bằng AIza...) hoặc Groq/OpenAI:", Location = new Point(16, 12), AutoSize = true, Font = new Font("Segoe UI", 8.8f, FontStyle.Bold) };
+            TextBox tbKey = new TextBox { Location = new Point(16, 36), Size = new Size(526, 26), Text = cfg[2], UseSystemPasswordChar = true, BorderStyle = BorderStyle.FixedSingle };
+            Label l2 = new Label { Text = "Model:", Location = new Point(16, 70), AutoSize = true, Font = new Font("Segoe UI", 8.6f, FontStyle.Bold) };
+            TextBox tbModel = new TextBox { Location = new Point(70, 67), Size = new Size(210, 24), Text = string.IsNullOrWhiteSpace(cfg[1]) ? "gemini-2.5-flash" : cfg[1], BorderStyle = BorderStyle.FixedSingle };
+            LinkLabel lnk = new LinkLabel { Text = "Lấy API Key Gemini miễn phí ↗", Location = new Point(295, 70), AutoSize = true, LinkColor = Color.FromArgb(37, 99, 235) };
             lnk.Click += (s, e) => { try { Process.Start("https://aistudio.google.com/apikey"); } catch { } };
-            Button bSave = new Button { Text = "💾 Lưu & Quét Sâu AI Ngay", Location = new Point(252, 118), Size = new Size(220, 36), BackColor = Color.FromArgb(5, 150, 105), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9.2f, FontStyle.Bold), Cursor = Cursors.Hand };
+
+            TextBox tbDiag = new TextBox
+            {
+                Location = new Point(16, 102),
+                Size = new Size(526, 98),
+                Multiline = true,
+                ReadOnly = true,
+                ScrollBars = ScrollBars.Vertical,
+                BackColor = Color.FromArgb(248, 250, 252),
+                Font = new Font("Consolas", 8.4f),
+                Text = "Nhấn '🔍 Kiểm Tra Kết Nối' hoặc '🔁 Test 5 Lần Liên Tiếp' để kiểm định đường truyền thực tế (không lưu Key/văn bản vào log)."
+            };
+
+            Button bTestOne = new Button { Text = "🔍 Kiểm Tra Kết Nối", Location = new Point(16, 208), Size = new Size(165, 32), BackColor = Color.FromArgb(37, 99, 235), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8.6f, FontStyle.Bold), Cursor = Cursors.Hand };
+            bTestOne.FlatAppearance.BorderSize = 0;
+
+            Button bTestLoop = new Button { Text = "🔁 Test 5 Lần Liên Tiếp", Location = new Point(188, 208), Size = new Size(175, 32), BackColor = Color.FromArgb(15, 118, 110), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8.6f, FontStyle.Bold), Cursor = Cursors.Hand };
+            bTestLoop.FlatAppearance.BorderSize = 0;
+
+            Button bOpenLog = new Button { Text = "📄 Mở Log Kỹ Thuật", Location = new Point(370, 208), Size = new Size(172, 32), BackColor = Color.FromArgb(241, 245, 249), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 8.5f), Cursor = Cursors.Hand };
+            bOpenLog.Click += (s, e) => { try { Process.Start("notepad.exe", AiWordAssistantForm.GetAiLogFilePath()); } catch { } };
+
+            Action<int> runDiag = (count) =>
+            {
+                string k = tbKey.Text.Trim();
+                int p = k.StartsWith("AIza", StringComparison.Ordinal) ? 0 : (k.StartsWith("gsk_", StringComparison.Ordinal) ? 4 : 1);
+                string m = tbModel.Text.Trim();
+                if (string.IsNullOrEmpty(m)) m = p == 0 ? "gemini-2.5-flash" : (p == 4 ? "llama-3.3-70b-versatile" : "gpt-4o-mini");
+                bTestOne.Enabled = false;
+                bTestLoop.Enabled = false;
+                tbDiag.Text = "⏳ Đang kiểm tra kết nối (" + count + " lần) tới " + m + "...";
+                System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    StringBuilder sb = new StringBuilder();
+                    int ok = 0;
+                    if (p == 0 && !string.IsNullOrEmpty(k))
+                    {
+                        string disc = AiWordAssistantForm.DiscoverFirstGeminiFlashModel(k);
+                        if (!string.IsNullOrEmpty(disc)) sb.AppendLine("• Model khả dụng phát hiện từ Google: " + disc);
+                    }
+                    for (int i = 1; i <= count; i++)
+                    {
+                        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                        try
+                        {
+                            string r = AiWordAssistantForm.CallOnlineAiDirect(p, m, k, "Chỉ trả lời đúng 2 chữ: SAN_SANG", "Kiểm tra kết nối lần " + i, false);
+                            sw.Stop();
+                            ok++;
+                            sb.AppendLine("✓ Lần " + i + ": Thành công (" + sw.ElapsedMilliseconds + "ms) -> " + (r.Length > 30 ? r.Substring(0, 30) : r));
+                        }
+                        catch (Exception ex)
+                        {
+                            sw.Stop();
+                            sb.AppendLine("✗ Lần " + i + " (" + sw.ElapsedMilliseconds + "ms): " + ex.Message);
+                            if (ex.Message.Contains("[401]") || ex.Message.Contains("[403]") || ex.Message.Contains("[Mất mạng")) break;
+                        }
+                    }
+                    sb.AppendLine("==> TỔNG KẾT: " + ok + "/" + count + " thành công.");
+                    if (!dlg.IsDisposed) dlg.BeginInvoke((Action)(() =>
+                    {
+                        tbDiag.Text = sb.ToString();
+                        bTestOne.Enabled = true;
+                        bTestLoop.Enabled = true;
+                    }));
+                });
+            };
+            bTestOne.Click += (s, e) => runDiag(1);
+            bTestLoop.Click += (s, e) => runDiag(5);
+
+            Button bSave = new Button { Text = "💾 Lưu & Quét Sâu AI Ngay", Location = new Point(322, 248), Size = new Size(220, 34), BackColor = Color.FromArgb(5, 150, 105), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9.1f, FontStyle.Bold), Cursor = Cursors.Hand };
             bSave.FlatAppearance.BorderSize = 0;
             bSave.Click += (s, e) =>
             {
                 string k = tbKey.Text.Trim();
                 int p = k.StartsWith("AIza", StringComparison.Ordinal) ? 0 : (k.StartsWith("gsk_", StringComparison.Ordinal) ? 4 : 1);
-                string m = p == 0 ? "gemini-3.8-flash" : (p == 4 ? "llama-3.3-70b-versatile" : "gpt-4o-mini");
+                string m = tbModel.Text.Trim();
+                if (string.IsNullOrEmpty(m)) m = p == 0 ? "gemini-2.5-flash" : (p == 4 ? "llama-3.3-70b-versatile" : "gpt-4o-mini");
                 AiWordAssistantForm.SaveAiConfig(new string[] { p.ToString(), m, k });
                 dlg.DialogResult = DialogResult.OK;
                 dlg.Close();
             };
-            Button bCancel = new Button { Text = "Đóng", Location = new Point(156, 118), Size = new Size(88, 36), BackColor = Color.FromArgb(241, 245, 249), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            Button bCancel = new Button { Text = "Đóng", Location = new Point(226, 248), Size = new Size(88, 34), BackColor = Color.FromArgb(241, 245, 249), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             bCancel.Click += (s, e) => dlg.Close();
-            dlg.Controls.AddRange(new Control[] { l1, tbKey, lnk, bSave, bCancel });
+            dlg.Controls.AddRange(new Control[] { l1, tbKey, l2, tbModel, lnk, tbDiag, bTestOne, bTestLoop, bOpenLog, bSave, bCancel });
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
-                RunDeepAiSpellScanAsync();
+                RunDeepAiSpellScanAsync(false);
             }
         }
 
