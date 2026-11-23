@@ -47,6 +47,11 @@
         <button id="btnReloadOllamaModels" class="btn btn-secondary" type="button">Tải lại danh sách model</button>
         <button id="btnSampleTestAi" class="btn btn-success" type="button">Thử AI câu mẫu</button>
       </div>
+      <div class="btn-row" style="margin-top:6px;">
+        <a href="https://ollama.com/download" target="_blank" class="btn btn-secondary" style="text-decoration:none;">Tải Ollama (Miễn phí)</a>
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn btn-secondary" style="text-decoration:none;">Lấy Key Gemini</a>
+        <a href="https://platform.openai.com/api-keys" target="_blank" class="btn btn-secondary" style="text-decoration:none;">Lấy Key OpenAI</a>
+      </div>
       <div id="sampleAiOutput" class="hidden" style="margin-top:8px;"></div>
     `;
     tabSettings.insertBefore(card, tabSettings.firstChild);
