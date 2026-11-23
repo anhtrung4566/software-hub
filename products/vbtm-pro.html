@@ -152,10 +152,8 @@
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,0.55);border:1px solid rgba(250,204,21,0.28);">
           <button type="button" class="btn-tool primary v3-nav-btn active" data-mod="all" onclick="VbtmPro30.switchModule('all')">🏠 Toàn bộ</button>
           <button type="button" class="btn-tool v3-nav-btn" data-mod="draft" onclick="VbtmPro30.switchModule('draft')">📝 Soạn thảo</button>
-          <button type="button" class="btn-tool v3-nav-btn" data-mod="word" onclick="VbtmPro30.switchModule('word')">📄 Chuẩn hóa Word</button>
           <button type="button" class="btn-tool v3-nav-btn" data-mod="ai" onclick="VbtmPro30.switchModule('ai')">🤖 Trợ lý AI</button>
           <button type="button" class="btn-tool v3-nav-btn" data-mod="spell" onclick="VbtmPro30.switchModule('spell')">✅ Kiểm tra chính tả</button>
-          <button type="button" class="btn-tool v3-nav-btn" data-mod="format" onclick="VbtmPro30.switchModule('format')">🏛️ Kiểm tra thể thức</button>
           <button type="button" class="btn-tool v3-nav-btn" data-mod="pdf" onclick="window.location.href='./vietnam-ocr.html'">📑 PDF &amp; OCR</button>
           <button type="button" class="btn-tool v3-nav-btn" data-mod="qr" onclick="VbtmPro30.switchModule('qr')">📱 Mã QR</button>
           <button type="button" class="btn-tool v3-nav-btn" data-mod="library" onclick="VbtmPro30.switchModule('library')">📚 Thư viện &amp; Căn cứ</button>
@@ -177,11 +175,6 @@
           <input type="file" id="vbtmWordFileInput" accept=".docx,.doc,.pdf,.txt,application/pdf" style="display: none;">
           <button type="button" class="btn-tool primary" onclick="document.getElementById('vbtmWordFileInput').click()">
             <span>📂 Nạp File (.docx / .pdf / .txt)</span>
-          </button>
-
-          <button type="button" class="btn-tool primary" onclick="standardizeAndFixEverything(); VbtmPro30.saveHistorySnapshot('Chuẩn hóa thể thức');">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>⚡ Chuẩn Hóa Thể Thức</span>
           </button>
 
           <button type="button" class="btn-tool" onclick="VbtmPro30.switchModule('spell'); VbtmPro30.runOfflineSpellCheck30();">
@@ -286,14 +279,7 @@
           </div>
         </div>
 
-        <!-- PHÂN HỆ KIỂM ĐỊNH THỂ THỨC 2 HỆ QUY CHUẨN & TRÌNH KÝ (PHẦN 7) -->
-        <div class="v3-panel-section" data-mods="format" style="display:none;margin-bottom:18px;padding:16px;border-radius:16px;background:rgba(15,23,42,0.72);border:1px solid rgba(250,204,21,0.35);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <strong style="color:#facc15;">🏛️ Kiểm Định Thể Thức &amp; Kiểm Tra Trước Khi Trình Ký</strong>
-            <button type="button" class="btn-tool primary" onclick="VbtmPro30.runFormatAudit30()">🔄 Chấm Điểm Lại</button>
-          </div>
-          <div id="v3FormatAuditBox"></div>
-        </div>
+        <!-- Đã gỡ bỏ hoàn toàn phân hệ tự động chỉnh thể thức theo yêu cầu bảo toàn nguyên vẹn định dạng gốc -->
 
         <!-- PHÂN HỆ LỊCH SỬ TÀI LIỆU & SO SÁNH (PHẦN 8) -->
         <div class="v3-panel-section" data-mods="history" style="display:none;margin-bottom:18px;padding:16px;border-radius:16px;background:rgba(15,23,42,0.72);border:1px solid rgba(250,204,21,0.35);">
