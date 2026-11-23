@@ -6,13 +6,40 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
+using System.Security.Cryptography;
 using Microsoft.Win32;
 
 namespace VBTM.OfficeIntegration
 {
+    public static class DpapiSecretStore
+    {
+        private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("VBTM-Pro-Unified-DPAPI-v3.5");
+
+        public static string SecretFilePath
+        {
+            get { return Path.Combine(PersonalInstallerEngine.InstallRoot, "secrets.dpapi"); }
+        }
+
+        public static void SaveProtectedSecret(string secretText)
+        {
+            Directory.CreateDirectory(PersonalInstallerEngine.InstallRoot);
+            byte[] plain = Encoding.UTF8.GetBytes(secretText ?? "");
+            byte[] cipher = ProtectedData.Protect(plain, Entropy, DataProtectionScope.CurrentUser);
+            File.WriteAllBytes(SecretFilePath, cipher);
+        }
+
+        public static string LoadProtectedSecret()
+        {
+            if (!File.Exists(SecretFilePath)) return "";
+            byte[] cipher = File.ReadAllBytes(SecretFilePath);
+            byte[] plain = ProtectedData.Unprotect(cipher, Entropy, DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(plain);
+        }
+    }
+
     static class Program
     {
-        public const string APP_VERSION = "3.0.0";
+        public const string APP_VERSION = "3.5.0";
         public const string BASE_HTTPS_URL = "https://anhtrung4566.github.io/software-hub/office-addins/";
 
         [STAThread]
@@ -42,6 +69,19 @@ namespace VBTM.OfficeIntegration
                     PersonalInstallerEngine.InstallOrUpdate(out msg1);
                     bool ok = PersonalInstallerEngine.RegisterOfficeAddinsCurrentUser(out msg2);
                     File.WriteAllText(Path.Combine(Path.GetTempPath(), "vbtm_office_register_result.txt"), msg1 + Environment.NewLine + msg2, Encoding.UTF8);
+                    return ok ? 0 : 1;
+                }
+                if (flag == "--test-dpapi")
+                {
+                    string sample = "vbtm-dpapi-roundtrip-ok";
+                    DpapiSecretStore.SaveProtectedSecret(sample);
+                    byte[] rawCipher = File.ReadAllBytes(DpapiSecretStore.SecretFilePath);
+                    string rawAscii = Encoding.UTF8.GetString(rawCipher);
+                    string dec = DpapiSecretStore.LoadProtectedSecret();
+                    bool ok = (dec == sample) && (rawAscii.IndexOf(sample, StringComparison.Ordinal) < 0);
+                    File.WriteAllText(Path.Combine(Path.GetTempPath(), "vbtm_dpapi_test.txt"),
+                        "DPAPI_OK=" + ok + " | CipherBytes=" + rawCipher.Length + " | PlaintextHidden=" + (rawAscii.IndexOf(sample, StringComparison.Ordinal) < 0),
+                        Encoding.UTF8);
                     return ok ? 0 : 1;
                 }
                 if (flag == "--uninstall")
