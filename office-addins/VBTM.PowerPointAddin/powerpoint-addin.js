@@ -89,11 +89,10 @@
       btnRun.disabled = true;
       btnCancel.classList.remove('hidden');
       try {
-        const res = await window.VBTM_AICore.generate(act.prompt, text, {
-          host: 'PowerPoint',
-          expectJson: wantsJson,
-          historyTitle: act.label
-        });
+        const bridge = window.VBTM_OfficeBridge ? window.VBTM_OfficeBridge.createBridge('PowerPoint') : null;
+        const res = bridge
+          ? await bridge.runTask(act.id, act.prompt, text, { expectJson: wantsJson, historyTitle: act.label })
+          : await window.VBTM_AICore.generate(act.prompt, text, { host: 'PowerPoint', expectJson: wantsJson, historyTitle: act.label });
         let displayText = res.text;
         if (wantsJson) {
           const parsed = window.VBTM_AICore.safeParseJson(res.text);
