@@ -18,11 +18,12 @@
   };
 
   const DEFAULT_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
+    'gemini-flash-lite-latest',
+    'gemini-flash-latest',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
     'gemini-3.8-flash',
-    'gemini-3.0-flash',
-    'gemini-1.5-flash'
+    'gemini-2.5-flash'
   ];
 
   const state = {
@@ -252,7 +253,73 @@
     }
   }
 
+  async function callOllamaLocalFallback(promptText, systemInstruction, timeoutMs) {
+    const base = (localStorage.getItem('vbtm_office_ollama_url') || 'http://localhost:11434').replace(/\/+$/, '');
+    const t0 = performance.now();
+    let models = [];
+    try {
+      const tr = await fetchWithTimeout(base + '/api/tags', { method: 'GET' }, 3500, null);
+      if (tr.ok) {
+        const td = await tr.json();
+        models = (td && Array.isArray(td.models)) ? td.models.map(m => m.name) : [];
+      }
+    } catch (e) {
+      throw {
+        code: 'OLLAMA_NOT_RUNNING',
+        retryable: false,
+        userMessage: 'Chưa phát hiện Ollama Local tại http://localhost:11434. Hãy cài đặt/khởi chạy Ollama (miễn phí, không cần API Key) hoặc nhập Gemini API Key bổ sung.'
+      };
+    }
+    if (!models.length) {
+      throw {
+        code: 'OLLAMA_NO_MODEL',
+        retryable: false,
+        userMessage: 'Ollama đã chạy nhưng chưa có model tiếng Việt. Hãy chạy lệnh "ollama pull qwen2.5:7b" (hoặc qwen2.5:3b) để dùng AI miễn phí không cần API Key.'
+      };
+    }
+    const pref = ['qwen2.5:7b', 'qwen2.5:3b', 'gemma2:9b', 'qwen2.5:14b'];
+    let chosen = models[0];
+    for (const p of pref) {
+      const hit = models.find(m => m.toLowerCase().startsWith(p));
+      if (hit) { chosen = hit; break; }
+    }
+    const gr = await fetchWithTimeout(base + '/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: chosen,
+        prompt: (systemInstruction ? systemInstruction + '\n\n' : '') + promptText,
+        stream: false
+      })
+    }, timeoutMs || 60000, null);
+    if (!gr.ok) {
+      throw { code: 'OLLAMA_ERROR', retryable: false, userMessage: `Ollama Local lỗi HTTP ${gr.status} với model ${chosen}.` };
+    }
+    const gd = await gr.json();
+    const text = String((gd && gd.response) || '').trim();
+    const latencyMs = Math.round(performance.now() - t0);
+    state.status = 'connected';
+    state.activeModel = chosen + ' (Ollama Local)';
+    state.lastLatencyMs = latencyMs;
+    state.lastError = null;
+    emitState();
+    pushLog({ action: 'ollama', model: chosen, status: 'ok', latencyMs, message: 'Local AI OK (không cần API Key)' });
+    return { text, model: chosen, provider: 'ollama', latencyMs };
+  }
+
   async function testConnection() {
+    const key = getApiKey();
+    if (!key) {
+      try {
+        const res = await callOllamaLocalFallback('Trả lời đúng 2 chữ: SAN_SANG', 'Chỉ trả lời đúng 2 chữ SAN_SANG.', 20000);
+        return { ok: true, model: res.model + ' (Ollama Local)', latencyMs: res.latencyMs, message: `Kết nối Ollama Local thành công (${res.model} · ${res.latencyMs}ms · không cần API Key)!` };
+      } catch (err) {
+        state.status = 'idle';
+        state.lastError = err.userMessage || err.message;
+        emitState();
+        return { ok: false, code: err.code || 'OLLAMA_NOT_RUNNING', message: state.lastError };
+      }
+    }
     const keyCheck = await testApiKey();
     if (!keyCheck.ok) return keyCheck;
     try {
@@ -327,11 +394,18 @@
     const apiKey = String(options.apiKey || getApiKey()).trim();
 
     if (mode === 'direct' && !apiKey) {
-      const err = { code: 'INVALID_API_KEY', retryable: false, userMessage: 'Chưa cấu hình API Key Google Gemini. Vào bảng điều khiển AI để nhập khóa.' };
-      state.status = 'error';
-      state.lastError = err.userMessage;
+      // Không chặn thiếu Gemini API Key — tự động chạy qua Ollama Local (http://localhost:11434)
+      state.status = 'connecting';
+      state.lastError = null;
       emitState();
-      throw err;
+      try {
+        return await callOllamaLocalFallback(options.prompt || '', options.systemInstruction || '', options.timeoutMs || 60000);
+      } catch (oErr) {
+        state.status = 'error';
+        state.lastError = oErr.userMessage || oErr.message;
+        emitState();
+        throw oErr;
+      }
     }
 
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
