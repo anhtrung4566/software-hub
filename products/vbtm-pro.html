@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VBTM Pro 2.5.0 · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường</title>
+  <title>VBTM Pro 3.0 Ultimate · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường</title>
   <meta name="description" content="Phần mềm & Add-in Microsoft Word chuẩn hóa thể thức văn bản của Đảng ủy và Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP và Hướng dẫn số 05-HD/VPTW, tạo mã QR thật (ISO 18004) và soát lỗi chính tả AI.">
   <link rel="stylesheet" href="../css/style.css">
   <!-- Thư viện đọc trực tiếp file Word .docx thực tế (Mammoth.js) & file PDF đa trang (PDF.js) -->
@@ -34,13 +34,13 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">Siêu App Văn Phòng</span>
-          <span class="brand-sub"><span class="status-indicator-dot"></span>VBTM Pro 2.5.0 Ultimate</span>
+          <span class="brand-sub"><span class="status-indicator-dot"></span>VBTM Pro 3.0 Ultimate</span>
         </div>
       </a>
 
       <div class="nav-center">
         <a href="../index.html#productsSection" class="nav-link">Kho Phần Mềm</a>
-        <a href="./vbtm-pro.html" class="nav-link active">VBTM Pro 2.5.0</a>
+        <a href="./vbtm-pro.html" class="nav-link active">VBTM Pro 3.0</a>
         <a href="./vietnam-ocr.html" class="nav-link">VietNamOCR 3.5 Pro</a>
         <a href="../admin.html" class="nav-link">Quản Trị</a>
       </div>
@@ -66,11 +66,11 @@
             <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="11" y="9" width="34" height="46" rx="5" fill="#fffbeb" stroke="#facc15" stroke-width="2"/><line x1="17" y1="18" x2="32" y2="18" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="24" x2="39" y2="24" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="30" x2="35" y2="30" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/><circle cx="44" cy="43" r="13" fill="#facc15" stroke="#991b1b" stroke-width="2"/><path d="M38 43.5L42 47.5L50 39" stroke="#7f1d1d" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <div class="detail-app-titles">
-            <h1>VBTM Pro 2.5.0</h1>
-            <p class="detail-app-tagline">Bộ công cụ Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường, Chuyển PDF/Word Giữ Nguyên Thể Thức 1:1, Tạo Mã QR Chuẩn Quốc Tế và Soát Lỗi Chính Tả AI</p>
+            <h1>VBTM Pro 3.0 Ultimate</h1>
+            <p class="detail-app-tagline">Phần Mềm Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy (05-HD/VPTW) &amp; UBND Phường (NĐ 30/2020), Xuất DOCX OpenXML Chuẩn A4, Soát Chính Tả AI Bảo Vệ Thực Thể &amp; Trợ Lý Google Gemini</p>
             <div class="detail-badges-row">
-              <span class="card-version">v4.0 Ultimate (Bản Cao Nhất)</span>
-              <span class="badge-tag badge-platform">Windows 10/11 &amp; Word</span>
+              <span class="card-version">v3.0 Ultimate (2026)</span>
+              <span class="badge-tag badge-platform">Windows 10/11 &amp; Microsoft Word</span>
               <span class="badge-tag badge-featured">Đảng Ủy &amp; UBND Phường</span>
               <span style="font-size: 0.82rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -144,59 +144,166 @@
       </div>
 
       <div class="studio-body" id="vbtmStudioApp">
+        <!-- THANH ĐIỀU HƯỚNG 11 PHÂN HỆ VBTM PRO 3.0 ULTIMATE -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:10px;border-radius:12px;background:rgba(15,23,42,0.55);border:1px solid rgba(250,204,21,0.28);">
+          <button type="button" class="btn-tool primary v3-nav-btn active" data-mod="all" onclick="VbtmPro30.switchModule('all')">🏠 Toàn bộ</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="draft" onclick="VbtmPro30.switchModule('draft')">📝 Soạn thảo</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="word" onclick="VbtmPro30.switchModule('word')">📄 Chuẩn hóa Word</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="ai" onclick="VbtmPro30.switchModule('ai')">🤖 Trợ lý AI</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="spell" onclick="VbtmPro30.switchModule('spell')">✅ Kiểm tra chính tả</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="format" onclick="VbtmPro30.switchModule('format')">🏛️ Kiểm tra thể thức</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="pdf" onclick="window.location.href='./vietnam-ocr.html'">📑 PDF &amp; OCR</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="qr" onclick="VbtmPro30.switchModule('qr')">📱 Mã QR</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="library" onclick="VbtmPro30.switchModule('library')">📚 Thư viện &amp; Căn cứ</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="history" onclick="VbtmPro30.switchModule('history')">🕒 Lịch sử tài liệu</button>
+          <button type="button" class="btn-tool v3-nav-btn" data-mod="settings" onclick="VbtmPro30.switchModule('settings')">⚙ Cài đặt AI</button>
+        </div>
+
+        <!-- THANH QUẢN LÝ NHIỀU TÀI LIỆU & KHÔI PHỤC BẢN NHÁP -->
+        <div id="v3DraftRestoreBanner" style="display:none;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:10px;background:rgba(217,119,6,0.22);border:1px solid #f59e0b;margin-bottom:10px;flex-wrap:wrap;">
+          <span id="v3DraftRestoreText" style="font-size:0.86rem;color:#fef08a;">Phát hiện bản nháp tự động lưu trước khi đóng.</span>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="btn-tool primary" style="padding:4px 12px;font-size:0.8rem;" onclick="VbtmPro30.restoreAutoSavedDraft()">Khôi phục bản nháp</button>
+            <button type="button" class="btn-tool" style="padding:4px 10px;font-size:0.8rem;" onclick="document.getElementById('v3DraftRestoreBanner').style.display='none'">Bỏ qua</button>
+          </div>
+        </div>
+        <div id="v3MultiDocBar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;"></div>
+
         <div class="toolbar-actions">
           <input type="file" id="vbtmWordFileInput" accept=".docx,.doc,.pdf,.txt,application/pdf" style="display: none;">
           <button type="button" class="btn-tool primary" onclick="document.getElementById('vbtmWordFileInput').click()">
-            <span>📂 Tải File Word (.docx) / PDF Lên Để Chuẩn Hóa</span>
+            <span>📂 Nạp File (.docx / .pdf / .txt)</span>
           </button>
 
-          <button type="button" class="btn-tool primary" onclick="standardizeAndFixEverything()">
+          <button type="button" class="btn-tool primary" onclick="standardizeAndFixEverything(); VbtmPro30.saveHistorySnapshot('Chuẩn hóa thể thức');">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>⚡ Chuẩn Hóa Thể Thức &amp; Tự Động Sửa Lỗi</span>
+            <span>⚡ Chuẩn Hóa Thể Thức</span>
           </button>
 
-          <button type="button" class="btn-tool" onclick="runSpellAndFormatCheck()">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span>Rà Soát Lỗi Chính Tả AI</span>
+          <button type="button" class="btn-tool" onclick="VbtmPro30.switchModule('spell'); VbtmPro30.runOfflineSpellCheck30();">
+            <span>✅ Soát Chính Tả (10 Loại)</span>
           </button>
 
-          <button type="button" class="btn-tool" onclick="insertSampleTypos()">
-            <span>Chèn Đoạn Văn Lỗi Để Thử</span>
+          <button type="button" class="btn-tool" onclick="VbtmPro30.generateAutoToc()">
+            <span>📑 Tạo Mục Lục</span>
+          </button>
+
+          <button type="button" class="btn-tool" onclick="VbtmPro30.saveHistorySnapshot('Lưu thủ công')">
+            <span>💾 Lưu Phiên Bản</span>
           </button>
 
           <button type="button" class="btn-tool" onclick="printVbtmA4Document()">
-            <span>🖨️ In / Lưu PDF A4</span>
+            <span>🖨️ In / PDF A4</span>
           </button>
 
-          <button type="button" class="btn-tool success" onclick="exportWordDocument()" style="margin-left: auto;">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            <span>Xuất File Word (.doc Chuẩn A4)</span>
+          <button type="button" class="btn-tool success" onclick="VbtmPro30.exportRealDocx30()" style="margin-left: auto;">
+            <span>⬇ Xuất Word (.DOCX Chuẩn OOXML)</span>
+          </button>
+
+          <button type="button" class="btn-tool" onclick="exportWordDocument()" title="Xuất bản dự phòng tương thích Word 2003 (.doc)">
+            <span>.DOC</span>
           </button>
         </div>
 
-        <!-- TRỢ LÝ AI SOẠN THẢO VĂN BẢN & CHỈNH VĂN PHONG -->
-        <div style="margin-bottom: 18px; padding: 16px; border-radius: 16px; background: rgba(69, 10, 10, 0.72); border: 1.5px solid rgba(250, 204, 21, 0.5);">
+        <!-- BẢNG ĐIỀU KHIỂN GOOGLE GEMINI AI TRUNG TÂM & 15 CHỨC NĂNG SOẠN THẢO + 7 CHẾ ĐỘ VĂN PHONG -->
+        <div class="v3-panel-section" data-mods="all,ai,draft,settings" style="margin-bottom: 18px; padding: 16px; border-radius: 16px; background: rgba(69, 10, 10, 0.72); border: 1.5px solid rgba(250, 204, 21, 0.5);">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-            <strong style="color: #facc15; font-size: 0.96rem;">🤖 Trợ Lý AI Soạn Thảo Văn Bản &amp; Chuẩn Hóa Văn Phong (Đảng Ủy &amp; UBND Phường)</strong>
-            <span style="font-size: 0.78rem; color: #fef08a;">Hoạt động tức thì Ngoại tuyến 100% hoặc kết nối Gemini API Key riêng</span>
+            <strong style="color: #facc15; font-size: 0.96rem;">🤖 Trung Tâm Điều Khiển Google Gemini AI (Online) &amp; Soạn Thảo 3.0</strong>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span id="v3AiStatusBadge" style="padding:3px 10px;border-radius:999px;font-size:0.76rem;font-weight:700;background:#475569;color:#fff;">Chưa kết nối</span>
+              <span style="font-size:0.78rem;color:#fef08a;">Model: <b id="v3AiModelDisplay">gemini-2.5-flash</b> · Phản hồi: <b id="v3AiLatencyDisplay">—</b></span>
+            </div>
           </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-            <input type="text" id="vbtmAiPromptInput" class="glass-input" style="flex: 1; min-width: 260px;" placeholder="Nhập yêu cầu soạn văn bản (VD: Soạn báo cáo công tác xây dựng Đảng tháng 11 năm 2026)...">
-            <button type="button" class="btn-tool primary" onclick="aiDraftDocumentFromPrompt()">
-              <span>🤖 AI Soạn Văn Bản</span>
-            </button>
-            <button type="button" class="btn-tool" onclick="aiUpgradeWritingStyle()">
-              <span>✨ AI Nâng Cấp Văn Phong</span>
-            </button>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding:10px;border-radius:10px;background:rgba(0,0,0,0.22);">
+            <input type="password" id="vbtmGeminiKey" class="glass-input" style="flex:1;min-width:210px;padding:6px 10px;font-size:0.82rem;" placeholder="Nhập Google Gemini API Key (AIza...) — lưu cục bộ trên trình duyệt">
+            <select id="v3AiModelSelect" class="glass-select" style="width:175px;padding:6px 10px;font-size:0.82rem;" onchange="VbtmAiService.setModel(this.value)"></select>
+            <button type="button" class="btn-tool" onclick="VbtmPro30.handleTestApiKey()">🔑 Kiểm tra API Key</button>
+            <button type="button" class="btn-tool primary" onclick="VbtmPro30.handleTestConnection()">⚡ Kiểm tra kết nối</button>
+            <button type="button" id="v3AiCancelBtn" class="btn-tool" onclick="VbtmAiService.cancelActiveRequest()" disabled>⏹ Hủy xử lý</button>
           </div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center;">
-            <span style="font-size: 0.78rem; color: var(--text-muted);">Gợi ý nhanh:</span>
-            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn báo cáo kết quả công tác xây dựng Đảng tháng 11 năm 2026 của Đảng ủy phường')">Báo cáo Đảng ủy</button>
-            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn nghị quyết Đảng ủy phường về đẩy mạnh chuyển đổi số và cải cách hành chính')">Nghị quyết Đảng ủy</button>
-            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn công văn UBND phường về tăng cường kiểm tra trật tự đô thị và vệ sinh môi trường')">Công văn UBND</button>
-            <button type="button" class="btn-tool" style="padding: 3px 10px; font-size: 0.76rem;" onclick="fillAiPromptAndRun('Soạn kế hoạch UBND phường tổ chức kiểm tra an toàn phòng cháy chữa cháy trên địa bàn')">Kế hoạch UBND</button>
-            <input type="password" id="vbtmGeminiKey" class="glass-input" style="width: 210px; margin-left: auto; padding: 4px 10px; font-size: 0.76rem;" placeholder="Gemini API Key (tùy chọn)">
+          <div style="font-size:0.75rem;color:#fde68a;margin-bottom:8px;">
+            ℹ Phân biệt rõ: <b>Quy tắc thể thức &amp; từ điển chính tả</b> chạy Offline 100%; <b>Trợ lý AI Gemini</b> yêu cầu Internet &amp; API Key riêng (chỉ lưu cục bộ trong trình duyệt của bạn, không bao giờ nhúng khóa bí mật vào mã nguồn công khai).
           </div>
+          <div id="v3AiErrorBox" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:rgba(220,38,38,0.25);border:1px solid #ef4444;color:#fecaca;font-size:0.82rem;"></div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;">
+            <select id="v3DraftModeSelect" class="glass-select" style="width: 240px; padding: 6px 10px; font-size: 0.82rem;"></select>
+            <select id="v3DraftLengthSelect" class="glass-select" style="width: 120px; padding: 6px 10px; font-size: 0.82rem;">
+              <option value="Ngắn gọn">Ngắn gọn</option>
+              <option value="Đầy đủ" selected>Đầy đủ</option>
+              <option value="Chi tiết">Chi tiết</option>
+            </select>
+            <input type="text" id="vbtmAiPromptInput" class="glass-input" style="flex: 1; min-width: 220px;" placeholder="Nhập chủ đề, cơ quan, kỳ báo cáo (AI sẽ hỏi nếu thiếu, không tự bịa số liệu)...">
+            <button type="button" class="btn-tool primary" onclick="VbtmPro30.runAiDraft30()">🤖 AI Soạn / Xử Lý</button>
+          </div>
+          <div id="v3MissingInfoBox" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:8px;background:rgba(245,158,11,0.2);border:1px solid #f59e0b;color:#fef3c7;font-size:0.8rem;"></div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <select id="v3StyleModeSelect" class="glass-select" style="width: 280px; padding: 6px 10px; font-size: 0.82rem;"></select>
+            <button type="button" class="btn-tool" onclick="VbtmPro30.runAiStyleUpgrade30()">✨ AI Nâng Cấp Văn Phong (So sánh Trước/Sau)</button>
+            <button type="button" class="btn-tool" onclick="insertSampleTypos()" style="margin-left:auto;">🧪 Chèn Văn Bản Lỗi Thử</button>
+          </div>
+
+          <details style="margin-top:10px;">
+            <summary style="cursor:pointer;font-size:0.78rem;color:#fde047;">📋 Log kỹ thuật AI (không lưu nội dung văn bản nhạy cảm)</summary>
+            <div id="v3AiLogList" style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(0,0,0,0.28);max-height:130px;overflow:auto;"></div>
+          </details>
+        </div>
+
+        <!-- PHÂN HỆ SOÁT LỖI CHÍNH TẢ 10 LOẠI + BẢO VỆ THỰC THỂ (PHẦN 3) -->
+        <div class="v3-panel-section" data-mods="all,spell" style="margin-bottom: 18px; padding: 16px; border-radius: 16px; background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(250, 204, 21, 0.35);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <strong style="color:#facc15;font-size:0.96rem;">✅ Soát Lỗi Chính Tả Tiếng Việt (10 Loại Lỗi · Bảo Vệ Tên Riêng, Số Liệu &amp; Căn Cứ Pháp Lý)</strong>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="btn-tool" onclick="VbtmPro30.runOfflineSpellCheck30()">🔍 Quét Quy Tắc (Offline)</button>
+              <button type="button" class="btn-tool primary" onclick="VbtmPro30.runGeminiSpellCheck30()">🧠 Quét Sâu AI Gemini (JSON)</button>
+              <button type="button" class="btn-tool success" onclick="VbtmPro30.fixAllSafeSpellIssues()">⚡ Sửa Tất Cả Lỗi An Toàn</button>
+              <button type="button" class="btn-tool" onclick="VbtmPro30.restoreSpellOriginal()">↩ Khôi Phục Bản Gốc</button>
+            </div>
+          </div>
+          <div id="v3SpellSummary" style="font-size:0.82rem;color:#e2e8f0;margin-bottom:8px;">Bấm "Quét Quy Tắc (Offline)" hoặc "Quét Sâu AI Gemini (JSON)" để thẩm định từng đoạn văn bản.</div>
+          <div style="overflow-x:auto;max-height:260px;overflow-y:auto;border:1px solid rgba(255,255,255,0.12);border-radius:10px;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+              <thead>
+                <tr style="background:rgba(255,255,255,0.08);text-align:left;">
+                  <th style="padding:7px;width:44px;text-align:center;">STT</th>
+                  <th style="padding:7px;">Nội dung gốc</th>
+                  <th style="padding:7px;">Đề xuất sửa</th>
+                  <th style="padding:7px;">Loại lỗi</th>
+                  <th style="padding:7px;width:78px;text-align:center;">Độ tin cậy</th>
+                  <th style="padding:7px;width:155px;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="v3SpellTableBody">
+                <tr><td colspan="6" style="text-align:center;padding:12px;opacity:0.7;">Chưa chạy soát lỗi.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PHÂN HỆ KIỂM ĐỊNH THỂ THỨC 2 HỆ QUY CHUẨN & TRÌNH KÝ (PHẦN 7) -->
+        <div class="v3-panel-section" data-mods="format" style="display:none;margin-bottom:18px;padding:16px;border-radius:16px;background:rgba(15,23,42,0.72);border:1px solid rgba(250,204,21,0.35);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="color:#facc15;">🏛️ Kiểm Định Thể Thức &amp; Kiểm Tra Trước Khi Trình Ký</strong>
+            <button type="button" class="btn-tool primary" onclick="VbtmPro30.runFormatAudit30()">🔄 Chấm Điểm Lại</button>
+          </div>
+          <div id="v3FormatAuditBox"></div>
+        </div>
+
+        <!-- PHÂN HỆ LỊCH SỬ TÀI LIỆU & SO SÁNH (PHẦN 8) -->
+        <div class="v3-panel-section" data-mods="history" style="display:none;margin-bottom:18px;padding:16px;border-radius:16px;background:rgba(15,23,42,0.72);border:1px solid rgba(250,204,21,0.35);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="color:#facc15;">🕒 Lịch Sử Chỉnh Sửa &amp; Khôi Phục Phiên Bản</strong>
+            <button type="button" class="btn-tool primary" onclick="VbtmPro30.saveHistorySnapshot('Lưu mốc phiên bản')">💾 Lưu Phiên Bản Hiện Tại</button>
+          </div>
+          <div id="v3HistoryList"></div>
+        </div>
+
+        <!-- PHÂN HỆ THƯ VIỆN CĂN CỨ PHÁP LÝ (PHẦN 8) -->
+        <div class="v3-panel-section" data-mods="library" style="display:none;margin-bottom:18px;padding:16px;border-radius:16px;background:rgba(15,23,42,0.72);border:1px solid rgba(250,204,21,0.35);">
+          <strong style="color:#facc15;display:block;margin-bottom:10px;">📚 Quản Lý Căn Cứ Pháp Lý &amp; Chèn Nhanh Vào Văn Bản</strong>
+          <div id="v3LegalBasisList"></div>
         </div>
 
         <div class="studio-grid-2col">
@@ -254,7 +361,14 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">Nội dung văn bản chính (Có thể dán trực tiếp văn bản thô vào đây rồi bấm Chuẩn Hóa)</label>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                <label class="form-label" style="margin:0;">Nội dung văn bản chính</label>
+                <div style="display:flex;gap:4px;align-items:center;">
+                  <input type="text" id="v3FindInput" class="glass-input" placeholder="Tìm..." style="width:110px;padding:3px 7px;font-size:0.76rem;">
+                  <input type="text" id="v3ReplaceInput" class="glass-input" placeholder="Thay bằng..." style="width:110px;padding:3px 7px;font-size:0.76rem;">
+                  <button type="button" class="btn-tool" style="padding:3px 8px;font-size:0.74rem;" onclick="VbtmPro30.runFindAndReplace()">Thay thế</button>
+                </div>
+              </div>
               <textarea id="vbtmDocBody" class="glass-textarea" rows="8"></textarea>
             </div>
 
@@ -279,7 +393,8 @@
                     <input type="checkbox" id="vbtmIncludeQr" checked> Đính kèm QR vào văn bản Word
                   </label>
                 </div>
-                <input type="text" id="vbtmQrText" class="glass-input" placeholder="Nhập link tra cứu văn bản hoặc mã xác thực hồ sơ...">
+                <input type="text" id="vbtmQrText" class="glass-input" placeholder="Nhập link tra cứu văn bản hoặc mã xác thực hồ sơ..." oninput="VbtmPro30.verifyQrCodeHealth()">
+                <div id="v3QrVerifyResult" style="font-size:0.76rem;margin-top:5px;"></div>
               </div>
             </div>
 
@@ -327,7 +442,7 @@
             <li>Trong phần mềm: Bấm <strong>"Mở File Word (.docx / .doc)"</strong> để nạp văn bản cần chuẩn hóa, bấm <strong>"1. Chuẩn Hóa &amp; Sửa Chính Tả AI"</strong>, sau đó bấm <strong>"2. Chuẩn Hóa Word Đang Mở"</strong> hoặc <strong>"3. Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
           </ol>
           <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
-            Mã chuẩn SHA256: <code id="sha256Code">c1f6194484b669d0431337917d91f76025adbd8c02eba3f8f714c159e8f03858</code>
+            Mã chuẩn SHA256: <code id="sha256Code">df56824a689af1679906fb9775aacd6d3bf460f89c8c7f800c046490d20b2296</code>
           </div>
         </div>
       </div>
@@ -355,8 +470,36 @@
     </div>
   </footer>
 
+  <!-- MODAL SO SÁNH TRƯỚC & SAU KHI ÁP DỤNG KẾT QUẢ AI -->
+  <div id="v3CompareModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;padding:16px;">
+    <div style="width:100%;max-width:960px;background:#111827;border:1.5px solid #facc15;border-radius:16px;padding:18px;color:#fff;max-height:90vh;display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <strong id="v3CompareTitle" style="color:#facc15;font-size:1rem;">So sánh Trước &amp; Sau</strong>
+        <button type="button" class="btn-tool" onclick="VbtmPro30.closeComparisonModal()">✕ Đóng</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:300px;">
+        <div style="display:flex;flex-direction:column;">
+          <label style="font-size:0.82rem;color:#fca5a5;margin-bottom:4px;">Nội dung gốc (Trước khi xử lý):</label>
+          <textarea id="v3CompareBefore" class="glass-textarea" readonly style="flex:1;min-height:280px;font-family:'Times New Roman',serif;font-size:14px;"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;">
+          <label style="font-size:0.82rem;color:#86efac;margin-bottom:4px;">Nội dung đề xuất (Có thể chỉnh sửa trực tiếp trước khi áp dụng):</label>
+          <textarea id="v3CompareAfter" class="glass-textarea" style="flex:1;min-height:280px;font-family:'Times New Roman',serif;font-size:14px;background:rgba(6,78,59,0.28);"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px;">
+        <button type="button" class="btn-tool" onclick="VbtmPro30.closeComparisonModal()">✕ Hủy (Giữ nguyên bản gốc)</button>
+        <button type="button" class="btn-tool success" onclick="VbtmPro30.applyComparisonModal()">✅ Xác Nhận Áp Dụng Vào Văn Bản</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/main.js"></script>
   <script src="../js/vietnamese-dictionary.js"></script>
+  <script src="../js/vbtm-ai-service.js"></script>
+  <script src="../js/vbtm-spell-engine.js"></script>
+  <script src="../js/vbtm-docx-engine.js"></script>
   <script src="../js/vbtm-app.js"></script>
+  <script src="../js/vbtm-pro30.js"></script>
 </body>
 </html>
