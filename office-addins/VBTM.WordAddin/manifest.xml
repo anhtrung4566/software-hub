@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>9c1f4a20-3b7e-4e82-9a11-7d5c2b8f3001</Id>
+  <Version>3.0.0.0</Version>
+  <ProviderName>VBTM Pro</ProviderName>
+  <DefaultLocale>vi-VN</DefaultLocale>
+  <DisplayName DefaultValue="VBTM PRO AI FOR WORD"/>
+  <Description DefaultValue="Trợ lý AI soạn thảo, rà soát chính tả và chuẩn hóa thể thức văn bản Đảng (05-HD/VPTW) &amp; Hành chính (NĐ 30/2020) trực tiếp trong Microsoft Word."/>
+  <IconUrl DefaultValue="https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png"/>
+  <HighResolutionIconUrl DefaultValue="https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png"/>
+  <SupportUrl DefaultValue="https://anhtrung4566.github.io/software-hub/products/vbtm-pro.html"/>
+  <AppDomains>
+    <AppDomain>https://anhtrung4566.github.io</AppDomain>
+    <AppDomain>https://generativelanguage.googleapis.com</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="WordApi" MinVersion="1.1"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://anhtrung4566.github.io/software-hub/office-addins/VBTM.WordAddin/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="VbtmProWordGroup">
+                <Label resid="CommandsGroup.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16x16"/>
+                  <bt:Image size="32" resid="Icon.32x32"/>
+                  <bt:Image size="80" resid="Icon.80x80"/>
+                </Icon>
+                <Control xsi:type="Button" id="VbtmProWordTaskpaneBtn">
+                  <Label resid="TaskpaneButton.Label"/>
+                  <Supertip>
+                    <Title resid="TaskpaneButton.Label"/>
+                    <Description resid="TaskpaneButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>VbtmProWordPane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16x16" DefaultValue="https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://anhtrung4566.github.io/software-hub/desktop-src/VBTM-Pro/VBTM-Pro-logo.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://anhtrung4566.github.io/software-hub/products/vbtm-pro.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://anhtrung4566.github.io/software-hub/office-addins/VBTM.WordAddin/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="VBTM PRO AI FOR WORD"/>
+        <bt:String id="CommandsGroup.Label" DefaultValue="VBTM PRO AI"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="VBTM PRO AI"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Mở Task Pane bên phải để soạn thảo, rà soát chính tả và chuẩn hóa thể thức trực tiếp trong Word."/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Mở Trợ lý VBTM PRO AI ngay bên phải tài liệu Microsoft Word."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
