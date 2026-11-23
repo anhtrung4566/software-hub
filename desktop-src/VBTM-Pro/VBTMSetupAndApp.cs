@@ -233,6 +233,19 @@ namespace VBTMProSuite
                     null, out ttft3, out total3, out cached3, out model3);
                 sb.AppendLine(string.Format("[PASS] AI-Stream-Rewrite: TTFT={0}ms | Total={1}ms | Reply={2}", ttft3, total3, r3));
 
+                // 5. Spell Guard test: chặn AI xóa tên riêng, đổi số liệu, viết lại câu dài; giữ lại lỗi chính tả thật
+                string guardSrc = "Đồng chí Nguyễn Văn An đề suất bổ xung 15% kinh phí cho UBND phường.";
+                string noisyAiJson = "[" +
+                    "{\"original\":\"Nguyễn Văn An\",\"suggestion\":\"Nguyễn Văn\",\"reason\":\"hallucination\"}," +
+                    "{\"original\":\"15%\",\"suggestion\":\"10%\",\"reason\":\"bad number\"}," +
+                    "{\"original\":\"UBND\",\"suggestion\":\"Ủy ban\",\"reason\":\"acronym\"}," +
+                    "{\"original\":\"bổ xung\",\"suggestion\":\"bổ sung\",\"reason\":\"Sai phụ âm x/s\"}," +
+                    "{\"original\":\"đề suất\",\"suggestion\":\"đề xuất\",\"reason\":\"Sai phụ âm s/x\"}" +
+                    "]";
+                var guarded = WordSpellInspectorForm.ParseAiSpellResponseSafe(noisyAiJson, guardSrc);
+                bool guardPass = (guarded.Count == 2 && guarded[0][0] == "bổ xung" && guarded[1][0] == "đề suất");
+                sb.AppendLine(string.Format("[{0}] Spell-Accuracy-Guard: kept={1}/5 (blocked name/number/acronym hallucinations)", guardPass ? "PASS" : "FAIL", guarded.Count));
+
                 // 4. Real MainStudioForm Format + 05-HD/VPTW + ND30 + Undo test
                 using (MainStudioForm f = new MainStudioForm())
                 {
@@ -3425,7 +3438,30 @@ namespace VBTMProSuite
             {
                 string result = "";
                 string modeNote = "";
-                if (useOnline)
+                string oErr;
+                List<string> oModels = DesktopAiGateway.FetchOllamaModels(out oErr);
+                if (oModels != null && oModels.Count > 0)
+                {
+                    try
+                    {
+                        if (!this.IsDisposed) this.BeginInvoke((Action)(() => txtPreview.Text = ""));
+                        DesktopAiGateway.ActiveProvider = "ollama";
+                        DesktopAiGateway.SpeedMode = "Nhanh";
+                        long ttft, tot; bool cHit; string uMod;
+                        result = DesktopAiGateway.GenerateStreaming(sysPrompt, clipped.Length > 4000 ? clipped.Substring(0, 4000) : clipped, (tok) =>
+                        {
+                            if (!this.IsDisposed) try { this.BeginInvoke((Action)(() => txtPreview.AppendText(tok.Replace("**", "")))); } catch { }
+                        }, out ttft, out tot, out cHit, out uMod);
+                        result = result.Replace("**", "").Replace("##", "").Replace("###", "").Trim();
+                        modeNote = string.Format("✓ Đã tóm tắt bằng Ollama Local ({0} · TTFT {1}ms · Tổng {2}ms). Xem trước rồi bấm Xác Nhận.", uMod, ttft, tot);
+                    }
+                    catch
+                    {
+                        result = BuildOfflineSummary(srcText, styleIdx);
+                        modeNote = "✓ Đã tóm tắt bằng Offline AI VBTM. Kiểm tra bản xem trước rồi bấm Xác Nhận.";
+                    }
+                }
+                else if (useOnline)
                 {
                     try
                     {
@@ -4402,6 +4438,35 @@ namespace VBTMProSuite
             return chunks;
         }
 
+        private static bool IsValidSpellSuggestion(string wrong, string sug)
+        {
+            if (string.IsNullOrWhiteSpace(wrong) || string.IsNullOrWhiteSpace(sug)) return false;
+            if (string.Equals(wrong, sug, StringComparison.Ordinal)) return false;
+            // 1. Chỉ nhận cụm từ ngắn (tối đa 55 ký tự, 6 từ) — chặn AI tự ý viết lại cả câu
+            if (wrong.Length > 55 || sug.Length > 60) return false;
+            if (wrong.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length > 6) return false;
+            // 2. Chặn AI cắt ngắn/xóa bớt từ hoặc xóa tên người (VD: "Nguyễn Văn An" -> "Nguyễn Văn")
+            if (sug.Length < wrong.Length * 0.6) return false;
+            // 3. Bảo vệ tuyệt đối số liệu, ngày tháng, tỷ lệ %, số hiệu văn bản
+            string dWrong = Regex.Replace(wrong, @"[^\d]", "");
+            string dSug = Regex.Replace(sug, @"[^\d]", "");
+            if (dWrong.Length > 0 && dWrong != dSug) return false;
+            // 4. Bảo vệ từ viết tắt cơ quan/pháp lý (UBND, HĐND, VPTW, MTTQ...)
+            if (Regex.IsMatch(wrong, @"^[A-ZĐÀ-Ỹ]{2,8}(-[A-ZĐÀ-Ỹ]{2,6})?$")) return false;
+            // 5. Bảo vệ tên riêng / chức danh viết hoa 2 từ trở lên liên tiếp
+            if (Regex.IsMatch(wrong, @"\b[A-ZĐÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸ][a-zà-ỹđ]+\s+[A-ZĐÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸ][a-zà-ỹđ]+"))
+                return false;
+            // 6. Kiểm tra độ tương đồng ký tự (chặn AI bịa từ hoàn toàn không liên quan)
+            string a = wrong.ToLowerInvariant();
+            string b = sug.ToLowerInvariant();
+            int common = 0;
+            HashSet<char> setB = new HashSet<char>(b);
+            foreach (char ch in a) if (setB.Contains(ch)) common++;
+            double ratio = (double)common / Math.Max(a.Length, b.Length);
+            if (ratio < 0.45) return false;
+            return true;
+        }
+
         public static List<string[]> ParseAiSpellResponseSafe(string resp, string sourceText)
         {
             List<string[]> found = new List<string[]>();
@@ -4433,8 +4498,8 @@ namespace VBTMProSuite
                             if (d == null) continue;
                             string wrong = d.ContainsKey("original") ? Convert.ToString(d["original"]).Trim() : "";
                             string sug = d.ContainsKey("suggestion") ? Convert.ToString(d["suggestion"]).Trim() : "";
-                            string why = d.ContainsKey("reason") ? Convert.ToString(d["reason"]).Trim() : "AI phát hiện lỗi ngữ cảnh";
-                            if (wrong.Length >= 2 && sug.Length >= 1 && !string.Equals(wrong, sug, StringComparison.Ordinal) && sourceText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
+                            string why = d.ContainsKey("reason") ? Convert.ToString(d["reason"]).Trim() : "AI phát hiện lỗi chính tả / ngữ cảnh";
+                            if (IsValidSpellSuggestion(wrong, sug) && sourceText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
                             {
                                 found.Add(new string[] { wrong, sug, why });
                             }
@@ -4455,7 +4520,7 @@ namespace VBTMProSuite
                     string wrong = parts[0].Trim().Trim('"', '\'', '-', '•', '*', ' ');
                     string sug = parts[1].Trim().Trim('"', '\'', ' ');
                     string why = parts.Length >= 3 ? parts[2].Trim() : "AI phát hiện lỗi ngữ cảnh / chính tả";
-                    if (wrong.Length >= 2 && sug.Length >= 1 && !string.Equals(wrong, sug, StringComparison.Ordinal) && sourceText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
+                    if (IsValidSpellSuggestion(wrong, sug) && sourceText.IndexOf(wrong, StringComparison.Ordinal) >= 0)
                     {
                         found.Add(new string[] { wrong, sug, why });
                     }
@@ -4488,18 +4553,24 @@ namespace VBTMProSuite
             string modelStr = cfg[1];
             string apiKey = cfg[2];
 
-            if (provIdx == 5 || string.IsNullOrWhiteSpace(apiKey))
+            // Ưu tiên Ollama Local (nhanh, miễn phí, không cần API Key)
+            string ollamaErr;
+            List<string> ollamaModels = DesktopAiGateway.FetchOllamaModels(out ollamaErr);
+            bool useOllamaLocal = (ollamaModels != null && ollamaModels.Count > 0);
+            string activeLabel = useOllamaLocal ? ("Ollama Local: " + ollamaModels[0]) : modelStr;
+
+            if (!useOllamaLocal && (provIdx == 5 || string.IsNullOrWhiteSpace(apiKey)))
             {
                 MessageBox.Show(
-                    "Chức năng 'Quét Sâu Bằng AI (Ngữ Cảnh)' cần 1 API Key Google Gemini (miễn phí tại aistudio.google.com/apikey).\n\n" +
-                    "Bấm nút '⚙ Key AI' để nhập & kiểm tra kết nối ngay!",
-                    "VBTM Pro 3.0 Ultimate — Quét Sâu AI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    "Chưa phát hiện Ollama Local (http://127.0.0.1:11434) và chưa nhập Gemini API Key.\n\n" +
+                    "Hãy khởi chạy Ollama (không cần Key) hoặc bấm '⚙ Key AI' để nhập Gemini API Key.",
+                    "VBTM Pro v3.5.0 — Quét Sâu AI", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             List<KeyValuePair<int, string>> workChunks = retryFailedOnly && failedChunks.Count > 0
                 ? new List<KeyValuePair<int, string>>(failedChunks)
-                : SplitIntoLogicalChunks(currentDocText, 1800);
+                : SplitIntoLogicalChunks(currentDocText, 900);
             failedChunks.Clear();
 
             isAiBusy = true;
@@ -4507,13 +4578,12 @@ namespace VBTMProSuite
             btnRetryFailed.Visible = false;
             prgScan.Visible = true;
             lblAiStatus.Visible = false;
-            lblSummary.Text = "🧠 Đang chia văn bản thành " + workChunks.Count + " đoạn và gửi lần lượt tới AI (" + modelStr + ")...";
+            lblSummary.Text = "🧠 Đang quét nhanh " + workChunks.Count + " đoạn bằng " + activeLabel + "...";
 
             string sysPrompt =
-                "Bạn là chuyên gia hiệu đính văn bản Đảng (05-HD/VPTW) và Hành chính Nhà nước Việt Nam (NĐ 30/2020). " +
-                "CHỈ tìm các lỗi chính tả, đánh máy, dùng từ sai ngữ cảnh trong đoạn văn sau. " +
-                "KHÔNG tự ý viết lại văn bản, KHÔNG thay đổi tên người, số liệu, ngày tháng, số hiệu hay căn cứ pháp lý. " +
-                "Trả về JSON array chuẩn: [{\"original\":\"cụm sai nguyên văn\",\"suggestion\":\"cụm sửa\",\"reason\":\"lý do ngắn\"}]. Nếu không có lỗi trả về [].";
+                "CHỈ tìm các từ/cụm từ bị SAI CHÍNH TẢ hoặc ĐÁNH MÁY rõ ràng trong tiếng Việt. " +
+                "KHÔNG sửa tên riêng, KHÔNG sửa số liệu/ngày tháng/số hiệu, KHÔNG viết lại câu đúng. " +
+                "Trả về JSON array: [{\"original\":\"từ sai chính xác\",\"suggestion\":\"từ đúng\",\"reason\":\"lý do ngắn\"}]. Nếu không có lỗi trả về [].";
 
             System.Threading.ThreadPool.QueueUserWorkItem(_ =>
             {
@@ -4530,29 +4600,52 @@ namespace VBTMProSuite
                     int totalCh = workChunks.Count;
                     if (!this.IsDisposed)
                     {
-                        this.BeginInvoke((Action)(() => lblSummary.Text = "🧠 Đang kiểm tra AI đoạn " + curIdx + "/" + totalCh + "..."));
+                        this.BeginInvoke((Action)(() => lblSummary.Text = "🧠 Đang quét " + activeLabel + " — đoạn " + curIdx + "/" + totalCh + "..."));
                     }
                     try
                     {
                         string resp = null;
-                        try
+                        if (useOllamaLocal)
                         {
-                            resp = AiWordAssistantForm.CallOnlineAiDirect(provIdx, modelStr, apiKey, sysPrompt, ch.Value, provIdx == 0);
+                            DesktopAiGateway.ActiveProvider = "ollama";
+                            DesktopAiGateway.SpeedMode = "Nhanh";
+                            long ttft, tot; bool cHit; string uMod;
+                            resp = DesktopAiGateway.GenerateStreaming(sysPrompt, ch.Value, null, out ttft, out tot, out cHit, out uMod);
                         }
-                        catch (Exception exPrimary)
+                        else
                         {
-                            string backupGeminiKey = TryFindBackupGeminiKey();
-                            if (provIdx != 0 && !string.IsNullOrEmpty(backupGeminiKey))
+                            try
                             {
-                                provIdx = 0;
-                                modelStr = "gemini-2.5-flash";
-                                apiKey = backupGeminiKey;
-                                AiWordAssistantForm.SaveAiConfig(new string[] { "0", modelStr, apiKey });
-                                resp = AiWordAssistantForm.CallOnlineAiDirect(0, modelStr, apiKey, sysPrompt, ch.Value, true);
+                                resp = AiWordAssistantForm.CallOnlineAiDirect(provIdx, modelStr, apiKey, sysPrompt, ch.Value, provIdx == 0);
                             }
-                            else throw exPrimary;
+                            catch (Exception exPrimary)
+                            {
+                                string backupGeminiKey = TryFindBackupGeminiKey();
+                                if (provIdx != 0 && !string.IsNullOrEmpty(backupGeminiKey))
+                                {
+                                    provIdx = 0;
+                                    modelStr = "gemini-flash-lite-latest";
+                                    apiKey = backupGeminiKey;
+                                    AiWordAssistantForm.SaveAiConfig(new string[] { "0", modelStr, apiKey });
+                                    resp = AiWordAssistantForm.CallOnlineAiDirect(0, modelStr, apiKey, sysPrompt, ch.Value, true);
+                                }
+                                else throw exPrimary;
+                            }
                         }
-                        var parsed = ParseAiSpellResponseSafe(resp, currentDocText);
+
+                        var parsed = ParseAiSpellResponseSafe(resp, ch.Value);
+                        if (parsed.Count > 0 && !this.IsDisposed)
+                        {
+                            this.BeginInvoke((Action)(() =>
+                            {
+                                foreach (string[] f in parsed)
+                                {
+                                    int pos = currentDocText.IndexOf(f[0], StringComparison.Ordinal);
+                                    if (pos >= 0) AddIssue("AI Chính tả", f[0], f[1], f[2], ExtractContextSnippet(currentDocText, pos, f[0].Length), true);
+                                }
+                                UpdateSummaryHeader();
+                            }));
+                        }
                         allFound.AddRange(parsed);
                         okChunks++;
                     }
@@ -4560,7 +4653,6 @@ namespace VBTMProSuite
                     {
                         lastErr = (exChunk.Message ?? "").Split('\n')[0];
                         newFailed.Add(ch);
-                        // Nếu lỗi xác thực 401/403 thì dừng ngay, không gửi lặp vô ích
                         if (lastErr.Contains("[401]") || lastErr.Contains("[403]")) break;
                     }
                 }
