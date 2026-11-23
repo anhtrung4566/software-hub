@@ -73,9 +73,12 @@
       btnRun.disabled = true;
       btnCancel.classList.remove('hidden');
       try {
-        const res = await window.VBTM_AICore.generate(act.prompt, text, { host: 'Outlook', historyTitle: act.label });
+        const bridge = window.VBTM_OfficeBridge ? window.VBTM_OfficeBridge.createBridge('Outlook') : null;
+        const res = bridge
+          ? await bridge.runTask(act.id, act.prompt, text, { historyTitle: act.label })
+          : await window.VBTM_AICore.generate(act.prompt, text, { host: 'Outlook', historyTitle: act.label });
         document.getElementById('txtMailOutput').value = res.text;
-        document.getElementById('mailResultMeta').textContent = `${res.model} · ${res.latencyMs}ms`;
+        document.getElementById('mailResultMeta').textContent = `${res.provider || 'gemini'} · ${res.model} · ${res.latencyMs}ms`;
         document.getElementById('mailResultCard').classList.remove('hidden');
       } catch (err) {
         showAlert('err', err.message || 'Lỗi gọi AI.');
