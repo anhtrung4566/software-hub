@@ -9,11 +9,13 @@
  */
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
 const PORT = process.env.PORT || 8080;
+const aiRateLimitMap = new Map();
 const ROOT_DIR = __dirname;
 const PRODUCTS_FILE = path.join(ROOT_DIR, 'data', 'products.json');
 const STATS_FILE = path.join(ROOT_DIR, 'data', 'stats.json');
@@ -75,7 +77,61 @@ const server = http.createServer((req, res) => {
 
   if (pathname === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ status: 'ok', service: 'SieuAppVanPhong-Backend', timestamp: new Date().toISOString() }));
+    res.end(JSON.stringify({ status: 'ok', service: 'SieuAppVanPhong-Backend', version: '3.0.0', aiProxyEnabled: Boolean(process.env.GEMINI_API_KEY), timestamp: new Date().toISOString() }));
+    return;
+  }
+
+  // Backend Proxy bảo vệ Gemini API Key (chỉ bật khi quản trị viên cấu hình biến môi trường GEMINI_API_KEY)
+  if (pathname === '/api/ai/gemini' && req.method === 'POST') {
+    const serverKey = (process.env.GEMINI_API_KEY || '').trim();
+    if (!serverKey) {
+      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: { code: 503, message: 'Backend chưa cấu hình biến môi trường GEMINI_API_KEY.' } }));
+      return;
+    }
+    const clientIp = req.socket.remoteAddress || 'local';
+    const now = Date.now();
+    const bucket = (aiRateLimitMap.get(clientIp) || []).filter(ts => now - ts < 60000);
+    if (bucket.length >= 30) {
+      res.writeHead(429, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: { code: 429, message: 'Vượt giới hạn 30 lượt gọi AI/phút từ địa chỉ này.' } }));
+      return;
+    }
+    bucket.push(now);
+    aiRateLimitMap.set(clientIp, bucket);
+
+    let body = '';
+    req.on('data', chunk => { if (body.length < 512 * 1024) body += chunk; });
+    req.on('end', () => {
+      try {
+        const parsed = JSON.parse(body || '{}');
+        const model = String(parsed.model || 'gemini-2.5-flash').replace(/[^a-zA-Z0-9._-]/g, '');
+        const payloadStr = JSON.stringify(parsed.payload || {});
+        const apiReq = https.request({
+          hostname: 'generativelanguage.googleapis.com',
+          path: `/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(serverKey)}`,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payloadStr) },
+          timeout: 25000
+        }, apiRes => {
+          let respBody = '';
+          apiRes.on('data', d => { respBody += d; });
+          apiRes.on('end', () => {
+            res.writeHead(apiRes.statusCode || 500, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(respBody);
+          });
+        });
+        apiReq.on('error', err => {
+          res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: { code: 502, message: err.message } }));
+        });
+        apiReq.write(payloadStr);
+        apiReq.end();
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: { code: 400, message: 'Invalid JSON request body.' } }));
+      }
+    });
     return;
   }
 
