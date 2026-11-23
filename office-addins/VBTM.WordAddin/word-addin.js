@@ -148,28 +148,11 @@
 
     for (let c = 0; c < totalChunks; c++) {
       const slice = scannedParagraphs.slice(c * chunkSize, (c + 1) * chunkSize);
-      progressEl.textContent = `Đang rà soát nhóm đoạn ${c + 1}/${totalChunks} (${scannedParagraphs.length} đoạn)...`;
-      const payloadText = slice.map(p => `[Đoạn #${p.id}] ${p.text}`).join('\n');
-      const sysPrompt = 'Bạn là bộ rà soát chính tả và ngữ pháp công vụ Việt Nam. Kiểm tra từng [Đoạn #ID], không thay đổi tên riêng/số liệu/căn cứ pháp lý. Trả về JSON array [{"paragraphId":0,"original":"cụm sai chính xác trong đoạn","suggestion":"cụm đúng","reason":"lý do ngắn"}]. Nếu không có lỗi trả về [].';
-
+      progressEl.textContent = `Đang rà soát nhóm đoạn ${c + 1}/${totalChunks} (${scannedParagraphs.length} đoạn · 15 nhóm lỗi)...`;
       try {
-        const res = await window.VBTM_AICore.generate(sysPrompt, payloadText, {
-          host: 'Word',
-          expectJson: true,
-          historyTitle: `Quét toàn văn bản (nhóm ${c + 1}/${totalChunks})`
-        });
-        const parsed = window.VBTM_AICore.safeParseJson(res.text);
-        if (parsed.ok && Array.isArray(parsed.data)) {
-          parsed.data.forEach(item => {
-            if (item && item.original && item.suggestion && item.original !== item.suggestion) {
-              allIssues.push({
-                paragraphId: Number(item.paragraphId),
-                original: String(item.original),
-                suggestion: String(item.suggestion),
-                reason: String(item.reason || 'Lỗi chính tả / diễn đạt')
-              });
-            }
-          });
+        const res = await window.VBTM_SpellUnified.inspectParagraphs(slice, { host: 'Word' });
+        if (res && Array.isArray(res.issues)) {
+          res.issues.forEach(item => allIssues.push(item));
         }
       } catch (err) {
         progressEl.textContent = `Lỗi tại nhóm ${c + 1}/${totalChunks}: ${err.message}`;
@@ -190,9 +173,9 @@
     }
     listEl.innerHTML = issues.map((it, i) => `
       <div class="issue-item" data-idx="${i}">
-        <div class="issue-head">Đoạn #${it.paragraphId + 1}: "${esc(it.original)}"</div>
+        <div class="issue-head">[${esc(it.severity || 'Cần sửa')} · ${esc(it.categoryLabel || 'Chính tả')}] Đoạn #${it.paragraphId + 1}: "${esc(it.original)}"</div>
         <div class="issue-sugg">→ Đề xuất: "${esc(it.suggestion)}"</div>
-        <div class="issue-reason">${esc(it.reason)}</div>
+        <div class="issue-reason">${esc(it.reason)}${it.reference ? ' · Nguồn: ' + esc(it.reference) : ''}</div>
         <div class="btn-row">
           <button class="btn btn-secondary btn-nav-issue" data-idx="${i}" type="button">Đi tới vị trí</button>
           <button class="btn btn-success btn-fix-issue" data-idx="${i}" type="button">Xác nhận sửa lỗi này</button>
@@ -246,6 +229,11 @@
       await context.sync();
       const p = paras.items[issue.paragraphId];
       if (!p) throw new Error('Đoạn văn không còn tồn tại.');
+      p.load('text');
+      await context.sync();
+      if (window.VBTM_SpellUnified && !window.VBTM_SpellUnified.verifyOriginalStillMatches(p.text, issue.original)) {
+        throw new Error('Nội dung gốc tại đoạn này đã thay đổi — hủy thay thế để tránh sửa nhầm.');
+      }
       const found = p.search(issue.original, { matchCase: false });
       found.load('items');
       await context.sync();
@@ -306,14 +294,13 @@
       btnCancel.classList.remove('hidden');
 
       try {
-        const res = await window.VBTM_AICore.generate(act.prompt, text, {
-          host: 'Word',
-          expectJson: false,
-          historyTitle: act.label
-        });
+        const bridge = window.VBTM_OfficeBridge ? window.VBTM_OfficeBridge.createBridge('Word') : null;
+        const res = bridge
+          ? await bridge.runTask(act.id, act.prompt, text, { expectJson: false, historyTitle: act.label })
+          : await window.VBTM_AICore.generate(act.prompt, text, { host: 'Word', expectJson: false, historyTitle: act.label });
         document.getElementById('origPreview').textContent = lastOriginalSelection;
         document.getElementById('txtProposal').value = res.text;
-        document.getElementById('resultMeta').textContent = `${res.model} · ${res.latencyMs}ms`;
+        document.getElementById('resultMeta').textContent = `${res.provider || 'gemini'} · ${res.model} · ${res.latencyMs}ms`;
         document.getElementById('resultCard').classList.remove('hidden');
       } catch (err) {
         showAlert('err', err.message || 'Lỗi gọi AI.');
