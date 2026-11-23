@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VBTM Pro 3.0 Ultimate · Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy &amp; UBND Phường</title>
+  <title>VBTM Pro v3.5.0 · Hệ Sinh Thái Văn Phòng AI, Rà Soát, Chuẩn Hóa 05-HD/VPTW &amp; NĐ 30/2020</title>
   <meta name="description" content="Phần mềm & Add-in Microsoft Word chuẩn hóa thể thức văn bản của Đảng ủy và Ủy ban nhân dân phường theo Nghị định 30/2020/NĐ-CP và Hướng dẫn số 05-HD/VPTW, tạo mã QR thật (ISO 18004) và soát lỗi chính tả AI.">
   <link rel="stylesheet" href="../css/style.css">
   <!-- Thư viện đọc trực tiếp file Word .docx thực tế (Mammoth.js) & file PDF đa trang (PDF.js) -->
@@ -34,13 +34,13 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">Siêu App Văn Phòng</span>
-          <span class="brand-sub"><span class="status-indicator-dot"></span>VBTM Pro 3.0 Ultimate</span>
+          <span class="brand-sub"><span class="status-indicator-dot"></span>VBTM Pro v3.5.0</span>
         </div>
       </a>
 
       <div class="nav-center">
         <a href="../index.html#productsSection" class="nav-link">Kho Phần Mềm</a>
-        <a href="./vbtm-pro.html" class="nav-link active">VBTM Pro 3.0</a>
+        <a href="./vbtm-pro.html" class="nav-link active">VBTM Pro v3.5.0</a>
         <a href="#officeIntegrationSection" class="nav-link">Office Add-ins</a>
         <a href="./vietnam-ocr.html" class="nav-link">VietNamOCR 3.5 Pro</a>
         <a href="../admin.html" class="nav-link">Quản Trị</a>
@@ -67,10 +67,10 @@
             <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="11" y="9" width="34" height="46" rx="5" fill="#fffbeb" stroke="#facc15" stroke-width="2"/><line x1="17" y1="18" x2="32" y2="18" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="24" x2="39" y2="24" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/><line x1="17" y1="30" x2="35" y2="30" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/><circle cx="44" cy="43" r="13" fill="#facc15" stroke="#991b1b" stroke-width="2"/><path d="M38 43.5L42 47.5L50 39" stroke="#7f1d1d" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <div class="detail-app-titles">
-            <h1>VBTM Pro 3.0 Ultimate</h1>
-            <p class="detail-app-tagline">Phần Mềm Chuẩn Hóa Thể Thức Văn Bản Đảng Ủy (05-HD/VPTW) &amp; UBND Phường (NĐ 30/2020), Xuất DOCX OpenXML Chuẩn A4, Soát Chính Tả AI Bảo Vệ Thực Thể &amp; Trợ Lý Google Gemini</p>
+            <h1>VBTM Pro v3.5.0</h1>
+            <p class="detail-app-tagline">Hệ Sinh Thái Văn Phòng AI Thống Nhất (Ollama Local Mặc Định Không Cần Key · Gemini · OpenAI) — Rà Soát Văn Bản, Tìm &amp; Thay Từ Tiếng Việt, Chuẩn Hóa Chủ Động 05-HD/VPTW &amp; NĐ 30/2020, Tích Hợp Microsoft Office</p>
             <div class="detail-badges-row">
-              <span class="card-version">v3.0 Ultimate (2026)</span>
+              <span class="card-version" data-vbtm-version>v3.5.0</span>
               <span class="badge-tag badge-platform">Windows 10/11 &amp; Microsoft Word</span>
               <span class="badge-tag badge-featured">Đảng Ủy &amp; UBND Phường</span>
               <span style="font-size: 0.82rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
@@ -113,7 +113,7 @@
             <span class="win-dot yellow"></span>
             <span class="win-dot green"></span>
           </div>
-          <span style="font-weight: 800; font-size: 1rem;">VBTM Pro 2.5.0 · Chuẩn Hóa Văn Bản Đảng Ủy &amp; UBND Phường (Đầy Đủ 16 Mẫu Chuẩn Quy Định)</span>
+          <span style="font-weight: 800; font-size: 1rem;">VBTM Pro v3.5.0 · Soạn Thảo, Rà Soát, Thay Từ &amp; Chuẩn Hóa Chủ Động (05-HD/VPTW &amp; NĐ 30/2020)</span>
         </div>
 
         <div class="studio-tabs" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -171,36 +171,82 @@
         </div>
         <div id="v3MultiDocBar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;"></div>
 
-        <div class="toolbar-actions">
+        <div class="toolbar-actions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;padding:10px;border-radius:12px;background:rgba(15,23,42,0.58);border:1px solid rgba(250,204,21,0.28);margin-bottom:12px;">
           <input type="file" id="vbtmWordFileInput" accept=".docx,.doc,.pdf,.txt,application/pdf" style="display: none;">
-          <button type="button" class="btn-tool primary" onclick="document.getElementById('vbtmWordFileInput').click()">
-            <span>📂 Nạp File (.docx / .pdf / .txt)</span>
-          </button>
 
-          <button type="button" class="btn-tool" onclick="VbtmPro30.switchModule('spell'); VbtmPro30.runOfflineSpellCheck30();">
-            <span>✅ Soát Chính Tả (10 Loại)</span>
-          </button>
+          <!-- Nhóm 1: Tài liệu -->
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+            <span style="width:100%;font-size:0.74rem;font-weight:700;color:#facc15;text-transform:uppercase;">1. Tài liệu</span>
+            <button type="button" class="btn-tool" title="Tạo văn bản mới" onclick="VbtmPro30.createNewDocTab()">➕ Mới</button>
+            <button type="button" class="btn-tool primary" title="Mở file Word/PDF/TXT (không tự chỉnh thể thức)" onclick="document.getElementById('vbtmWordFileInput').click()">📂 Mở</button>
+            <button type="button" class="btn-tool" title="Lưu mốc phiên bản" onclick="VbtmPro30.saveHistorySnapshot('Lưu thủ công')">💾 Lưu</button>
+            <button type="button" class="btn-tool success" title="Xuất file Word .DOCX" onclick="VbtmPro30.exportRealDocx30()">⬇ .DOCX</button>
+            <button type="button" class="btn-tool" title="Xuất bản dự phòng Word 2003 (.doc)" onclick="exportWordDocument()">.DOC</button>
+            <button type="button" class="btn-tool" title="In / Xuất PDF A4" onclick="printVbtmA4Document()">🖨️ PDF</button>
+          </div>
 
-          <button type="button" class="btn-tool" onclick="VbtmPro30.generateAutoToc()">
-            <span>📑 Tạo Mục Lục</span>
-          </button>
+          <!-- Nhóm 2: Soạn thảo & Thay từ -->
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+            <span style="width:100%;font-size:0.74rem;font-weight:700;color:#facc15;text-transform:uppercase;">2. Soạn thảo &amp; Thay từ</span>
+            <button type="button" class="btn-tool" title="Mở AI soạn thảo" onclick="VbtmPro30.switchModule('ai')">✍️ AI soạn thảo</button>
+            <button type="button" class="btn-tool" title="AI viết lại đoạn chọn" onclick="VbtmPro30.switchModule('ai')">🔄 AI viết lại</button>
+            <button type="button" class="btn-tool primary" title="Tìm kiếm & Thay từ tiếng Việt có dấu (có xem trước & Hoàn tác)" onclick="VbtmFindReplace.togglePanel()">🔎 Tìm / Thay từ</button>
+          </div>
 
-          <button type="button" class="btn-tool" onclick="VbtmPro30.saveHistorySnapshot('Lưu thủ công')">
-            <span>💾 Lưu Phiên Bản</span>
-          </button>
+          <!-- Nhóm 3: Rà soát -->
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+            <span style="width:100%;font-size:0.74rem;font-weight:700;color:#facc15;text-transform:uppercase;">3. Rà soát văn bản</span>
+            <button type="button" class="btn-tool primary" title="Rà soát chính tả, ngữ pháp & nội dung" onclick="VbtmPro30.switchModule('spell'); VbtmPro30.runOfflineSpellCheck30();">✅ Rà soát chính tả</button>
+            <button type="button" class="btn-tool" title="Tạo mục lục tự động" onclick="VbtmPro30.generateAutoToc()">📑 Mục lục</button>
+            <button type="button" class="btn-tool" title="Kiểm tra căn cứ pháp lý" onclick="VbtmPro30.switchModule('library')">📚 Căn cứ pháp lý</button>
+          </div>
 
-          <button type="button" class="btn-tool" onclick="printVbtmA4Document()">
-            <span>🖨️ In / PDF A4</span>
-          </button>
+          <!-- Nhóm 4: Thể thức (Chủ động — KHÔNG tự động) -->
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+            <span style="width:100%;font-size:0.74rem;font-weight:700;color:#facc15;text-transform:uppercase;">4. Thể thức (Chủ động)</span>
+            <button type="button" class="btn-tool" title="Kiểm tra thể thức văn bản Đảng theo Hướng dẫn 05-HD/VPTW" onclick="VbtmFormatStandards.renderAuditPanel('hd05')">🏛️ KT 05-HD</button>
+            <button type="button" class="btn-tool primary" title="Xem trước & Chuẩn hóa theo Hướng dẫn 05-HD/VPTW (có xác nhận & Hoàn tác)" onclick="VbtmFormatStandards.applyStandardizationWithUndo('hd05')">✨ Chuẩn hóa 05-HD</button>
+            <button type="button" class="btn-tool" title="Kiểm tra thể thức hành chính theo Nghị định 30/2020/NĐ-CP" onclick="VbtmFormatStandards.renderAuditPanel('nd30')">📋 KT NĐ 30</button>
+            <button type="button" class="btn-tool primary" title="Xem trước & Chuẩn hóa theo Nghị định 30/2020/NĐ-CP (có xác nhận & Hoàn tác)" onclick="VbtmFormatStandards.applyStandardizationWithUndo('nd30')">✨ Chuẩn hóa NĐ 30</button>
+            <button type="button" class="btn-tool" title="Hoàn tác thao tác chuẩn hóa gần nhất" onclick="VbtmFormatStandards.undoLastStandardization()">↩ Hoàn tác</button>
+          </div>
 
-          <button type="button" class="btn-tool success" onclick="VbtmPro30.exportRealDocx30()" style="margin-left: auto;">
-            <span>⬇ Xuất Word (.DOCX Chuẩn OOXML)</span>
-          </button>
-
-          <button type="button" class="btn-tool" onclick="exportWordDocument()" title="Xuất bản dự phòng tương thích Word 2003 (.doc)">
-            <span>.DOC</span>
-          </button>
+          <!-- Nhóm 5: AI (Ollama Local mặc định + Gemini/OpenAI tùy chọn) -->
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+            <span style="width:100%;font-size:0.74rem;font-weight:700;color:#facc15;text-transform:uppercase;">5. AI (Ollama Local mặc định)</span>
+            <button type="button" class="btn-tool" title="Mở Trung tâm cấu hình AI (Ollama / Gemini / OpenAI)" onclick="VbtmPro30.switchModule('settings')">🤖 Quản lý AI</button>
+            <a href="https://ollama.com/download" target="_blank" class="btn-tool" style="text-decoration:none;" title="Tải Ollama Local (miễn phí, không cần Key)">⬇ Ollama</a>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-tool" style="text-decoration:none;" title="Trang chính thức lấy Google Gemini API Key (tùy chọn)">🔑 Key Gemini</a>
+            <a href="https://platform.openai.com/api-keys" target="_blank" class="btn-tool" style="text-decoration:none;" title="Trang chính thức lấy OpenAI API Key (trả phí, tùy chọn)">🔑 Key OpenAI</a>
+          </div>
         </div>
+
+        <!-- BẢNG TÌM KIẾM & THAY TỪ TIẾNG VIỆT CÓ DẤU (XEM TRƯỚC & HOÀN TÁC) -->
+        <div id="vbtmFindReplacePanel" style="display:none;margin-bottom:12px;padding:12px 14px;border-radius:12px;background:rgba(15,23,42,0.82);border:1px solid #38bdf8;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong style="color:#7dd3fc;">🔎 Tìm Kiếm &amp; Thay Từ Tiếng Việt (Bảo Toàn Định Dạng · Có Hoàn Tác)</strong>
+            <button type="button" class="btn-tool" onclick="VbtmFindReplace.togglePanel()">✕ Đóng</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input type="text" id="vbtmFindInput" class="glass-input" placeholder="Nhập từ hoặc cụm từ tiếng Việt cần tìm...">
+            <input type="text" id="vbtmReplaceInput" class="glass-input" placeholder="Nhập từ thay thế...">
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px;font-size:0.84rem;color:#e2e8f0;">
+            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="vbtmFindMatchCase"> Phân biệt HOA / thường</label>
+            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="vbtmFindWholeWord" checked> Tìm từ nguyên vẹn (không thay nhầm 1 phần từ)</label>
+            <span id="vbtmFindStatus" style="color:#fef08a;margin-left:auto;"></span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <button type="button" class="btn-tool" onclick="VbtmFindReplace.runFind(-1)">⬆ Trước</button>
+            <button type="button" class="btn-tool primary" onclick="VbtmFindReplace.runFind(1)">⬇ Tìm tiếp</button>
+            <button type="button" class="btn-tool" onclick="VbtmFindReplace.replaceCurrent()">Thay 1 vị trí</button>
+            <button type="button" class="btn-tool success" onclick="VbtmFindReplace.previewAndReplaceAll()">Xem trước &amp; Thay tất cả</button>
+            <button type="button" class="btn-tool" onclick="VbtmFindReplace.undoReplace()">↩ Hoàn tác thay từ</button>
+          </div>
+        </div>
+
+        <!-- KẾT QUẢ KIỂM TRA THỂ THỨC CHỦ ĐỘNG (05-HD/VPTW & NĐ 30/2020) -->
+        <div id="vbtmFormatAuditResult" style="display:none;margin-bottom:12px;padding:12px 14px;border-radius:12px;background:rgba(15,23,42,0.82);border:1px solid #facc15;"></div>
 
         <!-- BẢNG ĐIỀU KHIỂN GOOGLE GEMINI AI TRUNG TÂM & 15 CHỨC NĂNG SOẠN THẢO + 7 CHẾ ĐỘ VĂN PHONG -->
         <div class="v3-panel-section" data-mods="all,ai,draft,settings" style="margin-bottom: 18px; padding: 16px; border-radius: 16px; background: rgba(69, 10, 10, 0.72); border: 1.5px solid rgba(250, 204, 21, 0.5);">
@@ -487,8 +533,20 @@
             <li>Nhấp đúp chuột vào tệp <code>VBTM-Setup-2.5.0.exe</code> và nhấn <strong>"Cài Đặt Ngay"</strong> (hoặc <strong>"Chạy Ngay (Không Cần Cài)"</strong>).</li>
             <li>Trong phần mềm: Bấm <strong>"Mở File Word (.docx / .doc)"</strong> để nạp văn bản cần chuẩn hóa, bấm <strong>"1. Chuẩn Hóa &amp; Sửa Chính Tả AI"</strong>, sau đó bấm <strong>"2. Chuẩn Hóa Word Đang Mở"</strong> hoặc <strong>"3. Xuất &amp; Mở Word (.doc A4)"</strong>.</li>
           </ol>
-          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
-            Mã chuẩn SHA256: <code id="sha256Code">974a74965512e519cd74f288ee17ae884a6f4e607119e844a5b26970bd9f145d</code>
+          <div style="font-size: 0.80rem; color: var(--text-secondary); margin-top: 10px; line-height: 1.7; word-break: break-all;">
+            <strong>Bộ cài thống nhất v3.5.0 (23/11/2026 · 37.5 KB):</strong> <code>VBTM-Pro-Unified-Setup.exe</code><br/>
+            SHA256: <code>aa2b4d21b2891e7f9ba9d18aa13f905cf9efa2ded5458bb3976057cf48276be1</code><br/>
+            <strong>Bản Desktop tương thích cũ (336 KB):</strong> <code>VBTM-Setup-2.5.0.exe</code> — Mã chuẩn SHA256: <code id="sha256Code">974a74965512e519cd74f288ee17ae884a6f4e607119e844a5b26970bd9f145d</code>
+          </div>
+
+          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <h4 style="margin: 0 0 8px; color: #fef08a; font-size: 0.95rem;">3 Lựa Chọn AI &amp; Câu Hỏi Thường Gặp (FAQ)</h4>
+            <ul style="margin: 0 0 8px 18px; color: var(--text-secondary); font-size: 0.86rem; line-height: 1.7;">
+              <li><strong>Ollama Local (Mặc định — Miễn phí, không cần API Key):</strong> Chạy trực tiếp tại <code>http://127.0.0.1:11434</code>. Tải tại <a href="https://ollama.com/download" target="_blank" style="color:#7dd3fc;">ollama.com/download</a>, tải model tiếng Việt <code>ollama pull qwen2.5:3b</code> (1.9GB) hoặc <code>qwen2.5:7b</code> (4.7GB).</li>
+              <li><strong>Google Gemini API (Tùy chọn bổ sung):</strong> Lấy khóa chính thức tại <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#7dd3fc;">aistudio.google.com/app/apikey</a> (không bắt buộc nếu đã dùng Ollama).</li>
+              <li><strong>OpenAI API (Tùy chọn trả phí theo token):</strong> Lấy khóa chính thức tại <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#7dd3fc;">platform.openai.com/api-keys</a> (lưu ý: gói ChatGPT trên web không bao gồm hạn mức OpenAI API; VBTM Pro không bao giờ tự chuyển sang OpenAI trả phí khi chưa được phép).</li>
+              <li><strong>FAQ — VBTM Pro có tự ý chỉnh thể thức khi mở file không?</strong> Không. Mở, nhập, dán hoặc lưu tài liệu giữ nguyên 100% nguyên trạng. Bạn chủ động bấm <em>KT 05-HD / Chuẩn hóa 05-HD</em> hoặc <em>KT NĐ 30 / Chuẩn hóa NĐ 30</em> để xem trước, xác nhận áp dụng và có thể Hoàn tác bất cứ lúc nào.</li>
+            </ul>
           </div>
           <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
             <h4 style="margin: 0 0 8px; color: #fef08a; font-size: 0.95rem;">Nhật Ký Phiên Bản (Đồng bộ từ product-config.json)</h4>
@@ -506,9 +564,9 @@
         <div>
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
             <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">Software Hub</span>
-            <span class="card-version">VBTM Pro 2.5.0</span>
+            <span class="card-version" data-vbtm-version>v3.5.0</span>
           </div>
-          <div class="footer-copy">&copy; 2026 Kho Phần Mềm Chuyên Dụng · VBTM Pro 2.5.0.</div>
+          <div class="footer-copy">&copy; 2026 Kho Phần Mềm Chuyên Dụng · VBTM Pro v3.5.0.</div>
         </div>
 
         <div class="footer-links">
@@ -551,6 +609,8 @@
   <script src="../js/vbtm-docx-engine.js"></script>
   <script src="../js/vbtm-app.js"></script>
   <script src="../js/vbtm-pro30.js"></script>
+  <script src="../js/vbtm-format-standards.js"></script>
+  <script src="../js/vbtm-find-replace.js"></script>
   <script src="../js/vbtm-ecosystem-sync.js"></script>
 </body>
 </html>
