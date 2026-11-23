@@ -91,6 +91,18 @@ namespace VBTM.OfficeIntegration
                     File.WriteAllText(Path.Combine(Path.GetTempPath(), "vbtm_office_uninstall_result.txt"), msg, Encoding.UTF8);
                     return ok ? 0 : 1;
                 }
+                if (flag == "--uninstall-ui")
+                {
+                    Application.EnableVisualStyles();
+                    if (MessageBox.Show("Bạn có chắc muốn gỡ bỏ hoàn toàn ứng dụng VBTM Pro & các tích hợp Office khỏi tài khoản Windows hiện tại?\n(Không ảnh hưởng tài liệu Word/Excel/PowerPoint của bạn.)",
+                        "Gỡ bỏ ứng dụng VBTM Pro", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        string msg;
+                        PersonalInstallerEngine.CleanUninstall(out msg);
+                        MessageBox.Show(msg, "Gỡ bỏ ứng dụng VBTM Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    return 0;
+                }
             }
 
             Application.EnableVisualStyles();
@@ -177,6 +189,8 @@ namespace VBTM.OfficeIntegration
                     Encoding.UTF8);
 
                 WritePersonalInstallGuide();
+                RegisterWindowsUninstallEntry();
+                sb.AppendLine("[OK] Đã đăng ký mục Gỡ bỏ ứng dụng trong Windows Settings -> Apps (HKCU, không cần quyền Admin).");
                 sb.AppendLine("[OK] Hoàn tất cài đặt phạm vi người dùng hiện tại tại: " + InstallRoot);
                 sb.AppendLine("[LƯU Ý BẢO MẬT] Bộ cài KHÔNG tự ý sửa Registry Office, KHÔNG dùng network share sideload và KHÔNG làm mất tài liệu/API Key.");
                 report = sb.ToString();
@@ -263,10 +277,73 @@ namespace VBTM.OfficeIntegration
             }
         }
 
-        public static bool CleanUninstall(out string report)
+        private const string UNINSTALL_REG_PATH = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\VBTMProUnified";
+
+        private static void RegisterWindowsUninstallEntry()
         {
             try
             {
+                string selfCopy = Path.Combine(InstallRoot, "VBTM-Pro-Unified-Setup.exe");
+                string currentExe = Process.GetCurrentProcess().MainModule.FileName;
+                if (!string.Equals(currentExe, selfCopy, StringComparison.OrdinalIgnoreCase) && File.Exists(currentExe))
+                {
+                    try { File.Copy(currentExe, selfCopy, true); } catch { }
+                }
+                using (RegistryKey k = Registry.CurrentUser.CreateSubKey(UNINSTALL_REG_PATH))
+                {
+                    if (k != null)
+                    {
+                        k.SetValue("DisplayName", "VBTM Pro — Unified AI Office Ecosystem");
+                        k.SetValue("DisplayVersion", Program.APP_VERSION);
+                        k.SetValue("Publisher", "VBTM Pro");
+                        k.SetValue("InstallLocation", InstallRoot);
+                        k.SetValue("UninstallString", "\"" + selfCopy + "\" --uninstall-ui");
+                        k.SetValue("NoModify", 1, RegistryValueKind.DWord);
+                        k.SetValue("NoRepair", 0, RegistryValueKind.DWord);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        public static string CheckOllamaLocalSummary()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("=== TRẠNG THÁI AI LOCAL (OLLAMA — KHÔNG CẦN API KEY) ===");
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:11434/api/tags");
+                req.Method = "GET";
+                req.Timeout = 3000;
+                req.KeepAlive = false;
+                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
+                {
+                    string json = sr.ReadToEnd();
+                    sb.AppendLine("Dịch vụ Ollama: ĐANG HOẠT ĐỘNG tại http://localhost:11434");
+                    if (json.Contains("\"models\":[]") || !json.Contains("\"name\""))
+                        sb.AppendLine("Model tiếng Việt: CHƯA TẢI — đề xuất chạy: ollama pull qwen2.5:7b (~4.7GB) hoặc qwen2.5:3b (~1.9GB)");
+                    else
+                        sb.AppendLine("Model tiếng Việt: ĐÃ SẴN SÀNG (có thể dùng AI ngay không cần API Key).");
+                }
+            }
+            catch
+            {
+                sb.AppendLine("Dịch vụ Ollama: CHƯA CÀI ĐẶT hoặc CHƯA KHỞI CHẠY tại http://localhost:11434.");
+                sb.AppendLine("Hướng dẫn dùng AI miễn phí không cần API Key:");
+                sb.AppendLine("  1. Cài Ollama cho Windows từ https://ollama.com/download/windows");
+                sb.AppendLine("  2. Mở Command Prompt/PowerShell chạy: ollama pull qwen2.5:7b (máy 16GB RAM) hoặc ollama pull qwen2.5:3b (máy 8GB RAM)");
+                sb.AppendLine("  3. Mở lại VBTM Pro / Word / Excel / PowerPoint / Outlook -> hệ thống tự kết nối AI Local.");
+            }
+            return sb.ToString();
+        }
+
+        public static bool CleanUninstall(out string report)
+        {
+            StringBuilder sb = new StringBuilder();
+            try
+            {
+                // 1. Hủy đăng ký 3 Add-in khỏi HKCU Office
                 try
                 {
                     using (RegistryKey devKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Office\16.0\WEF\Developer", true))
@@ -280,17 +357,59 @@ namespace VBTM.OfficeIntegration
                             }
                         }
                     }
+                    sb.AppendLine("[OK] Đã hủy đăng ký Add-in khỏi Microsoft Office (HKCU).");
                 }
                 catch { }
+
+                // 2. Xóa mục Gỡ bỏ trong Windows Apps & Features (HKCU)
+                try
+                {
+                    Registry.CurrentUser.DeleteSubKeyTree(UNINSTALL_REG_PATH, false);
+                    sb.AppendLine("[OK] Đã xóa mục VBTM Pro khỏi Windows Installed Apps.");
+                }
+                catch { }
+
+                // 3. Xóa shortcut Desktop & Start Menu (nếu có)
+                try
+                {
+                    string deskLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "VBTM Pro.lnk");
+                    if (File.Exists(deskLnk)) { File.Delete(deskLnk); sb.AppendLine("[OK] Đã xóa shortcut ngoài Desktop."); }
+                    string startDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "VBTM Pro");
+                    if (Directory.Exists(startDir)) { Directory.Delete(startDir, true); sb.AppendLine("[OK] Đã xóa thư mục Start Menu."); }
+                }
+                catch { }
+
+                // 4. Xóa bản cài VBTM Pro Desktop trong %LOCALAPPDATA%\Programs\VBTM-Pro (nếu có)
+                try
+                {
+                    string progDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "VBTM-Pro");
+                    if (Directory.Exists(progDir)) { Directory.Delete(progDir, true); sb.AppendLine("[OK] Đã gỡ bỏ ứng dụng VBTM Pro Desktop."); }
+                }
+                catch { }
+
+                // 5. Xóa thư mục cài đặt VBTMProOffice (an toàn nếu đang chạy từ chính thư mục đó)
                 if (Directory.Exists(InstallRoot))
                 {
-                    Directory.Delete(InstallRoot, true);
-                    report = "Đã gỡ cài đặt sạch thư mục VBTMProOffice và hủy đăng ký Add-in khỏi HKCU Office (không ảnh hưởng tài liệu và không xóa API Key của VBTM Desktop).";
+                    string currentExe = Process.GetCurrentProcess().MainModule.FileName;
+                    if (currentExe.StartsWith(InstallRoot, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Lên lịch xóa sạch sau khi tiến trình đóng
+                        Process.Start(new ProcessStartInfo("cmd.exe", "/c timeout /t 2 >nul & rmdir /s /q \"" + InstallRoot + "\"")
+                        {
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                            CreateNoWindow = true
+                        });
+                        sb.AppendLine("[OK] Đã lên lịch xóa sạch thư mục " + InstallRoot + " sau khi đóng cửa sổ.");
+                    }
+                    else
+                    {
+                        Directory.Delete(InstallRoot, true);
+                        sb.AppendLine("[OK] Đã xóa sạch thư mục " + InstallRoot + ".");
+                    }
                 }
-                else
-                {
-                    report = "Không phát hiện dữ liệu cài đặt VBTMProOffice để gỡ.";
-                }
+
+                sb.AppendLine("Hoàn tất gỡ bỏ ứng dụng VBTM Pro (không làm mất tài liệu Word/Excel/PowerPoint của bạn).");
+                report = sb.ToString();
                 return true;
             }
             catch (Exception ex)
@@ -408,7 +527,7 @@ namespace VBTM.OfficeIntegration
             Button btnRegister = MakeBtn("3. Đăng ký hiện trên Office", Color.FromArgb(217, 119, 6), Color.White);
             btnOpenDir = MakeBtn("4. Mở thư mục Manifest", Color.FromArgb(5, 150, 105), Color.White);
             btnRollback = MakeBtn("Khôi phục", Color.FromArgb(241, 245, 249), Color.FromArgb(15, 23, 42));
-            btnUninstall = MakeBtn("Gỡ sạch", Color.FromArgb(254, 226, 226), Color.FromArgb(153, 27, 27));
+            btnUninstall = MakeBtn("Gỡ bỏ ứng dụng", Color.FromArgb(254, 226, 226), Color.FromArgb(153, 27, 27));
 
             btnCheck.Click += (s, e) => RunCheck();
             btnInstall.Click += (s, e) => RunInstall();
@@ -477,7 +596,7 @@ namespace VBTM.OfficeIntegration
             lblStatus.Text = "Đang kiểm tra Windows, Office 32/64-bit, Build, WebView2 và kết nối HTTPS...";
             Application.DoEvents();
             var rep = CompatibilityChecker.Inspect(true);
-            txtLog.Text = rep.ToSummaryText();
+            txtLog.Text = rep.ToSummaryText() + Environment.NewLine + PersonalInstallerEngine.CheckOllamaLocalSummary();
             lblStatus.Text = "Hoàn tất kiểm tra: " + rep.OverallTier;
         }
 
