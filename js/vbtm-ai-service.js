@@ -254,41 +254,39 @@
   }
 
   async function callOllamaLocalFallback(promptText, systemInstruction, timeoutMs) {
-    const base = (localStorage.getItem('vbtm_office_ollama_url') || 'http://localhost:11434').replace(/\/+$/, '');
+    const base = (localStorage.getItem('vbtm_office_ollama_url') || 'http://127.0.0.1:11434').replace(/\/+$/, '');
     const t0 = performance.now();
     let models = [];
     try {
-      const tr = await fetchWithTimeout(base + '/api/tags', { method: 'GET' }, 3500, null);
+      const tr = await fetchWithTimeout(base + '/api/tags', { method: 'GET' }, 4000, null);
       if (tr.ok) {
         const td = await tr.json();
-        models = (td && Array.isArray(td.models)) ? td.models.map(m => m.name) : [];
+        models = (td && Array.isArray(td.models)) ? td.models.map(m => String(m.name || '')).filter(Boolean) : [];
       }
     } catch (e) {
       throw {
         code: 'OLLAMA_NOT_RUNNING',
         retryable: false,
-        userMessage: 'Chưa phát hiện Ollama Local tại http://localhost:11434. Hãy cài đặt/khởi chạy Ollama (miễn phí, không cần API Key) hoặc nhập Gemini API Key bổ sung.'
+        userMessage: `Không kết nối được Ollama Local tại ${base}. Hãy cài đặt và khởi chạy Ollama (miễn phí, không cần API Key).`
       };
     }
     if (!models.length) {
       throw {
         code: 'OLLAMA_NO_MODEL',
         retryable: false,
-        userMessage: 'Ollama đã chạy nhưng chưa có model tiếng Việt. Hãy chạy lệnh "ollama pull qwen2.5:7b" (hoặc qwen2.5:3b) để dùng AI miễn phí không cần API Key.'
+        userMessage: 'Ollama đang chạy nhưng chưa có model nào. Hãy tải model trên máy bằng lệnh: ollama pull qwen2.5:3b (hoặc qwen2.5:7b).'
       };
     }
-    const pref = ['qwen2.5:7b', 'qwen2.5:3b', 'gemma2:9b', 'qwen2.5:14b'];
-    let chosen = models[0];
-    for (const p of pref) {
-      const hit = models.find(m => m.toLowerCase().startsWith(p));
-      if (hit) { chosen = hit; break; }
-    }
+    // Chỉ sử dụng model thực sự tồn tại trên máy (không tự đoán tên model)
+    const saved = (localStorage.getItem('vbtm_office_ollama_model') || '').trim();
+    const chosen = (saved && models.includes(saved)) ? saved : models[0];
     const gr = await fetchWithTimeout(base + '/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: chosen,
-        prompt: (systemInstruction ? systemInstruction + '\n\n' : '') + promptText,
+        system: systemInstruction || 'Bạn là trợ lý văn phòng VBTM Pro.',
+        prompt: promptText,
         stream: false
       })
     }, timeoutMs || 60000, null);
@@ -303,7 +301,7 @@
     state.lastLatencyMs = latencyMs;
     state.lastError = null;
     emitState();
-    pushLog({ action: 'ollama', model: chosen, status: 'ok', latencyMs, message: 'Local AI OK (không cần API Key)' });
+    pushLog({ action: 'ollama', model: chosen, status: 'ok', latencyMs, message: 'Local AI OK (127.0.0.1:11434)' });
     return { text, model: chosen, provider: 'ollama', latencyMs };
   }
 
