@@ -102,10 +102,67 @@ function handleRequest(req, res) {
     });
   }
 
+  if (pathname === '/api/v1/ai/ollama/status' && req.method === 'GET') {
+    const oReq = http.request({ hostname: '127.0.0.1', port: 11434, path: '/api/tags', method: 'GET', timeout: 3000 }, oRes => {
+      let d = '';
+      oRes.on('data', c => { d += c; });
+      oRes.on('end', () => {
+        try {
+          const j = JSON.parse(d || '{}');
+          const models = (j.models || []).map(m => m.name);
+          return sendJson(res, 200, { running: true, models, endpoint: 'http://localhost:11434' });
+        } catch (e) {
+          return sendJson(res, 200, { running: false, models: [], error: 'Invalid Ollama response' });
+        }
+      });
+    });
+    oReq.on('error', () => sendJson(res, 200, { running: false, models: [], error: 'Ollama chưa chạy tại http://localhost:11434' }));
+    oReq.on('timeout', () => { oReq.destroy(); sendJson(res, 200, { running: false, models: [], error: 'Ollama timeout' }); });
+    oReq.end();
+    return;
+  }
+
   if ((pathname === '/api/v1/ai/generate' || pathname === '/api/ai/gemini') && req.method === 'POST') {
     const apiKey = (process.env.GEMINI_API_KEY || '').trim();
     if (!apiKey) {
-      return sendJson(res, 503, { error: { code: 503, message: 'VBTM AI Gateway chưa cấu hình biến môi trường GEMINI_API_KEY.' } });
+      // Không chặn hệ thống nếu chưa cấu hình Gemini Key — thử chuyển sang Ollama Local (http://127.0.0.1:11434)
+      let rawO = '';
+      req.on('data', c => { rawO += c; });
+      req.on('end', () => {
+        try {
+          const parsed = JSON.parse(rawO || '{}');
+          const textPrompt = parsed.payload && parsed.payload.contents && parsed.payload.contents[0] && parsed.payload.contents[0].parts
+            ? parsed.payload.contents[0].parts.map(p => p.text || '').join('\n')
+            : String(parsed.prompt || '');
+          const oBody = JSON.stringify({ model: parsed.ollamaModel || 'qwen2.5:7b', prompt: textPrompt, stream: false });
+          const oReq = http.request({
+            hostname: '127.0.0.1', port: 11434, path: '/api/generate', method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(oBody) },
+            timeout: 45000
+          }, oRes => {
+            let od = '';
+            oRes.on('data', ch => { od += ch; });
+            oRes.on('end', () => {
+              if (oRes.statusCode >= 200 && oRes.statusCode < 300) {
+                try {
+                  const oj = JSON.parse(od);
+                  return sendJson(res, 200, {
+                    provider: 'ollama',
+                    candidates: [{ content: { parts: [{ text: oj.response || '' }] } }]
+                  });
+                } catch (e) {}
+              }
+              return sendJson(res, 503, { error: { code: 503, message: 'Ollama Local chưa sẵn sàng và chưa cấu hình GEMINI_API_KEY. Hãy cài Ollama (miễn phí, không cần API Key).' } });
+            });
+          });
+          oReq.on('error', () => sendJson(res, 503, { error: { code: 503, message: 'Ollama Local chưa chạy tại http://localhost:11434 và chưa cấu hình GEMINI_API_KEY.' } }));
+          oReq.write(oBody);
+          oReq.end();
+        } catch (e) {
+          return sendJson(res, 400, { error: { code: 400, message: 'JSON request không hợp lệ.' } });
+        }
+      });
+      return;
     }
 
     const ip = req.socket.remoteAddress || 'local';
