@@ -15,12 +15,12 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("VBTM Pro 2.5.0 - Chuan Hoa Van Ban Dang Uy & UBND Phuong")]
-[assembly: AssemblyDescription("Bo cong cu Chuan Hoa The Thuc Van Ban Nghi dinh 30, Van ban Dang, Tao QR & Soat Loi Chinh Ta AI Offline cho Microsoft Word")]
+[assembly: AssemblyTitle("VBTM Pro 3.6.0 - Chuan Hoa Van Ban Dang Uy, UBND & CAND (Offline Edition)")]
+[assembly: AssemblyDescription("Bo cong cu Chuan Hoa The Thuc Van Ban Nghi dinh 30, Huong dan 05-HD/VPTW, Quy chuan CAND, Tao QR & Soat Loi Chinh Ta AI Offline cho Microsoft Word")]
 [assembly: AssemblyCompany("Software Hub")]
-[assembly: AssemblyProduct("VBTM Pro 2.5.0")]
-[assembly: AssemblyVersion("2.5.0.0")]
-[assembly: AssemblyFileVersion("2.5.0.0")]
+[assembly: AssemblyProduct("VBTM Pro 3.6.0")]
+[assembly: AssemblyVersion("3.6.0.0")]
+[assembly: AssemblyFileVersion("3.6.0.0")]
 
 namespace VBTMProSuite
 {
@@ -574,17 +574,28 @@ namespace VBTMProSuite
 
             lblStatus = new Label
             {
-                Text = "Sẵn sàng cài đặt. Nhấn 'Cài Đặt Ngay' để bắt đầu.",
-                Location = new Point(24, 332),
+                Text = "Vui lòng tích chọn đồng ý Điều khoản sử dụng rồi nhấn 'Cài Đặt & Tích Hợp Word'.",
+                Location = new Point(24, 326),
                 AutoSize = true,
                 ForeColor = Color.FromArgb(250, 204, 21)
             };
             this.Controls.Add(lblStatus);
 
+            CheckBox chkAgreeTerms = new CheckBox
+            {
+                Text = "Tôi đã đọc và đồng ý Điều khoản sử dụng & Cam kết 100% Offline bảo mật của VBTM Pro 3.6.0",
+                Location = new Point(24, 348),
+                Size = new Size(585, 22),
+                ForeColor = Color.FromArgb(254, 249, 195),
+                Font = new Font("Segoe UI", 8.8f, FontStyle.Bold),
+                Checked = false
+            };
+            this.Controls.Add(chkAgreeTerms);
+
             progressBar = new ProgressBar
             {
-                Location = new Point(24, 356),
-                Size = new Size(580, 14),
+                Location = new Point(24, 374),
+                Size = new Size(580, 10),
                 Value = 0
             };
             this.Controls.Add(progressBar);
@@ -592,23 +603,33 @@ namespace VBTMProSuite
             btnInstall = new Button
             {
                 Text = "★ Cài Đặt & Tích Hợp Word",
-                Location = new Point(394, 384),
-                Size = new Size(210, 38),
-                BackColor = Color.FromArgb(234, 179, 8),
+                Location = new Point(394, 390),
+                Size = new Size(210, 36),
+                BackColor = Color.FromArgb(148, 163, 184),
                 ForeColor = Color.FromArgb(69, 10, 10),
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9.8f, FontStyle.Bold),
-                Cursor = Cursors.Hand
+                Font = new Font("Segoe UI", 9.6f, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Enabled = false
             };
             btnInstall.FlatAppearance.BorderSize = 0;
             btnInstall.Click += BtnInstall_Click;
             this.Controls.Add(btnInstall);
 
+            chkAgreeTerms.CheckedChanged += (s, e) =>
+            {
+                btnInstall.Enabled = chkAgreeTerms.Checked;
+                btnInstall.BackColor = chkAgreeTerms.Checked ? Color.FromArgb(234, 179, 8) : Color.FromArgb(148, 163, 184);
+                lblStatus.Text = chkAgreeTerms.Checked
+                    ? "✓ Đã chấp nhận điều khoản. Nhấn '★ Cài Đặt & Tích Hợp Word' để bắt đầu!"
+                    : "Vui lòng tích chọn đồng ý Điều khoản sử dụng trước khi cài đặt.";
+            };
+
             btnPortable = new Button
             {
                 Text = "Mở Phần Mềm Ngay",
-                Location = new Point(208, 384),
-                Size = new Size(176, 38),
+                Location = new Point(208, 390),
+                Size = new Size(176, 36),
                 BackColor = Color.FromArgb(185, 28, 28),
                 ForeColor = Color.FromArgb(254, 240, 138),
                 FlatStyle = FlatStyle.Flat,
@@ -676,7 +697,7 @@ namespace VBTMProSuite
                 lblStatus.Text = "✓ Cài đặt VBTM Pro 2.5.0 hoàn tất thành công!";
                 lblStatus.ForeColor = Color.FromArgb(16, 185, 129);
                 isInstalled = true;
-                btnInstall.Text = "Mở VBTM Pro 2.5.0";
+                btnInstall.Text = "Mở VBTM Pro 3.6.0";
                 btnInstall.BackColor = Color.FromArgb(16, 185, 129);
 
                 DialogResult openWord = MessageBox.Show(
