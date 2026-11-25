@@ -367,10 +367,19 @@ async function loadRealPdfDocument(file) {
       }
 
       if (hasUsableTextLayer) {
-        // Trang PDF có lớp văn bản gốc (hoặc PDF 2 lớp chuẩn Unicode): Tái tạo chính xác 100% thể thức và giữ nguyên từng ký tự gốc
-        const { pageHtml, pagePlainText } = reconstructExactPdfPageLayout(rawItems, page, textContent, viewport1x, p);
-        pdfPagesLayoutHtml.push(pageHtml);
-        pdfPagesRawText.push(pagePlainText);
+        // Trang PDF có lớp văn bản gốc: Dò lưới bảng thật trước trên offCanvas để giữ 100% ô bảng (Lịch công tác, Bảng biểu)!
+        let nativeGridRes = null;
+        if (window.VietNamOcrTableGrid && window.VietNamOcrTableGrid.reconstructNativePdfPageWithRealTables) {
+          nativeGridRes = window.VietNamOcrTableGrid.reconstructNativePdfPageWithRealTables(offCanvas, rawItems, viewportRender, viewport1x);
+        }
+        if (nativeGridRes && nativeGridRes.html) {
+          pdfPagesLayoutHtml.push(nativeGridRes.html);
+          pdfPagesRawText.push(nativeGridRes.plainText);
+        } else {
+          const { pageHtml, pagePlainText } = reconstructExactPdfPageLayout(rawItems, page, textContent, viewport1x, p);
+          pdfPagesLayoutHtml.push(pageHtml);
+          pdfPagesRawText.push(pagePlainText);
+        }
         if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.recordPdfPageOcr) {
           const nativeLines = [];
           rawItems.forEach(it => {
@@ -672,20 +681,28 @@ function joinPdfRunItemsText(itemsArr) {
   for (let i = 1; i < itemsArr.length; i++) {
     const it = itemsArr[i];
     const gap = it.x - prevEndX;
-    const needSpace = gap > 1.0 && !/\s$/.test(out) && !/^\s/.test(it.str);
+    const minSpaceGap = Math.max(0.35, (it.fontSize || 12) * 0.08);
+    // Giữ nguyên khoảng trắng gốc từ PDF (precededBySpace) hoặc khoảng hở X thực tế giữa 2 run
+    const needSpace = (it.precededBySpace || gap > minSpaceGap) && !/\s$/.test(out) && !/^\s/.test(it.str);
     out += (needSpace ? ' ' : '') + it.str;
     prevEndX = Math.max(prevEndX, it.endX);
   }
-  return out.replace(/\s+/g, ' ').trim();
+  return out.replace(/[ \t]{2,}/g, ' ').trim();
 }
 
 function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport, pageNumber = 1) {
   const pageW = viewport?.width || 595.28;
   const styles = textContent?.styles || {};
   const runs = [];
+  let pendingSpace = false;
 
   for (const it of rawItems) {
-    if (!it.str || !it.str.trim()) continue;
+    if (typeof it.str !== 'string' || it.str.length === 0) continue;
+    // KHÔNG XÓA BỎ token khoảng trắng gốc của PDF! Đánh dấu để chèn đúng khoảng trắng vào run kế tiếp
+    if (it.str.trim().length === 0) {
+      pendingSpace = true;
+      continue;
+    }
     const tx = it.transform || [12, 0, 0, 12, 0, 0];
     const x = tx[4] || 0;
     const y = tx[5] || 0;
@@ -709,7 +726,8 @@ function reconstructExactPdfPageLayout(rawItems, page, textContent, viewport, pa
     const isBold = /bold|bd|black|heavy|demi|-b\b/i.test(fontDescriptor);
     const isItalic = /italic|ital|oblique|-i\b/i.test(fontDescriptor) || (Math.abs(tx[2] || 0) > 0.12);
 
-    runs.push({ str: it.str, x, y, w, endX: x + w, fontSize, isBold, isItalic });
+    runs.push({ str: it.str, x, y, w, endX: x + w, fontSize, isBold, isItalic, precededBySpace: pendingSpace });
+    pendingSpace = false;
   }
 
   if (runs.length === 0) {
