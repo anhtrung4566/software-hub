@@ -203,6 +203,7 @@ async function loadRealPdfDocument(file) {
     }
 
     totalPdfPages = loadedPdfDoc.numPages;
+    window.loadedPdfDoc = loadedPdfDoc;
     currentPdfPage = 1;
     pdfPagesLayoutHtml = [];
     pdfPagesRawText = [];
@@ -226,9 +227,12 @@ async function loadRealPdfDocument(file) {
       const textContent = await page.getTextContent();
       const rawItems = (textContent?.items || []).filter(it => typeof it.str === 'string' && it.str.length > 0);
       const nonEmptyItems = rawItems.filter(it => it.str.trim().length > 0);
+      const sampleEmbedded = nonEmptyItems.map(it => it.str).join(' ');
+      const replacementCount = (sampleEmbedded.match(/\uFFFD/g) || []).length;
+      const hasUsableTextLayer = nonEmptyItems.length >= 2 && replacementCount < Math.max(3, sampleEmbedded.length * 0.08);
 
-      // Render độ phân giải cao (scale 2.8 ~ 220-260 DPI) nếu là trang scan ảnh để nhận diện sắc nét dấu tiếng Việt
-      const renderScale = nonEmptyItems.length >= 2 ? 2.0 : Math.min(2.8, 2600 / Math.max(1, viewport1x.width));
+      // Render độ phân giải cao (scale 2.8 ~ 220-260 DPI) nếu là trang scan ảnh hoặc lớp chữ nhúng bị lỗi font
+      const renderScale = hasUsableTextLayer ? 2.0 : Math.min(2.8, 2600 / Math.max(1, viewport1x.width));
       const viewportRender = page.getViewport({ scale: renderScale });
 
       const offCanvas = document.createElement('canvas');
@@ -252,13 +256,13 @@ async function loadRealPdfDocument(file) {
         if (pageIndicator) pageIndicator.textContent = `Trang 1 / ${totalPdfPages}`;
       }
 
-      if (nonEmptyItems.length >= 2) {
-        // Trang PDF có lớp văn bản gốc: Tái tạo chính xác 100% thể thức và giữ nguyên từng ký tự gốc
+      if (hasUsableTextLayer) {
+        // Trang PDF có lớp văn bản gốc (hoặc PDF 2 lớp chuẩn Unicode): Tái tạo chính xác 100% thể thức và giữ nguyên từng ký tự gốc
         const { pageHtml, pagePlainText } = reconstructExactPdfPageLayout(rawItems, page, textContent, viewport1x, p);
         pdfPagesLayoutHtml.push(pageHtml);
         pdfPagesRawText.push(pagePlainText);
       } else {
-        // Trang PDF là ảnh scan thuần túy: Gọi Tesseract v5 LSTM Tiếng Việt + tái tạo bố cục 2 cột theo tọa độ bbox thực + AI Local hiệu đính
+        // Trang PDF là ảnh scan thuần túy (hoặc PDF 2 lớp bị lỗi font): Gọi Tesseract v5 LSTM Tiếng Việt + tái tạo bố cục 2 cột theo tọa độ bbox thực
         const ocrRes = await recognizeCanvasPageHighAccuracy(offCanvas, (pct) => {
           if (statusEl) statusEl.textContent = `Đang OCR Tiếng Việt chính xác cao Trang ${p}/${totalPdfPages} (${pct}%)...`;
         });
@@ -1448,7 +1452,7 @@ async function runVietnameseOcr(appendTableMode = false) {
     return;
   }
 
-  // Hiển thị ngay kết quả chuẩn thể thức 2 cột theo tọa độ bbox thực
+  // Hiển thị ngay kết quả chuẩn thể thức 2 cột theo tọa độ bbox thực (KHÔNG tự ý sửa nội dung)
   textOutput.value = rawPreserved;
   if (paperEl) {
     paperEl.innerHTML = (tesseractLines && tesseractLines.length > 0)
@@ -1457,22 +1461,9 @@ async function runVietnameseOcr(appendTableMode = false) {
   }
   extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
   if (window.VietNamOcr2LayerPdf) {
-    window.VietNamOcr2LayerPdf.recordSinglePageOcr(canvas, rawPreserved, tesseractLines);
+    window.VietNamOcr2LayerPdf.recordSinglePageOcr(canvas, rawPreserved, tesseractLines, procW, procH);
   }
-
-  // Hậu kiểm thông minh bằng AI Local (Ollama) nếu đang bật trên máy để sửa nốt các lỗi sai dấu còn sót
-  progressFill.style.width = '90%';
-  statusEl.textContent = '✓ Đã nhận diện xong! Đang kiểm tra hậu kiểm dấu tiếng Việt bằng AI Local (Ollama)...';
-  const aiFixed = await proofreadVietnameseOcrWithOllama(rawPreserved);
-  if (aiFixed && aiFixed.text) {
-    textOutput.value = aiFixed.text;
-    if (paperEl) {
-      paperEl.innerHTML = reconstructExactLayoutFromPlainText(aiFixed.text);
-    }
-    statusEl.textContent = `✓ Hoàn tất OCR Tiếng Việt + Hậu kiểm AI Local (${aiFixed.model})! Đã dựng chuẩn thể thức NĐ 30 / 05-HD.`;
-  } else {
-    statusEl.textContent = '✓ Hoàn tất nhận diện Tiếng Việt (Tesseract v5 LSTM + Tọa độ 2 cột NĐ 30/05-HD)! Sẵn sàng xuất Word hoặc PDF 2 lớp.';
-  }
+  statusEl.textContent = '✓ Hoàn tất nhận diện Tiếng Việt (Tesseract v5 LSTM + Tọa độ 2 cột NĐ 30/05-HD)! Sẵn sàng xuất Word hoặc PDF 2 lớp.';
   progressFill.style.width = '100%';
 }
 
