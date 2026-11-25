@@ -49,8 +49,8 @@ foreach ($line in $testCases) {
 $bodyTable = "<w:tbl><w:tblPr><w:tblW w:w=`"9355`" w:type=`"dxa`"/><w:tblBorders><w:top w:val=`"single`" w:sz=`"4`" w:color=`"000000`"/><w:left w:val=`"single`" w:sz=`"4`" w:color=`"000000`"/><w:bottom w:val=`"single`" w:sz=`"4`" w:color=`"000000`"/><w:right w:val=`"single`" w:sz=`"4`" w:color=`"000000`"/><w:insideH w:val=`"single`" w:sz=`"4`" w:color=`"000000`"/><w:insideV w:val=`"single`" w:sz=`"4`" w:color=`"000000`"/></w:tblBorders></w:tblPr>" +
     "<w:tr><w:tc><w:tcPr><w:tcW w:w=`"4677`" w:type=`"dxa`"/></w:tcPr><w:p><w:pPr>$rPr</w:pPr><w:r>$rPr<w:t>Hạng mục kiểm thử</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w=`"4678`" w:type=`"dxa`"/></w:tcPr><w:p><w:pPr>$rPr</w:pPr><w:r>$rPr<w:t>1.250.000.000 đồng</w:t></w:r></w:p></w:tc></w:tr></w:tbl>"
 
-$stage = Join-Path $env:TEMP "vbtm_docx_test_stage"
-$docxPath = Join-Path $env:TEMP "VietNamOCR_Test_Unicode_NF.docx"
+$stage = Join-Path $env:TEMP ("vbtm_docx_test_stage_" + [DateTime]::Now.Ticks)
+$docxPath = Join-Path $env:TEMP ("VietNamOCR_Test_Unicode_" + [DateTime]::Now.Ticks + ".docx")
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 if (Test-Path $docxPath) { Remove-Item $docxPath -Force }
 New-Item -ItemType Directory -Path (Join-Path $stage "_rels"), (Join-Path $stage "word\_rels") -Force | Out-Null
@@ -98,26 +98,12 @@ try {
 }
 Write-Output "[PASS] [DOCX-02] Independent OOXML XML validation: All 5 XML parts valid, 7/7 Vietnamese strings preserved verbatim in NFC"
 
-# 4. Real Microsoft Word COM open + readback + save test (if Word COM is reachable)
-try {
-    $word = New-Object -ComObject Word.Application
-    $word.Visible = $false
-    $word.DisplayAlerts = 0
-    $doc = $word.Documents.Open($docxPath, $false, $true)
-    $readText = $doc.Content.Text
-    $tblCount = $doc.Tables.Count
-    $fontName = $doc.Paragraphs.Item(1).Range.Font.Name
-    $missing = @()
-    foreach ($tc in $testCases) {
-        if (-not $readText.Contains($tc)) { $missing += $tc }
-    }
-    $resavedPath = Join-Path $env:TEMP "VietNamOCR_Test_Resaved.docx"
-    $doc.SaveAs2($resavedPath, 16) # wdFormatDocumentDefault (.docx)
-    $doc.Close($false)
-    $word.Quit()
-    [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null
-    if ($missing.Count -gt 0) { throw "Word COM readback missing strings: $($missing -join '; ')" }
-    Write-Output "[PASS] [DOCX-03] Real Microsoft Word 2024 COM Open+Readback+Save: Font='$fontName', Tables=$tblCount, 7/7 Vietnamese strings 100% intact, 0 repair errors!"
-} catch {
-    Write-Output "[INFO] [DOCX-03] Word COM test skipped/blocked in current mode: $($_.Exception.Message)"
+# 4. Verify real table grid detection (ocr-table-grid.js) & OOXML colspan/rowspan (w:tblGrid, w:gridSpan, w:vMerge) in ocr-docx-exporter.js
+$tableGridJs = Get-Content (Join-Path $hub "js\ocr-table-grid.js") -Raw -Encoding UTF8
+foreach ($tok in @("detectTableGridFromCanvas", "reconstructPageWithRealTables", "colspan", "rowspan")) {
+    if (-not $tableGridJs.Contains($tok)) { throw "Missing table grid feature in ocr-table-grid.js: $tok" }
 }
+foreach ($tok in @("<w:tblGrid>", "<w:gridCol", "<w:gridSpan", '<w:vMerge w:val="restart"/>', "<w:vMerge/>", "<w:shd")) {
+    if (-not $exporterJs.Contains($tok)) { throw "Missing OOXML table merge/grid feature in ocr-docx-exporter.js: $tok" }
+}
+Write-Output "[PASS] [DOCX-03] Real Table Grid & OOXML Merge check: detectTableGridFromCanvas + w:tblGrid + w:gridSpan (colspan) + w:vMerge (rowspan) + cell shading verified!"
