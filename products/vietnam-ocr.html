@@ -123,6 +123,17 @@
             <option value="auto">Chế độ: Giữ Nguyên Thể Thức Gốc 1:1</option>
             <option value="tesseract">Bộ máy: Tesseract v5 LSTM (tessdata_best)</option>
           </select>
+          <select id="ocrWordFontSelect" class="glass-select" style="padding: 5px 8px; font-size: 0.80rem; width: auto;" title="Chọn font chữ Unicode chuẩn khi xuất Word (.docx)">
+            <option value="Times New Roman">Font Word: Times New Roman</option>
+            <option value="Arial">Font Word: Arial</option>
+            <option value="Calibri">Font Word: Calibri</option>
+            <option value="Aptos">Font Word: Aptos</option>
+          </select>
+          <select id="ocrWordSizeSelect" class="glass-select" style="padding: 5px 8px; font-size: 0.80rem; width: auto;" title="Chọn cỡ chữ mặc định khi xuất Word (.docx)">
+            <option value="14">14pt</option>
+            <option value="13">13pt</option>
+            <option value="12">12pt</option>
+          </select>
           <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.80rem; color: #fef08a; cursor: pointer; user-select: none;">
             <input type="checkbox" id="ocrDeskewCheck" checked style="accent-color: #facc15;">
             <span>Tự căn thẳng ảnh nghiêng</span>
@@ -599,12 +610,13 @@
   <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/vietnamese-dictionary.js"></script>
-  <script src="../js/ocr-engine-pro.js?v=365"></script>
-  <script src="../js/ocr-ai-proofread.js?v=365"></script>
-  <script src="../js/ocr-idp-studio.js?v=365"></script>
-  <script src="../js/ocr-pdf-toolkit.js?v=365"></script>
-  <script src="../js/ocr-office-modules.js?v=365"></script>
-  <script src="../js/ocr-app.js?v=365"></script>
-  <script src="../js/ocr-2layer-pdf.js?v=365"></script>
+  <script src="../js/ocr-docx-exporter.js?v=366"></script>
+  <script src="../js/ocr-engine-pro.js?v=366"></script>
+  <script src="../js/ocr-ai-proofread.js?v=366"></script>
+  <script src="../js/ocr-idp-studio.js?v=366"></script>
+  <script src="../js/ocr-pdf-toolkit.js?v=366"></script>
+  <script src="../js/ocr-office-modules.js?v=366"></script>
+  <script src="../js/ocr-app.js?v=366"></script>
+  <script src="../js/ocr-2layer-pdf.js?v=366"></script>
 </body>
 </html>
