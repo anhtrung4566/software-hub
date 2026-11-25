@@ -18,7 +18,7 @@
     "name": "VietNamOCR 3.5 Pro",
     "version": "3.5.0",
     "category": "ai",
-    "setupFile": "VietNamOCR-Setup-3.5.0-x64.exe",
+    "setupFile": "VietNamOCR-Setup-3.5.0-x64.zip",
     "pageUrl": "./products/vietnam-ocr.html",
     "badge": "Giữ Nguyên Thể Thức 1:1",
     "platform": "Windows 10/11 x64",
