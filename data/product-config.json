@@ -2,8 +2,8 @@
   "ecosystem": {
     "name": "VBTM PRO – UNIFIED AI OFFICE ECOSYSTEM",
     "shortName": "VBTM Pro",
-    "version": "3.5.0",
-    "releaseDate": "2026-11-23",
+    "version": "3.6.0",
+    "releaseDate": "2026-11-25",
     "tagline": "Hệ sinh thái văn phòng AI thống nhất phục vụ Đảng ủy & UBND phường: Soạn thảo, Soát lỗi 15 nhóm, Chuẩn hóa 05-HD/VPTW & NĐ 30/2020, PDF/OCR, Kho tri thức RAG và Tích hợp trực tiếp Microsoft Office.",
     "standards": [
       "Hướng dẫn số 05-HD/VPTW (Văn bản Đảng)",
@@ -148,6 +148,16 @@
     "network": "HTTPS tới GitHub Pages & API AI (hoặc chạy cục bộ qua Ollama Local)"
   },
   "changelog": [
+    {
+      "version": "3.6.0",
+      "date": "2026-11-25",
+      "highlights": [
+        "Tự động khởi chạy nền Ollama Local (auto-start kèm CORS) ngay trong VBTM Pro Desktop, không cần bật tay sau khi khởi động lại Windows",
+        "Hỗ trợ điều phối thông minh 2 model tiếng Việt cục bộ: qwen2.5:3b (chế độ Nhanh, TTFT ~387ms) và qwen2.5:7b (chế độ Tiêu chuẩn/Chuyên sâu chuẩn xác cao)",
+        "Tích hợp bộ lọc Spell-Accuracy-Guard chặn 100% lỗi AI sửa nhầm tên riêng, số liệu và từ viết tắt cơ quan",
+        "Tinh gọn Tab Ribbon Word duy nhất 'VBTM Pro 3.6 (05-HD & NĐ30)' không trùng lặp nút"
+      ]
+    },
     {
       "version": "3.5.0",
       "date": "2026-11-23",
