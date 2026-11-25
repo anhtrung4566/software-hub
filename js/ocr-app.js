@@ -162,11 +162,24 @@ async function handleUploadedFiles(fileList) {
   let doneCount = 0;
 
   for (let i = 0; i < files.length; i++) {
-    if (window.VietNamOcrEnginePro && window.VietNamOcrEnginePro.isCancelled()) {
-      if (statusEl) statusEl.textContent = `⏹ Đã dừng hàng đợi OCR tại tệp ${i}/${files.length}.`;
-      break;
+    if (window.VietNamOcrEnginePro) {
+      await window.VietNamOcrEnginePro.waitIfPaused(() => {
+        if (statusEl) statusEl.textContent = `⏸ Đang tạm dừng hàng đợi tại tệp ${i + 1}/${files.length}... Bấm "Tiếp tục" để chạy tiếp.`;
+      });
+      if (window.VietNamOcrEnginePro.isCancelled()) {
+        if (statusEl) statusEl.textContent = `⏹ Đã dừng hàng đợi OCR tại tệp ${i}/${files.length}.`;
+        break;
+      }
     }
     const f = files[i];
+    if (window.VietNamOcrEnginePro) {
+      const check = window.VietNamOcrEnginePro.validateInputFile(f);
+      if (!check.ok) {
+        window.VietNamOcrEnginePro.logSafeError('FileValidation', check.reason);
+        allTexts.push(`=== [${i + 1}/${files.length}] ${f.name} (Bỏ qua: ${check.reason}) ===`);
+        continue;
+      }
+    }
     if (statusEl) statusEl.textContent = `Đang xử lý hàng đợi tệp ${i + 1}/${files.length}: "${f.name}"...`;
     if (progressFill) progressFill.style.width = `${Math.round((i / files.length) * 100)}%`;
 
@@ -403,6 +416,9 @@ async function loadRealPdfDocument(file) {
     if (textOutput) textOutput.value = fullPlainText;
 
     extractTableFromOcrResult(fullPlainText, null, false);
+    if (window.VietNamOcrIdpStudio) {
+      window.VietNamOcrIdpStudio.autoSaveDocumentToArchive(file.name, fullPlainText, 95);
+    }
     switchOcrViewMode('formatted');
 
     if (progressFill) progressFill.style.width = '100%';
@@ -1589,19 +1605,26 @@ async function runVietnameseOcr(appendTableMode = false) {
 
   let rawPreserved = '';
   let tesseractLines = null;
+  let tesseractWords = [];
+  let ocrConf = 0;
+  let ocrDocProfile = '';
   let procW = canvas.width;
   let procH = canvas.height;
 
   try {
-    const ocrRes = await recognizeCanvasPageHighAccuracy(canvas, (pct) => {
-      progressFill.style.width = `${Math.min(85, pct)}%`;
-      statusEl.textContent = `Đang nhận diện Tiếng Việt (Tesseract v5 LSTM): ${pct}%`;
+    const ocrRes = await recognizeCanvasPageHighAccuracy(canvas, (pct, msg) => {
+      progressFill.style.width = `${Math.min(92, pct)}%`;
+      statusEl.textContent = msg || `Đang nhận diện Tiếng Việt (Tesseract v5 tessdata_best): ${pct}%`;
     });
     rawPreserved = ocrRes.text;
     tesseractLines = ocrRes.lines;
+    tesseractWords = ocrRes.words || [];
+    ocrConf = ocrRes.confidence || 0;
+    ocrDocProfile = ocrRes.docProfile || '';
     procW = ocrRes.procWidth;
     procH = ocrRes.procHeight;
   } catch (tessErr) {
+    if (window.VietNamOcrEnginePro) window.VietNamOcrEnginePro.logSafeError('RunOCR', tessErr.message);
     statusEl.textContent = '⚠ Lỗi nhận diện Tesseract v5: ' + tessErr.message;
     return;
   }
@@ -1613,11 +1636,30 @@ async function runVietnameseOcr(appendTableMode = false) {
       ? reconstructLayoutFromTesseractBboxes(tesseractLines, procW, procH, 'auto')
       : reconstructExactLayoutFromPlainText(rawPreserved);
   }
-  extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
+
+  // Đánh dấu vùng có độ tin cậy thấp (< 70%) trực tiếp trên ảnh gốc để người dùng kiểm chứng
+  let lowConfDrawn = 0;
+  if (window.VietNamOcrEnginePro && tesseractWords.length > 0) {
+    lowConfDrawn = window.VietNamOcrEnginePro.drawConfidenceOverlayOnCanvas(canvas, tesseractWords, procW, procH);
+    const bboxTable = window.VietNamOcrEnginePro.extractTableFromWordBboxes(tesseractWords, procW);
+    if (bboxTable && bboxTable.rows.length > 0 && !appendTableMode) {
+      ocrTableHeaders = bboxTable.headers;
+      ocrTableRows = bboxTable.rows;
+      renderEditableTable();
+    } else {
+      extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
+    }
+  } else {
+    extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
+  }
+
   if (window.VietNamOcr2LayerPdf) {
     window.VietNamOcr2LayerPdf.recordSinglePageOcr(canvas, rawPreserved, tesseractLines, procW, procH);
   }
-  statusEl.textContent = '✓ Hoàn tất nhận diện Tiếng Việt (Tesseract v5 LSTM + Tọa độ 2 cột NĐ 30/05-HD)! Sẵn sàng xuất Word hoặc PDF 2 lớp.';
+  if (window.VietNamOcrIdpStudio) {
+    window.VietNamOcrIdpStudio.autoSaveDocumentToArchive(uploadedFileBaseName, rawPreserved, ocrConf);
+  }
+  statusEl.textContent = `✓ Hoàn tất OCR (${ocrConf}% tin cậy · ${ocrDocProfile || 'Văn bản'} · ${lowConfDrawn} vùng cần đối chiếu ảnh gốc)! Đã tự động lưu vào Kho cục bộ.`;
   progressFill.style.width = '100%';
 }
 
