@@ -174,35 +174,26 @@
     URL.revokeObjectURL(url);
   }
 
-  // Xuất tệp Word .DOCX chuẩn OOXML (OpenXML) chỉnh sửa trực tiếp trong Microsoft Word
+  // Xuất tệp Word .DOCX chuẩn OOXML qua bộ xuất thống nhất VietNamDocxExporter (bảo toàn 100% font Unicode & bố cục)
   async function exportOcrToDocx() {
+    const paperEl = document.getElementById('ocrFormattedPaper');
+    const plainWrap = document.getElementById('ocrPlainEditorWrap');
     const text = (document.getElementById('ocrResultText')?.value || '').trim();
-    if (!text) {
+    const hasFormattedHtml = paperEl && paperEl.innerHTML.trim() && (!plainWrap || plainWrap.style.display === 'none');
+    if (!text && !hasFormattedHtml) {
       if (global.showToast) global.showToast('Chưa có nội dung OCR để xuất .DOCX!');
       return;
     }
-    if (!global.JSZip) {
-      if (typeof global.exportOcrToWord === 'function') global.exportOcrToWord();
+    const baseName = (typeof global.uploadedFileBaseName === 'string' && global.uploadedFileBaseName) ? global.uploadedFileBaseName : 'VanBan_OCR';
+    if (global.VietNamDocxExporter && global.JSZip) {
+      await global.VietNamDocxExporter.exportUnifiedDocx({
+        html: hasFormattedHtml ? paperEl.innerHTML : '',
+        plainText: text,
+        fileName: baseName
+      });
       return;
     }
-
-    const baseName = (typeof global.uploadedFileBaseName === 'string' && global.uploadedFileBaseName) ? global.uploadedFileBaseName : 'VanBan_OCR';
-    const paras = text.split(/\n+/).map(p => p.trim()).filter(Boolean);
-    const pXml = paras.map(p => {
-      const isHeading = /^(PHẦN|CHƯƠNG|[IVXLCDM]+\.|QUYẾT ĐỊNH|BÁO CÁO|KẾ HOẠCH|THÔNG BÁO|TỜ TRÌNH|NGHỊ QUYẾT)/i.test(p) && p.length < 110;
-      const jc = isHeading ? 'center' : 'both';
-      const boldTag = isHeading ? '<w:b/>' : '';
-      return `<w:p><w:pPr><w:jc w:val="${jc}"/><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="28"/>${boldTag}</w:rPr><w:t xml:space="preserve">${escXml(p)}</w:t></w:r></w:p>`;
-    }).join('');
-
-    const zip = new global.JSZip();
-    zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
-    zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
-    zip.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${pXml}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="567" w:footer="567"/></w:sectPr></w:body></w:document>`);
-
-    const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    triggerDownload(blob, `${baseName}.docx`);
-    if (global.showToast) global.showToast(`✓ Đã xuất tệp Word OOXML chỉnh sửa được: ${baseName}.docx`);
+    if (typeof global.exportOcrToWord === 'function') global.exportOcrToWord();
   }
 
   function exportOcrToMarkdown() {
