@@ -260,6 +260,23 @@
       parts.push(global.reconstructExactLayoutFromPlainText(belowTxt, forceMode));
     }
 
+    // Lưu mô hình bảng trung gian (kèm ảnh cắt từng ô & bbox) để người dùng soi & sửa từng ô trước khi xuất DOCX
+    lastStructuredModel = {
+      source: 'scanned_ocr',
+      numRows: grid.numRows,
+      numCols: grid.numCols,
+      cells: grid.cells.map(cell => {
+        const cLines = groupCellWordsToLines(cell.words);
+        return {
+          r: cell.r, c: cell.c, colspan: cell.colspan, rowspan: cell.rowspan,
+          bbox: { x0: cell.x0, y0: cell.y0, x1: cell.x1, y1: cell.y1 },
+          lines: cLines, text: cLines.join('\n'),
+          confidence: cell.words.length ? Math.round(cell.words.reduce((a, w) => a + (Number(w.confidence) || 85), 0) / cell.words.length) : 100,
+          cropDataUrl: cropCellToDataUrl(procCanvas, cell)
+        };
+      })
+    };
+
     return {
       html: parts.join('\n'),
       numRows: grid.numRows,
@@ -270,8 +287,256 @@
     };
   }
 
+  // Cấu trúc dữ liệu trung gian lưu toàn bộ bảng & từng ô (ảnh gốc, bbox, nội dung, độ tin cậy) để kiểm tra & chỉnh sửa trước khi xuất DOCX
+  let lastStructuredModel = null;
+
+  function getLastStructuredTableModel() {
+    return lastStructuredModel;
+  }
+
+  function joinCellPdfRuns(runs) {
+    if (!runs || runs.length === 0) return '';
+    runs.sort((a, b) => a.x0 - b.x0);
+    let out = runs[0].str;
+    let prevX1 = runs[0].x1;
+    for (let i = 1; i < runs.length; i++) {
+      const r = runs[i];
+      const gap = r.x0 - prevX1;
+      const minGap = Math.max(0.8, (r.fontSize || 12) * 0.12);
+      const needSpace = (r.precededBySpace || gap > minGap) && !/\s$/.test(out) && !/^\s/.test(r.str);
+      out += (needSpace ? ' ' : '') + r.str;
+      prevX1 = Math.max(prevX1, r.x1);
+    }
+    return out.replace(/[ \t]{2,}/g, ' ').trim();
+  }
+
+  function groupPdfRunsToLines(runs) {
+    if (!runs || runs.length === 0) return [];
+    const sorted = runs.slice().sort((a, b) => a.cy - b.cy || a.x0 - b.x0);
+    const rows = [];
+    for (const r of sorted) {
+      let target = null;
+      for (const ln of rows) {
+        if (Math.abs(ln.cy - r.cy) <= Math.max(6, (r.h || 14) * 0.55)) { target = ln; break; }
+      }
+      if (!target) { target = { cy: r.cy, items: [] }; rows.push(target); }
+      target.items.push(r);
+    }
+    return rows.map(ln => joinCellPdfRuns(ln.items)).filter(Boolean);
+  }
+
+  function cropCellToDataUrl(sourceCanvas, cell) {
+    try {
+      const x = Math.max(0, Math.round(cell.x0));
+      const y = Math.max(0, Math.round(cell.y0));
+      const w = Math.max(8, Math.min(sourceCanvas.width - x, Math.round(cell.x1 - cell.x0)));
+      const h = Math.max(8, Math.min(sourceCanvas.height - y, Math.round(cell.y1 - cell.y0)));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(sourceCanvas, x, y, w, h, 0, 0, w, h);
+      return c.toDataURL('image/png');
+    } catch { return ''; }
+  }
+
+  // Tái tạo trang PDF gốc (có lớp văn bản) thành BẢNG THẬT giữ nguyên khoảng trắng, hàng, cột, ô gộp & ô trống
+  function reconstructNativePdfPageWithRealTables(offCanvas, rawItems, viewportRender, viewport1x) {
+    if (!offCanvas || !Array.isArray(rawItems) || rawItems.length === 0 || !global.pdfjsLib) return null;
+    const grid = detectTableGridFromCanvas(offCanvas);
+    if (!grid) return null;
+
+    const mappedRuns = [];
+    let pendingSpace = false;
+    for (const it of rawItems) {
+      if (typeof it.str !== 'string' || it.str.length === 0) continue;
+      if (it.str.trim().length === 0) {
+        pendingSpace = true;
+        continue;
+      }
+      if (!it.transform) continue;
+      const tx = global.pdfjsLib.Util.transform(viewportRender.transform, it.transform);
+      const x0 = tx[4];
+      const yBottom = tx[5];
+      const h = Math.max(10, Math.hypot(tx[2], tx[3]) || 14);
+      const w = Math.max(2, (it.width || 0) * viewportRender.scale);
+      mappedRuns.push({
+        str: it.str.normalize('NFC'),
+        x0, x1: x0 + w,
+        y0: yBottom - h, y1: yBottom,
+        cx: x0 + w / 2, cy: yBottom - h / 2,
+        h, fontSize: h,
+        precededBySpace: pendingSpace
+      });
+      pendingSpace = false;
+    }
+
+    const aboveRuns = [];
+    const belowRuns = [];
+    let insideCount = 0;
+
+    for (const r of mappedRuns) {
+      if (r.cy < grid.tableTop - 4) { aboveRuns.push(r); continue; }
+      if (r.cy > grid.tableBottom + 4) { belowRuns.push(r); continue; }
+      let placed = false;
+      for (const cell of grid.cells) {
+        if (r.cx >= cell.x0 - 3 && r.cx <= cell.x1 + 3 && r.cy >= cell.y0 - 3 && r.cy <= cell.y1 + 3) {
+          cell.words.push(r);
+          insideCount++;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        if (r.cy < (grid.tableTop + grid.tableBottom) / 2) aboveRuns.push(r);
+        else belowRuns.push(r);
+      }
+    }
+
+    if (insideCount < 4) return null;
+
+    const totalTableW = Math.max(1, grid.tableRight - grid.tableLeft);
+    const rowsByIdx = Array.from({ length: grid.numRows }, () => []);
+    grid.cells.forEach(cell => rowsByIdx[cell.r].push(cell));
+    rowsByIdx.forEach(arr => arr.sort((a, b) => a.c - b.c));
+
+    const structuredCells = [];
+    const plainLinesOut = [];
+    const aboveLines = groupPdfRunsToLines(aboveRuns);
+    const belowLines = groupPdfRunsToLines(belowRuns);
+
+    let htmlParts = [];
+    aboveLines.forEach(ln => {
+      plainLinesOut.push(ln);
+      const isCenter = /^(LỊCH|BẢNG|DANH SÁCH|PHỤ LỤC|CỘNG HÒA|Độc lập|Tuần\s+\d+|Từ ngày)/i.test(ln) || ln === ln.toUpperCase();
+      htmlParts.push(`<p align="${isCenter ? 'center' : 'left'}" style="text-align:${isCenter ? 'center' : 'left'}; text-indent:0; margin:0 0 4pt 0; font-size:14pt; ${ln === ln.toUpperCase() ? 'font-weight:bold;' : ''}">${escHtml(ln)}</p>`);
+    });
+
+    let tableHtml = `<table width="100%" cellpadding="4" cellspacing="0" border="1" style="width:100%; border-collapse:collapse; border:1px solid #000000; margin:8pt 0;">`;
+    for (let r = 0; r < grid.numRows; r++) {
+      const isHeaderRow = (r === 0);
+      tableHtml += '<tr>';
+      const rowPlainCells = [];
+      for (const cell of rowsByIdx[r]) {
+        const wPct = Math.max(4, Math.round(((cell.x1 - cell.x0) / totalTableW) * 1000) / 10);
+        const cellLines = groupPdfRunsToLines(cell.words);
+        const cellText = cellLines.join('\n');
+        rowPlainCells.push(cellLines.join(' '));
+        structuredCells.push({
+          r: cell.r, c: cell.c, colspan: cell.colspan, rowspan: cell.rowspan,
+          bbox: { x0: cell.x0, y0: cell.y0, x1: cell.x1, y1: cell.y1 },
+          lines: cellLines, text: cellText, confidence: 100,
+          cropDataUrl: cropCellToDataUrl(offCanvas, cell)
+        });
+        const tag = isHeaderRow ? 'th' : 'td';
+        const bgStyle = isHeaderRow ? 'background:#f1f5f9; font-weight:bold; text-align:center;' : 'text-align:left;';
+        const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : '';
+        const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : '';
+        const innerHtml = cellLines.length > 0
+          ? cellLines.map(ln => `<p style="margin:0 0 3pt 0; text-indent:0; font-size:13pt; ${isHeaderRow ? 'font-weight:bold; text-align:center;' : 'text-align:left;'}">${escHtml(ln)}</p>`).join('')
+          : `<p style="margin:0; text-indent:0; font-size:13pt;">&nbsp;</p>`;
+        tableHtml += `<${tag}${csAttr}${rsAttr} width="${wPct}%" style="width:${wPct}%; border:1px solid #000000; padding:4pt 6pt; vertical-align:top; ${bgStyle}">${innerHtml}</${tag}>`;
+      }
+      tableHtml += '</tr>';
+      plainLinesOut.push(rowPlainCells.join(' | '));
+    }
+    tableHtml += '</table>';
+    htmlParts.push(tableHtml);
+
+    belowLines.forEach(ln => {
+      plainLinesOut.push(ln);
+      htmlParts.push(`<p style="margin:4pt 0; text-indent:0; font-size:13.5pt;">${escHtml(ln)}</p>`);
+    });
+
+    lastStructuredModel = {
+      source: 'native_pdf',
+      numRows: grid.numRows,
+      numCols: grid.numCols,
+      aboveLines,
+      belowLines,
+      cells: structuredCells
+    };
+
+    return {
+      html: htmlParts.join('\n'),
+      plainText: plainLinesOut.join('\n'),
+      numRows: grid.numRows,
+      numCols: grid.numCols
+    };
+  }
+
+  // Cửa sổ kiểm tra & chỉnh sửa trực tiếp từng ô bảng (hiển thị ảnh cắt ô gốc + bbox + ô nhập sửa)
+  function openCellInspectorModal() {
+    if (!lastStructuredModel || !lastStructuredModel.cells || lastStructuredModel.cells.length === 0) {
+      if (global.showToast) global.showToast('Chưa phát hiện cấu trúc bảng trên tài liệu hiện tại. Hãy tải tệp có bảng (như Lịch công tác) trước!');
+      return;
+    }
+    let modal = document.getElementById('ocrCellInspectorModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'ocrCellInspectorModal';
+      modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:10003;background:rgba(15,23,42,0.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;';
+      document.body.appendChild(modal);
+    }
+
+    const rowsHtml = lastStructuredModel.cells.map((cell, idx) => `
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:12px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:10px;align-items:start;">
+        <div>
+          <div style="font-size:0.78rem;font-weight:700;color:#1d4ed8;margin-bottom:4px;">Ô [Hàng ${cell.r + 1}, Cột ${cell.c + 1}] ${cell.colspan > 1 ? `· Gộp ngang ${cell.colspan}` : ''} ${cell.rowspan > 1 ? `· Gộp dọc ${cell.rowspan}` : ''}</div>
+          ${cell.cropDataUrl ? `<img src="${cell.cropDataUrl}" style="max-width:100%;max-height:110px;border:1px solid #94a3b8;border-radius:6px;background:#f8fafc;">` : ''}
+          <div style="font-size:0.72rem;color:#64748b;margin-top:3px;">bbox: (${Math.round(cell.bbox.x0)}, ${Math.round(cell.bbox.y0)}) → (${Math.round(cell.bbox.x1)}, ${Math.round(cell.bbox.y1)})</div>
+        </div>
+        <textarea data-cell-idx="${idx}" rows="3" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-family:'Times New Roman',serif;font-size:14px;color:#0f172a;">${escHtml(cell.text)}</textarea>
+      </div>`).join('');
+
+    modal.innerHTML = `
+      <div style="width:100%;max-width:960px;max-height:90vh;background:#f8fafc;color:#0f172a;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;font-family:'Segoe UI',sans-serif;">
+        <div style="background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;color:#fff;">
+          <div>
+            <div style="font-weight:800;font-size:1.05rem;">🔬 Kiểm Tra &amp; Chỉnh Sửa Từng Ô Bảng (${lastStructuredModel.numRows} hàng × ${lastStructuredModel.numCols} cột)</div>
+            <div style="font-size:0.82rem;color:#dbeafe;">Đối chiếu ảnh cắt gốc từng ô với kết quả nhận diện trước khi xuất Word (.docx)</div>
+          </div>
+          <button type="button" onclick="document.getElementById('ocrCellInspectorModal').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-weight:700;">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:10px;">${rowsHtml}</div>
+        <div style="padding:12px 20px;background:#fff;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" onclick="document.getElementById('ocrCellInspectorModal').style.display='none'" style="padding:8px 16px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:600;cursor:pointer;">Đóng</button>
+          <button type="button" onclick="VietNamOcrTableGrid.applyEditedCellsToPreview()" style="padding:8px 18px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">✅ Áp dụng chỉnh sửa vào Bản Word</button>
+        </div>
+      </div>`;
+    modal.style.display = 'flex';
+  }
+
+  function applyEditedCellsToPreview() {
+    const modal = document.getElementById('ocrCellInspectorModal');
+    if (!modal || !lastStructuredModel) return;
+    modal.querySelectorAll('textarea[data-cell-idx]').forEach(ta => {
+      const idx = parseInt(ta.getAttribute('data-cell-idx'), 10);
+      if (lastStructuredModel.cells[idx]) {
+        lastStructuredModel.cells[idx].text = ta.value;
+        lastStructuredModel.cells[idx].lines = ta.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      }
+    });
+    // Cập nhật lại bảng HTML trong #ocrFormattedPaper
+    const paperEl = document.getElementById('ocrFormattedPaper');
+    if (paperEl) {
+      const tds = paperEl.querySelectorAll('table[border="1"] th, table[border="1"] td');
+      lastStructuredModel.cells.forEach((cell, i) => {
+        if (tds[i]) {
+          tds[i].innerHTML = cell.lines.length > 0
+            ? cell.lines.map(ln => `<p style="margin:0 0 3pt 0; text-indent:0; font-size:13pt;">${escHtml(ln)}</p>`).join('')
+            : `<p style="margin:0; text-indent:0; font-size:13pt;">&nbsp;</p>`;
+        }
+      });
+    }
+    modal.style.display = 'none';
+    if (global.showToast) global.showToast('✓ Đã cập nhật toàn bộ nội dung từng ô bảng vào bản xem trước Word!');
+  }
+
   global.VietNamOcrTableGrid = {
     detectTableGridFromCanvas,
-    reconstructPageWithRealTables
+    reconstructPageWithRealTables,
+    reconstructNativePdfPageWithRealTables,
+    getLastStructuredTableModel,
+    openCellInspectorModal,
+    applyEditedCellsToPreview
   };
 })(window);
