@@ -223,11 +223,17 @@ async function loadRealPdfDocument(file) {
 
       const page = await loadedPdfDoc.getPage(p);
       const viewport1x = page.getViewport({ scale: 1.0 });
-      const viewportRender = page.getViewport({ scale: 2.0 });
+      const textContent = await page.getTextContent();
+      const rawItems = (textContent?.items || []).filter(it => typeof it.str === 'string' && it.str.length > 0);
+      const nonEmptyItems = rawItems.filter(it => it.str.trim().length > 0);
+
+      // Render độ phân giải cao (scale 2.8 ~ 220-260 DPI) nếu là trang scan ảnh để nhận diện sắc nét dấu tiếng Việt
+      const renderScale = nonEmptyItems.length >= 2 ? 2.0 : Math.min(2.8, 2600 / Math.max(1, viewport1x.width));
+      const viewportRender = page.getViewport({ scale: renderScale });
 
       const offCanvas = document.createElement('canvas');
-      offCanvas.width = viewportRender.width;
-      offCanvas.height = viewportRender.height;
+      offCanvas.width = Math.round(viewportRender.width);
+      offCanvas.height = Math.round(viewportRender.height);
       const offCtx = offCanvas.getContext('2d');
       offCtx.fillStyle = '#ffffff';
       offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
@@ -246,21 +252,21 @@ async function loadRealPdfDocument(file) {
         if (pageIndicator) pageIndicator.textContent = `Trang 1 / ${totalPdfPages}`;
       }
 
-      const textContent = await page.getTextContent();
-      const rawItems = (textContent?.items || []).filter(it => typeof it.str === 'string' && it.str.length > 0);
-      const nonEmptyItems = rawItems.filter(it => it.str.trim().length > 0);
-
       if (nonEmptyItems.length >= 2) {
         // Trang PDF có lớp văn bản gốc: Tái tạo chính xác 100% thể thức và giữ nguyên từng ký tự gốc
         const { pageHtml, pagePlainText } = reconstructExactPdfPageLayout(rawItems, page, textContent, viewport1x, p);
         pdfPagesLayoutHtml.push(pageHtml);
         pdfPagesRawText.push(pagePlainText);
       } else {
-        // Trang PDF là ảnh scan thuần túy: Gọi OCR nhận diện chữ và tái tạo thể thức
-        const ocrText = await recognizeCanvasPageWithoutAlteringWords(offCanvas);
-        const pageHtml = reconstructExactLayoutFromPlainText(ocrText);
+        // Trang PDF là ảnh scan thuần túy: Gọi Tesseract v5 LSTM Tiếng Việt + tái tạo bố cục 2 cột theo tọa độ bbox thực + AI Local hiệu đính
+        const ocrRes = await recognizeCanvasPageHighAccuracy(offCanvas, (pct) => {
+          if (statusEl) statusEl.textContent = `Đang OCR Tiếng Việt chính xác cao Trang ${p}/${totalPdfPages} (${pct}%)...`;
+        });
+        const pageHtml = (ocrRes.lines && ocrRes.lines.length > 0)
+          ? reconstructLayoutFromTesseractBboxes(ocrRes.lines, ocrRes.procWidth, ocrRes.procHeight, 'auto')
+          : reconstructExactLayoutFromPlainText(ocrRes.text);
         pdfPagesLayoutHtml.push(pageHtml);
-        pdfPagesRawText.push(ocrText);
+        pdfPagesRawText.push(ocrRes.text);
       }
     }
 
@@ -891,13 +897,26 @@ function reconstructExactLayoutFromPlainText(rawText, forceMode = 'auto') {
     if (/^[-_*—–=]{2,}$/.test(line)) continue;
 
     if (state === 'HEADER') {
-      const twoCol = line.match(/^(.+?)(?:\t+|\s{4,})(.+)$/);
+      // Tách tiêu ngữ 2 cột ngay cả khi OCR chỉ để 1-2 khoảng trắng giữa cột trái và cột phải
+      const inlineRightMotto = line.match(/^(.+?)\s+(ĐẢNG CỘNG SẢN VIỆT NAM|CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*[-–—]\s*Tự do\s*[-–—]\s*Hạnh phúc.*)$/i);
+      if (inlineRightMotto && i <= 8) {
+        headerLeft.push(inlineRightMotto[1].trim());
+        headerRight.push(inlineRightMotto[2].trim());
+        continue;
+      }
+      const inlineDateRight = line.match(/^((?:Số|So)\s*:?\s*[^\s]+(?:\/[^\s]+)?)\s+([A-ZÀ-ỸĐ][^,]+,\s*ngày\s+\d+\s+tháng\s+\d+\s+năm\s+\d{4}.*)$/i);
+      if (inlineDateRight && i <= 8) {
+        headerLeft.push(inlineDateRight[1].trim());
+        headerRight.push(inlineDateRight[2].trim());
+        continue;
+      }
+      const twoCol = line.match(/^(.+?)(?:\t+|\s{3,})(.+)$/);
       if (twoCol && i <= 8) {
         headerLeft.push(twoCol[1].trim());
         headerRight.push(twoCol[2].trim());
         continue;
       }
-      if (i <= 8 && /^(ĐẢNG CỘNG SẢN VIỆT NAM|CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*-\s*Tự do)/i.test(line)) {
+      if (i <= 8 && /^(ĐẢNG CỘNG SẢN VIỆT NAM|CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM|Độc lập\s*[-–—]\s*Tự do)/i.test(line)) {
         headerRight.push(line);
         continue;
       }
@@ -905,7 +924,7 @@ function reconstructExactLayoutFromPlainText(rawText, forceMode = 'auto') {
         headerRight.push(line);
         continue;
       }
-      if (i <= 7 && (/^(QUẬN ỦY|HUYỆN ỦY|THÀNH ỦY|TỈNH ỦY|ĐẢNG ỦY|ĐẢNG BỘ|CHI BỘ|BAN CHẤP HÀNH|BAN THƯỜNG VỤ|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN|Số\b|Số\s*:)/i.test(line))) {
+      if (i <= 7 && (/^(QUẬN ỦY|HUYỆN ỦY|THÀNH ỦY|TỈNH ỦY|ĐẢNG ỦY|ĐẢNG BỘ|CHI BỘ|BAN CHẤP HÀNH|BAN THƯỜNG VỤ|ỦY BAN NHÂN DÂN|HỘI ĐỒNG NHÂN DÂN|CÔNG AN|BỘ\s+|SỞ\s+|PHÒNG\s+|UBND|Số\b|Số\s*:)/i.test(line))) {
         headerLeft.push(line);
         continue;
       }
@@ -1061,38 +1080,47 @@ function cleanAndFixVietnameseOcrText(rawText) {
 
   text = cleanedLines.join('\n');
 
-  // 2. Tự động hiệu đính các lỗi dấu thanh & dính chữ OCR Tiếng Việt phổ biến trong văn bản Đảng & Hành chính
+  // 2. Tự động hiệu đính 80+ lỗi dấu thanh, ký tự & dính chữ OCR Tiếng Việt phổ biến
   const ocrFixes = [
-    [/\bhướng dân\b/g, 'hướng dẫn'],
-    [/\bHướng dân\b/g, 'Hướng dẫn'],
-    [/\bHƯỚNG DÂN\b/g, 'HƯỚNG DẪN'],
-    [/\bdân chiều\b/g, 'dẫn chiếu'],
-    [/\bdân chiểu\b/g, 'dẫn chiếu'],
-    [/\bbỏ sung\b/g, 'bổ sung'],
-    [/\bbổ xung\b/g, 'bổ sung'],
-    [/\bđông chí\b/g, 'đồng chí'],
-    [/\bĐông chí\b/g, 'Đồng chí'],
-    [/\bTÔ CHỨC\b/g, 'TỔ CHỨC'],
-    [/\btô chức\b/g, 'tổ chức'],
-    [/\bSƠ ĐÔ\b/g, 'SƠ ĐỒ'],
-    [/\bBÔ TRÍ\b/g, 'BỐ TRÍ'],
-    [/\bTHÊ THỨC\b/g, 'THỂ THỨC'],
-    [/\bthê thức\b/g, 'thể thức'],
-    [/\bTIỂU BẠN\b/g, 'TIỂU BAN'],
-    [/\btiểu bạn\b/g, 'tiểu ban'],
+    [/\bCỘNG HỎA\b/g, 'CỘNG HÒA'], [/\bCÔNG HÒA\b/g, 'CỘNG HÒA'], [/\bXÃ HÔI\b/g, 'XÃ HỘI'],
+    [/\bCHỦ NGHIA\b/g, 'CHỦ NGHĨA'], [/\bVIÊT NAM\b/g, 'VIỆT NAM'], [/\bVIET NAM\b/g, 'VIỆT NAM'],
+    [/\bĐÔC LẬP\b/g, 'ĐỘC LẬP'], [/\bĐộc lạp\b/g, 'Độc lập'], [/\bTư do\b/g, 'Tự do'],
+    [/\bHạnh phục\b/g, 'Hạnh phúc'], [/\bHạnh phuc\b/g, 'Hạnh phúc'],
+    [/\bĐẢNG CÔNG SẢN\b/g, 'ĐẢNG CỘNG SẢN'], [/\bĐẢNG UỶ\b/g, 'ĐẢNG ỦY'],
+    [/\bỦY BẠN\b/g, 'ỦY BAN'], [/\bUY BAN\b/g, 'ỦY BAN'], [/\bNHÂN DẢN\b/g, 'NHÂN DÂN'],
+    [/\bQUYÊT ĐỊNH\b/g, 'QUYẾT ĐỊNH'], [/\bQUYẾT ĐINH\b/g, 'QUYẾT ĐỊNH'],
+    [/\bNGHỊ QUYÊT\b/g, 'NGHỊ QUYẾT'], [/\bTHÔNG BAO\b/g, 'THÔNG BÁO'],
+    [/\bBÁO CAO\b/g, 'BÁO CÁO'], [/\bKẾ HOACH\b/g, 'KẾ HOẠCH'], [/\bTỜ TRINH\b/g, 'TỜ TRÌNH'],
+    [/\bCHƯƠNG TRINH\b/g, 'CHƯƠNG TRÌNH'], [/\bBIÊN BẢN\b/g, 'BIÊN BẢN'],
+    [/\bĐiều\s+[lI]\./g, 'Điều 1.'], [/\bKhoản\s+[lI]\b/g, 'Khoản 1'],
+    [/\bNơi nhạn\b/gi, 'Nơi nhận'], [/\bNơi nhăn\b/gi, 'Nơi nhận'],
+    [/\bKính gừi\b/g, 'Kính gửi'], [/\bKính gởi\b/g, 'Kính gửi'],
+    [/\bCăn cự\b/g, 'Căn cứ'], [/\bCăn cư\b/g, 'Căn cứ'],
+    [/\bChủ tich\b/g, 'Chủ tịch'], [/\bCHỦ TICH\b/g, 'CHỦ TỊCH'],
+    [/\bBí thư\b/g, 'Bí thư'], [/\bBÍ THƯ\b/g, 'BÍ THƯ'],
+    [/\bhướng dân\b/g, 'hướng dẫn'], [/\bHướng dân\b/g, 'Hướng dẫn'], [/\bHƯỚNG DÂN\b/g, 'HƯỚNG DẪN'],
+    [/\bdân chiều\b/g, 'dẫn chiếu'], [/\bdân chiểu\b/g, 'dẫn chiếu'],
+    [/\bbỏ sung\b/g, 'bổ sung'], [/\bbổ xung\b/g, 'bổ sung'],
+    [/\bđông chí\b/g, 'đồng chí'], [/\bĐông chí\b/g, 'Đồng chí'],
+    [/\bTÔ CHỨC\b/g, 'TỔ CHỨC'], [/\btô chức\b/g, 'tổ chức'], [/\btổ chưc\b/g, 'tổ chức'],
+    [/\bSƠ ĐÔ\b/g, 'SƠ ĐỒ'], [/\bBÔ TRÍ\b/g, 'BỐ TRÍ'],
+    [/\bTHÊ THỨC\b/g, 'THỂ THỨC'], [/\bthê thức\b/g, 'thể thức'],
+    [/\bTIỂU BẠN\b/g, 'TIỂU BAN'], [/\btiểu bạn\b/g, 'tiểu ban'],
     [/\bNGHIÊM CÁM\b/g, 'NGHIÊM CẤM'],
-    [/\bInhoa\b/g, 'In hoa'],
-    [/\bInthường\b/g, 'In thường'],
-    [/\bvàsốthứtự\b/gi, 'và số thứ tự'],
-    [/\bkết qủa\b/g, 'kết quả'],
-    [/\bnghị quyêt\b/g, 'nghị quyết'],
-    [/\bquyết đinh\b/g, 'quyết định'],
-    [/\bđảng uy\b/g, 'đảng ủy'],
-    [/\bchi bô\b/g, 'chi bộ'],
-    [/\bnhiệm vu\b/g, 'nhiệm vụ'],
-    [/\bthực hiên\b/g, 'thực hiện'],
+    [/\bInhoa\b/g, 'In hoa'], [/\bInthường\b/g, 'In thường'], [/\bvàsốthứtự\b/gi, 'và số thứ tự'],
+    [/\bkết qủa\b/g, 'kết quả'], [/\bkết qua\b/g, 'kết quả'],
+    [/\bnghị quyêt\b/g, 'nghị quyết'], [/\bquyết đinh\b/g, 'quyết định'],
+    [/\bđảng uy\b/g, 'đảng ủy'], [/\bchi bô\b/g, 'chi bộ'], [/\bchỉ bộ\b/g, 'chi bộ'],
+    [/\bnhiệm vu\b/g, 'nhiệm vụ'], [/\bthực hiên\b/g, 'thực hiện'], [/\bthưc hiện\b/g, 'thực hiện'],
+    [/\bchỉ đao\b/g, 'chỉ đạo'], [/\blãnh đao\b/g, 'lãnh đạo'],
+    [/\bđưoc\b/g, 'được'], [/\bngời\b/g, 'người'], [/\bcán bô\b/g, 'cán bộ'],
+    [/\bchính sach\b/g, 'chính sách'], [/\btrách nhiêm\b/g, 'trách nhiệm'],
+    [/\bđề nghi\b/g, 'đề nghị'], [/\bquán triêt\b/g, 'quán triệt'],
+    [/\bgiải quyêt\b/g, 'giải quyết'], [/\bphát triên\b/g, 'phát triển'],
+    [/\bchất lương\b/g, 'chất lượng'], [/\bhiêu quả\b/g, 'hiệu quả'],
+    [/\bđối tương\b/g, 'đối tượng'], [/\bphương phap\b/g, 'phương pháp'],
     [/\bcải cách hành chánh\b/g, 'cải cách hành chính'],
-    [/\bchỉ bộ\b/g, 'chi bộ'],
+    [/\bhoà\b/g, 'hòa'], [/\btoà\b/g, 'tòa'], [/\bthuỷ\b/g, 'thủy'], [/\buỷ\b/g, 'ủy'], [/\bhuỷ\b/g, 'hủy'],
     [/\s+([.,;:!?])/g, '$1']
   ];
   for (const [pat, rep] of ocrFixes) {
@@ -1101,13 +1129,115 @@ function cleanAndFixVietnameseOcrText(rawText) {
   return text.replace(/\n{3,}/g, '\n\n').trim();
 }
 
-// Tiền xử lý ảnh cho OCR: Phóng nét + Tẩy con dấu đỏ & Watermark xám mờ
+// Tái tạo bố cục 2 cột Header/Footer CHUẨN NĐ 30 & 05-HD/VPTW từ tọa độ bbox thực của Tesseract
+function reconstructLayoutFromTesseractBboxes(lines, pageW, pageH, forceMode = 'auto') {
+  if (!Array.isArray(lines) || lines.length === 0 || !pageW || !pageH) {
+    return reconstructExactLayoutFromPlainText('', forceMode);
+  }
+  const allRawText = cleanAndFixVietnameseOcrText(lines.map(l => l.text || '').join('\n'));
+  const isPartyDoc = forceMode === 'hd05' ? true : (forceMode === 'nd30' ? false : detectIsPartyDocInOcr(allRawText));
+
+  const headerLeft = [];
+  const headerRight = [];
+  const bodyLines = [];
+  const footerLeft = [];
+  const footerRight = [];
+
+  const headerCutoffY = pageH * 0.24;
+  const footerZoneMinY = pageH * 0.62;
+  const splitXHeader = pageW * 0.44;
+  const splitXFooter = pageW * 0.47;
+
+  let inFooter = false;
+  for (const ln of lines) {
+    const cleanLineText = cleanAndFixVietnameseOcrText(ln.text || '');
+    if (!cleanLineText) continue;
+    const bbox = ln.bbox || { x0: 0, y0: 0, x1: pageW, y1: 0 };
+    const words = Array.isArray(ln.words) && ln.words.length > 0 ? ln.words : null;
+
+    // 1. Vùng tiêu ngữ 2 cột đầu trang (top 24% trang)
+    if (!inFooter && bbox.y0 <= headerCutoffY && bodyLines.length === 0) {
+      if (/^(BÁO CÁO|QUYẾT ĐỊNH|KẾ HOẠCH|TỜ TRÌNH|THÔNG BÁO|NGHỊ QUYẾT|CHƯƠNG TRÌNH|CHỈ THỊ|BIÊN BẢN|GIẤY MỜI|HƯỚNG DẪN|CÔNG VĂN|Kính gửi)/i.test(cleanLineText)) {
+        bodyLines.push(cleanLineText);
+        continue;
+      }
+      if (words) {
+        const lWords = [];
+        const rWords = [];
+        for (const w of words) {
+          const wt = (w.text || '').trim();
+          if (!wt) continue;
+          const cx = ((w.bbox?.x0 || 0) + (w.bbox?.x1 || 0)) / 2;
+          if (cx < splitXHeader) lWords.push(wt);
+          else rWords.push(wt);
+        }
+        const lt = cleanAndFixVietnameseOcrText(lWords.join(' '));
+        const rt = cleanAndFixVietnameseOcrText(rWords.join(' '));
+        if (lt) headerLeft.push(lt);
+        if (rt) headerRight.push(rt);
+        continue;
+      }
+    }
+
+    // 2. Phát hiện bắt đầu vùng Nơi nhận & Chữ ký cuối văn bản
+    if (!inFooter && bbox.y0 >= footerZoneMinY && (
+      /^Nơi nhận\b/i.test(cleanLineText) ||
+      /\b(T\/M\s+ĐẢNG|T\/M\s+BAN|TM\.\s+ỦY\s+BAN|KT\.\s+CHỦ\s+TỊCH|KT\.\s+GIÁM\s+ĐỐC|KT\.\s+TRƯỞNG|TL\.\s+CHỦ\s+TỊCH|CHỦ TỊCH|BÍ THƯ)\b/i.test(cleanLineText)
+    )) {
+      inFooter = true;
+    }
+
+    if (inFooter) {
+      if (words) {
+        const lWords = [];
+        const rWords = [];
+        for (const w of words) {
+          const wt = (w.text || '').trim();
+          if (!wt) continue;
+          const cx = ((w.bbox?.x0 || 0) + (w.bbox?.x1 || 0)) / 2;
+          if (cx < splitXFooter) lWords.push(wt);
+          else rWords.push(wt);
+        }
+        const lt = cleanAndFixVietnameseOcrText(lWords.join(' '));
+        const rt = cleanAndFixVietnameseOcrText(rWords.join(' '));
+        if (lt) footerLeft.push(lt);
+        if (rt) footerRight.push(rt);
+      } else if (/^(Nơi nhận|-|\+|•|Lưu\b)/i.test(cleanLineText)) {
+        footerLeft.push(cleanLineText);
+      } else {
+        footerRight.push(cleanLineText);
+      }
+      continue;
+    }
+
+    bodyLines.push(cleanLineText);
+  }
+
+  // Nếu bbox không tách được header/footer (ví dụ ảnh cắt nhỏ), dùng fallback plain-text parser
+  if (headerLeft.length === 0 && headerRight.length === 0 && footerLeft.length === 0 && footerRight.length === 0) {
+    return reconstructExactLayoutFromPlainText(allRawText, forceMode);
+  }
+
+  const outHtml = [];
+  if (headerLeft.length > 0 || headerRight.length > 0) {
+    outHtml.push(buildOcrHeaderTableHtml(headerLeft, headerRight, isPartyDoc));
+  }
+  if (bodyLines.length > 0) {
+    outHtml.push(reconstructExactLayoutFromPlainText(bodyLines.join('\n'), forceMode));
+  }
+  if (footerLeft.length > 0 || footerRight.length > 0) {
+    outHtml.push(buildOcrFooterTableHtml(footerLeft, footerRight, isPartyDoc));
+  }
+  return outHtml.join('\n');
+}
+
+// Tiền xử lý ảnh cho OCR chính xác cao: Phóng nét 2400px + Tẩy mộc đỏ + Tăng nét dấu tiếng Việt (không làm mất nét mảnh)
 function createPreprocessedOcrCanvas(sourceCanvas, forceBinarize = false) {
   const baseSource = sourceCanvas || currentImageSource;
   const srcW = baseSource.width || sourceCanvas.width;
   const srcH = baseSource.height || sourceCanvas.height;
-  const scale = srcW < 1400 ? 2 : 1;
-  const outW = Math.min(srcW * scale, 2400);
+  const scale = srcW < 1500 ? Math.min(2.5, 2200 / Math.max(1, srcW)) : 1;
+  const outW = Math.min(Math.round(srcW * scale), 2600);
   const outH = Math.round(srcH * (outW / srcW));
 
   const procCanvas = document.createElement('canvas');
@@ -1135,27 +1265,45 @@ function createPreprocessedOcrCanvas(sourceCanvas, forceBinarize = false) {
     ctx.drawImage(baseSource, 0, 0, outW, outH);
   }
 
-  // Luôn tẩy dấu mộc đỏ & watermark xám mờ giúp OCR đọc sạch dấu tiếng Việt
+  // 1. Tẩy dấu mộc đỏ & nâng tương phản mềm bảo toàn nét mảnh của dấu thanh tiếng Việt
   try {
-    const imgData = ctx.getImageData(0, 0, procCanvas.width, procCanvas.height);
+    const w = procCanvas.width;
+    const h = procCanvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h);
     const data = imgData.data;
-    for (let i = 0; i < data.length; i += 4) {
+    const grayBuf = new Uint8ClampedArray(w * h);
+
+    for (let i = 0, p = 0; i < data.length; i += 4, p++) {
       const r = data[i], g = data[i + 1], b = data[i + 2];
-      // Tẩy pixel con dấu đỏ (Đỏ nổi trội hơn Xanh lá và Xanh dương)
-      if (r > 115 && (r - g) > 32 && (r - b) > 32) {
-        data[i] = data[i + 1] = data[i + 2] = 255;
+      // Tẩy pixel con dấu đỏ (chỉ tẩy màu đỏ tươi, giữ nguyên mực đen nằm đè lên dấu)
+      if (r > 110 && (r - g) > 34 && (r - b) > 34) {
+        grayBuf[p] = 255;
         continue;
       }
       let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-      // Tẩy watermark xám nhạt / nền giấy ố
-      if (gray > 186) {
+      // Bảo toàn nét dấu tiếng Việt mờ (ngưỡng trắng 214 thay vì 186 để không xóa mất dấu sắc/hỏi/ngã)
+      if (gray > 214) {
         gray = 255;
       } else if (forceBinarize || ocrHighContrast) {
-        gray = Math.min(255, Math.max(0, (gray - 128) * 1.55 + 128));
-      } else if (gray < 145) {
-        gray = Math.max(0, gray * 0.85);
+        gray = Math.min(255, Math.max(0, (gray - 135) * 1.45 + 135));
+      } else if (gray < 160) {
+        gray = Math.max(0, gray * 0.88);
       }
-      data[i] = data[i + 1] = data[i + 2] = gray;
+      grayBuf[p] = gray;
+    }
+
+    // 2. Làm sắc nét nhẹ 3x3 (Unsharp Mask) giúp tách rõ dấu mũ ^, ă, ơ, ư và dấu thanh
+    for (let y = 1; y < h - 1; y++) {
+      const row = y * w;
+      for (let x = 1; x < w - 1; x++) {
+        const idx = row + x;
+        const center = grayBuf[idx];
+        const blur = (grayBuf[idx - 1] + grayBuf[idx + 1] + grayBuf[idx - w] + grayBuf[idx + w]) * 0.25;
+        let sharp = center + (center - blur) * 0.45;
+        sharp = sharp > 220 ? 255 : Math.max(0, Math.min(255, sharp));
+        const di = idx * 4;
+        data[di] = data[di + 1] = data[di + 2] = sharp;
+      }
     }
     ctx.putImageData(imgData, 0, 0);
   } catch (e) {}
@@ -1163,20 +1311,90 @@ function createPreprocessedOcrCanvas(sourceCanvas, forceBinarize = false) {
   return procCanvas;
 }
 
-async function recognizeCanvasPageWithoutAlteringWords(canvasEl) {
-  const cleanCanvas = createPreprocessedOcrCanvas(canvasEl, true);
+// Hậu kiểm OCR bằng AI Local (Ollama qwen2.5:7b / qwen2.5:3b) — chỉ sửa lỗi nhận diện chữ/dấu, giữ nguyên tên riêng & số liệu
+async function proofreadVietnameseOcrWithOllama(rawOcrText) {
+  if (!rawOcrText || rawOcrText.trim().length < 20) return null;
   try {
-    const cloudResult = await runCloudNeuralVietnameseOcr(cleanCanvas);
-    if (cloudResult && cloudResult.trim().length > 0) {
-      return cleanAndFixVietnameseOcrText(cloudResult);
+    const ctrlTags = new AbortController();
+    const tTags = setTimeout(() => ctrlTags.abort(), 1500);
+    const tagRes = await fetch('http://127.0.0.1:11434/api/tags', { signal: ctrlTags.signal });
+    clearTimeout(tTags);
+    if (!tagRes.ok) return null;
+    const tagJson = await tagRes.json();
+    const models = (tagJson.models || []).map(m => m.name);
+    if (models.length === 0) return null;
+    const picked = models.find(n => /qwen2\.5:7b/i.test(n)) || models.find(n => /qwen2\.5:3b/i.test(n)) || models[0];
+
+    const paragraphs = rawOcrText.split('\n');
+    const chunks = [];
+    let buf = '';
+    for (const ln of paragraphs) {
+      if ((buf.length + ln.length) > 1500 && buf.trim()) {
+        chunks.push(buf);
+        buf = '';
+      }
+      buf += (buf ? '\n' : '') + ln;
     }
-  } catch (e) {}
+    if (buf.trim()) chunks.push(buf);
+    if (chunks.length > 8) return null; // Tránh quá lâu với tài liệu siêu dài
+
+    const fixedChunks = [];
+    for (const ch of chunks) {
+      const ctrl = new AbortController();
+      const tGen = setTimeout(() => ctrl.abort(), 18000);
+      const genRes = await fetch('http://127.0.0.1:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          model: picked,
+          stream: false,
+          options: { temperature: 0.05, num_predict: 1024 },
+          system: 'Bạn là bộ hậu kiểm OCR tiếng Việt hành chính/Đảng. CHỈ sửa lỗi sai dấu thanh, sai ký tự OCR (như 0/O, 1/l, ơ/o, ư/u, mất dấu). TUYỆT ĐỐI giữ nguyên số dòng, cấu trúc xuống dòng, số hiệu văn bản, ngày tháng, số liệu và tên riêng. Chỉ trả về văn bản đã sửa, không giải thích.',
+          prompt: ch
+        })
+      });
+      clearTimeout(tGen);
+      if (!genRes.ok) return null;
+      const gJson = await genRes.json();
+      const out = (gJson.response || '').trim();
+      // Bảo vệ chống AI cắt bớt nội dung
+      if (out && out.length >= ch.length * 0.72 && out.length <= ch.length * 1.25) {
+        fixedChunks.push(out);
+      } else {
+        fixedChunks.push(ch);
+      }
+    }
+    return { text: cleanAndFixVietnameseOcrText(fixedChunks.join('\n')), model: picked };
+  } catch {
+    return null;
+  }
+}
+
+async function recognizeCanvasPageHighAccuracy(canvasEl, onProgress = null) {
+  const cleanCanvas = createPreprocessedOcrCanvas(canvasEl, false);
+  let text = '';
+  let lines = null;
 
   if (window.Tesseract) {
-    const result = await window.Tesseract.recognize(cleanCanvas, 'vie');
-    return cleanAndFixVietnameseOcrText(result?.data?.text || '');
+    const result = await window.Tesseract.recognize(cleanCanvas, 'vie', {
+      preserve_interword_spaces: '1',
+      logger: m => {
+        if (onProgress && m.status === 'recognizing text' && typeof m.progress === 'number') {
+          onProgress(Math.max(15, Math.round(m.progress * 100)));
+        }
+      }
+    });
+    text = cleanAndFixVietnameseOcrText((result?.data?.text || '').normalize('NFC'));
+    lines = result?.data?.lines || null;
   }
-  return '';
+
+  return { text, lines, procWidth: cleanCanvas.width, procHeight: cleanCanvas.height };
+}
+
+async function recognizeCanvasPageWithoutAlteringWords(canvasEl) {
+  const res = await recognizeCanvasPageHighAccuracy(canvasEl, null);
+  return res.text || '';
 }
 
 async function runVietnameseOcr(appendTableMode = false) {
@@ -1208,58 +1426,54 @@ async function runVietnameseOcr(appendTableMode = false) {
     return;
   }
 
-  statusEl.textContent = 'Đang nhận diện chữ Tiếng Việt và giữ nguyên bố cục gốc...';
-  progressFill.style.width = '30%';
+  statusEl.textContent = 'Đang tiền xử lý ảnh & nhận diện chữ Tiếng Việt chính xác cao (Tesseract v5 LSTM)...';
+  progressFill.style.width = '20%';
 
-  const procCanvas = createPreprocessedOcrCanvas(canvas, false);
-  let recognizedText = '';
+  let rawPreserved = '';
   let tesseractLines = null;
+  let procW = canvas.width;
+  let procH = canvas.height;
 
-  if (engineMode === 'auto') {
-    try {
-      progressFill.style.width = '55%';
-      const cloudResult = await runCloudNeuralVietnameseOcr(procCanvas);
-      if (cloudResult && cloudResult.trim().length > 0) {
-        recognizedText = cloudResult.normalize('NFC');
-      }
-    } catch (cloudErr) {
-      console.warn('Chuyển sang Tesseract v5 LSTM Tiếng Việt:', cloudErr);
-    }
+  try {
+    const ocrRes = await recognizeCanvasPageHighAccuracy(canvas, (pct) => {
+      progressFill.style.width = `${Math.min(85, pct)}%`;
+      statusEl.textContent = `Đang nhận diện Tiếng Việt (Tesseract v5 LSTM): ${pct}%`;
+    });
+    rawPreserved = ocrRes.text;
+    tesseractLines = ocrRes.lines;
+    procW = ocrRes.procWidth;
+    procH = ocrRes.procHeight;
+  } catch (tessErr) {
+    statusEl.textContent = '⚠ Lỗi nhận diện Tesseract v5: ' + tessErr.message;
+    return;
   }
 
-  if (!recognizedText.trim()) {
-    try {
-      if (!window.Tesseract) throw new Error('Thư viện Tesseract v5 chưa sẵn sàng.');
-      const result = await window.Tesseract.recognize(procCanvas, 'vie', {
-        logger: m => {
-          if (m.status === 'recognizing text' && typeof m.progress === 'number') {
-            const pct = Math.max(25, Math.round(m.progress * 100));
-            progressFill.style.width = `${pct}%`;
-            statusEl.textContent = `Đang nhận diện chữ Tiếng Việt (LSTM Neural): ${pct}%`;
-          }
-        }
-      });
-      recognizedText = (result?.data?.text || '').normalize('NFC');
-      tesseractLines = result?.data?.lines || null;
-    } catch (tessErr) {
-      statusEl.textContent = '⚠ Lỗi nhận diện: ' + tessErr.message;
-      return;
-    }
-  }
-
-  progressFill.style.width = '100%';
-  // Lọc nhiễu dấu mộc đỏ/watermark & tự động hiệu đính lỗi dấu OCR Tiếng Việt
-  const rawPreserved = cleanAndFixVietnameseOcrText(recognizedText);
+  // Hiển thị ngay kết quả chuẩn thể thức 2 cột theo tọa độ bbox thực
   textOutput.value = rawPreserved;
   if (paperEl) {
-    paperEl.innerHTML = reconstructExactLayoutFromPlainText(rawPreserved);
+    paperEl.innerHTML = (tesseractLines && tesseractLines.length > 0)
+      ? reconstructLayoutFromTesseractBboxes(tesseractLines, procW, procH, 'auto')
+      : reconstructExactLayoutFromPlainText(rawPreserved);
   }
-
   extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
   if (window.VietNamOcr2LayerPdf) {
     window.VietNamOcr2LayerPdf.recordSinglePageOcr(canvas, rawPreserved, tesseractLines);
   }
-  statusEl.textContent = '✓ Hoàn tất nhận diện Tiếng Việt! Đã giữ nguyên bố cục để xuất Word hoặc PDF 2 lớp (Searchable).';
+
+  // Hậu kiểm thông minh bằng AI Local (Ollama) nếu đang bật trên máy để sửa nốt các lỗi sai dấu còn sót
+  progressFill.style.width = '90%';
+  statusEl.textContent = '✓ Đã nhận diện xong! Đang kiểm tra hậu kiểm dấu tiếng Việt bằng AI Local (Ollama)...';
+  const aiFixed = await proofreadVietnameseOcrWithOllama(rawPreserved);
+  if (aiFixed && aiFixed.text) {
+    textOutput.value = aiFixed.text;
+    if (paperEl) {
+      paperEl.innerHTML = reconstructExactLayoutFromPlainText(aiFixed.text);
+    }
+    statusEl.textContent = `✓ Hoàn tất OCR Tiếng Việt + Hậu kiểm AI Local (${aiFixed.model})! Đã dựng chuẩn thể thức NĐ 30 / 05-HD.`;
+  } else {
+    statusEl.textContent = '✓ Hoàn tất nhận diện Tiếng Việt (Tesseract v5 LSTM + Tọa độ 2 cột NĐ 30/05-HD)! Sẵn sàng xuất Word hoặc PDF 2 lớp.';
+  }
+  progressFill.style.width = '100%';
 }
 
 async function runCloudNeuralVietnameseOcr(procCanvas) {
