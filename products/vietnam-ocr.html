@@ -83,12 +83,12 @@
         </div>
 
         <div class="detail-download-actions">
-          <a href="../downloads/VietNamOCR-Setup-3.5.0-x64.exe" class="btn-glass-primary" style="padding: 15px 26px; font-size: 1.02rem; border-radius: 999px;" download="VietNamOCR-Setup-3.5.0-x64.exe">
+          <a href="../downloads/VietNamOCR-Setup-3.5.0-x64.zip" class="btn-glass-primary" style="padding: 15px 26px; font-size: 1.02rem; border-radius: 999px;" onclick="return openOcrDownloadTerms(event, '../downloads/VietNamOCR-Setup-3.5.0-x64.zip', 'VietNamOCR-Setup-3.5.0-x64.zip', 'VietNamOCR 3.5 Pro (Bản nén .ZIP chuẩn — Giải nén để cài đặt)')">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            <span>Tải VietNamOCR 4.0 Pro (.exe)</span>
+            <span>Tải VietNamOCR-Setup-3.5.0-x64.zip</span>
           </a>
           <div class="detail-dl-meta">
-            Bản Ultimate Cao Nhất · Chuyển PDF Sang Word Giữ Nguyên Thể Thức 100%
+            Tải dạng tệp nén <strong>.ZIP</strong> (giải nén bình thường) · Hỗ trợ PDF 2 Lớp &amp; Word 1:1
           </div>
         </div>
       </div>
@@ -252,18 +252,19 @@
     <section class="features-box" id="guideSection" style="margin-top: 36px; margin-bottom: 36px;">
       <div class="section-title-wrap">
         <div>
-          <h2 class="section-heading">Hướng Dẫn Cài Đặt Bản Máy Tính Windows (.exe)</h2>
+          <h2 class="section-heading">Hướng Dẫn Giải Nén &amp; Cài Đặt Bản Máy Tính Windows (.ZIP)</h2>
           <p style="color: var(--text-muted); font-size: 0.90rem;">Bản nâng cấp VietNamOCR 3.5 Pro dành cho Windows 10/11 (x64)</p>
         </div>
       </div>
 
       <div class="features-grid" style="grid-template-columns: 1fr;">
         <div class="feature-glass-card" style="border-left: 4px solid #6443ff;">
-          <h3 class="feature-title">Quy Trình Cài Đặt &amp; Chuyển PDF Sang Word Giữ Nguyên Thể Thức</h3>
+          <h3 class="feature-title">Quy Trình Giải Nén, Cài Đặt &amp; Chuyển PDF Sang Word / PDF 2 Lớp</h3>
           <ol style="margin: 10px 0 0 20px; padding: 0; color: var(--text-secondary); line-height: 1.9; font-size: 0.95rem;">
-            <li>Tải tệp <code>VietNamOCR-Setup-3.5.0-x64.exe</code> (Bản 4.0 Pro Ultimate) về máy tính.</li>
-            <li>Nhấp đúp chuột vào tệp cài đặt và chọn <strong>"Cài Đặt Ngay"</strong> (hoặc <strong>"Chạy Ngay (Không Cần Cài)"</strong>).</li>
-            <li>Trong phần mềm: Nhấn <strong>"Chọn Ảnh / PDF"</strong> (hoặc kéo thả tệp PDF vào cửa sổ). Toàn bộ các trang PDF được đọc nguyên vẹn cấu trúc và nội dung gốc, nhấn <strong>"Xuất Word (.doc)"</strong> để nhận ngay tệp Word giữ nguyên 100% thể thức gốc theo Hướng dẫn 05-HD/VPTW hoặc Nghị định 30/2020/NĐ-CP mà không bị sửa đổi bất kỳ câu chữ nào.</li>
+            <li>Bấm nút <strong>"Tải VietNamOCR-Setup-3.5.0-x64.zip"</strong>, đọc và tích chọn đồng ý <strong>Điều khoản sử dụng</strong> để tải tệp nén về máy.</li>
+            <li>Nhấn chuột phải vào tệp <code>VietNamOCR-Setup-3.5.0-x64.zip</code> → chọn <strong>Extract All... (Giải nén)</strong> ra thư mục bình thường.</li>
+            <li>Nhấp đúp tệp <code>VietNamOCR-Setup-3.5.0-x64.exe</code> vừa giải nén và nhấn <strong>"Cài Đặt Ngay"</strong>.</li>
+            <li>Trong phần mềm: Chọn Ảnh / PDF để nhận diện Tiếng Việt (Tesseract v5 LSTM), giữ nguyên thể thức 2 cột NĐ 30 / 05-HD/VPTW và xuất <strong>Word (.doc)</strong> hoặc <strong>PDF 2 Lớp (Searchable PDF)</strong>.</li>
           </ol>
           <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; word-break: break-all;">
             Mã chuẩn SHA256: <code id="sha256Code">918a136c9ebed1d044009a7f9642ed27a9372f67cce7ecb4360978d74af8b61b</code>
@@ -294,9 +295,88 @@
     </div>
   </footer>
 
+  <!-- MODAL ĐIỀU KHOẢN SỬ DỤNG & XÁC NHẬN TẢI XUỐNG VIETNAMOCR 3.5 PRO -->
+  <div id="ocrDownloadTermsModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,0.82);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;">
+    <div style="width:100%;max-width:600px;background:#ffffff;color:#0f172a;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,0.45);overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;">
+      <div style="background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;color:#fff;">
+        <div>
+          <div style="font-size:1.08rem;font-weight:800;">📜 Điều Khoản Sử Dụng &amp; Xác Nhận Tải Xuống</div>
+          <div id="ocrTermsFileDesc" style="font-size:0.84rem;color:#dbeafe;margin-top:2px;">VietNamOCR 3.5 Pro (Bản nén .ZIP)</div>
+        </div>
+        <button type="button" onclick="closeOcrDownloadTerms()" style="background:rgba(255,255,255,0.18);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:700;">✕</button>
+      </div>
+      <div style="padding:18px 22px;">
+        <div style="max-height:230px;overflow-y:auto;background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:14px 16px;font-size:0.88rem;line-height:1.65;color:#334155;">
+          <p style="margin:0 0 8px;"><strong>1. Phạm vi sử dụng:</strong> VietNamOCR 3.5 Pro hỗ trợ nhận diện chữ tiếng Việt từ ảnh &amp; PDF scan, giữ nguyên thể thức văn bản (NĐ 30 / 05-HD/VPTW) và xuất PDF 2 lớp (Searchable PDF).</p>
+          <p style="margin:0 0 8px;"><strong>2. Bảo mật tài liệu:</strong> Toàn bộ quá trình đọc PDF, nhận diện Tesseract v5 LSTM và dựng PDF 2 lớp được xử lý trực tiếp trên máy tính của bạn, không tải tệp lên máy chủ lưu trữ bên ngoài.</p>
+          <p style="margin:0 0 8px;"><strong>3. Hướng dẫn giải nén:</strong> Gói cài đặt được nén chuẩn <code>.ZIP</code>. Sau khi tải về, vui lòng nhấn chuột phải → <strong>Extract All (Giải nén)</strong> trước khi chạy tệp cài đặt.</p>
+          <p style="margin:0;"><strong>4. Trách nhiệm kiểm duyệt:</strong> Người sử dụng kiểm tra lại nội dung và số liệu sau khi nhận diện OCR trước khi phát hành văn bản chính thức.</p>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;cursor:pointer;font-size:0.92rem;font-weight:600;color:#0f172a;">
+          <input type="checkbox" id="ocrTermsAgreeChk" onchange="toggleOcrDownloadBtn()" style="width:18px;height:18px;margin-top:2px;accent-color:#2563eb;cursor:pointer;">
+          <span>Tôi đã đọc kỹ và đồng ý với các Điều khoản sử dụng &amp; Bảo mật nêu trên.</span>
+        </label>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e2e8f0;">
+          <button type="button" onclick="closeOcrDownloadTerms()" style="padding:9px 18px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:600;cursor:pointer;">Hủy bỏ</button>
+          <button type="button" id="ocrConfirmDownloadBtn" disabled onclick="confirmOcrDownload()" style="padding:9px 20px;border-radius:9px;border:none;background:#94a3b8;color:#fff;font-weight:700;cursor:not-allowed;">⬇ Đồng ý &amp; Tải tệp nén (.ZIP)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      let pendingUrl = '';
+      let pendingName = '';
+      window.openOcrDownloadTerms = function(ev, url, fileName, desc) {
+        if (ev) ev.preventDefault();
+        pendingUrl = url;
+        pendingName = fileName;
+        const modal = document.getElementById('ocrDownloadTermsModal');
+        const descEl = document.getElementById('ocrTermsFileDesc');
+        const chk = document.getElementById('ocrTermsAgreeChk');
+        const btn = document.getElementById('ocrConfirmDownloadBtn');
+        if (descEl) descEl.textContent = (desc || fileName) + ' (' + fileName + ')';
+        if (chk) chk.checked = false;
+        if (btn) {
+          btn.disabled = true;
+          btn.style.background = '#94a3b8';
+          btn.style.cursor = 'not-allowed';
+          btn.textContent = '⬇ Đồng ý & Tải ' + fileName;
+        }
+        if (modal) modal.style.display = 'flex';
+        return false;
+      };
+      window.closeOcrDownloadTerms = function() {
+        const modal = document.getElementById('ocrDownloadTermsModal');
+        if (modal) modal.style.display = 'none';
+      };
+      window.toggleOcrDownloadBtn = function() {
+        const chk = document.getElementById('ocrTermsAgreeChk');
+        const btn = document.getElementById('ocrConfirmDownloadBtn');
+        if (!chk || !btn) return;
+        btn.disabled = !chk.checked;
+        btn.style.background = chk.checked ? '#2563eb' : '#94a3b8';
+        btn.style.cursor = chk.checked ? 'pointer' : 'not-allowed';
+      };
+      window.confirmOcrDownload = function() {
+        if (!pendingUrl) return;
+        const a = document.createElement('a');
+        a.href = pendingUrl;
+        a.download = pendingName || '';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        closeOcrDownloadTerms();
+        if (window.showToast) {
+          window.showToast('✓ Đang tải ' + pendingName + '! Hãy giải nén tệp .ZIP ra thư mục trước khi cài đặt.');
+        }
+      };
+    })();
+  </script>
+
   <script src="../js/main.js"></script>
   <script src="../js/vietnamese-dictionary.js"></script>
-  <script src="../js/ocr-app.js?v=353"></script>
-  <script src="../js/ocr-2layer-pdf.js?v=360"></script>
+  <script src="../js/ocr-app.js?v=361"></script>
+  <script src="../js/ocr-2layer-pdf.js?v=361"></script>
 </body>
 </html>
