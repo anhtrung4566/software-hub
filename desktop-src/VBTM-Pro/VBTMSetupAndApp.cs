@@ -126,6 +126,16 @@ namespace VBTMProSuite
                     WordQuickUtilities.ShowAboutDialog();
                     return;
                 }
+                else if (a.Equals("--norm-font-punct", StringComparison.OrdinalIgnoreCase))
+                {
+                    WordQuickUtilities.NormalizeFontAndPunctuationInWord();
+                    return;
+                }
+                else if (a.Equals("--norm-ai-text", StringComparison.OrdinalIgnoreCase))
+                {
+                    WordQuickUtilities.NormalizeAiGeneratedTextInWord();
+                    return;
+                }
                 else if (a.Equals("--test-money", StringComparison.OrdinalIgnoreCase))
                 {
                     string outPath = Path.Combine(Path.GetTempPath(), "vbtm_test_money.txt");
@@ -886,7 +896,8 @@ namespace VBTMProSuite
             sb.AppendLine("Sub Ribbon_DictAddGood(ByVal control As Object): LaunchVbtmFlag \"--dict-add-good\": End Sub");
             sb.AppendLine("Sub Ribbon_DictAddBad(ByVal control As Object): LaunchVbtmFlag \"--dict-add-bad\": End Sub");
             sb.AppendLine("Sub Ribbon_DictManage(ByVal control As Object): LaunchVbtmFlag \"--dict-word\": End Sub");
-            sb.AppendLine("Sub Ribbon_ChuanHoaFontDauCau(ByVal control As Object): SuaChinhTaVaDauCau_Word: End Sub");
+            sb.AppendLine("Sub Ribbon_ChuanHoaFontDauCau(ByVal control As Object): LaunchVbtmFlag \"--norm-font-punct\": End Sub");
+            sb.AppendLine("Sub Ribbon_ChuanHoaVanBanAI(ByVal control As Object): LaunchVbtmFlag \"--norm-ai-text\": End Sub");
             sb.AppendLine("");
             sb.AppendLine("Private Sub ShowUnicodeMsg(ByVal msgText As String)");
             sb.AppendLine("    On Error Resume Next");
@@ -1735,7 +1746,9 @@ namespace VBTMProSuite
                 // GROUP 2: Biên Tập & Soát Lỗi (Images 1 & 9)
                 "<group id=\"grpVbtmEditSpell\" label=\"Biên Tập &amp; Soát Lỗi\">" +
                 "<button id=\"btnVbtmFontPunct\" label=\"Chuẩn Hóa Font, Dấu Câu Từ\" size=\"large\" imageMso=\"FontColorAutomatic\" onAction=\"Ribbon_ChuanHoaFontDauCau\" supertip=\"Chuẩn hóa Font Times New Roman, bỏ khoảng trắng thừa và sửa dấu câu chuẩn tiếng Việt.\"/>" +
-                "<menu id=\"mnuVbtmFormatAI\" label=\"Chuẩn Hóa Văn Bản AI\" size=\"large\" imageMso=\"FileDocumentInspect\" supertip=\"Chuẩn hóa văn bản theo Hướng dẫn 05-HD/VPTW, Nghị định 30/2020/NĐ-CP, CAND và Trợ lý AI Local.\">" +
+                "<menu id=\"mnuVbtmFormatAI\" label=\"Chuẩn Hóa Văn Bản AI\" size=\"large\" imageMso=\"FileDocumentInspect\" supertip=\"Chuẩn hóa văn bản do AI tạo (xóa *, căn đều, bullets -/+), Hướng dẫn 05-HD/VPTW và Nghị định 30/2020/NĐ-CP.\">" +
+                "<button id=\"btnVbtmNormAiDoc\" label=\"✨ Chuẩn Hóa Văn Bản AI (Xóa Markdown *, Căn đều, Bullets -/+)\" imageMso=\"AutoFormat\" onAction=\"Ribbon_ChuanHoaVanBanAI\"/>" +
+                "<menuSeparator id=\"sepLegalStd\" title=\"Chuẩn Hóa Thể Thức Pháp Lý\"/>" +
                 "<button id=\"btnVbtmDangFast\" label=\"⭐ Chuẩn Hóa Văn Bản Đảng (05-HD/VPTW)\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\"/>" +
                 "<button id=\"btnVbtmNd30\" label=\"🏛️ Chuẩn Hóa Văn Bản Hành Chính (NĐ 30/2020)\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\"/>" +
                 "<button id=\"btnVbtmAutoNorm\" label=\"⚡ Tự Động Chuẩn Hóa Thông Minh\" imageMso=\"AutoFormat\" onAction=\"Ribbon_ChuanHoaTuDong\"/>" +
@@ -3831,7 +3844,7 @@ namespace VBTMProSuite
         private string currentDocText = "";
         private bool isAiBusy = false;
 
-        private static readonly string[,] InspectorRules = new string[,]
+        public static readonly string[,] InspectorRules = new string[,]
         {
             // I. Lỗi phụ âm đầu s/x, ch/tr, r/d/gi, l/n, ng/ngh
             { "bổ xung", "bổ sung", "Sai phụ âm x/s" },
