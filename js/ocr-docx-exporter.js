@@ -172,37 +172,113 @@
       ? `<w:tblBorders><w:top w:val="none"/><w:left w:val="none"/><w:bottom w:val="none"/><w:right w:val="none"/><w:insideH w:val="none"/><w:insideV w:val="none"/></w:tblBorders>`
       : `<w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/></w:tblBorders>`;
 
-    const trNodes = tblEl.querySelectorAll('tr');
-    let rowsXml = '';
-    trNodes.forEach(tr => {
-      const cells = tr.querySelectorAll('td, th');
-      let cellsXml = '';
-      const cellCount = Math.max(1, cells.length);
+    const trNodes = Array.from(tblEl.querySelectorAll('tr'));
+    if (trNodes.length === 0) return '';
+
+    const TOTAL_DXA = 9355; // A4 usable width = 11906 - 1701 - 850
+    // Tính tổng số cột lưới chuẩn (tính cả colspan & rowspan)
+    const rowTrackers = [];
+    let maxGridCols = 1;
+    const colWidthsDxa = [];
+
+    trNodes.forEach((tr, rIdx) => {
+      if (!rowTrackers[rIdx]) rowTrackers[rIdx] = [];
+      let colCursor = 0;
+      const cells = Array.from(tr.querySelectorAll('td, th'));
       cells.forEach(cell => {
+        while (rowTrackers[rIdx][colCursor]) colCursor++;
+        const cs = Math.max(1, parseInt(cell.getAttribute('colspan') || '1', 10));
+        const rs = Math.max(1, parseInt(cell.getAttribute('rowspan') || '1', 10));
         const cst = cell.getAttribute('style') || '';
         const wAttr = cell.getAttribute('width') || '';
         const pctMatch = (cst + ' ' + wAttr).match(/(\d+(?:\.\d+)?)%/);
-        const pct = pctMatch ? parseFloat(pctMatch[1]) : (100 / cellCount);
-        const dxa = Math.max(600, Math.round((pct / 100) * 9355)); // A4 usable width = 11906 - 1701 - 850 = 9355 dxa
-        const cellPt = isBorderless ? defaultPt : Math.min(defaultPt, 13);
+        const spanDxa = pctMatch ? Math.max(500, Math.round((parseFloat(pctMatch[1]) / 100) * TOTAL_DXA)) : 0;
 
-        let cellInner = '';
-        const childPs = cell.querySelectorAll('p');
-        if (childPs.length > 0) {
-          childPs.forEach(p => { cellInner += buildParagraphXmlFromElement(p, fontName, cellPt, true); });
-        } else {
-          const isTh = cell.tagName.toUpperCase() === 'TH';
-          const runs = collectRunsFromInlineNodes(cell, fontName, cellPt, isTh, false, false);
-          const jc = isTh ? 'center' : parseAlignFromNode(cell);
-          cellInner = `<w:p><w:pPr><w:jc w:val="${jc}"/><w:spacing w:after="40" w:line="240" w:lineRule="auto"/>${buildRunPrXml(fontName, cellPt * 2, isTh, false, false)}</w:pPr>${runs}</w:p>`;
+        for (let rr = 0; rr < rs; rr++) {
+          if (!rowTrackers[rIdx + rr]) rowTrackers[rIdx + rr] = [];
+          for (let cc = 0; cc < cs; cc++) {
+            rowTrackers[rIdx + rr][colCursor + cc] = {
+              isOrigin: (rr === 0 && cc === 0),
+              isVCont: (rr > 0 && cc === 0),
+              cell,
+              colspan: cs,
+              rowspan: rs,
+              dxa: spanDxa
+            };
+          }
         }
-        if (!cellInner) cellInner = `<w:p><w:pPr>${buildRunPrXml(fontName, cellPt * 2, false, false, false)}</w:pPr></w:p>`;
-        cellsXml += `<w:tc><w:tcPr><w:tcW w:w="${dxa}" w:type="dxa"/><w:vAlign w:val="top"/></w:tcPr>${cellInner}</w:tc>`;
+        if (cs === 1 && spanDxa > 0 && !colWidthsDxa[colCursor]) {
+          colWidthsDxa[colCursor] = spanDxa;
+        }
+        colCursor += cs;
+        if (colCursor > maxGridCols) maxGridCols = colCursor;
       });
-      rowsXml += `<w:tr>${cellsXml}</w:tr>`;
     });
 
-    return `<w:tbl><w:tblPr><w:tblW w:w="9355" w:type="dxa"/>${bordersXml}<w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar></w:tblPr>${rowsXml}</w:tbl>`;
+    // Chuẩn hóa w:tblGrid cho đúng tổng bề rộng trang A4
+    const defaultColDxa = Math.round(TOTAL_DXA / maxGridCols);
+    for (let c = 0; c < maxGridCols; c++) {
+      if (!colWidthsDxa[c]) colWidthsDxa[c] = defaultColDxa;
+    }
+    const gridXml = `<w:tblGrid>${colWidthsDxa.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>`;
+
+    let rowsXml = '';
+    for (let rIdx = 0; rIdx < trNodes.length; rIdx++) {
+      let cellsXml = '';
+      const rowSlots = rowTrackers[rIdx] || [];
+      let c = 0;
+      while (c < maxGridCols) {
+        const slot = rowSlots[c];
+        if (!slot) {
+          // Ô trống dự phòng để giữ vững cấu trúc lưới cột
+          const wDxa = colWidthsDxa[c] || defaultColDxa;
+          cellsXml += `<w:tc><w:tcPr><w:tcW w:w="${wDxa}" w:type="dxa"/><w:vAlign w:val="top"/></w:tcPr><w:p><w:pPr>${buildRunPrXml(fontName, defaultPt * 2, false, false, false)}</w:pPr></w:p></w:tc>`;
+          c++;
+          continue;
+        }
+
+        const cs = slot.colspan || 1;
+        let spanW = 0;
+        for (let k = 0; k < cs; k++) spanW += (colWidthsDxa[c + k] || defaultColDxa);
+        const gridSpanXml = cs > 1 ? `<w:gridSpan w:val="${cs}"/>` : '';
+
+        if (slot.isVCont) {
+          // Ô tiếp nối của ô gộp dọc (rowspan -> w:vMerge rỗng)
+          cellsXml += `<w:tc><w:tcPr><w:tcW w:w="${spanW}" w:type="dxa"/>${gridSpanXml}<w:vMerge/><w:vAlign w:val="top"/></w:tcPr><w:p><w:pPr>${buildRunPrXml(fontName, defaultPt * 2, false, false, false)}</w:pPr></w:p></w:tc>`;
+          c += cs;
+          continue;
+        }
+
+        if (slot.isOrigin) {
+          const cell = slot.cell;
+          const cst = cell.getAttribute('style') || '';
+          const isTh = cell.tagName.toUpperCase() === 'TH';
+          const vMergeXml = slot.rowspan > 1 ? '<w:vMerge w:val="restart"/>' : '';
+          const shdXml = (isTh || /background\s*:\s*#f1f5f9/i.test(cst))
+            ? '<w:shd w:val="clear" w:color="auto" w:fill="F1F5F9"/>' : '';
+          const cellPt = isBorderless ? defaultPt : Math.min(defaultPt, 13);
+
+          let cellInner = '';
+          const childPs = cell.querySelectorAll('p');
+          if (childPs.length > 0) {
+            childPs.forEach(p => { cellInner += buildParagraphXmlFromElement(p, fontName, cellPt, true); });
+          } else {
+            const runs = collectRunsFromInlineNodes(cell, fontName, cellPt, isTh, false, false);
+            const jc = isTh ? 'center' : parseAlignFromNode(cell);
+            cellInner = `<w:p><w:pPr><w:jc w:val="${jc}"/><w:spacing w:after="40" w:line="240" w:lineRule="auto"/>${buildRunPrXml(fontName, cellPt * 2, isTh, false, false)}</w:pPr>${runs}</w:p>`;
+          }
+          if (!cellInner) cellInner = `<w:p><w:pPr>${buildRunPrXml(fontName, cellPt * 2, false, false, false)}</w:pPr></w:p>`;
+
+          cellsXml += `<w:tc><w:tcPr><w:tcW w:w="${spanW}" w:type="dxa"/>${gridSpanXml}${vMergeXml}${shdXml}<w:vAlign w:val="top"/></w:tcPr>${cellInner}</w:tc>`;
+          c += cs;
+          continue;
+        }
+        c++;
+      }
+      rowsXml += `<w:tr>${cellsXml}</w:tr>`;
+    }
+
+    return `<w:tbl><w:tblPr><w:tblW w:w="${TOTAL_DXA}" w:type="dxa"/>${bordersXml}<w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar></w:tblPr>${gridXml}${rowsXml}</w:tbl>`;
   }
 
   function convertHtmlToWordBodyXml(htmlString, fontName, defaultPt) {
