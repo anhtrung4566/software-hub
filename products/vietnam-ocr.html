@@ -151,12 +151,40 @@
             <span>🤖 AI Hiệu Chỉnh OCR</span>
           </button>
 
+          <button type="button" class="btn-tool primary" onclick="VietNamOcrIdpStudio && VietNamOcrIdpStudio.open(1)" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 10px 14px; font-size: 0.88rem; font-weight: 700;" title="Tóm tắt, Hỏi đáp dẫn chiếu đoạn, Trích xuất thực thể, Mục lục, So sánh 2 tài liệu & Kho lưu trữ cục bộ">
+            <span>🧠 AI Phân Tích &amp; Kho Tài Liệu</span>
+          </button>
+
+          <button type="button" class="btn-tool" onclick="VietNamOcrIdpStudio && VietNamOcrIdpStudio.open(2)" title="Tìm kiếm tài liệu đã OCR theo tên file, nội dung, ngày tháng, số văn bản, họ tên">
+            <span>🔍 Kho Tìm Kiếm</span>
+          </button>
+
           <button type="button" class="btn-tool primary" onclick="runVietnameseOcr(false)">
             <span>▶ Bắt Đầu OCR</span>
           </button>
 
+          <button type="button" class="btn-tool" onclick="if(window.VietNamOcrEnginePro){ const p=VietNamOcrEnginePro.togglePause(); this.textContent = p ? '▶ Tiếp tục' : '⏸ Tạm dừng'; }" title="Tạm dừng / tiếp tục hàng đợi nhiều file">
+            <span>⏸ Tạm dừng</span>
+          </button>
+
+          <button type="button" class="btn-tool" onclick="VietNamOcrEnginePro && VietNamOcrEnginePro.requestCancel()" title="Hủy tác vụ OCR hàng loạt đang chạy">
+            <span>⏹ Hủy</span>
+          </button>
+
+          <button type="button" class="btn-tool" onclick="VietNamOcrIdpStudio && VietNamOcrIdpStudio.exportOcrToDocx()" title="Xuất tệp Word chuẩn OOXML (.docx) có thể chỉnh sửa trực tiếp">
+            <span>📝 Xuất DOCX</span>
+          </button>
+
           <button type="button" class="btn-tool" onclick="exportOcrToTxt()">
-            <span>📄 Xuất TXT</span>
+            <span>📄 TXT</span>
+          </button>
+
+          <button type="button" class="btn-tool" onclick="VietNamOcrIdpStudio && VietNamOcrIdpStudio.exportOcrToMarkdown()">
+            <span>⬇ MD</span>
+          </button>
+
+          <button type="button" class="btn-tool" onclick="VietNamOcrIdpStudio && VietNamOcrIdpStudio.exportOcrToStructuredJson()">
+            <span>⬇ JSON</span>
           </button>
 
           <button type="button" class="btn-tool" onclick="rotateOcrImage(-90)">
@@ -391,12 +419,14 @@
     })();
   </script>
 
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/vietnamese-dictionary.js"></script>
-  <script src="../js/ocr-engine-pro.js?v=363"></script>
-  <script src="../js/ocr-ai-proofread.js?v=363"></script>
-  <script src="../js/ocr-app.js?v=363"></script>
-  <script src="../js/ocr-2layer-pdf.js?v=363"></script>
+  <script src="../js/ocr-engine-pro.js?v=364"></script>
+  <script src="../js/ocr-ai-proofread.js?v=364"></script>
+  <script src="../js/ocr-idp-studio.js?v=364"></script>
+  <script src="../js/ocr-app.js?v=364"></script>
+  <script src="../js/ocr-2layer-pdf.js?v=364"></script>
 </body>
 </html>
