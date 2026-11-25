@@ -1631,7 +1631,7 @@ namespace VBTMProSuite
             string ribbonXml =
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
-                "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 3.5 (05-HD &amp; NĐ30)\">" +
+                "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 3.6 (05-HD &amp; NĐ30)\">" +
                 "<group id=\"grpVbtmTemplates\" label=\"1. 16 Mẫu Chuẩn &amp; Đơn Vị\">" +
                 "<menu id=\"mnuVbtm16\" label=\"16 Mẫu Chuẩn (Đảng &amp; UBND)\" size=\"large\" imageMso=\"FileNewBlogPost\">" +
                 "<menuSeparator id=\"sepUbnd\" title=\"I. Khối HĐND &amp; UBND Phường (Nghị định 30/2020/NĐ-CP)\"/>" +
@@ -5329,7 +5329,49 @@ namespace VBTMProSuite
             catch { }
         }
 
+        private static bool TryAutoStartOllamaIfInstalled()
+        {
+            try
+            {
+                string localOllama = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Ollama", "ollama.exe");
+                string progOllama = @"C:\Program Files\Ollama\ollama.exe";
+                string exe = File.Exists(localOllama) ? localOllama : (File.Exists(progOllama) ? progOllama : null);
+                if (string.IsNullOrEmpty(exe)) return false;
+
+                ProcessStartInfo psi = new ProcessStartInfo(exe, "serve");
+                psi.WindowStyle = ProcessWindowStyle.Hidden;
+                psi.CreateNoWindow = true;
+                psi.UseShellExecute = false;
+                psi.EnvironmentVariables["OLLAMA_ORIGINS"] = "https://anhtrung4566.github.io,http://127.0.0.1:*,http://localhost:*";
+                Process.Start(psi);
+
+                for (int i = 0; i < 8; i++)
+                {
+                    System.Threading.Thread.Sleep(500);
+                    try
+                    {
+                        HttpWebRequest ping = (HttpWebRequest)WebRequest.Create(OllamaBaseUrl.TrimEnd('/') + "/api/tags");
+                        ping.Method = "GET";
+                        ping.Proxy = null;
+                        ping.Timeout = 1200;
+                        using (HttpWebResponse r = (HttpWebResponse)ping.GetResponse())
+                        {
+                            if ((int)r.StatusCode == 200) return true;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            return false;
+        }
+
         public static List<string> FetchOllamaModels(out string error)
+        {
+            return FetchOllamaModelsInternal(true, out error);
+        }
+
+        private static List<string> FetchOllamaModelsInternal(bool allowAutoStart, out string error)
         {
             error = null;
             List<string> models = new List<string>();
@@ -5362,11 +5404,17 @@ namespace VBTMProSuite
                 }
                 if (models.Count > 0 && (string.IsNullOrEmpty(SelectedOllamaModel) || !models.Contains(SelectedOllamaModel)))
                 {
-                    SelectedOllamaModel = models[0];
+                    // Ưu tiên qwen2.5:7b cho tiếng Việt chuẩn xác nếu đã cài, ngược lại chọn model đầu tiên
+                    string best = models.Find(m => m.StartsWith("qwen2.5:7b", StringComparison.OrdinalIgnoreCase));
+                    SelectedOllamaModel = !string.IsNullOrEmpty(best) ? best : models[0];
                 }
             }
             catch (Exception ex)
             {
+                if (allowAutoStart && TryAutoStartOllamaIfInstalled())
+                {
+                    return FetchOllamaModelsInternal(false, out error);
+                }
                 error = "Không kết nối được Ollama Local tại " + OllamaBaseUrl + " (" + ex.Message + ")";
             }
             return models;
@@ -5432,6 +5480,16 @@ namespace VBTMProSuite
 
             string model = (!string.IsNullOrEmpty(SelectedOllamaModel) && installed.Contains(SelectedOllamaModel))
                 ? SelectedOllamaModel : installed[0];
+            if (SpeedMode == "Nhanh")
+            {
+                string fastM = installed.Find(m => m.StartsWith("qwen2.5:3b", StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrEmpty(fastM)) model = fastM;
+            }
+            else
+            {
+                string deepM = installed.Find(m => m.StartsWith("qwen2.5:7b", StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrEmpty(deepM)) model = deepM;
+            }
             usedModel = model;
 
             int numPredict, numCtx;
@@ -5637,7 +5695,7 @@ namespace VBTMProSuite
         public MainStudioForm()
         {
             try { ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls; } catch { }
-            this.Text = "★ VBTM Pro v3.5.0 · Trợ Lý AI Ollama Local, Rà Soát & Thể Thức Văn Bản (05-HD/VPTW & NĐ 30/2020)";
+            this.Text = "★ VBTM Pro v3.6.0 · Trợ Lý AI Ollama Local (3b/7b), Rà Soát & Thể Thức Văn Bản (05-HD/VPTW & NĐ 30/2020)";
             this.ClientSize = new Size(1380, 800);
             this.MinimumSize = new Size(1120, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -5739,7 +5797,7 @@ namespace VBTMProSuite
 
             Label lblBrand = new Label
             {
-                Text = "★ VBTM Pro v3.5.0",
+                Text = "★ VBTM Pro v3.6.0",
                 Font = new Font("Segoe UI", 12.5f, FontStyle.Bold),
                 ForeColor = Color.FromArgb(250, 204, 21),
                 Location = new Point(10, 16),
