@@ -71,6 +71,70 @@ namespace VBTMProSuite
                     RunDesktopBenchmark();
                     return;
                 }
+                else if (a.Equals("--page-setup-word", StringComparison.OrdinalIgnoreCase))
+                {
+                    Application.Run(new PageSetupVisualForm());
+                    return;
+                }
+                else if (a.Equals("--settings-word", StringComparison.OrdinalIgnoreCase))
+                {
+                    Application.Run(new SystemAndTemplateSettingsForm(0));
+                    return;
+                }
+                else if (a.Equals("--rest-reminder", StringComparison.OrdinalIgnoreCase))
+                {
+                    Application.Run(new SystemAndTemplateSettingsForm(5));
+                    return;
+                }
+                else if (a.Equals("--shortcuts-word", StringComparison.OrdinalIgnoreCase))
+                {
+                    Application.Run(new WordShortcutsForm());
+                    return;
+                }
+                else if (a.Equals("--dict-word", StringComparison.OrdinalIgnoreCase))
+                {
+                    Application.Run(new SpellDictionaryManagerForm("manage"));
+                    return;
+                }
+                else if (a.Equals("--dict-add-good", StringComparison.OrdinalIgnoreCase))
+                {
+                    Application.Run(new SpellDictionaryManagerForm("add-good"));
+                    return;
+                }
+                else if (a.Equals("--dict-add-bad", StringComparison.OrdinalIgnoreCase))
+                {
+                    Application.Run(new SpellDictionaryManagerForm("add-bad"));
+                    return;
+                }
+                else if (a.Equals("--money-to-words", StringComparison.OrdinalIgnoreCase))
+                {
+                    WordQuickUtilities.ConvertSelectedMoneyToVietnameseWords();
+                    return;
+                }
+                else if (a.Equals("--del-comments-all", StringComparison.OrdinalIgnoreCase))
+                {
+                    WordQuickUtilities.DeleteWordComments(true);
+                    return;
+                }
+                else if (a.Equals("--del-comments-sel", StringComparison.OrdinalIgnoreCase))
+                {
+                    WordQuickUtilities.DeleteWordComments(false);
+                    return;
+                }
+                else if (a.Equals("--about-vbtm", StringComparison.OrdinalIgnoreCase))
+                {
+                    WordQuickUtilities.ShowAboutDialog();
+                    return;
+                }
+                else if (a.Equals("--test-money", StringComparison.OrdinalIgnoreCase))
+                {
+                    string outPath = Path.Combine(Path.GetTempPath(), "vbtm_test_money.txt");
+                    string[] cases = new string[] { "0", "15.500.000", "1.205.015", "21.000", "105.004.000", "1.000.000.000" };
+                    StringBuilder sbTest = new StringBuilder();
+                    foreach (string c in cases) sbTest.AppendLine(c + " => " + WordQuickUtilities.NumberToVietnameseMoney(c));
+                    File.WriteAllText(outPath, sbTest.ToString(), new UTF8Encoding(false));
+                    return;
+                }
                 else if (a.Equals("--insert-tpl", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
                     int.TryParse(args[++idx], out insertTplIdx);
             }
@@ -789,8 +853,27 @@ namespace VBTMProSuite
             sb.AppendLine("    On Error Resume Next");
             sb.AppendLine("    ExportWordSnapshotForApp");
             sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) = \"\" Then p = Environ(\"LOCALAPPDATA\") & \"\\VBTMPro\\VBTM-Pro.exe\"");
             sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" --qr-word\", vbNormalFocus Else Ribbon_MoVBTM control");
             sb.AppendLine("End Sub");
+            sb.AppendLine("Private Sub LaunchVbtmFlag(ByVal flagArg As String)");
+            sb.AppendLine("    On Error Resume Next");
+            sb.AppendLine("    Dim p As String: p = Environ(\"LOCALAPPDATA\") & \"\\Programs\\VBTM-Pro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) = \"\" Then p = Environ(\"LOCALAPPDATA\") & \"\\VBTMPro\\VBTM-Pro.exe\"");
+            sb.AppendLine("    If Dir(p) <> \"\" Then Shell \"\"\"\" & p & \"\"\" \" & flagArg, vbNormalFocus");
+            sb.AppendLine("End Sub");
+            sb.AppendLine("Sub Ribbon_DocTienSangChu(ByVal control As Object): LaunchVbtmFlag \"--money-to-words\": End Sub");
+            sb.AppendLine("Sub Ribbon_XoaNhanXetAll(ByVal control As Object): LaunchVbtmFlag \"--del-comments-all\": End Sub");
+            sb.AppendLine("Sub Ribbon_XoaNhanXetSel(ByVal control As Object): LaunchVbtmFlag \"--del-comments-sel\": End Sub");
+            sb.AppendLine("Sub Ribbon_PageSetupVisual(ByVal control As Object): LaunchVbtmFlag \"--page-setup-word\": End Sub");
+            sb.AppendLine("Sub Ribbon_SettingsSystem(ByVal control As Object): LaunchVbtmFlag \"--settings-word\": End Sub");
+            sb.AppendLine("Sub Ribbon_PhimTatWord(ByVal control As Object): LaunchVbtmFlag \"--shortcuts-word\": End Sub");
+            sb.AppendLine("Sub Ribbon_NhacNhoNghiNgoi(ByVal control As Object): LaunchVbtmFlag \"--rest-reminder\": End Sub");
+            sb.AppendLine("Sub Ribbon_ThongTinPhanMem(ByVal control As Object): LaunchVbtmFlag \"--about-vbtm\": End Sub");
+            sb.AppendLine("Sub Ribbon_DictAddGood(ByVal control As Object): LaunchVbtmFlag \"--dict-add-good\": End Sub");
+            sb.AppendLine("Sub Ribbon_DictAddBad(ByVal control As Object): LaunchVbtmFlag \"--dict-add-bad\": End Sub");
+            sb.AppendLine("Sub Ribbon_DictManage(ByVal control As Object): LaunchVbtmFlag \"--dict-word\": End Sub");
+            sb.AppendLine("Sub Ribbon_ChuanHoaFontDauCau(ByVal control As Object): SuaChinhTaVaDauCau_Word: End Sub");
             sb.AppendLine("");
             sb.AppendLine("Private Sub ShowUnicodeMsg(ByVal msgText As String)");
             sb.AppendLine("    On Error Resume Next");
@@ -1632,9 +1715,56 @@ namespace VBTMProSuite
                 "<customUI xmlns=\"http://schemas.microsoft.com/office/2009/07/customui\">" +
                 "<ribbon><tabs>" +
                 "<tab id=\"tabVbtmPro\" label=\"VBTM Pro 3.6 (05-HD &amp; NĐ30)\">" +
-                "<group id=\"grpVbtmTemplates\" label=\"1. 16 Mẫu Chuẩn &amp; Đơn Vị\">" +
-                "<menu id=\"mnuVbtm16\" label=\"16 Mẫu Chuẩn (Đảng &amp; UBND)\" size=\"large\" imageMso=\"FileNewBlogPost\">" +
-                "<menuSeparator id=\"sepUbnd\" title=\"I. Khối HĐND &amp; UBND Phường (Nghị định 30/2020/NĐ-CP)\"/>" +
+                // GROUP 1: Bảng Điều Khiển
+                "<group id=\"grpVbtmDashboard\" label=\"Bảng Điều Khiển\">" +
+                "<button id=\"btnVbtmStudio\" label=\"Mở Bảng Điều Khiển\" size=\"large\" imageMso=\"WindowSideBySide\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở trung tâm VBTM Pro Studio 3.6 với thanh công cụ AI Local (Ollama) và bộ chuẩn hóa toàn diện.\"/>" +
+                "</group>" +
+                // GROUP 2: Biên Tập & Soát Lỗi (Images 1 & 9)
+                "<group id=\"grpVbtmEditSpell\" label=\"Biên Tập &amp; Soát Lỗi\">" +
+                "<button id=\"btnVbtmFontPunct\" label=\"Chuẩn Hóa Font, Dấu Câu Từ\" size=\"large\" imageMso=\"FontColorAutomatic\" onAction=\"Ribbon_ChuanHoaFontDauCau\" supertip=\"Chuẩn hóa Font Times New Roman, bỏ khoảng trắng thừa và sửa dấu câu chuẩn tiếng Việt.\"/>" +
+                "<menu id=\"mnuVbtmFormatAI\" label=\"Chuẩn Hóa Văn Bản AI\" size=\"large\" imageMso=\"FileDocumentInspect\" supertip=\"Chuẩn hóa văn bản theo Hướng dẫn 05-HD/VPTW, Nghị định 30/2020/NĐ-CP, CAND và Trợ lý AI Local.\">" +
+                "<button id=\"btnVbtmDangFast\" label=\"⭐ Chuẩn Hóa Văn Bản Đảng (05-HD/VPTW)\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\"/>" +
+                "<button id=\"btnVbtmNd30\" label=\"🏛️ Chuẩn Hóa Văn Bản Hành Chính (NĐ 30/2020)\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\"/>" +
+                "<button id=\"btnVbtmAutoNorm\" label=\"⚡ Tự Động Chuẩn Hóa Thông Minh\" imageMso=\"AutoFormat\" onAction=\"Ribbon_ChuanHoaTuDong\"/>" +
+                "<menuSeparator id=\"sepAiTools\" title=\"Trợ Lý AI Offline (Ollama Local)\"/>" +
+                "<button id=\"btnVbtmSummary\" label=\"📝 AI Tóm Tắt Văn Bản Đang Mở\" imageMso=\"OutlineShowDetail\" onAction=\"Ribbon_AiTomTatVanBan\"/>" +
+                "<button id=\"btnVbtmAiDraft\" label=\"🤖 AI Soạn Thảo &amp; Viết Lại Đoạn Văn\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_AISoanThao\"/>" +
+                "</menu>" +
+                "<menu id=\"mnuVbtmSpellAI\" label=\"Kiểm Tra Chính Tả AI\" size=\"large\" imageMso=\"SpellingAndGrammar\" supertip=\"Kiểm tra chính tả AI Offline &amp; quản lý từ điển từ đúng / từ sai cố định của đơn vị.\">" +
+                "<button id=\"btnVbtmSpellRun\" label=\"Kiểm tra chính tả AI (Khởi chạy)\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_RaSoatChinhTaAI\"/>" +
+                "<menuSeparator id=\"sepDictTools\"/>" +
+                "<button id=\"btnVbtmDictGood\" label=\"Thêm từ đúng vào từ điển...\" imageMso=\"AddDigitalSignature\" onAction=\"Ribbon_DictAddGood\"/>" +
+                "<button id=\"btnVbtmDictBad\" label=\"Đánh dấu từ sai (từ sai cố định)...\" imageMso=\"Delete\" onAction=\"Ribbon_DictAddBad\"/>" +
+                "<button id=\"btnVbtmDictManage\" label=\"Quản lý từ điển chính tả...\" imageMso=\"ResearchPane\" onAction=\"Ribbon_DictManage\"/>" +
+                "</menu>" +
+                "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Code\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 gắn trực tiếp vào văn bản Word.\"/>" +
+                "<button id=\"btnVbtmMoney\" label=\"Đọc tiền sang chữ\" size=\"normal\" imageMso=\"AccountingNumberFormat\" onAction=\"Ribbon_DocTienSangChu\" supertip=\"Đổi số tiền đang bôi đen trong Word thành chữ tiếng Việt chuẩn hành chính (VD: 15.500.000 -&gt; Mười lăm triệu năm trăm nghìn đồng).\"/>" +
+                "<menu id=\"mnuVbtmDelComments\" label=\"Xóa nhận xét\" size=\"normal\" imageMso=\"ReviewDeleteComment\" supertip=\"Xóa nhanh các nhận xét (Comments) trong vùng chọn hoặc toàn bộ tài liệu Word.\">" +
+                "<button id=\"btnDelCmtSel\" label=\"Xóa nhận xét trong vùng đang chọn\" imageMso=\"ReviewDeleteComment\" onAction=\"Ribbon_XoaNhanXetSel\"/>" +
+                "<button id=\"btnDelCmtAll\" label=\"Xóa toàn bộ nhận xét trong văn bản\" imageMso=\"ReviewDeleteAllCommentsInDocument\" onAction=\"Ribbon_XoaNhanXetAll\"/>" +
+                "</menu>" +
+                "</group>" +
+                // GROUP 3: Trang In & Bố Cục
+                "<group id=\"grpVbtmPageLayout\" label=\"Trang In &amp; Bố Cục\">" +
+                "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang\" size=\"large\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\" supertip=\"Tự động đánh số trang chuẩn NĐ 30 &amp; 05-HD/VPTW (ẩn trang 1, canh giữa lề trên từ trang 2).\"/>" +
+                "<menu id=\"mnuVbtmMargins\" label=\"Chuẩn Hóa Lề A4\" size=\"large\" imageMso=\"PageMarginsGallery\" supertip=\"Mở hộp thoại Thiết lập Căn lề &amp; Khổ giấy trực quan hoặc căn nhanh 20-20-30-15mm.\">" +
+                "<button id=\"btnMarginVisual\" label=\"📐 Thiết lập Căn lề &amp; Khổ giấy (Trực quan)...\" imageMso=\"PageSetupPageDialog\" onAction=\"Ribbon_PageSetupVisual\"/>" +
+                "<button id=\"btnMarginQuick\" label=\"⚡ Căn lề nhanh NĐ 30 / HD 05 (20-20-30-15mm)\" imageMso=\"PageMarginsGallery\" onAction=\"Ribbon_CanLeA4\"/>" +
+                "</menu>" +
+                "<menu id=\"mnuVbtmPageOps\" label=\"Thao Tác Trang\" size=\"large\" imageMso=\"FilePrintPreview\" supertip=\"Nối dòng PDF bị ngắt, chèn bảng chuẩn 13pt, xuất PDF ký số và thống kê trang/từ.\">" +
+                "<button id=\"btnVbtmMergePdf\" label=\"Nối Dòng PDF Bị Ngắt\" imageMso=\"WrapText\" onAction=\"Ribbon_NoiDongPDF\"/>" +
+                "<button id=\"btnVbtmTbl\" label=\"Chèn Bảng Chuẩn 13pt (Tự lặp tiêu đề)\" imageMso=\"TableInsert\" onAction=\"Ribbon_ChenBangChuan\"/>" +
+                "<button id=\"btnVbtmPdf\" label=\"Xuất PDF Ký Số Nhanh\" imageMso=\"FileSaveAsPdfOrXps\" onAction=\"Ribbon_XuatPDFNhanh\"/>" +
+                "<button id=\"btnVbtmStat\" label=\"Thống Kê Trang &amp; Từ\" imageMso=\"WordCount\" onAction=\"Ribbon_ThongKeVanBan\"/>" +
+                "</menu>" +
+                "</group>" +
+                // GROUP 4: Chèn Thể Thức & Quản Lý
+                "<group id=\"grpVbtmTemplatesManage\" label=\"Chèn Thể Thức &amp; Quản Lý\">" +
+                "<menu id=\"mnuVbtmInsertFormat\" label=\"Chèn Thể Thức\" size=\"large\" imageMso=\"FileNewBlogPost\" supertip=\"Chèn 16 mẫu văn bản chuẩn Đảng/UBND, Tiêu ngữ và Dấu Khẩn/Mật.\">" +
+                "<menuSeparator id=\"sepTieuNgu\" title=\"I. Chèn Tiêu Ngữ Nhanh\"/>" +
+                "<button id=\"btnTnDang\" label=\"⭐ Chèn Tiêu Ngữ Khối Đảng (05-HD/VPTW)\" tag=\"dang\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<button id=\"btnTnUbnd\" label=\"🏛️ Chèn Tiêu Ngữ Khối UBND / Hành Chính (NĐ 30)\" tag=\"ubnd\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
+                "<menuSeparator id=\"sepUbnd\" title=\"II. Khối HĐND &amp; UBND Phường (Nghị định 30/2020/NĐ-CP)\"/>" +
                 "<button id=\"btnTpl0\" label=\"1. Công văn UBND Phường\" tag=\"0\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl1\" label=\"2. Báo cáo UBND Phường\" tag=\"1\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl2\" label=\"3. Quyết định (cá biệt) UBND\" tag=\"2\" onAction=\"Ribbon_InsertTpl\"/>" +
@@ -1645,54 +1775,31 @@ namespace VBTMProSuite
                 "<button id=\"btnTpl7\" label=\"8. Nghị quyết HĐND Phường\" tag=\"7\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl8\" label=\"9. Biên bản họp UBND Phường\" tag=\"8\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl9\" label=\"10. Giấy mời họp UBND Phường\" tag=\"9\" onAction=\"Ribbon_InsertTpl\"/>" +
-                "<menuSeparator id=\"sepDang\" title=\"II. Khối Đảng Ủy &amp; Chi Bộ (Hướng dẫn 05-HD/VPTW)\"/>" +
+                "<menuSeparator id=\"sepDang\" title=\"III. Khối Đảng Ủy &amp; Chi Bộ (Hướng dẫn 05-HD/VPTW)\"/>" +
                 "<button id=\"btnTpl10\" label=\"11. Công văn Đảng ủy Phường\" tag=\"10\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl11\" label=\"12. Báo cáo Đảng ủy Phường\" tag=\"11\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl12\" label=\"13. Nghị quyết Đảng ủy / Chi bộ\" tag=\"12\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl13\" label=\"14. Kế hoạch Đảng ủy Phường\" tag=\"13\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl14\" label=\"15. Chương trình công tác Đảng ủy\" tag=\"14\" onAction=\"Ribbon_InsertTpl\"/>" +
                 "<button id=\"btnTpl15\" label=\"16. Quyết định Đảng ủy Phường\" tag=\"15\" onAction=\"Ribbon_InsertTpl\"/>" +
-                "</menu>" +
-                "<button id=\"btnVbtmUnitCfg\" label=\"Cài Đặt Đơn Vị\" size=\"large\" imageMso=\"FileDocumentManagementInformation\" onAction=\"Ribbon_CaiDatDonVi\" supertip=\"Thiết lập tên Đảng ủy, Chi bộ, UBND Phường, Tiêu ngữ, Địa danh và Người ký mặc định.\"/>" +
-                "</group>" +
-                "<group id=\"grpVbtmFormat\" label=\"2. Thể Thức (05-HD &amp; NĐ 30)\">" +
-                "<button id=\"btnVbtmDangFast\" label=\"Chuẩn Hóa Đảng (05-HD/VPTW)\" size=\"large\" imageMso=\"HappyFace\" onAction=\"Ribbon_ChinhDangNhanh\" supertip=\"Chuẩn hóa văn bản Word đang mở theo Hướng dẫn số 05-HD/VPTW (khổ A4, Times New Roman 14pt, lề chuẩn, số trang từ trang 2).\"/>" +
-                "<button id=\"btnVbtmNd30\" label=\"Chuẩn Hóa NĐ 30/2020\" size=\"large\" imageMso=\"FileDocumentInspect\" onAction=\"Ribbon_NghiDinh30\" supertip=\"Chuẩn hóa văn bản hành chính đang mở theo Nghị định 30/2020/NĐ-CP.\"/>" +
-                "<menu id=\"mnuVbtmTieuNgu\" label=\"Chèn Tiêu Ngữ\" size=\"normal\" imageMso=\"HeaderFooterInsert\" supertip=\"Chèn nhanh Tiêu ngữ Khối Đảng (05-HD/VPTW) hoặc Khối UBND (NĐ 30/2020).\">" +
-                "<button id=\"btnTnDang\" label=\"⭐ Chèn Tiêu Ngữ Khối Đảng (05-HD/VPTW)\" tag=\"dang\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
-                "<button id=\"btnTnUbnd\" label=\"🏛️ Chèn Tiêu Ngữ Khối UBND / Hành Chính (NĐ 30)\" tag=\"ubnd\" onAction=\"Ribbon_TuDongHoaTieuNgu\"/>" +
-                "</menu>" +
-                "<button id=\"btnVbtmAudit\" label=\"Kiểm Định Thể Thức (%)\" size=\"normal\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\" supertip=\"Kiểm tra tuân thủ thể thức 05-HD/VPTW &amp; NĐ 30/2020/NĐ-CP mà không tự ý sửa nội dung.\"/>" +
-                "<button id=\"btnVbtmConvert\" label=\"Đổi Đảng &lt;-&gt; Hành Chính\" size=\"normal\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\" supertip=\"Chuyển đổi thể thức &amp; thuật ngữ qua lại giữa Khối Đảng (05-HD) và UBND (NĐ 30).\"/>" +
-                "<button id=\"btnVbtmMargins\" label=\"Căn Lề A4 (30-15-20-20)\" size=\"normal\" imageMso=\"PageMarginsGallery\" onAction=\"Ribbon_CanLeA4\"/>" +
-                "<button id=\"btnVbtmPageNum\" label=\"Đánh Số Trang (Từ Tr.2)\" size=\"normal\" imageMso=\"HeaderFooterPageNumberInsert\" onAction=\"Ribbon_DanhSoTrang\"/>" +
-                "</group>" +
-                "<group id=\"grpVbtmTools\" label=\"3. Rà Soát &amp; Trợ Lý AI\">" +
-                "<button id=\"btnVbtmSpellAI\" label=\"Rà Soát Chính Tả AI\" size=\"large\" imageMso=\"SpellingAndGrammar\" onAction=\"Ribbon_RaSoatChinhTaAI\" supertip=\"Rà soát lỗi chính tả &amp; gợi ý sửa đổi trực tiếp trong tài liệu Word đang mở.\"/>" +
-                "<button id=\"btnVbtmSummary\" label=\"AI Tóm Tắt Văn Bản\" size=\"large\" imageMso=\"OutlineShowDetail\" onAction=\"Ribbon_AiTomTatVanBan\" supertip=\"AI đọc nhanh văn bản đang mở và trích xuất các điểm trọng tâm.\"/>" +
-                "<button id=\"btnVbtmStudio\" label=\"Mở VBTM Pro Studio (AI Local)\" size=\"large\" imageMso=\"QuickPartsInsertGallery\" onAction=\"Ribbon_MoVBTM\" supertip=\"Mở ứng dụng VBTM Pro v3.5.0 với thanh công cụ AI 9 nút (Ollama Local) và Panel AI streaming.\"/>" +
-                "</group>" +
-                "<group id=\"grpVbtmStudio\" label=\"4. Trình Bày &amp; Xuất Bản\">" +
-                "<button id=\"btnVbtmMergePdf\" label=\"Nối Dòng PDF Bị Ngắt\" size=\"normal\" imageMso=\"WrapText\" onAction=\"Ribbon_NoiDongPDF\"/>" +
-                "<button id=\"btnVbtmTbl\" label=\"Chèn Bảng Chuẩn 13pt\" size=\"normal\" imageMso=\"TableInsert\" onAction=\"Ribbon_ChenBangChuan\" supertip=\"Chèn bảng thống kê Times New Roman 13pt tự động lặp dòng tiêu đề khi sang trang.\"/>" +
-                "<menu id=\"mnuVbtmKhanMat\" label=\"Dấu Khẩn / Mật\" size=\"normal\" imageMso=\"HighImportance\" supertip=\"Chèn nhanh khung đóng dấu Độ Khẩn hoặc Độ Mật chuẩn Unicode.\">" +
-                "<menuSeparator id=\"sepKhan\" title=\"I. Dấu Độ Khẩn\"/>" +
+                "<menuSeparator id=\"sepKhanMat\" title=\"IV. Chèn Dấu Khẩn / Mật Chuẩn\"/>" +
                 "<button id=\"btnKm1\" label=\"KHẨN\" tag=\"1\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm2\" label=\"THƯỢNG KHẨN\" tag=\"2\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm3\" label=\"HỎA TỐC\" tag=\"3\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
-                "<button id=\"btnKm4\" label=\"HỎA TỐC HẸN GIỜ\" tag=\"4\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
-                "<menuSeparator id=\"sepMat\" title=\"II. Dấu Độ Mật\"/>" +
                 "<button id=\"btnKm5\" label=\"MẬT\" tag=\"5\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm6\" label=\"TỐI MẬT\" tag=\"6\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "<button id=\"btnKm7\" label=\"TUYỆT MẬT\" tag=\"7\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
-                "<menuSeparator id=\"sepPos\" title=\"III. Đặt Vị Trí Khung\"/>" +
-                "<button id=\"btnKmPos1\" label=\"↖ Đặt Góc Trên Trái Trang\" tag=\"pos1\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
-                "<button id=\"btnKmPos2\" label=\"↙ Đặt Dưới Số Ký Hiệu\" tag=\"pos2\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
-                "<button id=\"btnKmPos3\" label=\"↗ Đặt Góc Trên Phải Trang\" tag=\"pos3\" onAction=\"Ribbon_ChenDoKhanMat\"/>" +
                 "</menu>" +
-                "<button id=\"btnVbtmPdf\" label=\"Xuất PDF Ký Số\" size=\"normal\" imageMso=\"FileSaveAsPdfOrXps\" onAction=\"Ribbon_XuatPDFNhanh\"/>" +
-                "<button id=\"btnVbtmStat\" label=\"Thống Kê Trang &amp; Từ\" size=\"normal\" imageMso=\"WordCount\" onAction=\"Ribbon_ThongKeVanBan\"/>" +
-                "<button id=\"btnVbtmQr\" label=\"Tạo Mã QR Văn Bản\" size=\"large\" imageMso=\"BarcodeInsert\" onAction=\"Ribbon_ChenMaQR\" supertip=\"Tạo mã QR chuẩn quốc tế ISO 18004 gắn vào văn bản Word.\"/>" +
+                "<button id=\"btnVbtmSettings\" label=\"Cài Đặt\" size=\"large\" imageMso=\"FileDocumentManagementInformation\" onAction=\"Ribbon_SettingsSystem\" supertip=\"Mở Cài đặt Hệ thống &amp; Mẫu Thể thức (NĐ 30, HD 05-HD/VPTW, CAND, Quốc hiệu, Chữ ký, Nhắc nghỉ ngơi).\"/>" +
+                "<menu id=\"mnuVbtmSysUtils\" label=\"Tiện Ích Hệ Thống\" size=\"large\" imageMso=\"ControlToolboxOutlook\" supertip=\"Các phím tắt trong Word, Nhắc nhở nghỉ ngơi, Kiểm định thể thức (%) và Đổi Đảng &lt;-&gt; Hành chính.\">" +
+                "<button id=\"btnVbtmShortcuts\" label=\"⌨️ Các phím tắt trong Word\" imageMso=\"KeyboardShortcuts\" onAction=\"Ribbon_PhimTatWord\"/>" +
+                "<button id=\"btnVbtmRest\" label=\"☕ Nhắc nhở nghỉ ngơi &amp; Bảo vệ mắt\" imageMso=\"Reminder\" onAction=\"Ribbon_NhacNhoNghiNgoi\"/>" +
+                "<menuSeparator id=\"sepAuditTools\" title=\"Kiểm định &amp; Chuyển đổi\"/>" +
+                "<button id=\"btnVbtmAudit\" label=\"📊 Kiểm Định Thể Thức (%)\" imageMso=\"ReviewCompareTwoVersions\" onAction=\"Ribbon_KiemDinhTheThuc\"/>" +
+                "<button id=\"btnVbtmConvert\" label=\"🔄 Đổi Đảng &lt;-&gt; Hành Chính\" imageMso=\"ChangeStyles\" onAction=\"Ribbon_ChuyenDoiDangHanhChinh\"/>" +
+                "<button id=\"btnVbtmUnitLegacy\" label=\"🏢 Thiết lập nhanh Đơn vị (Đảng/UBND)\" imageMso=\"FileProperties\" onAction=\"Ribbon_CaiDatDonVi\"/>" +
+                "</menu>" +
+                "<button id=\"btnVbtmAbout\" label=\"Thông tin Phần Mềm\" size=\"large\" imageMso=\"Help\" onAction=\"Ribbon_ThongTinPhanMem\" supertip=\"Thông tin phiên bản VBTM Pro 3.6 Offline Edition (NĐ 30, 05-HD/VPTW, CAND).\"/>" +
                 "</group>" +
                 "</tab></tabs></ribbon></customUI>";
 
@@ -4187,6 +4294,7 @@ namespace VBTMProSuite
         {
             if (string.IsNullOrEmpty(wrong) || string.Equals(wrong, suggest, StringComparison.Ordinal)) return;
             if (ignoredKeys.Contains(wrong)) return;
+            if (VbtmCustomDictStore.IsGoodWord(wrong)) return;
             foreach (var it in issues)
             {
                 if (string.Equals(it.Wrong, wrong, StringComparison.Ordinal)) return;
@@ -4278,6 +4386,15 @@ namespace VBTMProSuite
                 }
                 docText = docText.Normalize(NormalizationForm.FormC);
                 currentDocText = docText;
+
+                // 0. Quét từ sai cố định do người dùng tự khai báo trong Từ điển Chính tả
+                foreach (KeyValuePair<string, string> kv in VbtmCustomDictStore.LoadBadWords())
+                {
+                    foreach (Match m in Regex.Matches(docText, @"(?<![A-Za-zÀ-Ỹà-ỹĐđ])" + Regex.Escape(kv.Key) + @"(?![A-Za-zÀ-Ỹà-ỹĐđ])", RegexOptions.IgnoreCase))
+                    {
+                        AddIssue("Từ sai cố định", m.Value, kv.Value, "Nằm trong danh sách từ sai cố định của đơn vị", ExtractContextSnippet(docText, m.Index, m.Length), true);
+                    }
+                }
 
                 // 1. Quét 150+ quy tắc chính tả hành chính & Đảng (s/x, ch/tr, hỏi/ngã, thiếu dấu, từ sai...)
                 for (int r = 0; r < InspectorRules.GetLength(0); r++)
