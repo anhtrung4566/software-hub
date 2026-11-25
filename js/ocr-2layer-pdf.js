@@ -160,8 +160,16 @@
       if (!rawTxt) continue;
       const drawTxt = hasUnicodeFont ? rawTxt : stripVietnameseFallback(rawTxt);
       const box = ln.bbox || { x0: imgW * 0.08, y0: 40, x1: imgW * 0.92, y1: 60 };
+      const boxW = Math.max(8, (box.x1 - box.x0) * scaleX);
       const boxH = Math.max(8, (box.y1 - box.y0) * scaleY);
-      const fontSize = Math.max(6.5, Math.min(28, boxH * 0.82));
+      let fontSize = Math.max(6, Math.min(28, boxH * 0.84));
+      // Tự co giãn fontSize theo bề rộng bbox thực để bôi đen & Ctrl+F khớp đúng vị trí từng chữ trên ảnh scan
+      try {
+        const measuredW = embeddedFont.widthOfTextAtSize(drawTxt, fontSize);
+        if (measuredW > boxW * 1.06 && measuredW > 0) {
+          fontSize = Math.max(5.5, fontSize * (boxW / measuredW));
+        }
+      } catch (e) {}
       const pdfX = Math.max(4, Math.min(pageW - 20, box.x0 * scaleX));
       // Hệ tọa độ PDF gốc ở góc dưới trái, ngược trục Y với Canvas
       const pdfY = Math.max(4, Math.min(pageH - fontSize, pageH - (box.y1 * scaleY) + (boxH * 0.12)));
