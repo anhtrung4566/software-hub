@@ -16,42 +16,71 @@
 
   let cachedFontBytes = null;
 
-  // Lưu cache kết quả OCR (ảnh canvas + tọa độ bbox dòng) cho ảnh đơn lẻ hoặc từng trang PDF
+  // Lưu cache kết quả OCR (ảnh canvas + tọa độ bbox dòng) cho ảnh đơn lẻ hoặc TẤT CẢ các trang PDF
   const pageStore = {
-    singlePage: null // { imageDataUrl, width, height, lines: [{ text, bbox }] }
+    singlePage: null, // { imageDataUrl, width, height, text, lines: [{ text, bbox }] }
+    multiPages: []    // Array of { pageNum, imageDataUrl, width, height, text, lines }
   };
+
+  function clearMultiPageStore() {
+    pageStore.multiPages = [];
+  }
+
+  function buildScaledLines(tesseractLines, dstW, dstH, bboxSrcW, bboxSrcH) {
+    const sx = (bboxSrcW && bboxSrcW > 0) ? (dstW / bboxSrcW) : 1;
+    const sy = (bboxSrcH && bboxSrcH > 0) ? (dstH / bboxSrcH) : 1;
+    const cleanLines = [];
+    if (Array.isArray(tesseractLines) && tesseractLines.length > 0) {
+      tesseractLines.forEach(l => {
+        const t = String(l && l.text || '').replace(/\r?\n/g, ' ').trim();
+        if (t && l.bbox) {
+          cleanLines.push({
+            text: t.normalize('NFC'),
+            bbox: {
+              x0: (Number(l.bbox.x0) || 0) * sx,
+              y0: (Number(l.bbox.y0) || 0) * sy,
+              x1: (Number(l.bbox.x1) || dstW) * sx,
+              y1: (Number(l.bbox.y1) || 20) * sy
+            }
+          });
+        }
+      });
+    }
+    return cleanLines;
+  }
 
   function recordSinglePageOcr(canvas, text, tesseractLines, bboxSrcW, bboxSrcH) {
     if (!canvas) return;
     try {
       const dstW = canvas.width || 1240;
       const dstH = canvas.height || 1754;
-      const sx = (bboxSrcW && bboxSrcW > 0) ? (dstW / bboxSrcW) : 1;
-      const sy = (bboxSrcH && bboxSrcH > 0) ? (dstH / bboxSrcH) : 1;
-      const cleanLines = [];
-      if (Array.isArray(tesseractLines) && tesseractLines.length > 0) {
-        tesseractLines.forEach(l => {
-          const t = String(l && l.text || '').replace(/\r?\n/g, ' ').trim();
-          if (t && l.bbox) {
-            cleanLines.push({
-              text: t.normalize('NFC'),
-              bbox: {
-                x0: (Number(l.bbox.x0) || 0) * sx,
-                y0: (Number(l.bbox.y0) || 0) * sy,
-                x1: (Number(l.bbox.x1) || dstW) * sx,
-                y1: (Number(l.bbox.y1) || 20) * sy
-              }
-            });
-          }
-        });
-      }
       pageStore.singlePage = {
         imageDataUrl: canvas.toDataURL('image/jpeg', 0.90),
         width: dstW,
         height: dstH,
         text: String(text || '').normalize('NFC'),
-        lines: cleanLines
+        lines: buildScaledLines(tesseractLines, dstW, dstH, bboxSrcW, bboxSrcH)
       };
+    } catch (e) {}
+  }
+
+  function recordPdfPageOcr(pageNum, canvas, text, lines, bboxSrcW, bboxSrcH) {
+    if (!canvas) return;
+    try {
+      const dstW = canvas.width || 1240;
+      const dstH = canvas.height || 1754;
+      const entry = {
+        pageNum: Number(pageNum) || (pageStore.multiPages.length + 1),
+        imageDataUrl: canvas.toDataURL('image/jpeg', 0.88),
+        width: dstW,
+        height: dstH,
+        text: String(text || '').normalize('NFC'),
+        lines: buildScaledLines(lines, dstW, dstH, bboxSrcW, bboxSrcH)
+      };
+      const idx = pageStore.multiPages.findIndex(p => p.pageNum === entry.pageNum);
+      if (idx >= 0) pageStore.multiPages[idx] = entry;
+      else pageStore.multiPages.push(entry);
+      pageStore.multiPages.sort((a, b) => a.pageNum - b.pageNum);
     } catch (e) {}
   }
 
@@ -190,13 +219,24 @@
 
       const pagesToBuild = [];
 
-      // Trường hợp 1: Đang mở tệp PDF nhiều trang bằng PDF.js
-      if (typeof global.loadedPdfDoc !== 'undefined' && global.loadedPdfDoc && global.loadedPdfDoc.numPages > 0) {
+      // Trường hợp 1: Đã có cache đầy đủ TẤT CẢ các trang PDF từ lúc tải tệp -> xuất tức thì toàn bộ 100% số trang!
+      if (pageStore.multiPages.length > 0 && (!global.loadedPdfDoc || pageStore.multiPages.length >= global.loadedPdfDoc.numPages)) {
+        for (let i = 0; i < pageStore.multiPages.length; i++) {
+          setStatus(`Đang đóng gói PDF 2 lớp — trang ${i + 1}/${pageStore.multiPages.length}...`, Math.round(20 + ((i + 1) / pageStore.multiPages.length) * 65));
+          pagesToBuild.push(pageStore.multiPages[i]);
+        }
+      } else if (typeof global.loadedPdfDoc !== 'undefined' && global.loadedPdfDoc && global.loadedPdfDoc.numPages > 0) {
+        // Trường hợp 2: Đang mở tệp PDF nhiều trang bằng PDF.js -> duyệt từng trang 1..numPages
         const total = global.loadedPdfDoc.numPages;
         for (let p = 1; p <= total; p++) {
+          const cached = pageStore.multiPages.find(x => x.pageNum === p);
+          if (cached) {
+            pagesToBuild.push(cached);
+            continue;
+          }
           setStatus(`Đang xử lý PDF 2 lớp — trang ${p}/${total}...`, Math.round(15 + (p / total) * 70));
           const pdfPage = await global.loadedPdfDoc.getPage(p);
-          const vp = pdfPage.getViewport({ scale: 1.6 });
+          const vp = pdfPage.getViewport({ scale: 2.0 });
           const off = document.createElement('canvas');
           off.width = Math.round(vp.width);
           off.height = Math.round(vp.height);
@@ -205,7 +245,6 @@
           ctx.fillRect(0, 0, off.width, off.height);
           await pdfPage.render({ canvasContext: ctx, viewport: vp }).promise;
 
-          // Lấy lớp chữ sẵn có trong PDF hoặc chạy Tesseract v5 nếu là trang scan ảnh
           let pageLines = [];
           let pageText = '';
           const tc = await pdfPage.getTextContent();
@@ -225,9 +264,10 @@
             });
           }
 
-          if (pageLines.length < 2 && global.Tesseract) {
+          const badChars = (pageText.match(/\uFFFD/g) || []).length;
+          if ((pageLines.length < 2 || badChars > 3) && global.Tesseract) {
             setStatus(`Trang ${p}/${total} là ảnh scan — đang OCR tiếng Việt tạo lớp chữ ẩn...`, Math.round(15 + (p / total) * 70));
-            const ocrRes = await global.Tesseract.recognize(off, 'vie');
+            const ocrRes = await global.Tesseract.recognize(off, 'vie', { preserve_interword_spaces: '1' });
             pageText = String(ocrRes?.data?.text || '').normalize('NFC');
             const tLines = ocrRes?.data?.lines || [];
             pageLines = tLines.filter(l => l && l.text && l.text.trim() && l.bbox).map(l => ({
@@ -300,6 +340,8 @@
 
   global.VietNamOcr2LayerPdf = {
     recordSinglePageOcr,
+    recordPdfPageOcr,
+    clearMultiPageStore,
     exportSearchableTwoLayerPdf
   };
   global.exportOcrToTwoLayerPdf = exportSearchableTwoLayerPdf;
