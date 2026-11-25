@@ -39,7 +39,7 @@ namespace VBTM.OfficeIntegration
 
     static class Program
     {
-        public const string APP_VERSION = "3.5.0";
+        public const string APP_VERSION = "3.6.0";
         public const string BASE_HTTPS_URL = "https://anhtrung4566.github.io/software-hub/office-addins/";
 
         [STAThread]
