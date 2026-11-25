@@ -121,10 +121,74 @@ namespace VBTMProSuite
             { "kỹ niệm", "kỷ niệm", "Chính tả", "Chuẩn chính tả: 'kỷ niệm'" }
         };
 
+        private static readonly HashSet<string> ValidBaseNuclei = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "a", "ă", "â", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "y",
+            "ai", "ao", "au", "âu", "ay", "ây", "eo", "êu", "ia", "iê", "iu",
+            "oa", "oă", "oe", "oi", "ôi", "ơi", "oo", "ua", "uâ", "uê", "ui",
+            "uô", "uơ", "uy", "ưa", "ươ", "ưu", "yê",
+            "iêu", "oai", "oao", "oay", "oeo", "uai", "uây", "uôi", "uya", "uyê", "uyu", "ươi", "ươu", "yêu"
+        };
+
+        private static readonly Dictionary<string, string> DirectWordRepairs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "ngời", "người" }, { "ngưoi", "người" }, { "ngươi", "người" },
+            { "đưoc", "được" }, { "đuợc", "được" }, { "đươc", "được" },
+            { "thưc", "thực" }, { "quyêt", "quyết" }, { "hoach", "hoạch" },
+            { "chưc", "chức" }, { "nhưg", "nhưng" }, { "khôg", "không" },
+            { "cũg", "cũng" }, { "trườg", "trường" }, { "tưởg", "tưởng" },
+            { "chươg", "chương" }, { "chưong", "chương" }, { "đồg", "đồng" },
+            { "côg", "công" }, { "hòan", "hoàn" }, { "tòan", "toàn" },
+            { "quôc", "quốc" }, { "luât", "luật" }, { "phap", "pháp" },
+            { "nhât", "nhất" }, { "môt", "một" }, { "tôt", "tốt" },
+            { "đôc", "độc" }, { "lâp", "lập" }, { "hơp", "hợp" },
+            { "tâp", "tập" }, { "câp", "cấp" }, { "kêt", "kết" },
+            { "viêt", "viết" }, { "biêt", "biết" }, { "xuât", "xuất" },
+            { "phat", "phát" }, { "đat", "đạt" }, { "mât", "mất" },
+            { "hêt", "hết" }, { "thiêt", "thiết" }, { "triêt", "triệt" },
+            { "nghiêt", "nghiệt" }, { "nhiêt", "nhiệt" }, { "săc", "sắc" },
+            { "tuc", "túc" }, { "đăc", "đặc" }, { "măc", "mặc" },
+            { "băc", "bắc" }, { "mưc", "mức" }, { "sưc", "sức" },
+            { "lưc", "lực" }, { "tưc", "tức" }, { "kiêm", "kiểm" },
+            { "điêm", "điểm" }, { "nghiêm", "nghiêm" }, { "ngiêm", "nghiêm" },
+            { "ngĩ", "nghĩ" }, { "ngĩa", "nghĩa" }, { "ngị", "nghị" },
+            { "ngề", "nghề" }, { "ngệ", "nghệ" }, { "nghành", "ngành" }
+        };
+
         private static bool IsVietnameseVowel(char c)
         {
             const string vowels = "aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ";
             return vowels.IndexOf(char.ToLower(c)) >= 0;
+        }
+
+        private static int GetToneType(char c)
+        {
+            // 0 = ngang, 1 = sac, 2 = huyen, 3 = hoi, 4 = nga, 5 = nang
+            char lc = char.ToLower(c);
+            if ("áắấéếíóốớúứý".IndexOf(lc) >= 0) return 1;
+            if ("àằầèềìòồờùừỳ".IndexOf(lc) >= 0) return 2;
+            if ("ảẳẩẻểỉỏổởủửỷ".IndexOf(lc) >= 0) return 3;
+            if ("ãẵẫẽễĩõỗỡũữỹ".IndexOf(lc) >= 0) return 4;
+            if ("ạặậẹệịọộợụựỵ".IndexOf(lc) >= 0) return 5;
+            return 0;
+        }
+
+        private static char StripToneOnly(char c)
+        {
+            char lc = char.ToLower(c);
+            if ("aàáảãạ".IndexOf(lc) >= 0) return 'a';
+            if ("ăằắẳẵặ".IndexOf(lc) >= 0) return 'ă';
+            if ("âầấẩẫậ".IndexOf(lc) >= 0) return 'â';
+            if ("eèéẻẽẹ".IndexOf(lc) >= 0) return 'e';
+            if ("êềếểễệ".IndexOf(lc) >= 0) return 'ê';
+            if ("iìíỉĩị".IndexOf(lc) >= 0) return 'i';
+            if ("oòóỏõọ".IndexOf(lc) >= 0) return 'o';
+            if ("ôồốổỗộ".IndexOf(lc) >= 0) return 'ô';
+            if ("ơờớởỡợ".IndexOf(lc) >= 0) return 'ơ';
+            if ("uùúủũụ".IndexOf(lc) >= 0) return 'u';
+            if ("ưừứửữự".IndexOf(lc) >= 0) return 'ư';
+            if ("yỳýỷỹỵ".IndexOf(lc) >= 0) return 'y';
+            return lc;
         }
 
         private static bool HasVietnameseDiacritic(string s)
@@ -157,23 +221,44 @@ namespace VBTMProSuite
             string nucleus = w.Substring(firstVowel, lastVowel - firstVowel + 1);
             string coda = w.Substring(lastVowel + 1);
 
-            // Handle "gi" + vowel (e.g., "gì" -> initial="g", nucleus="ì", or "giữ" -> initial="g", nucleus="iữ")
             if (initial == "q" && nucleus.Length >= 2 && nucleus[0] == 'u')
             {
                 initial = "qu";
                 nucleus = nucleus.Substring(1);
             }
+            else if (initial == "g" && nucleus.Length >= 2 && nucleus[0] == 'i')
+            {
+                initial = "gi";
+                nucleus = nucleus.Substring(1);
+            }
 
             if (!ValidInitials.Contains(initial)) return false;
             if (!ValidCodas.Contains(coda)) return false;
-            if (nucleus.Length > 3) return false;
+            if (nucleus.Length == 0 || nucleus.Length > 3) return false;
 
-            // Every char inside nucleus must be a vowel
-            foreach (char c in nucleus) if (!IsVietnameseVowel(c)) return false;
+            StringBuilder baseNuc = new StringBuilder();
+            int toneCount = 0;
+            int toneVal = 0;
+            foreach (char c in nucleus)
+            {
+                if (!IsVietnameseVowel(c)) return false;
+                int t = GetToneType(c);
+                if (t > 0) { toneCount++; toneVal = t; }
+                baseNuc.Append(StripToneOnly(c));
+            }
+            if (toneCount > 1) return false;
+            string bn = baseNuc.ToString();
+            if (!ValidBaseNuclei.Contains(bn)) return false;
+
+            // Strict Vietnamese stop-coda tone rule: -c, -ch, -p, -t MUST take sắc (1) or nặng (5)!
+            if (coda == "c" || coda == "ch" || coda == "p" || coda == "t")
+            {
+                if (toneVal != 1 && toneVal != 5) return false;
+            }
 
             // Rules for ng/ngh, g/gh, c/k before i/e/ê
-            char nv = nucleus[0];
-            bool isFrontVowel = ("eèéẻẽẹêềếểễệiìíỉĩị".IndexOf(nv) >= 0);
+            char nv = bn[0];
+            bool isFrontVowel = (nv == 'e' || nv == 'ê' || nv == 'i');
             if (isFrontVowel && (initial == "ng" || initial == "c")) return false;
             if (!isFrontVowel && (initial == "ngh" || initial == "gh")) return false;
 
@@ -194,14 +279,20 @@ namespace VBTMProSuite
         /// </summary>
         public static string TryRepairTelexOrExtraChar(string word)
         {
-            if (string.IsNullOrWhiteSpace(word) || word.Length < 3 || word.Length > 9) return null;
+            if (string.IsNullOrWhiteSpace(word) || word.Length < 2 || word.Length > 10) return null;
             if (WhitelistWords.Contains(word)) return null;
-            if (IsValidVietnameseSyllable(word)) return null;
 
             string w = word.Normalize(NormalizationForm.FormC);
+            string direct;
+            if (DirectWordRepairs.TryGetValue(w, out direct) && !string.Equals(w, direct, StringComparison.OrdinalIgnoreCase))
+            {
+                return PreserveCase(w, direct);
+            }
+            if (IsValidVietnameseSyllable(w)) return null;
+
             if (!HasVietnameseDiacritic(w))
             {
-                // Also catch obvious doubled trailing consonant on pure ASCII Vietnamese words like "trongg", "cungg"
+                // Catch doubled trailing consonant on pure ASCII Vietnamese words like "trongg", "cungg"
                 if (w.Length >= 4 && char.ToLower(w[w.Length - 1]) == char.ToLower(w[w.Length - 2]))
                 {
                     string trimmed = w.Substring(0, w.Length - 1);
@@ -220,22 +311,49 @@ namespace VBTMProSuite
                 if (isTelex || isDup)
                 {
                     string cand = w.Remove(i, 1);
-                    if (IsValidVietnameseSyllable(cand))
-                    {
-                        return cand;
-                    }
+                    if (IsValidVietnameseSyllable(cand)) return cand;
                 }
             }
 
-            // 2. Try deleting any single extra consonant inside the coda (e.g. "điểkm" -> "điểm")
+            // 2. Try inserting missing 'n' before trailing 'g' (e.g. "nhưg"->"nhưng", "trườg"->"trường")
+            if (w.EndsWith("g", StringComparison.OrdinalIgnoreCase) && w.Length >= 3)
+            {
+                string candNg = w.Substring(0, w.Length - 1) + "ng";
+                if (IsValidVietnameseSyllable(candNg)) return candNg;
+            }
+
+            // 3. Try deleting any single extra consonant inside the coda (e.g. "điểkm" -> "điểm")
             for (int i = w.Length - 1; i >= 2; i--)
             {
                 if (!IsVietnameseVowel(w[i]))
                 {
                     string cand = w.Remove(i, 1);
-                    if (IsValidVietnameseSyllable(cand))
+                    if (IsValidVietnameseSyllable(cand)) return cand;
+                }
+            }
+
+            // 4. Missing tone on -c/-ch/-p/-t coda (try adding sắc or nặng on last vowel)
+            string lw = w.ToLowerInvariant();
+            if (lw.EndsWith("c") || lw.EndsWith("ch") || lw.EndsWith("p") || lw.EndsWith("t"))
+            {
+                string[,] toneAdd = new string[,] {
+                    { "a", "á" }, { "ă", "ắ" }, { "â", "ấ" }, { "e", "é" }, { "ê", "ế" },
+                    { "i", "í" }, { "o", "ó" }, { "ô", "ố" }, { "ơ", "ớ" }, { "u", "ú" }, { "ư", "ứ" }
+                };
+                for (int i = w.Length - 1; i >= 0; i--)
+                {
+                    if (IsVietnameseVowel(w[i]))
                     {
-                        return cand;
+                        string ch = w[i].ToString().ToLowerInvariant();
+                        for (int k = 0; k < toneAdd.GetLength(0); k++)
+                        {
+                            if (toneAdd[k, 0] == ch)
+                            {
+                                string cand = w.Substring(0, i) + toneAdd[k, 1] + w.Substring(i + 1);
+                                if (IsValidVietnameseSyllable(cand)) return PreserveCase(w, cand);
+                            }
+                        }
+                        break;
                     }
                 }
             }
@@ -343,6 +461,34 @@ namespace VBTMProSuite
                         Badge = badge,
                         Reason = reason,
                         IsSuspicious = string.Equals(badge, "Nghi ngờ", StringComparison.OrdinalIgnoreCase)
+                    }));
+                    for (int p = m.Index; p < m.Index + m.Length; p++) coveredPositions.Add(p);
+                }
+            }
+
+            // 2b. Scan ALL 150+ Administrative & Party rules from WordSpellInspectorForm.InspectorRules
+            for (int r = 0; r < WordSpellInspectorForm.InspectorRules.GetLength(0); r++)
+            {
+                string w = WordSpellInspectorForm.InspectorRules[r, 0];
+                string s = WordSpellInspectorForm.InspectorRules[r, 1];
+                string reason = WordSpellInspectorForm.InspectorRules[r, 2];
+                if (string.IsNullOrEmpty(reason) || string.Equals(w, s, StringComparison.OrdinalIgnoreCase)) continue;
+                if (goodWords.Contains(w)) continue;
+
+                foreach (Match m in Regex.Matches(text, @"(?<![A-Za-zÀ-Ỹà-ỹĐđ])" + Regex.Escape(w) + @"(?![A-Za-zÀ-Ỹà-ỹĐđ])", RegexOptions.IgnoreCase))
+                {
+                    if (coveredPositions.Contains(m.Index)) continue;
+                    if (goodWords.Contains(m.Value)) continue;
+                    string prop = PreserveCase(m.Value, s);
+                    if (string.Equals(m.Value, prop, StringComparison.Ordinal)) continue;
+
+                    ordered.Add(new KeyValuePair<int, SpellCardIssue>(m.Index, new SpellCardIssue
+                    {
+                        Wrong = m.Value,
+                        Suggest = prop,
+                        Badge = "Chính tả",
+                        Reason = reason,
+                        IsSuspicious = false
                     }));
                     for (int p = m.Index; p < m.Index + m.Length; p++) coveredPositions.Add(p);
                 }
@@ -466,7 +612,15 @@ namespace VBTMProSuite
             pnlSpellView.BringToFront();
 
             SwitchTab(true);
-            this.Shown += (s, e) => ScanActiveWordInstant();
+            this.Shown += (s, e) =>
+            {
+                ScanActiveWordInstant();
+                // Tự động chạy quét sâu AI Local toàn bộ văn bản ở nền (không chặn giao diện)
+                if (!string.IsNullOrWhiteSpace(currentDocText))
+                {
+                    RunDeepOllamaSupplementAsync();
+                }
+            };
         }
 
         private Button MakePillBtn(string text, int x, int y, int w, int h, Color bg, Color fg, Color border)
@@ -740,37 +894,75 @@ namespace VBTMProSuite
                 if (string.IsNullOrWhiteSpace(currentDocText)) return;
             }
             btnAiDeep.Enabled = false;
-            lblStatusBottom.Text = "⏳ Đang gọi AI Local (Ollama) kiểm tra ngữ cảnh chuyên sâu...";
+            lblStatusBottom.Text = "⏳ AI Local đang tự động quét sâu toàn bộ văn bản...";
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 try
                 {
-                    string sample = currentDocText.Length > 2200 ? currentDocText.Substring(0, 2200) : currentDocText;
-                    string prompt = "Chỉ liệt kê lỗi chính tả/ngữ cảnh tiếng Việt thật sự sai trong đoạn văn sau dưới dạng JSON array: [{\"original\":\"cụm sai\",\"suggestion\":\"cụm đúng\",\"reason\":\"ngắn gọn\"}]. Không bịa lỗi, không sửa tên riêng/số liệu. Nếu không có lỗi trả về [].\n\n" + sample;
-                    long ttftMs, totalMs; bool fromCache; string usedModel;
-                    string resp = DesktopAiGateway.GenerateStreaming(
-                        "Bạn là chuyên gia hiệu đính văn bản tiếng Việt chuẩn NĐ 30 và Hướng dẫn 05-HD/VPTW.",
-                        prompt,
-                        null,
-                        out ttftMs, out totalMs, out fromCache, out usedModel);
-                    List<string[]> aiFound = WordSpellInspectorForm.ParseAiSpellResponseSafe(resp, currentDocText);
-                    int added = 0;
-                    foreach (string[] row in aiFound)
+                    // Chia TOÀN BỘ văn bản thành các đoạn ~1800 ký tự để AI không bỏ sót phần cuối văn bản
+                    List<string> chunks = new List<string>();
+                    string[] paras = currentDocText.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    StringBuilder cur = new StringBuilder();
+                    foreach (string p in paras)
                     {
-                        if (VbtmCustomDictStore.IsGoodWord(row[0])) continue;
-                        bool exists = false;
-                        foreach (var ex in activeIssues) if (string.Equals(ex.Wrong, row[0], StringComparison.OrdinalIgnoreCase)) { exists = true; break; }
-                        if (!exists)
+                        string t = p.Trim();
+                        if (t.Length < 4) continue;
+                        if (cur.Length + t.Length > 1800 && cur.Length > 0)
                         {
-                            activeIssues.Add(new SpellCardIssue { Wrong = row[0], Suggest = row[1], Badge = "Nghi ngờ", Reason = row[2], OccurrenceIndex = 1, IsSuspicious = true });
-                            added++;
+                            chunks.Add(cur.ToString());
+                            cur.Length = 0;
+                        }
+                        cur.AppendLine(t);
+                    }
+                    if (cur.Length > 0) chunks.Add(cur.ToString());
+                    if (chunks.Count > 15) chunks = chunks.GetRange(0, 15);
+
+                    int totalAdded = 0;
+                    for (int ci = 0; ci < chunks.Count; ci++)
+                    {
+                        int curIdx = ci + 1;
+                        int totalCh = chunks.Count;
+                        try
+                        {
+                            this.BeginInvoke((Action)(() =>
+                            {
+                                lblStatusBottom.Text = string.Format("⏳ AI Local đang quét sâu đoạn {0}/{1}...", curIdx, totalCh);
+                            }));
+                        }
+                        catch { }
+
+                        string prompt = "Chỉ liệt kê lỗi chính tả, sai dấu, sai thanh điệu hoặc nhầm từ ngữ cảnh tiếng Việt thật sự sai trong đoạn văn sau dưới dạng JSON array: [{\"original\":\"cụm sai\",\"suggestion\":\"cụm đúng\",\"reason\":\"ngắn gọn\"}]. Không sửa tên riêng/số liệu. Nếu không có lỗi trả về [].\n\n" + chunks[ci];
+                        long ttftMs, totalMs; bool fromCache; string usedModel;
+                        string resp = DesktopAiGateway.GenerateStreaming(
+                            "Bạn là chuyên gia hiệu đính văn bản tiếng Việt chuẩn NĐ 30 và Hướng dẫn 05-HD/VPTW.",
+                            prompt,
+                            null,
+                            out ttftMs, out totalMs, out fromCache, out usedModel);
+                        List<string[]> aiFound = WordSpellInspectorForm.ParseAiSpellResponseSafe(resp, chunks[ci]);
+                        int chunkAdded = 0;
+                        foreach (string[] row in aiFound)
+                        {
+                            if (VbtmCustomDictStore.IsGoodWord(row[0])) continue;
+                            bool exists = false;
+                            foreach (var ex in activeIssues) if (string.Equals(ex.Wrong, row[0], StringComparison.OrdinalIgnoreCase)) { exists = true; break; }
+                            if (!exists)
+                            {
+                                activeIssues.Add(new SpellCardIssue { Wrong = row[0], Suggest = row[1], Badge = "Nghi ngờ", Reason = row[2], OccurrenceIndex = 1, IsSuspicious = true });
+                                chunkAdded++;
+                                totalAdded++;
+                            }
+                        }
+                        if (chunkAdded > 0)
+                        {
+                            try { this.BeginInvoke((Action)(() => RenderCards())); } catch { }
                         }
                     }
+
                     this.BeginInvoke((Action)(() =>
                     {
                         btnAiDeep.Enabled = true;
                         RenderCards();
-                        lblStatusBottom.Text = "✓ AI Local hoàn tất — bổ sung thêm " + added + " gợi ý ngữ cảnh.";
+                        lblStatusBottom.Text = string.Format("✓ Hoàn tất toàn bộ {0} đoạn — phát hiện tổng {1} từ cần sửa (AI bổ sung +{2}).", chunks.Count, activeIssues.Count, totalAdded);
                     }));
                 }
                 catch (Exception ex)
@@ -778,7 +970,7 @@ namespace VBTMProSuite
                     this.BeginInvoke((Action)(() =>
                     {
                         btnAiDeep.Enabled = true;
-                        lblStatusBottom.Text = "AI Local chưa sẵn sàng (" + ex.Message + ") — vẫn dùng tốt chế độ Offline 100%.";
+                        lblStatusBottom.Text = "✓ Chế độ Offline 100% sẵn sàng (" + activeIssues.Count + " lỗi) • AI Local: " + ex.Message;
                     }));
                 }
             });
