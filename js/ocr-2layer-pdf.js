@@ -21,9 +21,13 @@
     singlePage: null // { imageDataUrl, width, height, lines: [{ text, bbox }] }
   };
 
-  function recordSinglePageOcr(canvas, text, tesseractLines) {
+  function recordSinglePageOcr(canvas, text, tesseractLines, bboxSrcW, bboxSrcH) {
     if (!canvas) return;
     try {
+      const dstW = canvas.width || 1240;
+      const dstH = canvas.height || 1754;
+      const sx = (bboxSrcW && bboxSrcW > 0) ? (dstW / bboxSrcW) : 1;
+      const sy = (bboxSrcH && bboxSrcH > 0) ? (dstH / bboxSrcH) : 1;
       const cleanLines = [];
       if (Array.isArray(tesseractLines) && tesseractLines.length > 0) {
         tesseractLines.forEach(l => {
@@ -32,10 +36,10 @@
             cleanLines.push({
               text: t.normalize('NFC'),
               bbox: {
-                x0: Number(l.bbox.x0) || 0,
-                y0: Number(l.bbox.y0) || 0,
-                x1: Number(l.bbox.x1) || canvas.width,
-                y1: Number(l.bbox.y1) || 20
+                x0: (Number(l.bbox.x0) || 0) * sx,
+                y0: (Number(l.bbox.y0) || 0) * sy,
+                x1: (Number(l.bbox.x1) || dstW) * sx,
+                y1: (Number(l.bbox.y1) || 20) * sy
               }
             });
           }
@@ -43,8 +47,8 @@
       }
       pageStore.singlePage = {
         imageDataUrl: canvas.toDataURL('image/jpeg', 0.90),
-        width: canvas.width || 1240,
-        height: canvas.height || 1754,
+        width: dstW,
+        height: dstH,
         text: String(text || '').normalize('NFC'),
         lines: cleanLines
       };
