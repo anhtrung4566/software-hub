@@ -385,13 +385,22 @@ async function loadRealPdfDocument(file) {
           window.VietNamOcr2LayerPdf.recordPdfPageOcr(p, offCanvas, pagePlainText, nativeLines, offCanvas.width, offCanvas.height);
         }
       } else {
-        // Trang PDF là ảnh scan thuần túy (hoặc PDF 2 lớp bị lỗi font): Gọi Tesseract v5 LSTM Tiếng Việt + tái tạo bố cục 2 cột theo tọa độ bbox thực
+        // Trang PDF là ảnh scan thuần túy (hoặc PDF 2 lớp bị lỗi font): Gọi Tesseract v5 LSTM Tiếng Việt + dò lưới ô bảng thật (colspan/rowspan) + tái tạo bố cục
         const ocrRes = await recognizeCanvasPageHighAccuracy(offCanvas, (pct) => {
           if (statusEl) statusEl.textContent = `Đang OCR Tiếng Việt chính xác cao Trang ${p}/${totalPdfPages} (${pct}%)...`;
         });
-        const pageHtml = (ocrRes.lines && ocrRes.lines.length > 0)
-          ? reconstructLayoutFromTesseractBboxes(ocrRes.lines, ocrRes.procWidth, ocrRes.procHeight, 'auto')
-          : reconstructExactLayoutFromPlainText(ocrRes.text);
+        let pageHtml = '';
+        if (window.VietNamOcrTableGrid && ocrRes.procCanvas && ocrRes.words && ocrRes.words.length > 0) {
+          const gridRes = window.VietNamOcrTableGrid.reconstructPageWithRealTables(ocrRes.procCanvas, ocrRes.words, ocrRes.lines, 'auto');
+          if (gridRes && gridRes.html) {
+            pageHtml = gridRes.html;
+          }
+        }
+        if (!pageHtml) {
+          pageHtml = (ocrRes.lines && ocrRes.lines.length > 0)
+            ? reconstructLayoutFromTesseractBboxes(ocrRes.lines, ocrRes.procWidth, ocrRes.procHeight, 'auto')
+            : reconstructExactLayoutFromPlainText(ocrRes.text);
+        }
         pdfPagesLayoutHtml.push(pageHtml);
         pdfPagesRawText.push(ocrRes.text);
         if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.recordPdfPageOcr) {
@@ -1522,6 +1531,8 @@ async function recognizeCanvasPageHighAccuracy(canvasEl, onProgress = null) {
       lines: res.lines,
       words: res.words,
       confidence: res.confidence,
+      docProfile: res.docProfile,
+      procCanvas: cleanCanvas,
       procWidth: res.procWidth,
       procHeight: res.procHeight,
       deskewAngle: res.deskewAngle,
@@ -1608,6 +1619,7 @@ async function runVietnameseOcr(appendTableMode = false) {
   let tesseractWords = [];
   let ocrConf = 0;
   let ocrDocProfile = '';
+  let ocrProcCanvas = null;
   let procW = canvas.width;
   let procH = canvas.height;
 
@@ -1621,6 +1633,7 @@ async function runVietnameseOcr(appendTableMode = false) {
     tesseractWords = ocrRes.words || [];
     ocrConf = ocrRes.confidence || 0;
     ocrDocProfile = ocrRes.docProfile || '';
+    ocrProcCanvas = ocrRes.procCanvas || null;
     procW = ocrRes.procWidth;
     procH = ocrRes.procHeight;
   } catch (tessErr) {
@@ -1629,25 +1642,40 @@ async function runVietnameseOcr(appendTableMode = false) {
     return;
   }
 
-  // Hiển thị ngay kết quả chuẩn thể thức 2 cột theo tọa độ bbox thực (KHÔNG tự ý sửa nội dung)
+  // Ưu tiên phát hiện lưới bảng thật (đường kẻ ngang/dọc, colspan, rowspan, từng ô độc lập) trước khi fallback bố cục đoạn văn
+  let detectedGridInfo = null;
+  if (window.VietNamOcrTableGrid && ocrProcCanvas && tesseractWords.length > 0) {
+    detectedGridInfo = window.VietNamOcrTableGrid.reconstructPageWithRealTables(ocrProcCanvas, tesseractWords, tesseractLines, 'auto');
+  }
+
   textOutput.value = rawPreserved;
   if (paperEl) {
-    paperEl.innerHTML = (tesseractLines && tesseractLines.length > 0)
-      ? reconstructLayoutFromTesseractBboxes(tesseractLines, procW, procH, 'auto')
-      : reconstructExactLayoutFromPlainText(rawPreserved);
+    if (detectedGridInfo && detectedGridInfo.html) {
+      paperEl.innerHTML = detectedGridInfo.html;
+    } else {
+      paperEl.innerHTML = (tesseractLines && tesseractLines.length > 0)
+        ? reconstructLayoutFromTesseractBboxes(tesseractLines, procW, procH, 'auto')
+        : reconstructExactLayoutFromPlainText(rawPreserved);
+    }
   }
 
   // Đánh dấu vùng có độ tin cậy thấp (< 70%) trực tiếp trên ảnh gốc để người dùng kiểm chứng
   let lowConfDrawn = 0;
   if (window.VietNamOcrEnginePro && tesseractWords.length > 0) {
     lowConfDrawn = window.VietNamOcrEnginePro.drawConfidenceOverlayOnCanvas(canvas, tesseractWords, procW, procH);
-    const bboxTable = window.VietNamOcrEnginePro.extractTableFromWordBboxes(tesseractWords, procW);
-    if (bboxTable && bboxTable.rows.length > 0 && !appendTableMode) {
-      ocrTableHeaders = bboxTable.headers;
-      ocrTableRows = bboxTable.rows;
+    if (detectedGridInfo && detectedGridInfo.excelRows && detectedGridInfo.excelRows.length > 0 && !appendTableMode) {
+      ocrTableHeaders = detectedGridInfo.excelHeaders;
+      ocrTableRows = detectedGridInfo.excelRows;
       renderEditableTable();
     } else {
-      extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
+      const bboxTable = window.VietNamOcrEnginePro.extractTableFromWordBboxes(tesseractWords, procW);
+      if (bboxTable && bboxTable.rows.length > 0 && !appendTableMode) {
+        ocrTableHeaders = bboxTable.headers;
+        ocrTableRows = bboxTable.rows;
+        renderEditableTable();
+      } else {
+        extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
+      }
     }
   } else {
     extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
@@ -1659,7 +1687,8 @@ async function runVietnameseOcr(appendTableMode = false) {
   if (window.VietNamOcrIdpStudio) {
     window.VietNamOcrIdpStudio.autoSaveDocumentToArchive(uploadedFileBaseName, rawPreserved, ocrConf);
   }
-  statusEl.textContent = `✓ Hoàn tất OCR (${ocrConf}% tin cậy · ${ocrDocProfile || 'Văn bản'} · ${lowConfDrawn} vùng cần đối chiếu ảnh gốc)! Đã tự động lưu vào Kho cục bộ.`;
+  const tableBadge = detectedGridInfo ? ` · Đã giữ nguyên bảng thật ${detectedGridInfo.numRows} hàng × ${detectedGridInfo.numCols} cột` : '';
+  statusEl.textContent = `✓ Hoàn tất OCR (${ocrConf}% tin cậy · ${ocrDocProfile || 'Văn bản'}${tableBadge} · ${lowConfDrawn} vùng cần đối chiếu)!`;
   progressFill.style.width = '100%';
 }
 
