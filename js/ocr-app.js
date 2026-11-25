@@ -113,14 +113,14 @@ function setupOcrDropzone() {
   studioApp.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleUploadedFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleUploadedFiles(e.dataTransfer.files);
     }
   });
 
   fileInput.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files[0]) {
-      handleUploadedFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      handleUploadedFiles(e.target.files);
       fileInput.value = '';
     }
   });
@@ -140,6 +140,55 @@ function setupOcrDropzone() {
   });
 }
 
+async function handleUploadedFiles(fileList) {
+  const files = Array.from(fileList || []).filter(Boolean);
+  if (files.length === 0) return;
+  if (files.length === 1) {
+    await handleUploadedFile(files[0]);
+    return;
+  }
+
+  const statusEl = document.getElementById('ocrStatusText');
+  const progressFill = document.getElementById('ocrProgressFill');
+  const textOutput = document.getElementById('ocrResultText');
+  const paperEl = document.getElementById('ocrFormattedPaper');
+  if (window.VietNamOcrEnginePro) window.VietNamOcrEnginePro.resetCancel();
+  if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.clearMultiPageStore) {
+    window.VietNamOcr2LayerPdf.clearMultiPageStore();
+  }
+
+  const allTexts = [];
+  const allHtmls = [];
+  let doneCount = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    if (window.VietNamOcrEnginePro && window.VietNamOcrEnginePro.isCancelled()) {
+      if (statusEl) statusEl.textContent = `⏹ Đã dừng hàng đợi OCR tại tệp ${i}/${files.length}.`;
+      break;
+    }
+    const f = files[i];
+    if (statusEl) statusEl.textContent = `Đang xử lý hàng đợi tệp ${i + 1}/${files.length}: "${f.name}"...`;
+    if (progressFill) progressFill.style.width = `${Math.round((i / files.length) * 100)}%`;
+
+    try {
+      await handleUploadedFile(f);
+      const t = (textOutput?.value || '').trim();
+      const h = (paperEl?.innerHTML || '').trim();
+      if (t) allTexts.push(`=== [${i + 1}/${files.length}] ${f.name} ===\n${t}`);
+      if (h) allHtmls.push(h);
+      doneCount++;
+    } catch (err) {
+      allTexts.push(`=== [${i + 1}/${files.length}] ${f.name} (Lỗi: ${err.message}) ===`);
+    }
+  }
+
+  uploadedFileBaseName = `OCR_HangDoi_${files.length}_Tep`;
+  if (textOutput && allTexts.length > 0) textOutput.value = allTexts.join('\n\n');
+  if (paperEl && allHtmls.length > 0) paperEl.innerHTML = allHtmls.join('<hr style="margin:12pt 0;border:none;border-top:1px dashed #cbd5e1;"/>');
+  if (progressFill) progressFill.style.width = '100%';
+  if (statusEl) statusEl.textContent = `✓ Hoàn tất hàng đợi OCR ${doneCount}/${files.length} tệp! Sẵn sàng xuất Word, TXT hoặc PDF 2 Lớp.`;
+}
+
 async function handleUploadedFile(file) {
   isSampleDocLoaded = false;
   ocrRotation = 0;
@@ -151,6 +200,51 @@ async function handleUploadedFile(file) {
   if (isPdf) {
     await loadRealPdfDocument(file);
     return;
+  }
+
+  // Hỗ trợ giải mã ảnh TIFF (.tif / .tiff) nhiều trang
+  const isTiff = file.type === 'image/tiff' || /\.(tif|tiff)$/i.test(file.name || '');
+  if (isTiff && window.VietNamOcrEnginePro) {
+    const statusEl = document.getElementById('ocrStatusText');
+    try {
+      if (statusEl) statusEl.textContent = `Đang giải mã tệp ảnh TIFF "${file.name}"...`;
+      const canvases = await window.VietNamOcrEnginePro.decodeTiffFileToCanvas(file);
+      loadedPdfDoc = null;
+      window.loadedPdfDoc = null;
+      if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.clearMultiPageStore) {
+        window.VietNamOcr2LayerPdf.clearMultiPageStore();
+      }
+      const allTexts = [];
+      const allHtmls = [];
+      for (let idx = 0; idx < canvases.length; idx++) {
+        const c = canvases[idx];
+        if (idx === 0) {
+          const img = new Image();
+          await new Promise(res => { img.onload = res; img.src = c.toDataURL('image/png'); });
+          currentImageSource = img;
+          drawCanvasImage();
+        }
+        const ocrRes = await recognizeCanvasPageHighAccuracy(c, (pct) => {
+          if (statusEl) statusEl.textContent = `Đang OCR ảnh TIFF Trang ${idx + 1}/${canvases.length} (${pct}%)...`;
+        });
+        allTexts.push(ocrRes.text);
+        allHtmls.push(ocrRes.lines && ocrRes.lines.length > 0
+          ? reconstructLayoutFromTesseractBboxes(ocrRes.lines, ocrRes.procWidth, ocrRes.procHeight, 'auto')
+          : reconstructExactLayoutFromPlainText(ocrRes.text));
+        if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.recordPdfPageOcr) {
+          window.VietNamOcr2LayerPdf.recordPdfPageOcr(idx + 1, c, ocrRes.text, ocrRes.lines, ocrRes.procWidth, ocrRes.procHeight);
+        }
+      }
+      const textOutput = document.getElementById('ocrResultText');
+      const paperEl = document.getElementById('ocrFormattedPaper');
+      if (textOutput) textOutput.value = allTexts.join('\n\n');
+      if (paperEl) paperEl.innerHTML = allHtmls.join('\n');
+      if (statusEl) statusEl.textContent = `✓ Đã OCR xong ${canvases.length} trang TIFF "${file.name}"!`;
+      return;
+    } catch (tifErr) {
+      if (statusEl) statusEl.textContent = '⚠ Lỗi đọc tệp TIFF: ' + tifErr.message;
+      return;
+    }
   }
 
   loadedPdfDoc = null;
@@ -1396,11 +1490,33 @@ async function proofreadVietnameseOcrWithOllama(rawOcrText) {
 
 async function recognizeCanvasPageHighAccuracy(canvasEl, onProgress = null) {
   const cleanCanvas = createPreprocessedOcrCanvas(canvasEl, false);
+  const selectedLang = document.getElementById('ocrLangSelect')?.value || 'vie';
+  const enableDeskew = document.getElementById('ocrDeskewCheck')?.checked !== false;
+
+  if (window.VietNamOcrEnginePro) {
+    const res = await window.VietNamOcrEnginePro.recognizeCanvasWithBestEngine(cleanCanvas, {
+      lang: selectedLang,
+      deskew: enableDeskew,
+      onProgress: (pct, msg) => {
+        if (onProgress) onProgress(pct, msg);
+      }
+    });
+    return {
+      text: cleanAndFixVietnameseOcrText(res.text),
+      lines: res.lines,
+      words: res.words,
+      confidence: res.confidence,
+      procWidth: res.procWidth,
+      procHeight: res.procHeight,
+      deskewAngle: res.deskewAngle,
+      engineSource: res.engineSource
+    };
+  }
+
   let text = '';
   let lines = null;
-
   if (window.Tesseract) {
-    const result = await window.Tesseract.recognize(cleanCanvas, 'vie', {
+    const result = await window.Tesseract.recognize(cleanCanvas, selectedLang, {
       preserve_interword_spaces: '1',
       logger: m => {
         if (onProgress && m.status === 'recognizing text' && typeof m.progress === 'number') {
@@ -1412,7 +1528,26 @@ async function recognizeCanvasPageHighAccuracy(canvasEl, onProgress = null) {
     lines = result?.data?.lines || null;
   }
 
-  return { text, lines, procWidth: cleanCanvas.width, procHeight: cleanCanvas.height };
+  return { text, lines, words: [], confidence: 0, procWidth: cleanCanvas.width, procHeight: cleanCanvas.height, deskewAngle: 0, engineSource: 'tesseract_fallback' };
+}
+
+function exportOcrToTxt() {
+  const textContent = document.getElementById('ocrResultText')?.value || '';
+  if (!textContent.trim()) {
+    if (window.showToast) window.showToast('Chưa có nội dung văn bản OCR để xuất .TXT!');
+    return;
+  }
+  const outFileName = `${uploadedFileBaseName || 'VanBan_OCR'}.txt`;
+  const blob = new Blob(['\ufeff', textContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = outFileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  if (window.showToast) window.showToast(`✓ Đã xuất tệp văn bản thuần UTF-8: ${outFileName}`);
 }
 
 async function recognizeCanvasPageWithoutAlteringWords(canvasEl) {
