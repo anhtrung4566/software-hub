@@ -293,6 +293,182 @@
       </div>
     </section>
 
+    <!-- ===================================================================
+         BỘ CÔNG CỤ VĂN PHÒNG THÔNG MINH VIETNAMOCR PRO (6 MODULE CHUYÊN NGHIỆP)
+         =================================================================== -->
+    <section id="officeSuiteSection" class="studio-box" style="margin-top: 28px;">
+      <div class="studio-topbar" style="flex-wrap: wrap; gap: 10px;">
+        <div class="studio-window-Title">
+          <span style="font-weight: 800; font-size: 1rem;">💼 Bộ Công Cụ Văn Phòng Thông Minh (PDF · Soạn Thảo NĐ 30 · Excel · So Sánh · Biên Bản Họp · Bảo Mật)</span>
+        </div>
+        <input type="text" id="officeFeatureSearch" oninput="filterOfficeModules(this.value)" placeholder="🔍 Tìm nhanh chức năng (VD: ghép PDF, tách trang, che CCCD, chữ ký số, biên bản...)" style="padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: rgba(15,23,42,0.55); color: #fff; font-size: 0.84rem; min-width: 280px;">
+      </div>
+
+      <div style="padding: 14px 18px;">
+        <div id="officeModuleNav" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+          <button type="button" class="btn-tool primary office-nav-btn" data-mod="pdf" data-kw="ghép tách xóa xoay nén watermark bản sao số trang trích xuất pdf" onclick="switchOfficeModule('pdf')">📑 Công Cụ PDF</button>
+          <button type="button" class="btn-tool office-nav-btn" data-mod="admin" data-kw="soạn thảo công văn quyết định thông báo tờ trình báo cáo kế hoạch biên bản giấy mời giới thiệu nđ 30" onclick="switchOfficeModule('admin')">📝 Soạn Thảo NĐ 30</button>
+          <button type="button" class="btn-tool office-nav-btn" data-mod="excel" data-kw="excel bảng biểu lọc trùng chuẩn hóa ngày số thống kê biểu đồ csv" onclick="switchOfficeModule('excel')">📊 Công Cụ Excel</button>
+          <button type="button" class="btn-tool office-nav-btn" data-mod="diff" data-kw="so sánh tài liệu word pdf khác biệt diff" onclick="switchOfficeModule('diff')">⚖️ So Sánh 2 Tài Liệu</button>
+          <button type="button" class="btn-tool office-nav-btn" data-mod="meeting" data-kw="ghi âm giọng nói biên bản họp micro audio" onclick="switchOfficeModule('meeting')">🎙 Ghi Âm &amp; Biên Bản Họp</button>
+          <button type="button" class="btn-tool office-nav-btn" data-mod="security" data-kw="bảo mật che thông tin nhạy cảm cccd sđt email mst chữ ký số pdf redaction" onclick="switchOfficeModule('security')">🛡 Bảo Mật &amp; Chữ Ký Số</button>
+          <button type="button" class="btn-tool" onclick="VietNamOcrIdpStudio && VietNamOcrIdpStudio.open(1)">🤖 Trợ Lý AI &amp; Kho Tra Cứu</button>
+        </div>
+
+        <!-- PANEL 1: BỘ CÔNG CỤ PDF -->
+        <div id="officeMod_pdf" class="office-mod-panel">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div style="background: rgba(15,23,42,0.45); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px;">
+              <h4 style="margin: 0 0 8px; color: #fef08a;">1. Ghép Nhiều Tệp PDF (Merge)</h4>
+              <input type="file" id="pdfMergeInput" accept=".pdf,application/pdf" multiple style="color: #e2e8f0; margin-bottom: 10px; width: 100%;">
+              <button type="button" class="btn-tool primary" onclick="VietNamPdfToolkit.mergePdfFiles()">➕ Ghép Các Tệp PDF Đã Chọn</button>
+            </div>
+            <div style="background: rgba(15,23,42,0.45); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px;">
+              <h4 style="margin: 0 0 8px; color: #fef08a;">2. Tách · Xóa · Xoay · Đánh Số Trang · Watermark · Trích Xuất</h4>
+              <input type="file" id="pdfSingleInput" accept=".pdf,application/pdf" style="color: #e2e8f0; margin-bottom: 8px; width: 100%;">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; align-items: center;">
+                <input type="text" id="pdfPageRangeInput" value="1-2" placeholder="Dải trang (VD: 1-3, 5)" style="padding: 5px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; width: 140px;">
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.splitOrDeletePdf('split')">✂ Tách trang</button>
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.splitOrDeletePdf('delete')">🗑 Xóa trang</button>
+                <select id="pdfRotateDegSelect" style="padding: 5px; border-radius: 6px; background: #0f172a; color: #fff; border: 1px solid #475569;"><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.rotatePdfPages()">↻ Xoay PDF</button>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <input type="text" id="pdfWatermarkInput" value="BAN SAO - LUU HANH NOI BO" style="padding: 5px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; flex: 1; min-width: 170px;">
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.stampWatermarkOrPageNum('watermark')">💧 Watermark</button>
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.stampWatermarkOrPageNum('copy_stamp')">📕 Đóng dấu Bản Sao</button>
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.stampWatermarkOrPageNum('pagenum')">🔢 Số trang NĐ30</button>
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.extractPdfTextOrImages('text')">📄 Trích Văn Bản</button>
+                <button type="button" class="btn-tool" onclick="VietNamPdfToolkit.extractPdfTextOrImages('images')">🖼 Trích Ảnh (.ZIP)</button>
+              </div>
+            </div>
+          </div>
+          <div id="pdfToolStatus" style="margin-top: 10px; font-size: 0.86rem; color: #7dd3fc;">Sẵn sàng xử lý PDF 100% cục bộ — không ghi đè tệp gốc.</div>
+        </div>
+
+        <!-- PANEL 2: SOẠN THẢO VĂN BẢN HÀNH CHÍNH NĐ 30 -->
+        <div id="officeMod_admin" class="office-mod-panel" style="display: none;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center;">
+            <select id="adminTplSelect" class="glass-select" style="width: auto; padding: 6px 10px;">
+              <option value="congvan">1. Công văn hành chính</option>
+              <option value="quyetdinh">2. Quyết định</option>
+              <option value="thongbao">3. Thông báo</option>
+              <option value="totrinh">4. Tờ trình</option>
+              <option value="baocao">5. Báo cáo</option>
+              <option value="kehoach">6. Kế hoạch</option>
+              <option value="bienban">7. Biên bản</option>
+              <option value="giaymoi">8. Giấy mời</option>
+              <option value="giaygioithieu">9. Giấy giới thiệu</option>
+              <option value="bieumau">10. Đơn đề nghị / Biểu mẫu</option>
+            </select>
+            <input id="adminParentOrg" type="text" value="UBND THÀNH PHỐ ĐÀ NẴNG" placeholder="Cơ quan cấp trên" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff;">
+            <input id="adminIssuingOrg" type="text" value="ỦY BAN NHÂN DÂN PHƯỜNG" placeholder="Cơ quan ban hành" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff;">
+            <input id="adminLocation" type="text" value="Đà Nẵng" placeholder="Địa danh" style="padding: 6px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; width: 105px;">
+            <input id="adminDocSeq" type="text" value="01" placeholder="Số VB" style="padding: 6px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; width: 64px;">
+            <input id="adminSignerTitle" type="text" value="CHỦ TỊCH" placeholder="Chức vụ ký" style="padding: 6px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; width: 120px;">
+            <button type="button" class="btn-tool primary" onclick="VietNamOfficeModules.generateAdminDraft()">✨ Tạo Từ Mẫu</button>
+            <button type="button" class="btn-tool success" onclick="VietNamOfficeModules.exportAdminDraftDocx()">📝 Xuất DOCX</button>
+          </div>
+          <textarea id="adminDraftEditor" oninput="VietNamOfficeModules.validateAdminNd30()" rows="10" class="glass-textarea" placeholder="Chọn mẫu văn bản ở trên và bấm 'Tạo Từ Mẫu' để soạn thảo chuẩn Nghị định 30/2020/NĐ-CP..." style="font-family: 'Times New Roman', serif; font-size: 1rem;"></textarea>
+          <div id="adminNd30CheckOut" style="margin-top: 8px; font-size: 0.85rem; color: #e2e8f0;"></div>
+        </div>
+
+        <!-- PANEL 3: CÔNG CỤ EXCEL & PHÂN TÍCH DỮ LIỆU -->
+        <div id="officeMod_excel" class="office-mod-panel" style="display: none;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+            <button type="button" class="btn-tool primary" onclick="VietNamOfficeModules.renderExcelStatsAndChart('')">📊 Thống Kê &amp; Vẽ Biểu Đồ Từ Bảng OCR</button>
+            <button type="button" class="btn-tool" onclick="VietNamOfficeModules.excelDeduplicate()">🧹 Loại Bỏ Dòng Trùng</button>
+            <button type="button" class="btn-tool" onclick="VietNamOfficeModules.excelNormalizeDatesAndNumbers()">📅 Chuẩn Hóa Ngày (dd/mm/yyyy)</button>
+            <button type="button" class="btn-tool success" onclick="VietNamOfficeModules.exportExcelCsv()">⬇ Xuất CSV (UTF-8)</button>
+            <button type="button" class="btn-tool success" onclick="exportOcrToExcel()">⬇ Xuất Excel (.xls)</button>
+          </div>
+          <div id="excelStatsSummary" style="margin-bottom: 10px; font-size: 0.88rem; color: #fef08a;">Bấm "Thống Kê &amp; Vẽ Biểu Đồ" để tổng hợp số liệu từ bảng đang trích xuất ở trên.</div>
+          <canvas id="excelChartCanvas" width="760" height="190" style="width: 100%; max-width: 760px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);"></canvas>
+        </div>
+
+        <!-- PANEL 4: SO SÁNH 2 TÀI LIỆU -->
+        <div id="officeMod_diff" class="office-mod-panel" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <div>
+              <div style="margin-bottom: 6px; font-size: 0.85rem;"><strong>Tài liệu A (DOCX / PDF / TXT):</strong> <input type="file" accept=".docx,.pdf,.txt" onchange="VietNamOfficeModules.loadDiffFile('A', this.files[0])"></div>
+              <textarea id="cmpDocAText" rows="6" class="glass-textarea" placeholder="Chọn tệp A hoặc dán nội dung bản gốc..."></textarea>
+            </div>
+            <div>
+              <div style="margin-bottom: 6px; font-size: 0.85rem;"><strong>Tài liệu B (DOCX / PDF / TXT):</strong> <input type="file" accept=".docx,.pdf,.txt" onchange="VietNamOfficeModules.loadDiffFile('B', this.files[0])"></div>
+              <textarea id="cmpDocBText" rows="6" class="glass-textarea" placeholder="Chọn tệp B hoặc dán nội dung bản cần đối chiếu..."></textarea>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <button type="button" class="btn-tool primary" onclick="VietNamOfficeModules.runRealDocumentDiff()">⚖️ So Sánh Ngay</button>
+            <button type="button" class="btn-tool success" onclick="VietNamOfficeModules.exportDiffReportHtml()">📄 Xuất Báo Cáo So Sánh (.HTML)</button>
+          </div>
+          <div id="cmpDiffResultBox" style="background: rgba(15,23,42,0.55); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 12px; max-height: 260px; overflow-y: auto; font-size: 0.86rem;"></div>
+        </div>
+
+        <!-- PANEL 5: GHI ÂM & BIÊN BẢN HỌP -->
+        <div id="officeMod_meeting" class="office-mod-panel" style="display: none;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center;">
+            <input id="meetTitleInput" type="text" value="CUỘC HỌP GIAO BAN TUẦN" placeholder="Tên cuộc họp" style="padding: 7px 10px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; min-width: 220px;">
+            <button type="button" id="btnMeetRecord" class="btn-tool primary" onclick="VietNamOfficeModules.toggleVietnameseSpeechRec()">🎙 Bắt đầu Ghi âm Tiếng Việt (vi-VN)</button>
+            <label class="btn-tool" style="cursor: pointer;">🔊 Mở file ghi âm nghe lại<input type="file" accept="audio/*" onchange="VietNamOfficeModules.loadAudioForPlayback(this.files[0])" style="display: none;"></label>
+            <button type="button" class="btn-tool success" onclick="VietNamOfficeModules.buildMeetingMinutes()">📋 Tạo Biên Bản Họp</button>
+          </div>
+          <audio id="meetAudioPlayer" controls style="display: none; width: 100%; margin-bottom: 8px;"></audio>
+          <div id="meetStatusText" style="font-size: 0.84rem; color: #7dd3fc; margin-bottom: 8px;">Hỗ trợ nhận diện giọng nói Tiếng Việt trực tiếp (Chrome/Edge) và chỉnh sửa trước khi xuất biên bản.</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <textarea id="meetTranscriptBox" rows="7" class="glass-textarea" placeholder="Nội dung chuyển giọng nói thành văn bản (có thể gõ/chỉnh sửa trực tiếp)..."></textarea>
+            <textarea id="meetMinutesOutput" rows="7" class="glass-textarea" placeholder="Biên bản họp chuẩn sẽ hiển thị tại đây sau khi bấm 'Tạo Biên Bản Họp'..."></textarea>
+          </div>
+        </div>
+
+        <!-- PANEL 6: BẢO MẬT, CHE THÔNG TIN NHẠY CẢM & KIỂM TRA CHỮ KÝ SỐ PDF -->
+        <div id="officeMod_security" class="office-mod-panel" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div style="background: rgba(15,23,42,0.45); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px;">
+              <h4 style="margin: 0 0 8px; color: #fef08a;">1. Che &amp; Xóa Thông Tin Nhạy Cảm (Redaction Thật)</h4>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.84rem; margin-bottom: 8px;">
+                <label><input type="checkbox" id="chkRedactCccd" checked> CCCD/CMND</label>
+                <label><input type="checkbox" id="chkRedactPhone" checked> SĐT</label>
+                <label><input type="checkbox" id="chkRedactEmail" checked> Email</label>
+                <label><input type="checkbox" id="chkRedactMst" checked> Mã số thuế</label>
+              </div>
+              <textarea id="secRedactInput" rows="4" class="glass-textarea" placeholder="Để trống sẽ tự lấy văn bản OCR hiện tại, hoặc dán văn bản cần che..."></textarea>
+              <div style="display: flex; gap: 8px; margin: 8px 0;">
+                <button type="button" class="btn-tool primary" onclick="VietNamOfficeModules.scanAndRedactSensitiveText()">🛡 Che &amp; Xóa Dữ Liệu Nhạy Cảm</button>
+                <button type="button" class="btn-tool success" onclick="VietNamOfficeModules.exportRedactedTxt()">⬇ Xuất Bản Đã Che (.TXT)</button>
+              </div>
+              <div id="secRedactSummary" style="font-size: 0.82rem; color: #86efac; margin-bottom: 6px;"></div>
+              <textarea id="secRedactOutput" rows="4" class="glass-textarea" readonly placeholder="Văn bản sau khi xóa sạch dữ liệu thật bên dưới vùng che..."></textarea>
+            </div>
+            <div style="background: rgba(15,23,42,0.45); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px;">
+              <h4 style="margin: 0 0 8px; color: #fef08a;">2. Kiểm Tra Chữ Ký Số PDF (/Type /Sig &amp; ByteRange)</h4>
+              <input type="file" accept=".pdf,application/pdf" onchange="VietNamOfficeModules.inspectPdfDigitalSignature(this.files[0])" style="color: #e2e8f0; margin-bottom: 10px; width: 100%;">
+              <div id="secPdfSigReport" style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 12px; font-size: 0.85rem; min-height: 150px;">Chọn 1 tệp PDF đã ký số để kiểm tra cấu trúc chữ ký, người ký, thời gian ký và tính toàn vẹn ByteRange.</div>
+              <div style="margin-top: 12px;">
+                <button type="button" class="btn-tool" style="background: rgba(220,38,38,0.25); border-color: #ef4444;" onclick="VietNamOcrIdpStudio && VietNamOcrIdpStudio.clearAllLocalOcrData()">🗑 Xóa Toàn Bộ Dữ Liệu Tạm &amp; Lịch Sử OCR Cục Bộ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script>
+      window.switchOfficeModule = function(mod) {
+        document.querySelectorAll('.office-mod-panel').forEach(p => { p.style.display = (p.id === 'officeMod_' + mod) ? 'block' : 'none'; });
+        document.querySelectorAll('.office-nav-btn').forEach(b => {
+          if (b.dataset.mod === mod) b.classList.add('primary');
+          else b.classList.remove('primary');
+        });
+      };
+      window.filterOfficeModules = function(q) {
+        const s = String(q || '').trim().toLowerCase();
+        document.querySelectorAll('.office-nav-btn').forEach(b => {
+          const hit = !s || (b.textContent || '').toLowerCase().includes(s) || (b.dataset.kw || '').toLowerCase().includes(s);
+          b.style.opacity = hit ? '1' : '0.32';
+        });
+      };
+    </script>
+
     <!-- Installation & Usage Guide Box -->
     <section class="features-box" id="guideSection" style="margin-top: 36px; margin-bottom: 36px;">
       <div class="section-title-wrap">
@@ -423,10 +599,12 @@
   <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
   <script src="../js/main.js"></script>
   <script src="../js/vietnamese-dictionary.js"></script>
-  <script src="../js/ocr-engine-pro.js?v=364"></script>
-  <script src="../js/ocr-ai-proofread.js?v=364"></script>
-  <script src="../js/ocr-idp-studio.js?v=364"></script>
-  <script src="../js/ocr-app.js?v=364"></script>
-  <script src="../js/ocr-2layer-pdf.js?v=364"></script>
+  <script src="../js/ocr-engine-pro.js?v=365"></script>
+  <script src="../js/ocr-ai-proofread.js?v=365"></script>
+  <script src="../js/ocr-idp-studio.js?v=365"></script>
+  <script src="../js/ocr-pdf-toolkit.js?v=365"></script>
+  <script src="../js/ocr-office-modules.js?v=365"></script>
+  <script src="../js/ocr-app.js?v=365"></script>
+  <script src="../js/ocr-2layer-pdf.js?v=365"></script>
 </body>
 </html>
