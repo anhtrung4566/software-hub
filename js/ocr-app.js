@@ -2017,7 +2017,7 @@ function clearOcrTable() {
 // ============================================================================
 // XUẤT FILE WORD (.DOC) GIỮ NGUYÊN 100% THỂ THỨC GỐC - KHÔNG CHÈN BẢNG PHỤ
 // ============================================================================
-function exportOcrToWord() {
+async function exportOcrToWord() {
   const paperEl = document.getElementById('ocrFormattedPaper');
   const plainWrap = document.getElementById('ocrPlainEditorWrap');
   const textContent = document.getElementById('ocrResultText')?.value || '';
@@ -2029,6 +2029,20 @@ function exportOcrToWord() {
     bodyHtml = paperEl.innerHTML.replace(/page-break-(before|after)\s*:\s*always\s*;?/gi, '');
   } else {
     bodyHtml = reconstructExactLayoutFromPlainText(textContent);
+  }
+
+  // Ưu tiên xuất .DOCX chuẩn OOXML thống nhất (đầy đủ styles.xml, settings.xml, w:rFonts 4 thuộc tính, w:lang="vi-VN")
+  if (window.VietNamDocxExporter && window.JSZip) {
+    try {
+      await window.VietNamDocxExporter.exportUnifiedDocx({
+        html: bodyHtml,
+        plainText: textContent,
+        fileName: uploadedFileBaseName || 'VanBan_ChuyenDoi'
+      });
+      return;
+    } catch (docxErr) {
+      console.warn('Fallback sang .doc HTML:', docxErr);
+    }
   }
 
   const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
