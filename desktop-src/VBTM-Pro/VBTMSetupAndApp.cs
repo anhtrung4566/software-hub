@@ -135,6 +135,19 @@ namespace VBTMProSuite
                     File.WriteAllText(outPath, sbTest.ToString(), new UTF8Encoding(false));
                     return;
                 }
+                else if (a.Equals("--test-spell-offline", StringComparison.OrdinalIgnoreCase))
+                {
+                    string outPath = Path.Combine(Path.GetTempPath(), "vbtm_test_spell_offline.txt");
+                    string sample = "Công tác kiểm điểsm tự phê bình phải sâu sắcs, đấu tranh với các biểu hiện Đảng phải cục bộ, chọn đúng người và năm giữ vai trò nòng cốt, đồng thời năm giữ kỷ luật nghiêm minh.";
+                    System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                    List<SpellCardIssue> found = OfflineVietnameseSpellEngine.ScanDocumentFast(sample);
+                    sw.Stop();
+                    StringBuilder sbTest = new StringBuilder();
+                    sbTest.AppendLine("ELAPSED_MS=" + sw.ElapsedMilliseconds + " | COUNT=" + found.Count);
+                    foreach (var it in found) sbTest.AppendLine(it.Wrong + " -> " + it.Suggest + " [" + it.Badge + "]");
+                    File.WriteAllText(outPath, sbTest.ToString(), new UTF8Encoding(false));
+                    return;
+                }
                 else if (a.Equals("--insert-tpl", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
                     int.TryParse(args[++idx], out insertTplIdx);
             }
@@ -196,7 +209,7 @@ namespace VBTMProSuite
             }
             if (spellWordMode)
             {
-                Application.Run(new WordSpellInspectorForm());
+                Application.Run(new WordSpellTaskPaneForm());
                 return;
             }
             if (qrWordMode)
