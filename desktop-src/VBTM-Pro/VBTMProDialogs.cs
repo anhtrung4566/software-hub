@@ -550,6 +550,238 @@ namespace VBTMProSuite
                 f.ShowDialog();
             }
         }
+
+        // =========================================================================
+        // 3B. CHUẨN HÓA FONT & DẤU CÂU TỪ (ẢNH 1) + CHUẨN HÓA VĂN BẢN AI (ẢNH 2)
+        // =========================================================================
+        private static readonly string[,] NewToneNormalizationPairs = new string[,]
+        {
+            { "hoà", "hòa" }, { "hoá", "hóa" }, { "hoả", "hỏa" }, { "hoã", "hõa" }, { "hoạ", "họa" },
+            { "toà", "tòa" }, { "toá", "tóa" }, { "toả", "tỏa" }, { "toã", "tõa" }, { "toạ", "tọa" },
+            { "loà", "lòa" }, { "loá", "lóa" }, { "loả", "lỏa" }, { "loã", "lõa" }, { "loạ", "lọa" },
+            { "xoà", "xòa" }, { "xoá", "xóa" }, { "xoả", "xỏa" }, { "xoã", "xõa" }, { "xoạ", "xọa" },
+            { "khoẻ", "khỏe" }, { "khoé", "khóe" }, { "loè", "lòe" }, { "loé", "lóe" }, { "xoè", "xòe" },
+            { "thuỷ", "thủy" }, { "thuý", "thúy" }, { "thuỳ", "thùy" }, { "thuỵ", "thụy" },
+            { "uỷ", "ủy" }, { "uý", "úy" }, { "uỳ", "ùy" }, { "uỵ", "ụy" },
+            { "huỷ", "hủy" }, { "huý", "húy" }, { "huỳ", "hùy" }, { "huỵ", "hụy" },
+            { "tuỷ", "tủy" }, { "tuý", "túy" }, { "tuỳ", "tùy" }, { "tuỵ", "tụy" },
+            { "nguỵ", "ngụy" }, { "quỷ", "quỷ" }, { "quý", "quý" }, { "quỳ", "quỳ" }, { "quỵ", "quỵ" },
+            { "Hoà", "Hòa" }, { "Hoá", "Hóa" }, { "Toà", "Tòa" }, { "Thuỷ", "Thủy" }, { "Uỷ", "Ủy" }, { "Huỷ", "Hủy" }
+        };
+
+        private static void WordFindReplace(object doc, string findText, string replaceText, bool useWildcards, bool matchCase, bool setItalic = false, bool setBold = false)
+        {
+            try
+            {
+                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+                object find = content.GetType().InvokeMember("Find", BindingFlags.GetProperty, null, content, null);
+                find.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, find, null);
+                object repl = find.GetType().InvokeMember("Replacement", BindingFlags.GetProperty, null, find, null);
+                repl.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, repl, null);
+                if (setItalic)
+                {
+                    object fnt = repl.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, repl, null);
+                    fnt.GetType().InvokeMember("Italic", BindingFlags.SetProperty, null, fnt, new object[] { -1 });
+                }
+                if (setBold)
+                {
+                    object fnt = repl.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, repl, null);
+                    fnt.GetType().InvokeMember("Bold", BindingFlags.SetProperty, null, fnt, new object[] { -1 });
+                }
+                object[] args = new object[] {
+                    findText, matchCase, false, useWildcards, false, false, true, 1, false, replaceText, 2 // wdReplaceAll = 2
+                };
+                find.GetType().InvokeMember("Execute", BindingFlags.InvokeMethod, null, find, args);
+            }
+            catch { }
+        }
+
+        private static void ShowCleanSuccessDialog(string title, string intro, string[] bullets)
+        {
+            using (Form f = new Form())
+            {
+                f.Text = title;
+                f.Size = new Size(510, 220 + bullets.Length * 26);
+                f.StartPosition = FormStartPosition.CenterScreen;
+                f.FormBorderStyle = FormBorderStyle.FixedDialog;
+                f.MaximizeBox = false;
+                f.BackColor = Color.White;
+                f.Font = new Font("Segoe UI", 9.5f);
+
+                Panel hdr = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = Color.White };
+                hdr.Paint += (s, e) => { using (Pen p = new Pen(Color.FromArgb(226, 232, 240))) e.Graphics.DrawLine(p, 0, hdr.Height - 1, hdr.Width, hdr.Height - 1); };
+                Panel chk = new Panel { Location = new Point(18, 13), Size = new Size(38, 38), BackColor = Color.FromArgb(236, 253, 245) };
+                chk.Controls.Add(new Label { Text = "✓", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter, ForeColor = Color.FromArgb(16, 185, 129), Font = new Font("Segoe UI", 16f, FontStyle.Bold) });
+                hdr.Controls.Add(chk);
+                hdr.Controls.Add(new Label { Text = title, Location = new Point(68, 12), AutoSize = true, ForeColor = Color.FromArgb(15, 23, 42), Font = new Font("Segoe UI", 11f, FontStyle.Bold) });
+                hdr.Controls.Add(new Label { Text = "Thao tác thành công", Location = new Point(68, 36), AutoSize = true, ForeColor = Color.FromArgb(100, 116, 139), Font = new Font("Segoe UI", 8.8f) });
+                f.Controls.Add(hdr);
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(intro);
+                sb.AppendLine();
+                foreach (string b in bullets) sb.AppendLine(b);
+
+                Label lblBody = new Label
+                {
+                    Location = new Point(22, 78),
+                    Size = new Size(454, f.ClientSize.Height - 148),
+                    ForeColor = Color.FromArgb(30, 41, 59),
+                    Text = sb.ToString()
+                };
+                f.Controls.Add(lblBody);
+
+                Panel ftr = new Panel { Dock = DockStyle.Bottom, Height = 58, BackColor = Color.White };
+                ftr.Paint += (s, e) => { using (Pen p = new Pen(Color.FromArgb(226, 232, 240))) e.Graphics.DrawLine(p, 0, 0, ftr.Width, 0); };
+                Button btnClose = new Button { Text = "Đóng", Location = new Point(372, 11), Size = new Size(106, 36), BackColor = Color.FromArgb(37, 99, 235), ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+                btnClose.FlatAppearance.BorderSize = 0;
+                btnClose.Click += (s, e) => f.Close();
+                ftr.Controls.Add(btnClose);
+                f.Controls.Add(ftr);
+                f.ShowDialog();
+            }
+        }
+
+        public static void NormalizeFontAndPunctuationInWord()
+        {
+            try
+            {
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
+                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+
+                // 1. Đồng nhất phông chữ Times New Roman (Unicode)
+                object font = content.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, content, null);
+                font.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, font, new object[] { "Times New Roman" });
+
+                // 2. Làm sạch khoảng trắng thừa (bảo toàn khoảng trống ngày/tháng/năm & số văn bản)
+                WordFindReplace(doc, " ,", ",", false, false);
+                WordFindReplace(doc, " .", ".", false, false);
+                WordFindReplace(doc, " ;", ";", false, false);
+                WordFindReplace(doc, " :", ":", false, false);
+                WordFindReplace(doc, " !", "!", false, false);
+                WordFindReplace(doc, " ?", "?", false, false);
+                WordFindReplace(doc, "( ", "(", false, false);
+                WordFindReplace(doc, " )", ")", false, false);
+                WordFindReplace(doc, "  ", " ", false, false);
+                WordFindReplace(doc, "  ", " ", false, false);
+
+                // 3. Chuyển đổi ngoặc kép thông minh (“...”) & In nghiêng nội dung trong ngoặc đơn (...) và ngoặc kép (“...”)
+                WordFindReplace(doc, "\"([!\"]@)\"", "“\\1”", true, false, true, false);
+                WordFindReplace(doc, "“([!“”]@)”", "“\\1”", true, false, true, false);
+                WordFindReplace(doc, "\\(([!\\(\\)]@)\\)", "(\\1)", true, false, true, false);
+
+                // 4. Chuẩn hóa dấu thanh tiếng Việt theo chuẩn mới (hòa, tòa, thủy, ủy...)
+                for (int i = 0; i < NewToneNormalizationPairs.GetLength(0); i++)
+                {
+                    WordFindReplace(doc, NewToneNormalizationPairs[i, 0], NewToneNormalizationPairs[i, 1], false, true);
+                }
+
+                ShowCleanSuccessDialog(
+                    "VBTM - Chuẩn Hóa Font & Dấu Câu Từ",
+                    "Đã hoàn tất chuẩn hóa phông chữ, khoảng cách và dấu câu từ thành công!",
+                    new string[]
+                    {
+                        "• Đồng nhất phông chữ Times New Roman (Unicode).",
+                        "• Làm sạch khoảng trắng thừa (bảo toàn khoảng trống ngày tháng năm và số văn bản).",
+                        "• Chuẩn hóa dấu câu và chuyển đổi ngoặc kép thông minh (“...”)." ,
+                        "• In nghiêng nội dung trong ngoặc đơn (...) và ngoặc kép (“...”)." ,
+                        "• Chuẩn hóa dấu thanh tiếng Việt theo chuẩn mới (hòa, tòa, thủy, ủy...)."
+                    });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Chưa mở tài liệu Word đang soạn thảo: " + ex.Message, "VBTM Pro 3.6", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        public static void NormalizeAiGeneratedTextInWord()
+        {
+            try
+            {
+                object wordApp = Marshal.GetActiveObject("Word.Application");
+                object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
+                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
+
+                // 1. Đổi phông chữ sang Times New Roman (giữ nguyên cỡ chữ)
+                object font = content.GetType().InvokeMember("Font", BindingFlags.GetProperty, null, content, null);
+                font.GetType().InvokeMember("Name", BindingFlags.SetProperty, null, font, new object[] { "Times New Roman" });
+
+                // 2. Loại bỏ các ký tự Markdown của AI (**bold**, *, ###, ##, #)
+                WordFindReplace(doc, "\\*\\*([!\\*]@)\\*\\*", "\\1", true, false, false, true);
+                WordFindReplace(doc, "### ", "", false, false);
+                WordFindReplace(doc, "## ", "", false, false);
+                WordFindReplace(doc, "# ", "", false, false);
+                WordFindReplace(doc, "*", "", false, false);
+
+                // 3. Chuẩn hóa bullets theo chuẩn Việt Nam (Cấp cha: -, Cấp con: +)
+                WordFindReplace(doc, "^p• ", "^p- ", false, false);
+                WordFindReplace(doc, "^p● ", "^p- ", false, false);
+                WordFindReplace(doc, "^p▪ ", "^p- ", false, false);
+                WordFindReplace(doc, "^p◦ ", "^p+ ", false, false);
+                WordFindReplace(doc, "^p○ ", "^p+ ", false, false);
+                WordFindReplace(doc, "^p    - ", "^p+ ", false, false);
+                WordFindReplace(doc, "^p  - ", "^p+ ", false, false);
+
+                // 4. Làm sạch khoảng trắng & dấu câu + ngoặc kép thông minh + in nghiêng (...) và “...”
+                WordFindReplace(doc, " ,", ",", false, false);
+                WordFindReplace(doc, " .", ".", false, false);
+                WordFindReplace(doc, " ;", ";", false, false);
+                WordFindReplace(doc, " :", ":", false, false);
+                WordFindReplace(doc, "  ", " ", false, false);
+                WordFindReplace(doc, "\"([!\"]@)\"", "“\\1”", true, false, true, false);
+                WordFindReplace(doc, "“([!“”]@)”", "“\\1”", true, false, true, false);
+                WordFindReplace(doc, "\\(([!\\(\\)]@)\\)", "(\\1)", true, false, true, false);
+
+                // 5. Căn đều 2 bên các đoạn văn bản (giữ nguyên các đoạn căn giữa và bảng biểu) & xóa dòng trắng thừa (bảo toàn vùng ký tên)
+                object paras = doc.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, doc, null);
+                int pCount = (int)paras.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, paras, null);
+                int sigZoneStart = Math.Max(1, pCount - 8);
+                for (int i = pCount; i >= 1; i--)
+                {
+                    try
+                    {
+                        object p = paras.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paras, new object[] { i });
+                        object rng = p.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, p, null);
+                        object tbls = rng.GetType().InvokeMember("Tables", BindingFlags.GetProperty, null, rng, null);
+                        int tCount = (int)tbls.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, tbls, null);
+                        if (tCount > 0) continue; // Giữ nguyên bảng biểu
+
+                        string txt = (Convert.ToString(rng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, rng, null)) ?? "").Trim('\r', '\n', ' ', '\t');
+                        if (string.IsNullOrEmpty(txt) && i < sigZoneStart)
+                        {
+                            rng.GetType().InvokeMember("Delete", BindingFlags.InvokeMethod, null, rng, null);
+                            continue;
+                        }
+                        int align = Convert.ToInt32(p.GetType().InvokeMember("Alignment", BindingFlags.GetProperty, null, p, null));
+                        if (align == 0) // wdAlignParagraphLeft -> wdAlignParagraphJustify (3), giữ nguyên căn giữa (1) & căn phải (2)
+                        {
+                            p.GetType().InvokeMember("Alignment", BindingFlags.SetProperty, null, p, new object[] { 3 });
+                        }
+                    }
+                    catch { }
+                }
+
+                ShowCleanSuccessDialog(
+                    "VBTM - Chuẩn Hóa Văn Bản AI",
+                    "Đã hoàn tất chuẩn hóa văn bản do AI tạo thành công!",
+                    new string[]
+                    {
+                        "• Đổi phông chữ sang Times New Roman (giữ nguyên cỡ chữ).",
+                        "• Căn đều 2 bên các đoạn văn bản (giữ nguyên các đoạn căn giữa và bảng biểu).",
+                        "• Chuẩn hóa danh sách gạch đầu dòng (bullets) theo chuẩn Việt Nam:\r\n  - Cấp cha: Dấu gạch đầu dòng (-)\r\n  - Cấp con: Dấu cộng (+)",
+                        "• Xóa bỏ các dòng trắng thừa (bảo toàn nguyên vẹn dòng trống vùng ký tên).",
+                        "• Làm sạch khoảng trắng liên tục (bảo toàn khoảng trống sau ngày, tháng, năm).",
+                        "• Chuẩn hóa dấu câu và chuyển đổi ngoặc kép thông minh (“...”)." ,
+                        "• Loại bỏ các ký tự dấu sao (*) markdown của AI.",
+                        "• In nghiêng nội dung trong ngoặc đơn (...) và ngoặc kép (“...”)."
+                    });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Chưa mở tài liệu Word đang soạn thảo: " + ex.Message, "VBTM Pro 3.6", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
     }
 
     // =========================================================================
