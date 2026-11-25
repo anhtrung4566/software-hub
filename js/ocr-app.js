@@ -1256,7 +1256,10 @@ async function runVietnameseOcr(appendTableMode = false) {
   }
 
   extractTableFromOcrResult(rawPreserved, tesseractLines, appendTableMode);
-  statusEl.textContent = '✓ Hoàn tất nhận diện Tiếng Việt! Đã giữ nguyên bố cục văn bản để xuất sang Word.';
+  if (window.VietNamOcr2LayerPdf) {
+    window.VietNamOcr2LayerPdf.recordSinglePageOcr(canvas, rawPreserved, tesseractLines);
+  }
+  statusEl.textContent = '✓ Hoàn tất nhận diện Tiếng Việt! Đã giữ nguyên bố cục để xuất Word hoặc PDF 2 lớp (Searchable).';
 }
 
 async function runCloudNeuralVietnameseOcr(procCanvas) {
