@@ -207,6 +207,9 @@ async function loadRealPdfDocument(file) {
     currentPdfPage = 1;
     pdfPagesLayoutHtml = [];
     pdfPagesRawText = [];
+    if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.clearMultiPageStore) {
+      window.VietNamOcr2LayerPdf.clearMultiPageStore();
+    }
 
     const pdfCtrl = document.getElementById('pdfPageControls');
     if (pdfCtrl) {
@@ -261,6 +264,19 @@ async function loadRealPdfDocument(file) {
         const { pageHtml, pagePlainText } = reconstructExactPdfPageLayout(rawItems, page, textContent, viewport1x, p);
         pdfPagesLayoutHtml.push(pageHtml);
         pdfPagesRawText.push(pagePlainText);
+        if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.recordPdfPageOcr) {
+          const nativeLines = [];
+          rawItems.forEach(it => {
+            const s = String(it.str || '').trim();
+            if (!s || !it.transform) return;
+            const tx = window.pdfjsLib.Util.transform(viewportRender.transform, it.transform);
+            const x0 = tx[4];
+            const yBottom = tx[5];
+            const h = Math.max(10, Math.hypot(tx[2], tx[3]) || 14);
+            nativeLines.push({ text: s.normalize('NFC'), bbox: { x0, y0: yBottom - h, x1: x0 + (it.width * viewportRender.scale), y1: yBottom } });
+          });
+          window.VietNamOcr2LayerPdf.recordPdfPageOcr(p, offCanvas, pagePlainText, nativeLines, offCanvas.width, offCanvas.height);
+        }
       } else {
         // Trang PDF là ảnh scan thuần túy (hoặc PDF 2 lớp bị lỗi font): Gọi Tesseract v5 LSTM Tiếng Việt + tái tạo bố cục 2 cột theo tọa độ bbox thực
         const ocrRes = await recognizeCanvasPageHighAccuracy(offCanvas, (pct) => {
@@ -271,6 +287,9 @@ async function loadRealPdfDocument(file) {
           : reconstructExactLayoutFromPlainText(ocrRes.text);
         pdfPagesLayoutHtml.push(pageHtml);
         pdfPagesRawText.push(ocrRes.text);
+        if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.recordPdfPageOcr) {
+          window.VietNamOcr2LayerPdf.recordPdfPageOcr(p, offCanvas, ocrRes.text, ocrRes.lines, ocrRes.procWidth, ocrRes.procHeight);
+        }
       }
     }
 
