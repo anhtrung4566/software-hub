@@ -372,13 +372,16 @@ async function loadRealPdfDocument(file) {
         if (window.VietNamOcrTableGrid && window.VietNamOcrTableGrid.reconstructNativePdfPageWithRealTables) {
           nativeGridRes = window.VietNamOcrTableGrid.reconstructNativePdfPageWithRealTables(offCanvas, rawItems, viewportRender, viewport1x);
         }
+        let currentPagePlainText = '';
         if (nativeGridRes && nativeGridRes.html) {
+          currentPagePlainText = nativeGridRes.plainText || '';
           pdfPagesLayoutHtml.push(nativeGridRes.html);
-          pdfPagesRawText.push(nativeGridRes.plainText);
+          pdfPagesRawText.push(currentPagePlainText);
         } else {
           const { pageHtml, pagePlainText } = reconstructExactPdfPageLayout(rawItems, page, textContent, viewport1x, p);
+          currentPagePlainText = pagePlainText || '';
           pdfPagesLayoutHtml.push(pageHtml);
-          pdfPagesRawText.push(pagePlainText);
+          pdfPagesRawText.push(currentPagePlainText);
         }
         if (window.VietNamOcr2LayerPdf && window.VietNamOcr2LayerPdf.recordPdfPageOcr) {
           const nativeLines = [];
@@ -391,7 +394,7 @@ async function loadRealPdfDocument(file) {
             const h = Math.max(10, Math.hypot(tx[2], tx[3]) || 14);
             nativeLines.push({ text: s.normalize('NFC'), bbox: { x0, y0: yBottom - h, x1: x0 + (it.width * viewportRender.scale), y1: yBottom } });
           });
-          window.VietNamOcr2LayerPdf.recordPdfPageOcr(p, offCanvas, pagePlainText, nativeLines, offCanvas.width, offCanvas.height);
+          window.VietNamOcr2LayerPdf.recordPdfPageOcr(p, offCanvas, currentPagePlainText, nativeLines, offCanvas.width, offCanvas.height);
         }
       } else {
         // Trang PDF là ảnh scan thuần túy (hoặc PDF 2 lớp bị lỗi font): Gọi Tesseract v5 LSTM Tiếng Việt + dò lưới ô bảng thật (colspan/rowspan) + tái tạo bố cục
