@@ -1,17 +1,17 @@
 [
   {
     "id": "vbtm-pro",
-    "name": "VBTM Pro 2.5.0",
-    "version": "2.5.0",
+    "name": "VBTM Pro 3.6.0",
+    "version": "3.6.0",
     "category": "ai",
     "setupFile": "VBTM-Setup-3.6.0.zip",
     "pageUrl": "./products/vbtm-pro.html",
     "badge": "Đảng Ủy & UBND Phường",
     "platform": "Windows 10/11 & Word",
-    "tagline": "Chuẩn Hóa Văn Bản Hướng Dẫn 05-HD/VPTW & Nghị Định 30, Chuyển PDF Sang Word & Chính Tả AI",
-    "shortDesc": "Chuẩn hóa 100% thể thức văn bản của Đảng ủy phường theo Hướng dẫn số 05-HD/VPTW và văn bản của UBND phường theo Nghị định 30/2020/NĐ-CP. Tích hợp chuyển đổi PDF/DOCX sang Word giữ nguyên thể thức, tạo mã QR ISO 18004 và soát lỗi chính tả AI.",
+    "tagline": "Chuẩn Hóa Văn Bản 05-HD/VPTW & NĐ 30, Kho 84 Mẫu Chuẩn & Chính Tả AI Offline (ProtonX / Ollama)",
+    "shortDesc": "Chuẩn hóa 100% thể thức văn bản Đảng ủy phường theo Hướng dẫn 05-HD/VPTW, UBND phường theo Nghị định 30/2020/NĐ-CP và CAND. Tích hợp kiểm tra chính tả AI 3 tầng Offline (CTranslate2 ProtonX + 147.000 từ điển + Ollama), kho 84 mẫu văn bản chuẩn và tạo mã QR ISO 18004.",
     "iconColor": "linear-gradient(145deg, #dc2626 0%, #b91c1c 55%, #7f1d1d 100%)",
-    "iconSvg": "<svg viewBox=\"0 0 64 64\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"11\" y=\"9\" width=\"34\" height=\"46\" rx=\"5\" fill=\"#fffbeb\" stroke=\"#facc15\" stroke-width=\"2\"/><line x1=\"17\" y1=\"18\" x2=\"32\" y2=\"18\" stroke=\"#b91c1c\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><line x1=\"17\" y1=\"24\" x2=\"39\" y2=\"24\" stroke=\"#7f1d1d\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"17\" y1=\"30\" x2=\"35\" y2=\"30\" stroke=\"#7f1d1d\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"44\" cy=\"43\" r=\"13\" fill=\"#facc15\" stroke=\"#991b1b\" stroke-width=\"2\"/><path d=\"M38 43.5L42 47.5L50 39\" stroke=\"#7f1d1d\" stroke-width=\"2.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>"
+    "iconSvg": "<img src=\"./desktop-src/VBTM-Pro/VBTM-Pro-logo.png\" alt=\"VBTM Pro 3.6.0\" style=\"width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;\">"
   },
   {
     "id": "vietnam-ocr",
