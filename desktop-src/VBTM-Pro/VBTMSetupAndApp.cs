@@ -158,6 +158,20 @@ namespace VBTMProSuite
                     File.WriteAllText(outPath, sbTest.ToString(), new UTF8Encoding(false));
                     return;
                 }
+                else if (a.Equals("--test-spell-docx", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
+                {
+                    string docxFile = args[++idx];
+                    string outPath = Path.Combine(Path.GetTempPath(), "vbtm_test_spell_docx.txt");
+                    System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+                    var segs = OfflineVietnameseSpellEngine.ExtractSegmentsFromDocx(docxFile);
+                    var found = OfflineVietnameseSpellEngine.ScanStructuredSegments(segs);
+                    sw.Stop();
+                    StringBuilder sbTest = new StringBuilder();
+                    sbTest.AppendLine(string.Format("ELAPSED_MS={0} | SEGMENTS={1} | COUNT={2}", sw.ElapsedMilliseconds, segs.Count, found.Count));
+                    foreach (var it in found) sbTest.AppendLine(string.Format("[{0}] {1} -> {2} [{3}] ({4})", it.Location, it.Wrong, it.Suggest, it.Badge, it.Reason));
+                    File.WriteAllText(outPath, sbTest.ToString(), new UTF8Encoding(false));
+                    return;
+                }
                 else if (a.Equals("--insert-tpl", StringComparison.OrdinalIgnoreCase) && idx + 1 < args.Length)
                     int.TryParse(args[++idx], out insertTplIdx);
             }
