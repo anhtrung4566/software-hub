@@ -148,7 +148,7 @@ namespace VBTMProSuite
                 else if (a.Equals("--test-spell-offline", StringComparison.OrdinalIgnoreCase))
                 {
                     string outPath = Path.Combine(Path.GetTempPath(), "vbtm_test_spell_offline.txt");
-                    string sample = "Công tác kiểm điểsm tự phê bình phải sâu sắcs, đấu tranh với các biểu hiện Đảng phải cục bộ, chọn đúng người và năm giữ vai trò nòng cốt, đồng thời năm giữ kỷ luật nghiêm minh.";
+                    string sample = "Công tác tập treung lãnh đạo cqác cơ quan vận độeng thực hiện tquyền và cơ scấu tổ chức, chọn đúng người, giáo dục đảng sviên, thàdnh lập tổ công tác phòng chống xunga đột, năm giữ vai trò nòng cốt của nước evà nhân dân, đồng thời năm giữ kỷ luật nghiêm minh.";
                     System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
                     List<SpellCardIssue> found = OfflineVietnameseSpellEngine.ScanDocumentFast(sample);
                     sw.Stop();
@@ -1724,7 +1724,19 @@ namespace VBTMProSuite
                 }
                 finally
                 {
-                    try { wordType.InvokeMember("Quit", BindingFlags.InvokeMethod, null, wordApp, new object[] { false }); } catch { }
+                    // Đánh dấu NormalTemplate.Saved = true và Quit(wdDoNotSaveChanges = 0) để không bao giờ khóa Normal.dotm hoặc để sót tiến trình WINWORD.EXE chạy ngầm
+                    try
+                    {
+                        object normalTpl = wordType.InvokeMember("NormalTemplate", BindingFlags.GetProperty, null, wordApp, null);
+                        if (normalTpl != null)
+                        {
+                            normalTpl.GetType().InvokeMember("Saved", BindingFlags.SetProperty, null, normalTpl, new object[] { true });
+                            try { System.Runtime.InteropServices.Marshal.ReleaseComObject(normalTpl); } catch { }
+                        }
+                    }
+                    catch { }
+                    try { wordType.InvokeMember("Quit", BindingFlags.InvokeMethod, null, wordApp, new object[] { 0 }); } catch { }
+                    try { System.Runtime.InteropServices.Marshal.FinalReleaseComObject(wordApp); } catch { }
                 }
 
                 // 3. Chờ Word nhả khóa tệp tạm rồi nhúng Custom Ribbon Tab vào tempDotm và chép vào STARTUP
