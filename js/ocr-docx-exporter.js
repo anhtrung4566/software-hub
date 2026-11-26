@@ -164,7 +164,7 @@
     return `<w:p><w:pPr><w:jc w:val="${jc}"/>${indXml}<w:spacing w:after="${afterSpace}" w:line="276" w:lineRule="auto"/>${rPrP}</w:pPr>${runs}</w:p>`;
   }
 
-  function buildTableXmlFromElement(tblEl, fontName, defaultPt) {
+  function buildTableXmlFromElement(tblEl, fontName, defaultPt, usableWidthDxa) {
     const st = (tblEl.getAttribute && tblEl.getAttribute('style')) || '';
     const borderAttr = tblEl.getAttribute('border');
     const isBorderless = borderAttr === '0' || /border\s*:\s*none/i.test(st);
@@ -175,7 +175,7 @@
     const trNodes = Array.from(tblEl.querySelectorAll('tr'));
     if (trNodes.length === 0) return '';
 
-    const TOTAL_DXA = 9355; // A4 usable width = 11906 - 1701 - 850
+    const TOTAL_DXA = usableWidthDxa || 9355; // Portrait = 9355 dxa, Landscape A4 = 14286 dxa
     // Tính tổng số cột lưới chuẩn (tính cả colspan & rowspan)
     const rowTrackers = [];
     let maxGridCols = 1;
@@ -252,6 +252,8 @@
         if (slot.isOrigin) {
           const cell = slot.cell;
           const cst = cell.getAttribute('style') || '';
+          const vAlignAttr = (cell.getAttribute('valign') || '').toLowerCase();
+          const vAlignWord = (vAlignAttr === 'middle' || /vertical-align\s*:\s*middle/i.test(cst)) ? 'center' : 'top';
           const isTh = cell.tagName.toUpperCase() === 'TH';
           const vMergeXml = slot.rowspan > 1 ? '<w:vMerge w:val="restart"/>' : '';
           const shdXml = (isTh || /background\s*:\s*#f1f5f9/i.test(cst))
@@ -269,7 +271,7 @@
           }
           if (!cellInner) cellInner = `<w:p><w:pPr>${buildRunPrXml(fontName, cellPt * 2, false, false, false)}</w:pPr></w:p>`;
 
-          cellsXml += `<w:tc><w:tcPr><w:tcW w:w="${spanW}" w:type="dxa"/>${gridSpanXml}${vMergeXml}${shdXml}<w:vAlign w:val="top"/></w:tcPr>${cellInner}</w:tc>`;
+          cellsXml += `<w:tc><w:tcPr><w:tcW w:w="${spanW}" w:type="dxa"/>${gridSpanXml}${vMergeXml}${shdXml}<w:vAlign w:val="${vAlignWord}"/></w:tcPr>${cellInner}</w:tc>`;
           c += cs;
           continue;
         }
@@ -281,7 +283,7 @@
     return `<w:tbl><w:tblPr><w:tblW w:w="${TOTAL_DXA}" w:type="dxa"/>${bordersXml}<w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar></w:tblPr>${gridXml}${rowsXml}</w:tbl>`;
   }
 
-  function convertHtmlToWordBodyXml(htmlString, fontName, defaultPt) {
+  function convertHtmlToWordBodyXml(htmlString, fontName, defaultPt, usableWidthDxa) {
     const host = document.createElement('div');
     host.innerHTML = normalizeVietnameseUnicode(htmlString || '');
     let out = '';
@@ -297,7 +299,7 @@
         } else if (n.nodeType === 1) {
           const tag = n.tagName.toUpperCase();
           if (tag === 'TABLE') {
-            out += buildTableXmlFromElement(n, fontName, defaultPt);
+            out += buildTableXmlFromElement(n, fontName, defaultPt, usableWidthDxa);
           } else if (tag === 'P' || tag === 'H1' || tag === 'H2' || tag === 'H3' || tag === 'LI') {
             out += buildParagraphXmlFromElement(n, fontName, defaultPt, false);
           } else if (tag === 'DIV' || tag === 'SECTION' || tag === 'UL' || tag === 'OL') {
@@ -355,10 +357,18 @@
     const sizePt = options.sizePt || cfg.sizePt || DEFAULT_SIZE_PT;
     const halfPt = Math.round(sizePt * 2);
     const fXml = escXml(fontName);
+    const isLandscape = (options.landscape === true) || (global.lastDocumentOrientation === 'landscape');
+    const pgSzXml = isLandscape
+      ? '<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>'
+      : '<w:pgSz w:w="11906" w:h="16838"/>';
+    const pgMarXml = isLandscape
+      ? '<w:pgMar w:top="850" w:right="850" w:bottom="850" w:left="1134" w:header="450" w:footer="450" w:gutter="0"/>'
+      : '<w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/>';
+    const usableWidthDxa = isLandscape ? 14854 : 9355;
 
     let bodyInnerXml = '';
     if (options.html && String(options.html).trim()) {
-      bodyInnerXml = convertHtmlToWordBodyXml(options.html, fontName, sizePt);
+      bodyInnerXml = convertHtmlToWordBodyXml(options.html, fontName, sizePt, usableWidthDxa);
     } else {
       bodyInnerXml = convertPlainTextToWordBodyXml(options.plainText || '', fontName, sizePt);
     }
@@ -442,8 +452,8 @@
       `<w:headerReference w:type="first" r:id="rIdHdr1"/>` +
       `<w:headerReference w:type="default" r:id="rIdHdr2"/>` +
       `<w:titlePg/>` +
-      `<w:pgSz w:w="11906" w:h="16838"/>` +
-      `<w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/>` +
+      pgSzXml +
+      pgMarXml +
       `</w:sectPr>` +
       `</w:body></w:document>`;
 
