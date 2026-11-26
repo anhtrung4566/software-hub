@@ -271,6 +271,11 @@ async function handleUploadedFile(file) {
     const img = new Image();
     img.onload = () => {
       currentImageSource = img;
+      window.lastDocumentOrientation = (img.width > img.height) ? 'landscape' : 'portrait';
+      const paperEl = document.getElementById('ocrFormattedPaper');
+      if (paperEl) {
+        paperEl.style.maxWidth = (window.lastDocumentOrientation === 'landscape') ? '1080px' : '794px';
+      }
       drawCanvasImage();
       if (window.showToast) {
         window.showToast(`Đã nạp ảnh "${file.name || 'Clipboard'}" (${img.width}x${img.height}px) · Đang nhận diện giữ nguyên bố cục...`);
@@ -354,6 +359,11 @@ async function loadRealPdfDocument(file) {
       await page.render({ canvasContext: offCtx, viewport: viewportRender }).promise;
 
       if (p === 1) {
+        window.lastDocumentOrientation = (viewport1x.width > viewport1x.height) ? 'landscape' : 'portrait';
+        const paperElPreview = document.getElementById('ocrFormattedPaper');
+        if (paperElPreview) {
+          paperElPreview.style.maxWidth = (window.lastDocumentOrientation === 'landscape') ? '1080px' : '794px';
+        }
         const img = new Image();
         await new Promise((resolve) => {
           img.onload = resolve;
@@ -367,10 +377,10 @@ async function loadRealPdfDocument(file) {
       }
 
       if (hasUsableTextLayer) {
-        // Trang PDF có lớp văn bản gốc: Dò lưới bảng thật trước trên offCanvas để giữ 100% ô bảng (Lịch công tác, Bảng biểu)!
+        // Trang PDF có lớp văn bản gốc: Dò lưới bảng thật trước trên offCanvas để giữ 100% ô bảng, in đậm/nghiêng, cỡ chữ và căn lề!
         let nativeGridRes = null;
         if (window.VietNamOcrTableGrid && window.VietNamOcrTableGrid.reconstructNativePdfPageWithRealTables) {
-          nativeGridRes = window.VietNamOcrTableGrid.reconstructNativePdfPageWithRealTables(offCanvas, rawItems, viewportRender, viewport1x);
+          nativeGridRes = window.VietNamOcrTableGrid.reconstructNativePdfPageWithRealTables(offCanvas, rawItems, viewportRender, viewport1x, page, textContent);
         }
         let currentPagePlainText = '';
         if (nativeGridRes && nativeGridRes.html) {
@@ -442,12 +452,13 @@ async function loadRealPdfDocument(file) {
     }
     switchOcrViewMode('formatted');
 
+    const orientLabel = window.lastDocumentOrientation === 'landscape' ? 'A4 Ngang' : 'A4 Đứng';
     if (progressFill) progressFill.style.width = '100%';
     if (statusEl) {
-      statusEl.textContent = `✓ Đã đọc toàn bộ ${totalPdfPages} trang PDF "${file.name}" · Giữ nguyên 100% thể thức và nội dung gốc!`;
+      statusEl.textContent = `✓ Đã đọc & tự động tách ${totalPdfPages} trang (${orientLabel}) "${file.name}" · Sẵn sàng xuất Word (.docx) 1:1 & PDF 2 lớp tức thì!`;
     }
     if (window.showToast) {
-      window.showToast(`Đã chuyển đổi ${totalPdfPages} trang PDF giữ nguyên 100% thể thức gốc! Bấm "Xuất Word (.doc)" để tải về.`);
+      window.showToast(`Hoàn tất ${totalPdfPages} trang (${orientLabel})! Đã tự động tách ô bảng & chuẩn bị sẵn OCR 2 lớp — bấm "Xuất Word (.docx)" hoặc "Xuất PDF 2 Lớp".`);
     }
   } catch (err) {
     console.error('Lỗi đọc PDF:', err);
