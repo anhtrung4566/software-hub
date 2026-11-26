@@ -362,16 +362,17 @@ namespace VBTMProSuite
             string lc = cand.ToLowerInvariant();
             int score = 5;
 
-            if (CommonVietnameseSyllables.Contains(lc)) score += 45;
+            if (CommonVietnameseSyllables.Contains(lc) || VbtmKnowledgeHub.DictionaryWords.Contains(lc)) score += 45;
 
-            if (!string.IsNullOrEmpty(prevWord) && CommonVietnameseBigrams.Contains(prevWord.ToLowerInvariant() + " " + lc))
-            {
+            int leftExt = VbtmKnowledgeHub.GetBigramScore(prevWord, lc);
+            if (leftExt > 0) score += leftExt;
+            else if (!string.IsNullOrEmpty(prevWord) && CommonVietnameseBigrams.Contains(prevWord.ToLowerInvariant() + " " + lc))
                 score += 120;
-            }
-            if (!string.IsNullOrEmpty(nextWord) && CommonVietnameseBigrams.Contains(lc + " " + nextWord.ToLowerInvariant()))
-            {
+
+            int rightExt = VbtmKnowledgeHub.GetBigramScore(lc, nextWord);
+            if (rightExt > 0) score += rightExt;
+            else if (!string.IsNullOrEmpty(nextWord) && CommonVietnameseBigrams.Contains(lc + " " + nextWord.ToLowerInvariant()))
                 score += 120;
-            }
 
             if (deletedIndex >= 0 && deletedIndex < original.Length)
             {
@@ -402,7 +403,8 @@ namespace VBTMProSuite
         public static string TryRepairTelexOrExtraChar(string word, string prevWord, string nextWord)
         {
             if (string.IsNullOrWhiteSpace(word) || word.Length < 2 || word.Length > 10) return null;
-            if (WhitelistWords.Contains(word)) return null;
+            VbtmKnowledgeHub.EnsureLoaded();
+            if (WhitelistWords.Contains(word) || VbtmKnowledgeHub.ProtectedWhitelist.Contains(word)) return null;
 
             string w = word.Normalize(NormalizationForm.FormC);
             // Bỏ qua từ viết tắt toàn chữ HOA ngắn (VD: UBND, HĐND, TW, QR)
@@ -410,6 +412,10 @@ namespace VBTMProSuite
 
             string direct;
             if (DirectWordRepairs.TryGetValue(w, out direct) && !string.Equals(w, direct, StringComparison.OrdinalIgnoreCase))
+            {
+                return PreserveCase(w, direct);
+            }
+            if (VbtmKnowledgeHub.ExternalTypoMap.TryGetValue(w, out direct) && !string.Equals(w, direct, StringComparison.OrdinalIgnoreCase))
             {
                 return PreserveCase(w, direct);
             }
@@ -622,8 +628,8 @@ namespace VBTMProSuite
                     int spanStart = wm.Index;
                     int spanLen = wm.Length;
 
-                    bool leftBigram = hasLeftSpace && CommonVietnameseBigrams.Contains(prevWord.ToLowerInvariant() + " " + repaired.ToLowerInvariant());
-                    bool rightBigram = hasRightSpace && CommonVietnameseBigrams.Contains(repaired.ToLowerInvariant() + " " + nextWord.ToLowerInvariant());
+                    bool leftBigram = hasLeftSpace && (CommonVietnameseBigrams.Contains(prevWord.ToLowerInvariant() + " " + repaired.ToLowerInvariant()) || VbtmKnowledgeHub.GetBigramScore(prevWord, repaired) > 0);
+                    bool rightBigram = hasRightSpace && (CommonVietnameseBigrams.Contains(repaired.ToLowerInvariant() + " " + nextWord.ToLowerInvariant()) || VbtmKnowledgeHub.GetBigramScore(repaired, nextWord) > 0);
 
                     if (leftBigram)
                     {
@@ -723,6 +729,34 @@ namespace VBTMProSuite
                 }
             }
 
+            // 2c. Scan 350+ Confusable Vietnamese Phrases from SpellCheck\Data\confusable_phrases.json
+            VbtmKnowledgeHub.EnsureLoaded();
+            string lowerText = text.ToLowerInvariant();
+            foreach (ConfusablePhraseRule cr in VbtmKnowledgeHub.ConfusableRules)
+            {
+                if (goodWords.Contains(cr.Wrong)) continue;
+                // Fast pre-filter before regex so scanning 350+ phrases takes < 5ms!
+                if (lowerText.IndexOf(cr.Wrong.ToLowerInvariant(), StringComparison.Ordinal) < 0) continue;
+
+                foreach (Match m in Regex.Matches(text, @"(?<![A-Za-zÀ-Ỹà-ỹĐđ])" + Regex.Escape(cr.Wrong) + @"(?![A-Za-zÀ-Ỹà-ỹĐđ])", RegexOptions.IgnoreCase))
+                {
+                    if (coveredPositions.Contains(m.Index)) continue;
+                    if (goodWords.Contains(m.Value)) continue;
+                    string prop = PreserveCase(m.Value, cr.Replacement);
+                    if (string.Equals(m.Value, prop, StringComparison.Ordinal)) continue;
+
+                    ordered.Add(new KeyValuePair<int, SpellCardIssue>(m.Index, new SpellCardIssue
+                    {
+                        Wrong = m.Value,
+                        Suggest = prop,
+                        Badge = cr.IsSuspicious ? "Nghi ngờ" : "Chính tả",
+                        Reason = cr.Description,
+                        IsSuspicious = cr.IsSuspicious
+                    }));
+                    for (int p = m.Index; p < m.Index + m.Length; p++) coveredPositions.Add(p);
+                }
+            }
+
             ordered.Sort((a, b) => a.Key.CompareTo(b.Key));
             Dictionary<string, int> occCounter = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var kv in ordered)
@@ -795,7 +829,7 @@ namespace VBTMProSuite
             btnRescan.FlatAppearance.BorderSize = 0;
             btnRescan.Click += (s, e) => ScanActiveWordInstant();
 
-            btnAiDeep = new Button { Text = "⚡ Quét sâu AI (Ollama)", Location = new Point(222, 26), Size = new Size(206, 32), BackColor = Color.FromArgb(241, 245, 249), ForeColor = Color.FromArgb(30, 41, 59), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9f, FontStyle.Bold), Cursor = Cursors.Hand };
+            btnAiDeep = new Button { Text = "⚡ Quét AI (CT2 / Ollama)", Location = new Point(222, 26), Size = new Size(206, 32), BackColor = Color.FromArgb(241, 245, 249), ForeColor = Color.FromArgb(30, 41, 59), FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9f, FontStyle.Bold), Cursor = Cursors.Hand };
             btnAiDeep.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
             btnAiDeep.Click += (s, e) => RunDeepOllamaSupplementAsync();
             ftr.Controls.AddRange(new Control[] { lblStatusBottom, btnRescan, btnAiDeep });
@@ -871,12 +905,42 @@ namespace VBTMProSuite
 
         private void BuildQuickFormatTab()
         {
+            VbtmKnowledgeHub.EnsureLoaded();
             int y = 12;
-            AddQuickActionCard(pnlFormatView, "📐 Thiết lập Căn lề & Khổ giấy (Trực quan)", "Mở giao diện căn lề A4 + xem trước trang in (NĐ 30 / HD 05)", y, () => { using (var f = new PageSetupVisualForm()) f.ShowDialog(); }); y += 68;
-            AddQuickActionCard(pnlFormatView, "⚙ Cài đặt Hệ thống & Mẫu Thể thức", "Quản lý quy chuẩn NĐ 30, 05-HD/VPTW, CAND, Quốc hiệu, Chữ ký", y, () => { using (var f = new SystemAndTemplateSettingsForm(0)) f.ShowDialog(); }); y += 68;
-            AddQuickActionCard(pnlFormatView, "💰 Đọc tiền sang chữ trong Word", "Đổi số tiền đang bôi đen thành chữ tiếng Việt chuẩn hành chính", y, () => WordQuickUtilities.ConvertSelectedMoneyToVietnameseWords()); y += 68;
-            AddQuickActionCard(pnlFormatView, "💬 Xóa toàn bộ nhận xét (Comments)", "Dọn sạch toàn bộ ghi chú nhận xét trước khi phát hành văn bản", y, () => WordQuickUtilities.DeleteWordComments(true)); y += 68;
-            AddQuickActionCard(pnlFormatView, "📱 Tạo Mã QR Code văn bản", "Chèn mã QR chuẩn ISO 18004 trực tiếp vào tài liệu Word", y, () => { using (var f = new WordQrInsertForm()) f.ShowDialog(); }); y += 68;
+            int tplCount = VbtmKnowledgeHub.OfficialTemplates.Count;
+            AddQuickActionCard(pnlFormatView,
+                "📚 Kho " + (tplCount > 0 ? tplCount.ToString() : "84") + " Mẫu Văn Bản Chuẩn (Đảng · NĐ 30 · CAND)",
+                "Mở nhanh mẫu Nghị quyết, Quyết định, Công văn, Báo cáo, CAND, Cá nhân...",
+                y,
+                () => { using (var f = new OfficialTemplateBrowserForm()) f.ShowDialog(); });
+            y += 66;
+
+            // Thanh chèn nhanh Dấu Mật / Khẩn theo NĐ 30 & CAND
+            Panel pnlMarks = new Panel { Location = new Point(14, y), Size = new Size(410, 56), BackColor = Color.White };
+            pnlMarks.Paint += (s, e) => { using (Pen p = new Pen(Color.FromArgb(226, 232, 240))) e.Graphics.DrawRectangle(p, 0, 0, pnlMarks.Width - 1, pnlMarks.Height - 1); };
+            pnlMarks.Controls.Add(new Label { Text = "Chèn nhanh dấu Độ khẩn / Độ mật:", Location = new Point(10, 5), AutoSize = true, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold), ForeColor = Color.FromArgb(71, 85, 105) });
+            string[] marks = new string[] { "HỎA TỐC", "MẬT", "TỐI MẬT", "TUYỆT MẬT" };
+            int mx = 10;
+            foreach (string mk in marks)
+            {
+                string capturedMk = mk;
+                bool isRed = (capturedMk == "HỎA TỐC");
+                Button bm = MakePillBtn(capturedMk, mx, 25, 92, 24,
+                    isRed ? Color.FromArgb(254, 242, 242) : Color.FromArgb(241, 245, 249),
+                    isRed ? Color.FromArgb(185, 28, 28) : Color.FromArgb(30, 41, 59),
+                    isRed ? Color.FromArgb(254, 202, 202) : Color.FromArgb(203, 213, 225));
+                bm.Click += (s, e) => VbtmKnowledgeHub.InsertSpecialMarkIntoWord(capturedMk, isRed);
+                pnlMarks.Controls.Add(bm);
+                mx += 98;
+            }
+            pnlFormatView.Controls.Add(pnlMarks);
+            y += 64;
+
+            AddQuickActionCard(pnlFormatView, "📐 Thiết lập Căn lề & Khổ giấy (Trực quan)", "Mở giao diện căn lề A4 + xem trước trang in (NĐ 30 / HD 05)", y, () => { using (var f = new PageSetupVisualForm()) f.ShowDialog(); }); y += 66;
+            AddQuickActionCard(pnlFormatView, "⚙ Cài đặt Hệ thống & Mẫu Thể thức", "Quản lý quy chuẩn NĐ 30, 05-HD/VPTW, CAND, Quốc hiệu, Chữ ký", y, () => { using (var f = new SystemAndTemplateSettingsForm(0)) f.ShowDialog(); }); y += 66;
+            AddQuickActionCard(pnlFormatView, "💰 Đọc tiền sang chữ trong Word", "Đổi số tiền đang bôi đen thành chữ tiếng Việt chuẩn hành chính", y, () => WordQuickUtilities.ConvertSelectedMoneyToVietnameseWords()); y += 66;
+            AddQuickActionCard(pnlFormatView, "💬 Xóa toàn bộ nhận xét (Comments)", "Dọn sạch toàn bộ ghi chú nhận xét trước khi phát hành văn bản", y, () => WordQuickUtilities.DeleteWordComments(true)); y += 66;
+            AddQuickActionCard(pnlFormatView, "📱 Tạo Mã QR Code văn bản", "Chèn mã QR chuẩn ISO 18004 trực tiếp vào tài liệu Word", y, () => { using (var f = new WordQrInsertForm()) f.ShowDialog(); }); y += 66;
             AddQuickActionCard(pnlFormatView, "⌨️ Các phím tắt trong Word", "Tra cứu nhanh 32 phím tắt Word có highlight trực tiếp", y, () => { using (var f = new WordShortcutsForm()) f.ShowDialog(); });
         }
 
@@ -1123,12 +1187,49 @@ namespace VBTMProSuite
                 if (string.IsNullOrWhiteSpace(currentDocText)) return;
             }
             btnAiDeep.Enabled = false;
-            lblStatusBottom.Text = "⏳ AI Local đang tự động quét sâu toàn bộ văn bản...";
+            VbtmKnowledgeHub.EnsureLoaded();
+            lblStatusBottom.Text = VbtmKnowledgeHub.HasCTranslate2
+                ? "⏳ Đang nạp mô hình AI CTranslate2 Offline & soát ngữ cảnh..."
+                : "⏳ AI Local đang tự động quét sâu toàn bộ văn bản...";
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 try
                 {
-                    // Chia TOÀN BỘ văn bản thành các đoạn ~1800 ký tự để AI không bỏ sót phần cuối văn bản
+                    int totalAdded = 0;
+
+                    // 1. Ưu tiên chạy mô hình AI CTranslate2 Offline nếu có sẵn trên máy
+                    if (VbtmKnowledgeHub.HasCTranslate2)
+                    {
+                        List<SpellCardIssue> ct2Found = VbtmKnowledgeHub.RunCTranslate2DeepScan(currentDocText);
+                        int ct2Added = 0;
+                        foreach (SpellCardIssue ci in ct2Found)
+                        {
+                            if (VbtmCustomDictStore.IsGoodWord(ci.Wrong)) continue;
+                            bool exists = false;
+                            foreach (var ex in activeIssues)
+                            {
+                                if (string.Equals(ex.Wrong, ci.Wrong, StringComparison.OrdinalIgnoreCase) ||
+                                    ex.Wrong.IndexOf(ci.Wrong, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (!exists)
+                            {
+                                ci.OccurrenceIndex = 1;
+                                activeIssues.Add(ci);
+                                ct2Added++;
+                                totalAdded++;
+                            }
+                        }
+                        if (ct2Added > 0)
+                        {
+                            try { this.BeginInvoke((Action)(() => RenderCards())); } catch { }
+                        }
+                    }
+
+                    // 2. Bổ sung quét sâu ngữ cảnh bằng Ollama Local (nếu đang bật)
                     List<string> chunks = new List<string>();
                     string[] paras = currentDocText.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                     StringBuilder cur = new StringBuilder();
@@ -1146,7 +1247,6 @@ namespace VBTMProSuite
                     if (cur.Length > 0) chunks.Add(cur.ToString());
                     if (chunks.Count > 15) chunks = chunks.GetRange(0, 15);
 
-                    int totalAdded = 0;
                     for (int ci = 0; ci < chunks.Count; ci++)
                     {
                         int curIdx = ci + 1;
@@ -1191,7 +1291,7 @@ namespace VBTMProSuite
                     {
                         btnAiDeep.Enabled = true;
                         RenderCards();
-                        lblStatusBottom.Text = string.Format("✓ Hoàn tất toàn bộ {0} đoạn — phát hiện tổng {1} từ cần sửa (AI bổ sung +{2}).", chunks.Count, activeIssues.Count, totalAdded);
+                        lblStatusBottom.Text = string.Format("✓ Hoàn tất ({0}) • Tổng {1} từ cần sửa (AI +{2})", VbtmKnowledgeHub.GetKnowledgeSummary(), activeIssues.Count, totalAdded);
                     }));
                 }
                 catch (Exception ex)
@@ -1199,8 +1299,9 @@ namespace VBTMProSuite
                     this.BeginInvoke((Action)(() =>
                     {
                         btnAiDeep.Enabled = true;
-                        lblStatusBottom.Text = "✓ Chế độ Offline 100% sẵn sàng (" + activeIssues.Count + " lỗi) • AI Local: " + ex.Message;
+                        lblStatusBottom.Text = "✓ " + VbtmKnowledgeHub.GetKnowledgeSummary() + " (" + activeIssues.Count + " lỗi)";
                     }));
+                    System.Diagnostics.Debug.WriteLine(ex.Message);
                 }
             });
         }
