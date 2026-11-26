@@ -19,10 +19,17 @@ namespace VBTMProSuite
     {
         public string Wrong { get; set; }
         public string Suggest { get; set; }
-        public string Badge { get; set; }      // "Chính tả" or "Nghi ngờ"
+        public string Badge { get; set; }      // "Chính tả", "Dính chữ", "Lặp từ", "Dấu câu", "Viết hoa", "Nghi ngờ", "Ngữ cảnh AI"
         public string Reason { get; set; }
+        public string Location { get; set; }   // "Đoạn 3", "Bảng 1 · Hàng 2, Cột 3", "Header", "Footer", "Chú thích"
         public int OccurrenceIndex { get; set; }
         public bool IsSuspicious { get; set; }
+    }
+
+    public class DocumentTextSegment
+    {
+        public string Location { get; set; }
+        public string Text { get; set; }
     }
 
     public static class OfflineVietnameseSpellEngine
@@ -204,8 +211,40 @@ namespace VBTMProSuite
             { "ngề", "nghề", "Chính tả", "Thiếu chữ 'h' sau 'ng' trước 'i/e/ê'" },
             { "ngệ", "nghệ", "Chính tả", "Thiếu chữ 'h' sau 'ng' trước 'i/e/ê'" },
             { "kỹ luât", "kỷ luật", "Chính tả", "Chuẩn chính tả: 'kỷ luật'" },
-            { "kỹ cương", "kỷ cương", "Chính tả", "Chuẩn chính tả: 'kỷ cương'" },
-            { "kỹ niệm", "kỷ niệm", "Chính tả", "Chuẩn chính tả: 'kỷ niệm'" }
+            { "kỹ luật", "kỷ luật", "Chính tả", "Chuẩn chính tả: 'kỷ luật' (thanh hỏi)" },
+            { "kỹ cương", "kỷ cương", "Chính tả", "Chuẩn chính tả: 'kỷ cương' (thanh hỏi)" },
+            { "kỹ niệm", "kỷ niệm", "Chính tả", "Chuẩn chính tả: 'kỷ niệm' (thanh hỏi)" },
+            { "chỉn sửa", "chỉnh sửa", "Chính tả", "Thiếu chữ 'h': 'chỉnh sửa'" },
+            { "đề suất", "đề xuất", "Chính tả", "Sai phụ âm đầu s/x: 'đề xuất'" },
+            { "sản suất", "sản xuất", "Chính tả", "Sai phụ âm đầu s/x: 'sản xuất'" },
+            { "suất sắc", "xuất sắc", "Chính tả", "Sai phụ âm đầu s/x: 'xuất sắc'" },
+            { "kiểm xoát", "kiểm soát", "Chính tả", "Sai phụ âm đầu s/x: 'kiểm soát'" },
+            { "giám xát", "giám sát", "Chính tả", "Sai phụ âm đầu s/x: 'giám sát'" },
+            { "chủ chương", "chủ trương", "Chính tả", "Sai phụ âm đầu ch/tr: 'chủ trương'" },
+            { "khẩn chương", "khẩn trương", "Chính tả", "Sai phụ âm đầu ch/tr: 'khẩn trương'" },
+            { "tuyên chuyền", "tuyên truyền", "Chính tả", "Sai phụ âm đầu ch/tr: 'tuyên truyền'" },
+            { "cũng cố", "củng cố", "Chính tả", "Sai dấu thanh hỏi/ngã: 'củng cố'" },
+            { "mẫu thuẫn", "mâu thuẫn", "Chính tả", "Sai dấu thanh: 'mâu thuẫn'" },
+            { "nổ lực", "nỗ lực", "Chính tả", "Sai dấu thanh hỏi/ngã: 'nỗ lực'" },
+            { "hổ trợ", "hỗ trợ", "Chính tả", "Sai dấu thanh hỏi/ngã: 'hỗ trợ'" },
+            { "sữa đổi", "sửa đổi", "Chính tả", "Sai dấu thanh hỏi/ngã: 'sửa đổi'" },
+            { "cãi cách", "cải cách", "Chính tả", "Sai dấu thanh hỏi/ngã: 'cải cách'" },
+            { "sẳn sàng", "sẵn sàng", "Chính tả", "Sai dấu thanh hỏi/ngã: 'sẵn sàng'" },
+            { "chặt chẻ", "chặt chẽ", "Chính tả", "Sai dấu thanh hỏi/ngã: 'chặt chẽ'" },
+            { "phát triễn", "phát triển", "Chính tả", "Sai dấu thanh hỏi/ngã: 'phát triển'" },
+            { "tiêu chuẫn", "tiêu chuẩn", "Chính tả", "Sai dấu thanh hỏi/ngã: 'tiêu chuẩn'" },
+            { "kiễm tra", "kiểm tra", "Chính tả", "Sai dấu thanh hỏi/ngã: 'kiểm tra'" },
+            { "phỗ biến", "phổ biến", "Chính tả", "Sai dấu thanh hỏi/ngã: 'phổ biến'" },
+            { "bất cặp", "bất cập", "Chính tả", "Sai nguyên âm ă/â: 'bất cập'" },
+            { "cặp nhật", "cập nhật", "Chính tả", "Sai nguyên âm ă/â: 'cập nhật'" },
+            { "nguyên tắt", "nguyên tắc", "Chính tả", "Sai phụ âm cuối t/c: 'nguyên tắc'" },
+            { "thủ tụt", "thủ tục", "Chính tả", "Sai phụ âm cuối t/c: 'thủ tục'" },
+            { "suôn sẽ", "suôn sẻ", "Chính tả", "Sai dấu thanh hỏi/ngã: 'suôn sẻ'" },
+            { "dư giả", "dư dả", "Chính tả", "Chuẩn chính tả: 'dư dả'" },
+            { "vô hình chung", "vô hình trung", "Chính tả", "Chuẩn chính tả: 'vô hình trung'" },
+            { "tựu chung", "tựu trung", "Chính tả", "Chuẩn chính tả: 'tựu trung'" },
+            { "bàng quang", "bàng quan", "Nghi ngờ", "Kiểm tra ngữ cảnh: 'bàng quan' (thờ ơ)" },
+            { "ủy bạn", "ủy ban", "Chính tả", "Sai dấu thanh: 'ủy ban'" }
         };
 
         private static readonly HashSet<string> ValidBaseNuclei = new HashSet<string>(StringComparer.Ordinal)
@@ -692,7 +731,61 @@ namespace VBTMProSuite
             return null;
         }
 
+        private static readonly HashSet<string> VietnameseReduplicatives = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "luôn", "ngày", "từ", "dần", "người", "nhà", "lớp", "đoàn", "trùng", "điệp", "nhẹ", "khẽ",
+            "đều", "rõ", "sát", "gần", "xa", "mãi", "hằng", "nhanh", "chậm", "nhỏ", "cao", "thấp",
+            "sâu", "dài", "ngắn", "xanh", "đỏ", "vàng", "trắng", "ầm", "ào", "rầm", "đời", "năm", "tháng"
+        };
+
+        private static readonly HashSet<string> CommonAbbreviationsBeforeDot = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "tp", "ts", "pgs", "gs", "ths", "bs", "đc", "qđ", "nđ", "tt", "tb", "bc", "kh", "cv", "hd",
+            "vv", "tr", "số", "tm", "kt", "tl", "tuq", "st", "bt", "pbt", "ct", "pct", "ub", "tw"
+        };
+
+        /// <summary>
+        /// Tách từ tiếng Việt bị dính liền nhau có bằng chứng từ điển Bigram (VD: "thựchiện" -> "thực hiện", "côngtác" -> "công tác", "Tuần36" -> "Tuần 36").
+        /// Không tách tên riêng, từ viết tắt, hay từ tiếng Anh.
+        /// </summary>
+        private static string TrySplitStuckVietnameseWord(string word)
+        {
+            if (string.IsNullOrWhiteSpace(word) || word.Length < 4 || word.Length > 16) return null;
+            string w = word.Normalize(NormalizationForm.FormC);
+            if (WhitelistWords.Contains(w) || VbtmKnowledgeHub.ProtectedWhitelist.Contains(w)) return null;
+            if (IsValidVietnameseSyllable(w)) return null;
+
+            // 1. Dính chữ + số (VD: "Tuần36" -> "Tuần 36", "ngày07" -> "ngày 07"), bỏ qua mã đơn vị kiểu "PC09", "PA05", "NĐ30"
+            Match dm = Regex.Match(w, @"^([A-Za-zÀ-Ỹà-ỹĐđ]{3,})(\d{1,4})$");
+            if (dm.Success && HasVietnameseDiacritic(dm.Groups[1].Value) && IsValidVietnameseSyllable(dm.Groups[1].Value))
+            {
+                return dm.Groups[1].Value + " " + dm.Groups[2].Value;
+            }
+
+            // 2. Dính 2 âm tiết tiếng Việt thành 1 cụm từ hành chính/phổ biến
+            bool hasVn = HasVietnameseDiacritic(w);
+            if (!hasVn) return null;
+            string lw = w.ToLowerInvariant();
+            for (int k = 2; k <= lw.Length - 2; k++)
+            {
+                string left = lw.Substring(0, k);
+                string right = lw.Substring(k);
+                if (!IsValidVietnameseSyllable(left) || !IsValidVietnameseSyllable(right)) continue;
+                string pair = left + " " + right;
+                if (CommonVietnameseBigrams.Contains(pair) || VbtmKnowledgeHub.GetBigramScore(left, right) > 0)
+                {
+                    return PreserveCase(w.Substring(0, k), left) + " " + PreserveCase(w.Substring(k), right);
+                }
+            }
+            return null;
+        }
+
         public static List<SpellCardIssue> ScanDocumentFast(string docText)
+        {
+            return ScanDocumentFast(docText, null);
+        }
+
+        public static List<SpellCardIssue> ScanDocumentFast(string docText, string locationLabel)
         {
             List<SpellCardIssue> results = new List<SpellCardIssue>();
             if (string.IsNullOrWhiteSpace(docText)) return results;
@@ -730,6 +823,23 @@ namespace VBTMProSuite
                 if (coveredPositions.Contains(wm.Index)) continue;
                 string tok = wm.Value;
                 if (goodWords.Contains(tok) || WhitelistWords.Contains(tok)) continue;
+
+                // 1a. Kiểm tra từ bị dính chữ có bằng chứng từ điển (VD: "thựchiện" -> "thực hiện", "côngtác" -> "công tác")
+                string unStuck = TrySplitStuckVietnameseWord(tok);
+                if (!string.IsNullOrEmpty(unStuck) && !string.Equals(tok, unStuck, StringComparison.Ordinal))
+                {
+                    ordered.Add(new KeyValuePair<int, SpellCardIssue>(wm.Index, new SpellCardIssue
+                    {
+                        Wrong = tok,
+                        Suggest = unStuck,
+                        Badge = "Dính chữ",
+                        Reason = "Hai từ tiếng Việt bị dính liền thiếu khoảng trắng",
+                        Location = locationLabel ?? "",
+                        IsSuspicious = false
+                    }));
+                    for (int p = wm.Index; p < wm.Index + wm.Length; p++) coveredPositions.Add(p);
+                    continue;
+                }
 
                 string prevWord = null;
                 bool hasLeftSpace = false;
@@ -806,6 +916,27 @@ namespace VBTMProSuite
                         }));
                         for (int p = spanStart; p < spanStart + spanLen; p++) coveredPositions.Add(p);
                     }
+                }
+            }
+
+            // 1b. Phát hiện lỗi dính chữ tiếng Việt + chữ số (VD: "Tuần36" -> "Tuần 36", "ngày07" -> "ngày 07"), bỏ qua mã đơn vị PC09/PA05/NĐ30
+            foreach (Match ldm in Regex.Matches(text, @"(?<![A-Za-zÀ-Ỹà-ỹĐđ0-9])([A-Za-zÀ-Ỹà-ỹĐđ]{3,})(\d{1,4})(?![A-Za-zÀ-Ỹà-ỹĐđ0-9/-])"))
+            {
+                if (coveredPositions.Contains(ldm.Index) || goodWords.Contains(ldm.Value)) continue;
+                string wPart = ldm.Groups[1].Value;
+                string nPart = ldm.Groups[2].Value;
+                if (HasVietnameseDiacritic(wPart) && IsValidVietnameseSyllable(wPart))
+                {
+                    ordered.Add(new KeyValuePair<int, SpellCardIssue>(ldm.Index, new SpellCardIssue
+                    {
+                        Wrong = ldm.Value,
+                        Suggest = wPart + " " + nPart,
+                        Badge = "Dính chữ",
+                        Reason = "Chữ tiếng Việt bị dính liền với chữ số thiếu khoảng trắng",
+                        Location = locationLabel ?? "",
+                        IsSuspicious = false
+                    }));
+                    for (int p = ldm.Index; p < ldm.Index + ldm.Length; p++) coveredPositions.Add(p);
                 }
             }
 
@@ -906,6 +1037,8 @@ namespace VBTMProSuite
                 if (coveredPositions.Contains(m1.Index) || coveredPositions.Contains(m2.Index)) continue;
 
                 string pairOrig = m1.Value + " " + m2.Value;
+                // Bảo vệ tuyệt đối Tên riêng / Địa danh viết hoa chữ cái đầu cả 2 từ (VD: "Văn An", "Tân Sơn", "Hoàng Nam")
+                if (char.IsUpper(m1.Value[0]) && char.IsUpper(m2.Value[0]) && m1.Value != m1.Value.ToUpperInvariant()) continue;
                 string pairLow = pairOrig.ToLowerInvariant();
                 if (CommonVietnameseBigrams.Contains(pairLow) || ValidAmbiguousPairs.Contains(pairLow)) continue;
                 if (goodWords.Contains(pairOrig) || goodWords.Contains(m1.Value) || goodWords.Contains(m2.Value)) continue;
@@ -950,9 +1083,80 @@ namespace VBTMProSuite
                     Suggest = "Số",
                     Badge = "Nghi ngờ",
                     Reason = "Kiểm tra số ký hiệu văn bản ('Số:' thay vì 'Sổ:')",
+                    Location = locationLabel ?? "",
                     IsSuspicious = true
                 }));
                 for (int p = sm.Index; p < sm.Index + sm.Length; p++) coveredPositions.Add(p);
+            }
+
+            // 3. Phát hiện từ lặp liên tiếp (VD: "và và", "các các", "của của"), loại trừ từ láy tiếng Việt tự nhiên ("luôn luôn", "ngày ngày"...)
+            foreach (Match dm in Regex.Matches(text, @"(?<![A-Za-zÀ-Ỹà-ỹĐđ])([A-Za-zÀ-Ỹà-ỹĐđ]{2,})\s+\1(?![A-Za-zÀ-Ỹà-ỹĐđ])", RegexOptions.IgnoreCase))
+            {
+                if (coveredPositions.Contains(dm.Index) || goodWords.Contains(dm.Value)) continue;
+                string w1 = dm.Groups[1].Value;
+                if (VietnameseReduplicatives.Contains(w1)) continue;
+                ordered.Add(new KeyValuePair<int, SpellCardIssue>(dm.Index, new SpellCardIssue
+                {
+                    Wrong = dm.Value,
+                    Suggest = w1,
+                    Badge = "Lặp từ",
+                    Reason = "Từ '" + w1 + "' bị gõ lặp 2 lần liên tiếp",
+                    Location = locationLabel ?? "",
+                    IsSuspicious = false
+                }));
+                for (int p = dm.Index; p < dm.Index + dm.Length; p++) coveredPositions.Add(p);
+            }
+
+            // 4. Phát hiện lỗi khoảng trắng & dấu câu: thừa khoảng trắng trước dấu (.,;:!?) hoặc >= 2 khoảng trắng giữa 2 từ
+            foreach (Match pm in Regex.Matches(text, @"([A-Za-zÀ-Ỹà-ỹĐđ0-9]+)\s+([,.;:!?])"))
+            {
+                if (coveredPositions.Contains(pm.Index)) continue;
+                string fixedP = pm.Groups[1].Value + pm.Groups[2].Value;
+                ordered.Add(new KeyValuePair<int, SpellCardIssue>(pm.Index, new SpellCardIssue
+                {
+                    Wrong = pm.Value,
+                    Suggest = fixedP,
+                    Badge = "Dấu câu",
+                    Reason = "Thừa khoảng trắng trước dấu '" + pm.Groups[2].Value + "'",
+                    Location = locationLabel ?? "",
+                    IsSuspicious = false
+                }));
+                for (int p = pm.Index; p < pm.Index + pm.Length; p++) coveredPositions.Add(p);
+            }
+            foreach (Match spm in Regex.Matches(text, @"([A-Za-zÀ-Ỹà-ỹĐđ]+)[ ]{2,}([A-Za-zÀ-Ỹà-ỹĐđ]+)"))
+            {
+                if (coveredPositions.Contains(spm.Index)) continue;
+                string fixedSp = spm.Groups[1].Value + " " + spm.Groups[2].Value;
+                ordered.Add(new KeyValuePair<int, SpellCardIssue>(spm.Index, new SpellCardIssue
+                {
+                    Wrong = spm.Value,
+                    Suggest = fixedSp,
+                    Badge = "Dấu câu",
+                    Reason = "Thừa khoảng trắng liên tiếp giữa 2 từ",
+                    Location = locationLabel ?? "",
+                    IsSuspicious = false
+                }));
+                for (int p = spm.Index; p < spm.Index + spm.Length; p++) coveredPositions.Add(p);
+            }
+
+            // 5. Phát hiện lỗi không viết hoa chữ cái đầu câu ngay sau dấu chấm kết thúc câu (loại trừ từ viết tắt TP., TS., QĐ., v.v.)
+            foreach (Match cm in Regex.Matches(text, @"([A-Za-zÀ-Ỹà-ỹĐđ]{2,})\.\s+([a-zà-ỹđ][a-zà-ỹđ]+)"))
+            {
+                if (coveredPositions.Contains(cm.Index)) continue;
+                string prevTok = cm.Groups[1].Value;
+                string nextTok = cm.Groups[2].Value;
+                if (CommonAbbreviationsBeforeDot.Contains(prevTok)) continue;
+                string capNext = char.ToUpper(nextTok[0]) + nextTok.Substring(1);
+                ordered.Add(new KeyValuePair<int, SpellCardIssue>(cm.Index, new SpellCardIssue
+                {
+                    Wrong = cm.Value,
+                    Suggest = prevTok + ". " + capNext,
+                    Badge = "Viết hoa",
+                    Reason = "Cần viết hoa chữ cái đầu câu sau dấu chấm",
+                    Location = locationLabel ?? "",
+                    IsSuspicious = true
+                }));
+                for (int p = cm.Index; p < cm.Index + cm.Length; p++) coveredPositions.Add(p);
             }
 
             ordered.Sort((a, b) => a.Key.CompareTo(b.Key));
@@ -960,12 +1164,127 @@ namespace VBTMProSuite
             foreach (var kv in ordered)
             {
                 SpellCardIssue iss = kv.Value;
+                if (string.IsNullOrEmpty(iss.Location) && !string.IsNullOrEmpty(locationLabel)) iss.Location = locationLabel;
                 int occ = occCounter.ContainsKey(iss.Wrong) ? occCounter[iss.Wrong] + 1 : 1;
                 occCounter[iss.Wrong] = occ;
                 iss.OccurrenceIndex = occ;
                 results.Add(iss);
             }
             return results;
+        }
+
+        /// <summary>
+        /// Quét toàn bộ danh sách phân đoạn có vị trí cụ thể (Đoạn văn, Ô bảng, Header, Footer, Chú thích, TextBox)
+        /// </summary>
+        public static List<SpellCardIssue> ScanStructuredSegments(List<DocumentTextSegment> segments)
+        {
+            List<SpellCardIssue> all = new List<SpellCardIssue>();
+            if (segments == null || segments.Count == 0) return all;
+            Dictionary<string, int> globalOcc = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (DocumentTextSegment seg in segments)
+            {
+                if (seg == null || string.IsNullOrWhiteSpace(seg.Text)) continue;
+                List<SpellCardIssue> found = ScanDocumentFast(seg.Text, seg.Location);
+                foreach (SpellCardIssue iss in found)
+                {
+                    iss.Location = seg.Location;
+                    int occ = globalOcc.ContainsKey(iss.Wrong) ? globalOcc[iss.Wrong] + 1 : 1;
+                    globalOcc[iss.Wrong] = occ;
+                    iss.OccurrenceIndex = occ;
+                    all.Add(iss);
+                }
+            }
+            return all;
+        }
+
+        /// <summary>
+        /// Đọc trực tiếp tệp Word .docx (Paragraphs, Bảng & từng ô, Header, Footer, Footnotes) để kiểm thử & rà soát không bỏ sót vùng nào.
+        /// </summary>
+        public static List<DocumentTextSegment> ExtractSegmentsFromDocx(string docxPath)
+        {
+            List<DocumentTextSegment> segs = new List<DocumentTextSegment>();
+            if (string.IsNullOrEmpty(docxPath) || !File.Exists(docxPath)) return segs;
+            using (System.IO.Compression.ZipArchive zip = System.IO.Compression.ZipFile.OpenRead(docxPath))
+            {
+                foreach (System.IO.Compression.ZipArchiveEntry entry in zip.Entries)
+                {
+                    string name = entry.FullName.Replace('\\', '/').ToLowerInvariant();
+                    if (!name.EndsWith(".xml")) continue;
+                    bool isDoc = name == "word/document.xml";
+                    bool isHdr = name.StartsWith("word/header");
+                    bool isFtr = name.StartsWith("word/footer");
+                    bool isFtn = name == "word/footnotes.xml" || name == "word/endnotes.xml";
+                    if (!isDoc && !isHdr && !isFtr && !isFtn) continue;
+
+                    System.Xml.XmlDocument xdoc = new System.Xml.XmlDocument();
+                    using (Stream s = entry.Open()) xdoc.Load(s);
+                    System.Xml.XmlNamespaceManager ns = new System.Xml.XmlNamespaceManager(xdoc.NameTable);
+                    ns.AddNamespace("w", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
+
+                    if (isDoc)
+                    {
+                        System.Xml.XmlNode body = xdoc.SelectSingleNode("//w:body", ns);
+                        if (body == null) continue;
+                        int pIdx = 0, tIdx = 0;
+                        foreach (System.Xml.XmlNode child in body.ChildNodes)
+                        {
+                            if (child.LocalName == "p")
+                            {
+                                pIdx++;
+                                string txt = ExtractParagraphTextXml(child, ns);
+                                if (!string.IsNullOrWhiteSpace(txt))
+                                    segs.Add(new DocumentTextSegment { Location = "Đoạn " + pIdx, Text = txt });
+                            }
+                            else if (child.LocalName == "tbl")
+                            {
+                                tIdx++;
+                                int rIdx = 0;
+                                foreach (System.Xml.XmlNode tr in child.SelectNodes("./w:tr", ns))
+                                {
+                                    rIdx++;
+                                    int cIdx = 0;
+                                    foreach (System.Xml.XmlNode tc in tr.SelectNodes("./w:tc", ns))
+                                    {
+                                        cIdx++;
+                                        StringBuilder cellSb = new StringBuilder();
+                                        foreach (System.Xml.XmlNode cp in tc.SelectNodes("./w:p", ns))
+                                        {
+                                            string pt = ExtractParagraphTextXml(cp, ns);
+                                            if (!string.IsNullOrWhiteSpace(pt)) cellSb.AppendLine(pt);
+                                        }
+                                        string cellTxt = cellSb.ToString().Trim();
+                                        if (!string.IsNullOrWhiteSpace(cellTxt))
+                                            segs.Add(new DocumentTextSegment { Location = string.Format("Bảng {0} · Hàng {1}, Cột {2}", tIdx, rIdx, cIdx), Text = cellTxt });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        string prefix = isHdr ? "Header (Đầu trang)" : (isFtr ? "Footer (Chân trang)" : "Chú thích");
+                        int idx = 0;
+                        foreach (System.Xml.XmlNode p in xdoc.SelectNodes("//w:p", ns))
+                        {
+                            idx++;
+                            string txt = ExtractParagraphTextXml(p, ns);
+                            if (!string.IsNullOrWhiteSpace(txt))
+                                segs.Add(new DocumentTextSegment { Location = prefix + " #" + idx, Text = txt });
+                        }
+                    }
+                }
+            }
+            return segs;
+        }
+
+        private static string ExtractParagraphTextXml(System.Xml.XmlNode pNode, System.Xml.XmlNamespaceManager ns)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (System.Xml.XmlNode t in pNode.SelectNodes(".//w:t", ns))
+            {
+                sb.Append(t.InnerText);
+            }
+            return sb.ToString().Normalize(NormalizationForm.FormC);
         }
     }
 
@@ -1154,37 +1473,172 @@ namespace VBTMProSuite
             parent.Controls.Add(c);
         }
 
-        private string ReadActiveWordText()
+        private List<DocumentTextSegment> ReadActiveWordSegments()
         {
-            string docText = "";
+            List<DocumentTextSegment> segments = new List<DocumentTextSegment>();
             try
             {
                 object wordApp = Marshal.GetActiveObject("Word.Application");
                 object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
-                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
-                docText = Convert.ToString(content.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, content, null)) ?? "";
+
+                // 1. Đọc toàn bộ đoạn văn ngoài bảng (MainStory Paragraphs)
+                object paras = doc.GetType().InvokeMember("Paragraphs", BindingFlags.GetProperty, null, doc, null);
+                int pCount = Convert.ToInt32(paras.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, paras, null));
+                int pNonTable = 0;
+                for (int i = 1; i <= pCount; i++)
+                {
+                    try
+                    {
+                        object pObj = paras.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, paras, new object[] { i });
+                        object rng = pObj.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, pObj, null);
+                        // Bỏ qua đoạn nằm trong bảng ở vòng này vì bước 2 sẽ đọc chi tiết từng ô bảng (Hàng, Cột)
+                        bool inTable = false;
+                        try { inTable = Convert.ToBoolean(rng.GetType().InvokeMember("Information", BindingFlags.GetProperty, null, rng, new object[] { 12 })); } catch { } // wdWithInTable = 12
+                        if (inTable) continue;
+                        pNonTable++;
+                        string t = Convert.ToString(rng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, rng, null)) ?? "";
+                        t = t.Trim('\r', '\n', '\a', ' ');
+                        if (!string.IsNullOrWhiteSpace(t))
+                            segments.Add(new DocumentTextSegment { Location = "Đoạn " + pNonTable, Text = t });
+                    }
+                    catch { }
+                }
+
+                // 2. Đọc TẤT CẢ bảng và TỪNG Ô BẢNG độc lập (không bao giờ bỏ sót hay trộn 2 ô)
+                object tables = doc.GetType().InvokeMember("Tables", BindingFlags.GetProperty, null, doc, null);
+                int tCount = Convert.ToInt32(tables.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, tables, null));
+                for (int t = 1; t <= tCount; t++)
+                {
+                    try
+                    {
+                        object tbl = tables.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, tables, new object[] { t });
+                        object tblRng = tbl.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, tbl, null);
+                        object cells = tblRng.GetType().InvokeMember("Cells", BindingFlags.GetProperty, null, tblRng, null);
+                        int cCount = Convert.ToInt32(cells.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, cells, null));
+                        for (int ci = 1; ci <= cCount; ci++)
+                        {
+                            try
+                            {
+                                object cell = cells.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, cells, new object[] { ci });
+                                int rIdx = Convert.ToInt32(cell.GetType().InvokeMember("RowIndex", BindingFlags.GetProperty, null, cell, null));
+                                int cIdx = Convert.ToInt32(cell.GetType().InvokeMember("ColumnIndex", BindingFlags.GetProperty, null, cell, null));
+                                object cRng = cell.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, cell, null);
+                                string ct = Convert.ToString(cRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, cRng, null)) ?? "";
+                                ct = ct.Replace("\r\a", "").Replace("\a", "").Trim('\r', '\n', ' ');
+                                if (!string.IsNullOrWhiteSpace(ct))
+                                    segments.Add(new DocumentTextSegment { Location = string.Format("Bảng {0} · Hàng {1}, Cột {2}", t, rIdx, cIdx), Text = ct });
+                            }
+                            catch { }
+                        }
+                    }
+                    catch { }
+                }
+
+                // 3. Đọc Header & Footer trên tất cả các Section (Primary, FirstPage, EvenPages)
+                try
+                {
+                    object sections = doc.GetType().InvokeMember("Sections", BindingFlags.GetProperty, null, doc, null);
+                    int sCount = Convert.ToInt32(sections.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, sections, null));
+                    HashSet<string> seenHf = new HashSet<string>(StringComparer.Ordinal);
+                    for (int s = 1; s <= sCount; s++)
+                    {
+                        object sec = sections.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, sections, new object[] { s });
+                        foreach (string hfProp in new string[] { "Headers", "Footers" })
+                        {
+                            object hfCol = sec.GetType().InvokeMember(hfProp, BindingFlags.GetProperty, null, sec, null);
+                            for (int idx = 1; idx <= 3; idx++)
+                            {
+                                try
+                                {
+                                    object hf = hfCol.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, hfCol, new object[] { idx });
+                                    object hRng = hf.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, hf, null);
+                                    string ht = Convert.ToString(hRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, hRng, null)) ?? "";
+                                    ht = ht.Replace("\r\a", "").Replace("\a", "").Trim('\r', '\n', ' ');
+                                    if (!string.IsNullOrWhiteSpace(ht) && seenHf.Add(hfProp + "|" + ht))
+                                    {
+                                        segments.Add(new DocumentTextSegment
+                                        {
+                                            Location = (hfProp == "Headers" ? "Header (Đầu trang)" : "Footer (Chân trang)"),
+                                            Text = ht
+                                        });
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                // 4. Đọc Chú thích cuối trang (Footnotes) & Hộp văn bản (Shapes / TextFrames)
+                try
+                {
+                    object fns = doc.GetType().InvokeMember("Footnotes", BindingFlags.GetProperty, null, doc, null);
+                    int fCount = Convert.ToInt32(fns.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, fns, null));
+                    for (int f = 1; f <= fCount; f++)
+                    {
+                        object fn = fns.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, fns, new object[] { f });
+                        object fRng = fn.GetType().InvokeMember("Range", BindingFlags.GetProperty, null, fn, null);
+                        string ft = (Convert.ToString(fRng.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, fRng, null)) ?? "").Trim('\r', '\n', ' ');
+                        if (!string.IsNullOrWhiteSpace(ft))
+                            segments.Add(new DocumentTextSegment { Location = "Chú thích #" + f, Text = ft });
+                    }
+                }
+                catch { }
+                try
+                {
+                    object shapes = doc.GetType().InvokeMember("Shapes", BindingFlags.GetProperty, null, doc, null);
+                    int shCount = Convert.ToInt32(shapes.GetType().InvokeMember("Count", BindingFlags.GetProperty, null, shapes, null));
+                    for (int sh = 1; sh <= shCount; sh++)
+                    {
+                        try
+                        {
+                            object shp = shapes.GetType().InvokeMember("Item", BindingFlags.InvokeMethod, null, shapes, new object[] { sh });
+                            object tf = shp.GetType().InvokeMember("TextFrame", BindingFlags.GetProperty, null, shp, null);
+                            int hasTxt = Convert.ToInt32(tf.GetType().InvokeMember("HasText", BindingFlags.GetProperty, null, tf, null));
+                            if (hasTxt != 0)
+                            {
+                                object tr = tf.GetType().InvokeMember("TextRange", BindingFlags.GetProperty, null, tf, null);
+                                string st = (Convert.ToString(tr.GetType().InvokeMember("Text", BindingFlags.GetProperty, null, tr, null)) ?? "").Trim('\r', '\n', ' ');
+                                if (!string.IsNullOrWhiteSpace(st))
+                                    segments.Add(new DocumentTextSegment { Location = "Hộp văn bản #" + sh, Text = st });
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
             }
             catch { }
-            if (string.IsNullOrWhiteSpace(docText))
+
+            if (segments.Count == 0)
             {
                 try
                 {
                     string snapPath = Path.Combine(Path.GetTempPath(), "vbtm_word_snapshot.txt");
-                    if (File.Exists(snapPath)) docText = File.ReadAllText(snapPath, Encoding.Unicode);
+                    if (File.Exists(snapPath))
+                    {
+                        string raw = File.ReadAllText(snapPath, Encoding.Unicode);
+                        if (!string.IsNullOrWhiteSpace(raw))
+                            segments.Add(new DocumentTextSegment { Location = "Văn bản", Text = raw });
+                    }
                 }
                 catch { }
             }
-            return docText;
+            return segments;
         }
 
         private void ScanActiveWordInstant()
         {
             System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-            currentDocText = ReadActiveWordText();
-            activeIssues = OfflineVietnameseSpellEngine.ScanDocumentFast(currentDocText);
+            List<DocumentTextSegment> segs = ReadActiveWordSegments();
+            StringBuilder fullSb = new StringBuilder();
+            foreach (DocumentTextSegment sg in segs) fullSb.AppendLine(sg.Text);
+            currentDocText = fullSb.ToString();
+            activeIssues = OfflineVietnameseSpellEngine.ScanStructuredSegments(segs);
             sw.Stop();
             RenderCards();
-            lblStatusBottom.Text = string.Format("✓ Quét Offline hoàn tất trong {0}ms • Phát hiện {1} từ cần sửa", sw.ElapsedMilliseconds, activeIssues.Count);
+            lblStatusBottom.Text = string.Format("✓ Quét {0} vùng (đoạn/bảng/header/footer) trong {1}ms • {2} lỗi", segs.Count, sw.ElapsedMilliseconds, activeIssues.Count);
         }
 
         private void RenderCards()
@@ -1209,65 +1663,70 @@ namespace VBTMProSuite
             }
 
             int y = 8;
+            Dictionary<string, int> dupCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (SpellCardIssue it in activeIssues)
+            {
+                dupCount[it.Wrong] = dupCount.ContainsKey(it.Wrong) ? dupCount[it.Wrong] + 1 : 1;
+            }
             foreach (SpellCardIssue issue in activeIssues)
             {
                 SpellCardIssue captured = issue;
-                Panel card = new Panel { Location = new Point(10, y), Size = new Size(412, 52), BackColor = Color.White };
+                Panel card = new Panel { Location = new Point(10, y), Size = new Size(412, 74), BackColor = Color.White };
                 card.Paint += (s, e) => { using (Pen p = new Pen(Color.FromArgb(226, 232, 240))) e.Graphics.DrawRectangle(p, 0, 0, card.Width - 1, card.Height - 1); };
 
                 // Red wrong pill
                 Label lblWrong = new Label
                 {
                     Text = captured.Wrong,
-                    Location = new Point(10, 12),
+                    Location = new Point(10, 9),
                     AutoSize = true,
                     Padding = new Padding(6, 3, 6, 3),
                     BackColor = Color.FromArgb(254, 242, 242),
                     ForeColor = Color.FromArgb(185, 28, 28),
-                    Font = new Font("Segoe UI", 9.2f, FontStyle.Bold),
+                    Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
                     Cursor = Cursors.Hand
                 };
                 lblWrong.Paint += (s, e) => { using (Pen p = new Pen(Color.FromArgb(252, 165, 165))) e.Graphics.DrawRectangle(p, 0, 0, lblWrong.Width - 1, lblWrong.Height - 1); };
                 lblWrong.Click += (s, e) => JumpToWordInDocument(captured.Wrong, captured.OccurrenceIndex);
 
                 card.Controls.Add(lblWrong);
-                int curX = lblWrong.Right + 6;
+                int curX = lblWrong.Right + 5;
 
-                Label lblArrow = new Label { Text = "→", Location = new Point(curX, 15), AutoSize = true, ForeColor = Color.FromArgb(100, 116, 139), Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+                Label lblArrow = new Label { Text = "→", Location = new Point(curX, 12), AutoSize = true, ForeColor = Color.FromArgb(100, 116, 139), Font = new Font("Segoe UI", 9.2f, FontStyle.Bold) };
                 card.Controls.Add(lblArrow);
-                curX = lblArrow.Right + 6;
+                curX = lblArrow.Right + 5;
 
                 // Green suggestion pill (click to apply fix!)
                 Label lblSug = new Label
                 {
                     Text = captured.Suggest,
-                    Location = new Point(curX, 12),
+                    Location = new Point(curX, 9),
                     AutoSize = true,
                     Padding = new Padding(6, 3, 6, 3),
                     BackColor = Color.FromArgb(240, 253, 244),
                     ForeColor = Color.FromArgb(21, 128, 61),
-                    Font = new Font("Segoe UI", 9.2f, FontStyle.Bold),
+                    Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
                     Cursor = Cursors.Hand
                 };
                 lblSug.Paint += (s, e) => { using (Pen p = new Pen(Color.FromArgb(134, 239, 172))) e.Graphics.DrawRectangle(p, 0, 0, lblSug.Width - 1, lblSug.Height - 1); };
                 lblSug.Click += (s, e) => ApplySingleFixInWord(captured);
                 card.Controls.Add(lblSug);
 
-                // Category badge ("Chính tả" / "Nghi ngờ")
+                // Category badge ("Chính tả" / "Dính chữ" / "Lặp từ" / "Dấu câu" / "Nghi ngờ")
                 Label lblBadge = new Label
                 {
                     Text = captured.Badge,
-                    Location = new Point(Math.Min(lblSug.Right + 6, 255), 16),
+                    Location = new Point(Math.Min(lblSug.Right + 5, 248), 13),
                     AutoSize = true,
                     Padding = new Padding(4, 1, 4, 1),
                     BackColor = captured.IsSuspicious ? Color.FromArgb(254, 249, 195) : Color.FromArgb(254, 226, 226),
                     ForeColor = captured.IsSuspicious ? Color.FromArgb(146, 64, 14) : Color.FromArgb(185, 28, 28),
-                    Font = new Font("Segoe UI", 7.6f, FontStyle.Bold)
+                    Font = new Font("Segoe UI", 7.4f, FontStyle.Bold)
                 };
                 card.Controls.Add(lblBadge);
 
                 // Right links: "+ Đúng" · "Bỏ qua"
-                LinkLabel lnkGood = new LinkLabel { Text = "+ Đúng", Location = new Point(312, 16), AutoSize = true, LinkColor = Color.FromArgb(37, 99, 235), LinkBehavior = LinkBehavior.HoverUnderline, Font = new Font("Segoe UI", 8.2f, FontStyle.Bold) };
+                LinkLabel lnkGood = new LinkLabel { Text = "+ Đúng", Location = new Point(312, 13), AutoSize = true, LinkColor = Color.FromArgb(37, 99, 235), LinkBehavior = LinkBehavior.HoverUnderline, Font = new Font("Segoe UI", 8.0f, FontStyle.Bold) };
                 lnkGood.Click += (s, e) =>
                 {
                     VbtmCustomDictStore.AddGoodWord(captured.Wrong);
@@ -1276,17 +1735,57 @@ namespace VBTMProSuite
                     lblStatusBottom.Text = "✓ Đã thêm \"" + captured.Wrong + "\" vào từ điển từ đúng.";
                 };
 
-                LinkLabel lnkSkip = new LinkLabel { Text = "Bỏ qua", Location = new Point(362, 16), AutoSize = true, LinkColor = Color.FromArgb(100, 116, 139), LinkBehavior = LinkBehavior.HoverUnderline, Font = new Font("Segoe UI", 8.2f) };
+                LinkLabel lnkSkip = new LinkLabel { Text = "Bỏ qua", Location = new Point(362, 13), AutoSize = true, LinkColor = Color.FromArgb(100, 116, 139), LinkBehavior = LinkBehavior.HoverUnderline, Font = new Font("Segoe UI", 8.0f) };
                 lnkSkip.Click += (s, e) =>
                 {
                     activeIssues.Remove(captured);
                     RenderCards();
                 };
 
+                // Line 2: Vị trí cụ thể + Giải thích ngắn gọn + Sửa tất cả giống nhau
+                string locPrefix = string.IsNullOrEmpty(captured.Location) ? "" : ("📍 " + captured.Location + " · ");
+                string descTxt = locPrefix + (captured.Reason ?? "");
+                if (descTxt.Length > 68) descTxt = descTxt.Substring(0, 65) + "...";
+                Label lblMeta = new Label
+                {
+                    Text = descTxt,
+                    Location = new Point(10, 44),
+                    Size = new Size(320, 22),
+                    ForeColor = Color.FromArgb(100, 116, 139),
+                    Font = new Font("Segoe UI", 7.8f)
+                };
+                card.Controls.Add(lblMeta);
+
+                int sameCount = dupCount.ContainsKey(captured.Wrong) ? dupCount[captured.Wrong] : 1;
+                if (sameCount > 1)
+                {
+                    LinkLabel lnkFixSame = new LinkLabel
+                    {
+                        Text = "Sửa hết (" + sameCount + ")",
+                        Location = new Point(332, 45),
+                        AutoSize = true,
+                        LinkColor = Color.FromArgb(21, 128, 61),
+                        LinkBehavior = LinkBehavior.HoverUnderline,
+                        Font = new Font("Segoe UI", 7.8f, FontStyle.Bold)
+                    };
+                    lnkFixSame.Click += (s, e) =>
+                    {
+                        if (MessageBox.Show("Sửa tất cả " + sameCount + " vị trí \"" + captured.Wrong + "\" → \"" + captured.Suggest + "\" trong tài liệu Word?",
+                            "Xác nhận sửa hàng loạt", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        {
+                            int nFixed = ReplaceAllSameInWord(captured.Wrong, captured.Suggest);
+                            activeIssues.RemoveAll(x => string.Equals(x.Wrong, captured.Wrong, StringComparison.OrdinalIgnoreCase));
+                            RenderCards();
+                            lblStatusBottom.Text = "✓ Đã sửa " + nFixed + " vị trí \"" + captured.Wrong + "\" → \"" + captured.Suggest + "\".";
+                        }
+                    };
+                    card.Controls.Add(lnkFixSame);
+                }
+
                 card.Controls.Add(lnkGood);
                 card.Controls.Add(lnkSkip);
                 pnlCardsHost.Controls.Add(card);
-                y += 60;
+                y += 80;
             }
             pnlCardsHost.ResumeLayout();
         }
@@ -1322,19 +1821,39 @@ namespace VBTMProSuite
             {
                 object wordApp = Marshal.GetActiveObject("Word.Application");
                 object doc = wordApp.GetType().InvokeMember("ActiveDocument", BindingFlags.GetProperty, null, wordApp, null);
-                object content = doc.GetType().InvokeMember("Content", BindingFlags.GetProperty, null, doc, null);
-                object find = content.GetType().InvokeMember("Find", BindingFlags.GetProperty, null, content, null);
-                find.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, find, null);
-                object repl = find.GetType().InvokeMember("Replacement", BindingFlags.GetProperty, null, find, null);
-                repl.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, repl, null);
-
-                // Replace 1 occurrence (wdReplaceOne = 1)
-                object[] args = new object[] {
-                    wrong, true, false, false, false, false, true, 1, false, suggest, 1
-                };
-                return (bool)find.GetType().InvokeMember("Execute", BindingFlags.InvokeMethod, null, find, args);
+                // Quét trên TẤT CẢ StoryRanges (Văn bản chính, Bảng, Header, Footer, Chú thích, TextBox) và giữ nguyên 100% định dạng gốc!
+                object storyRanges = doc.GetType().InvokeMember("StoryRanges", BindingFlags.GetProperty, null, doc, null);
+                foreach (object storyObj in (System.Collections.IEnumerable)storyRanges)
+                {
+                    object curRng = storyObj;
+                    int safety = 0;
+                    while (curRng != null && safety++ < 40)
+                    {
+                        try
+                        {
+                            object find = curRng.GetType().InvokeMember("Find", BindingFlags.GetProperty, null, curRng, null);
+                            find.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, find, null);
+                            object repl = find.GetType().InvokeMember("Replacement", BindingFlags.GetProperty, null, find, null);
+                            repl.GetType().InvokeMember("ClearFormatting", BindingFlags.InvokeMethod, null, repl, null);
+                            object[] args = new object[] { wrong, true, false, false, false, false, true, 1, false, suggest, 1 };
+                            if ((bool)find.GetType().InvokeMember("Execute", BindingFlags.InvokeMethod, null, find, args))
+                                return true;
+                        }
+                        catch { }
+                        try { curRng = curRng.GetType().InvokeMember("NextStoryRange", BindingFlags.GetProperty, null, curRng, null); }
+                        catch { curRng = null; }
+                    }
+                }
+                return false;
             }
             catch { return false; }
+        }
+
+        private int ReplaceAllSameInWord(string wrong, string suggest)
+        {
+            int count = 0;
+            while (count < 200 && ReplaceOneInWord(wrong, suggest)) count++;
+            return count;
         }
 
         private void ApplySingleFixInWord(SpellCardIssue issue)
@@ -1343,22 +1862,42 @@ namespace VBTMProSuite
             activeIssues.Remove(issue);
             RenderCards();
             lblStatusBottom.Text = ok
-                ? ("✓ Đã sửa \"" + issue.Wrong + "\" → \"" + issue.Suggest + "\" trong Word.")
+                ? ("✓ Đã sửa \"" + issue.Wrong + "\" → \"" + issue.Suggest + "\" trong Word (giữ nguyên định dạng).")
                 : ("Không tìm thấy \"" + issue.Wrong + "\" trong Word đang mở.");
         }
 
         private void ApplyAllFixesInWord()
         {
             if (activeIssues.Count == 0) return;
-            int fixedCount = 0;
-            List<SpellCardIssue> copy = new List<SpellCardIssue>(activeIssues);
-            foreach (var iss in copy)
+            int sureCount = 0, susCount = 0;
+            foreach (var it in activeIssues) { if (it.IsSuspicious) susCount++; else sureCount++; }
+            bool includeSuspicious = false;
+            if (susCount > 0)
             {
-                if (ReplaceOneInWord(iss.Wrong, iss.Suggest)) fixedCount++;
+                DialogResult dr = MessageBox.Show(
+                    string.Format("Có {0} lỗi chắc chắn và {1} mục 'Nghi ngờ' (cần kiểm tra ngữ cảnh).\r\n\r\n" +
+                    "• Chọn YES: Chỉ sửa tự động {0} lỗi chắc chắn, giữ lại {1} mục Nghi ngờ để bạn xem kỹ (Khuyên dùng).\r\n" +
+                    "• Chọn NO: Hủy thao tác.", sureCount, susCount),
+                    "Nguyên tắc an toàn khi sửa hàng loạt — VBTM Pro 3.6",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information);
+                if (dr != DialogResult.Yes) return;
             }
-            activeIssues.Clear();
+            int fixedCount = 0;
+            List<SpellCardIssue> remaining = new List<SpellCardIssue>();
+            foreach (var iss in activeIssues)
+            {
+                if (iss.IsSuspicious && !includeSuspicious)
+                {
+                    remaining.Add(iss);
+                    continue;
+                }
+                if (ReplaceOneInWord(iss.Wrong, iss.Suggest)) fixedCount++;
+                else remaining.Add(iss);
+            }
+            activeIssues = remaining;
             RenderCards();
-            lblStatusBottom.Text = "✓ Đã áp dụng sửa tự động " + fixedCount + " lỗi trong tài liệu Word!";
+            lblStatusBottom.Text = string.Format("✓ Đã sửa an toàn {0} lỗi chắc chắn • Còn lại {1} mục cần xem xét.", fixedCount, activeIssues.Count);
         }
 
         private void ClearWordHighlights()
@@ -1443,7 +1982,7 @@ namespace VBTMProSuite
                         cur.AppendLine(t);
                     }
                     if (cur.Length > 0) chunks.Add(cur.ToString());
-                    if (chunks.Count > 15) chunks = chunks.GetRange(0, 15);
+                    // Quét 100% toàn bộ tài liệu, KHÔNG cắt bỏ các đoạn cuối văn bản dài!
 
                     for (int ci = 0; ci < chunks.Count; ci++)
                     {
