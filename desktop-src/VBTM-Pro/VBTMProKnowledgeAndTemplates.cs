@@ -92,12 +92,14 @@ namespace VBTMProSuite
         private static void DiscoverPaths()
         {
             string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             string[] candidateRoots = new string[]
             {
-                Path.Combine(localApp, "Programs", "VBTM"),
                 Path.Combine(localApp, "Programs", "VBTM-Pro"),
+                AppDomain.CurrentDomain.BaseDirectory,
                 Path.Combine(localApp, "VBTMPro"),
-                AppDomain.CurrentDomain.BaseDirectory
+                Path.Combine(localApp, "Programs", "VBTM"),
+                Path.Combine(userProfile, "Downloads", "VBTM")
             };
 
             foreach (string r in candidateRoots)
@@ -336,16 +338,28 @@ namespace VBTMProSuite
                     "sys.path.insert(0, r'" + ChinhtaAiDir.Replace("'", "\\'") + "')\n" +
                     "os.chdir(r'" + ChinhtaAiDir.Replace("'", "\\'") + "')\n" +
                     "from core.speller import HybridSpeller\n" +
+                    "try:\n" +
+                    "    from core.text_preprocessing import preprocess_text\n" +
+                    "except Exception:\n" +
+                    "    preprocess_text = lambda s: s\n" +
                     "sp = HybridSpeller()\n" +
                     "txt = open(sys.argv[1], 'r', encoding='utf-8').read()\n" +
-                    "res = sp.check_text(txt) if hasattr(sp, 'check_text') else []\n" +
+                    "proc = preprocess_text(txt)\n" +
+                    "mistakes = sp.find_spelling_errors(proc)\n" +
                     "out = []\n" +
-                    "for it in (res or []):\n" +
-                    "    if isinstance(it, dict):\n" +
-                    "        w = str(it.get('wrong') or it.get('original') or it.get('word') or '').strip()\n" +
-                    "        s = str(it.get('suggest') or it.get('suggestion') or it.get('corrected') or '').strip()\n" +
+                    "for m in (mistakes or []):\n" +
+                    "    if isinstance(m, (list, tuple)) and len(m) >= 2:\n" +
+                    "        w = str(m[0] or '').strip()\n" +
+                    "        s = str(m[1] or '').strip()\n" +
+                    "        sev = str(m[5] if len(m) > 5 else 'error').strip()\n" +
+                    "        desc = str(m[6] if len(m) > 6 else 'AI CTranslate2 ngữ cảnh').strip()\n" +
                     "        if w and s and w != s:\n" +
-                    "            out.append({'wrong': w, 'suggest': s, 'type': str(it.get('type') or 'Chính tả'), 'reason': str(it.get('reason') or 'AI CTranslate2 ngữ cảnh')})\n" +
+                    "            out.append({'wrong': w, 'suggest': s, 'type': 'Nghi ngờ' if sev != 'error' else 'Chính tả', 'reason': desc or 'AI CTranslate2 ngữ cảnh'})\n" +
+                    "    elif isinstance(m, dict):\n" +
+                    "        w = str(m.get('wrong') or m.get('original') or '').strip()\n" +
+                    "        s = str(m.get('right') or m.get('suggest') or '').strip()\n" +
+                    "        if w and s and w != s:\n" +
+                    "            out.append({'wrong': w, 'suggest': s, 'type': 'Chính tả', 'reason': str(m.get('description') or 'AI CTranslate2 ngữ cảnh')})\n" +
                     "open(sys.argv[2], 'w', encoding='utf-8').write(json.dumps(out, ensure_ascii=False))\n";
                 File.WriteAllText(tmpPy, pyCode, new UTF8Encoding(false));
 
@@ -361,7 +375,7 @@ namespace VBTMProSuite
                 };
                 using (Process proc = Process.Start(psi))
                 {
-                    if (proc != null && proc.WaitForExit(35000))
+                    if (proc != null && proc.WaitForExit(90000))
                     {
                         if (File.Exists(tmpOut))
                         {
