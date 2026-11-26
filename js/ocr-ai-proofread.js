@@ -89,6 +89,31 @@
     return null;
   }
 
+  // Loại C (Hỗ trợ chính tả — KHÔNG thay thế đối chiếu ảnh gốc A & khoảng trắng tọa độ B):
+  // Bộ lọc cấu trúc âm tiết tiếng Việt chuẩn (<1ms) bắt ngay các từ sai cấu trúc (VD: quyêt, ngị, đươc)
+  function isValidVietnameseSyllable(word) {
+    const cleanWord = String(word || '').normalize('NFC').toLowerCase().trim();
+    if (!cleanWord) return true;
+    const vowels = 'aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ';
+    const syllableRegex = new RegExp(`^(ngh|ng|nh|ch|gh|gi|kh|ph|qu|th|tr|[bcdđghklmnpqrstvx])?([${vowels}]{1,3})(ch|ng|nh|[cmnpt])?$`, 'i');
+    const match = cleanWord.match(syllableRegex);
+    if (!match) return false;
+    const initial = match[1] || '';
+    const nucleus = match[2] || '';
+    const coda = match[3] || '';
+    const baseNucleus = nucleus.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
+    if (['ngh', 'gh', 'k'].includes(initial) && !/^[ieê]/.test(baseNucleus)) return false;
+    if (['ng', 'g', 'c'].includes(initial) && /^[ieê]/.test(baseNucleus)) return false;
+    if (initial === 'q') return false;
+    if (initial === 'qu' && !baseNucleus) return false;
+    const toneMarks = nucleus.normalize('NFD').match(/[\u0300\u0301\u0303\u0309\u0323]/g);
+    if (toneMarks && toneMarks.length > 1) return false;
+    if (['c', 'ch', 'p', 't'].includes(coda)) {
+      if (!toneMarks || !['\u0301', '\u0323'].includes(toneMarks[0])) return false;
+    }
+    return true;
+  }
+
   function scanOfflineOcrSuggestions(text) {
     const issues = [];
     const seen = new Set();
@@ -101,10 +126,28 @@
           id: 'off_' + issues.length,
           original: wrong,
           suggestion: suggest,
-          reason,
-          source: 'Offline',
+          reason: '[Loại C - Hỗ trợ chính tả] ' + reason,
+          source: 'Offline (Loại C)',
           protectedReason: prot,
-          status: 'pending' // pending | accepted | rejected
+          status: 'pending'
+        });
+      }
+    }
+    // Quét tiền xử lý cấu trúc âm tiết tiếng Việt (bỏ qua số, mã VB, chữ viết hoa/tên riêng)
+    const tokens = String(text || '').split(/[\s,.;:!?()\[\]"'“”‘’/\\-]+/);
+    for (const token of tokens) {
+      if (!token || token.length < 2 || /[0-9]/.test(token)) continue;
+      if (/^[A-ZĐÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ]/.test(token)) continue;
+      if (!seen.has(token) && !isValidVietnameseSyllable(token)) {
+        seen.add(token);
+        issues.push({
+          id: 'syl_' + issues.length,
+          original: token,
+          suggestion: token,
+          reason: '[Loại C - Tiền lọc âm tiết] Sai cấu trúc âm tiết tiếng Việt — hãy đối chiếu ảnh gốc trước khi sửa',
+          source: 'Tiền lọc âm tiết (Loại C)',
+          protectedReason: 'Cần đối chiếu ảnh gốc (không tự sửa)',
+          status: 'pending'
         });
       }
     }
@@ -136,7 +179,7 @@
           model: picked,
           stream: false,
           options: { temperature: 0.05, num_predict: 900 },
-          system: 'Bạn là chuyên gia kiểm tra lỗi OCR tiếng Việt. Chỉ trả về JSON array: [{"original":"cụm sai đúng nguyên văn trong bài","suggestion":"cụm đã sửa","reason":"lý do ngắn gọn"}]. TUYỆT ĐỐI KHÔNG sửa họ tên, địa chỉ, số CCCD, mã số thuế, số hợp đồng, số văn bản, ngày tháng năm, số tiền. Nếu không có lỗi trả về [].',
+          system: 'Bạn là Chuyên viên Hiệu đính Văn bản Hành chính cấp cao. Nhiệm vụ DUY NHẤT là phát hiện lỗi chính tả, lỗi đánh máy/OCR và dấu thanh. KHÔNG tự ý viết lại câu hay thay từ đồng nghĩa. BỎ QUA tên riêng người/địa danh, tên cơ quan, mã ký hiệu văn bản, số liệu, ngày tháng, từ viết tắt. Nếu không có lỗi chỉ trả về: KHÔNG CÓ LỖI. Nếu có lỗi trả về mảng JSON chuẩn: [{"tu_sai":"trích chính xác cụm từ trong văn bản gốc","de_xuat_sua":"cụm từ đã sửa đúng","loai_loi":"Lỗi gõ phím / Lỗi dấu thanh / Lỗi phụ âm / Lỗi dấu câu","giai_thich":"Giải thích ngắn gọn 1 câu"}].',
           prompt: sample
         })
       });
@@ -144,15 +187,19 @@
       if (!genRes.ok) return { items: out, model: picked, note: 'AI Local tạm bận.' };
       const gJson = await genRes.json();
       const raw = String(gJson.response || '').trim();
+      if (/KHÔNG CÓ LỖI/i.test(raw)) {
+        return { items: out, model: picked, note: `AI Local (${picked}) xác nhận không có lỗi chính tả bổ sung.` };
+      }
       const sIdx = raw.indexOf('[');
       const eIdx = raw.lastIndexOf(']');
       if (sIdx >= 0 && eIdx > sIdx) {
         const parsed = JSON.parse(raw.slice(sIdx, eIdx + 1));
         if (Array.isArray(parsed)) {
           parsed.forEach((it, idx) => {
-            const orig = String(it?.original || '').trim();
-            const sug = String(it?.suggestion || '').trim();
-            const why = String(it?.reason || 'AI phát hiện lỗi nhận diện OCR').trim();
+            const orig = String(it?.tu_sai || it?.original || '').trim();
+            const sug = String(it?.de_xuat_sua || it?.suggestion || '').trim();
+            const kind = String(it?.loai_loi || '').trim();
+            const why = String(it?.giai_thich || it?.reason || 'AI phát hiện lỗi nhận diện OCR').trim();
             if (!orig || !sug || orig === sug || orig.length > 70) return;
             if (!text.includes(orig)) return;
             const prot = detectProtectedEntityReason(orig, sug);
@@ -160,7 +207,7 @@
               id: 'ai_' + idx,
               original: orig,
               suggestion: sug,
-              reason: why,
+              reason: (kind ? `[${kind}] ` : '[Loại C] ') + why,
               source: `AI (${picked})`,
               protectedReason: prot,
               status: 'pending'
