@@ -42,77 +42,88 @@
       const ctx = sourceCanvas.getContext('2d');
       const data = ctx.getImageData(0, 0, w, h).data;
 
-      // Nhị phân hóa nhanh để dò đường kẻ (độ xám < 175)
+      // Nhị phân hóa chính xác để bắt trọn đường kẻ mỏng 1px & đường kẻ xám chống răng cưa (gray < 218)
       const isDark = (x, y) => {
+        if (x < 0 || y < 0 || x >= w || y >= h) return false;
         const idx = (y * w + x) * 4;
-        return (0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]) < 175;
+        return (0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]) < 218;
       };
 
-      // 1. Dò các hàng có đoạn kẻ ngang liên tục dài >= 28% chiều rộng trang
-      const minHRun = Math.round(w * 0.28);
+      // 1. Quét TỪNG HÀNG pixel (y += 1) để không bao giờ bỏ sót đường kẻ ngang mảnh 1px!
+      const minHRun = Math.round(w * 0.26);
       const rawYs = [];
-      for (let y = 4; y < h - 4; y += 2) {
-        let run = 0, maxRun = 0;
+      for (let y = 2; y < h - 2; y += 1) {
+        let run = 0, maxRun = 0, gapTol = 0;
         for (let x = 2; x < w - 2; x += 2) {
-          if (isDark(x, y)) { run += 2; if (run > maxRun) maxRun = run; }
-          else run = 0;
+          if (isDark(x, y)) {
+            run += 2; gapTol = 0;
+            if (run > maxRun) maxRun = run;
+          } else {
+            gapTol += 2;
+            if (gapTol > 4) run = 0;
+          }
         }
         if (maxRun >= minHRun) rawYs.push(y);
       }
-      const ys = clusterCoords(rawYs, Math.max(8, Math.round(h * 0.008)));
+      const ys = clusterCoords(rawYs, Math.max(6, Math.round(h * 0.006)));
       if (ys.length < 3) return null;
 
       const tableTop = ys[0];
       const tableBottom = ys[ys.length - 1];
       const tableH = tableBottom - tableTop;
-      if (tableH < h * 0.10) return null;
+      if (tableH < h * 0.08) return null;
 
-      // 2. Dò các cột có đoạn kẻ dọc liên tục bên trong [tableTop, tableBottom] dài >= 22% chiều cao bảng
-      const minVRun = Math.max(40, Math.round(tableH * 0.22));
+      // 2. Quét TỪNG CỘT pixel (x += 1) bên trong [tableTop, tableBottom] để không bỏ sót đường kẻ dọc mảnh 1px!
+      const minVRun = Math.max(32, Math.round(tableH * 0.18));
       const rawXs = [];
-      for (let x = 4; x < w - 4; x += 2) {
-        let run = 0, maxRun = 0;
+      for (let x = 2; x < w - 2; x += 1) {
+        let run = 0, maxRun = 0, gapTol = 0;
         for (let y = tableTop; y <= tableBottom; y += 2) {
-          if (isDark(x, y)) { run += 2; if (run > maxRun) maxRun = run; }
-          else run = 0;
+          if (isDark(x, y)) {
+            run += 2; gapTol = 0;
+            if (run > maxRun) maxRun = run;
+          } else {
+            gapTol += 2;
+            if (gapTol > 4) run = 0;
+          }
         }
         if (maxRun >= minVRun) rawXs.push(x);
       }
-      const xs = clusterCoords(rawXs, Math.max(8, Math.round(w * 0.008)));
+      const xs = clusterCoords(rawXs, Math.max(6, Math.round(w * 0.006)));
       if (xs.length < 3) return null;
 
       const tableLeft = xs[0];
       const tableRight = xs[xs.length - 1];
-      if ((tableRight - tableLeft) < w * 0.30) return null;
+      if ((tableRight - tableLeft) < w * 0.25) return null;
 
-      // 3. Kiểm tra vách ngăn giữa các ô để phát hiện chính xác ô gộp ngang (colspan) & ô gộp dọc (rowspan)
+      // 3. Kiểm tra vách ngăn giữa các ô bằng dải 5px (±2px) để không bỏ sót viền chống răng cưa khi kiểm tra colspan/rowspan
       const numRows = ys.length - 1;
       const numCols = xs.length - 1;
 
       const hasVertBorder = (colLineIdx, r) => {
         const x = xs[colLineIdx];
-        const y0 = ys[r] + 4;
-        const y1 = ys[r + 1] - 4;
+        const y0 = ys[r] + 3;
+        const y1 = ys[r + 1] - 3;
         if (y1 <= y0) return true;
         let dark = 0, total = 0;
         for (let y = y0; y <= y1; y += 2) {
           total++;
-          if (isDark(x, y) || (x > 1 && isDark(x - 1, y)) || (x + 1 < w && isDark(x + 1, y))) dark++;
+          if (isDark(x, y) || isDark(x - 1, y) || isDark(x + 1, y) || isDark(x - 2, y) || isDark(x + 2, y)) dark++;
         }
-        return total > 0 && (dark / total) >= 0.42;
+        return total > 0 && (dark / total) >= 0.35;
       };
 
       const hasHorizBorder = (rowLineIdx, c) => {
         const y = ys[rowLineIdx];
-        const x0 = xs[c] + 4;
-        const x1 = xs[c + 1] - 4;
+        const x0 = xs[c] + 3;
+        const x1 = xs[c + 1] - 3;
         if (x1 <= x0) return true;
         let dark = 0, total = 0;
         for (let x = x0; x <= x1; x += 2) {
           total++;
-          if (isDark(x, y) || (y > 1 && isDark(x, y - 1)) || (y + 1 < h && isDark(x, y + 1))) dark++;
+          if (isDark(x, y) || isDark(x, y - 1) || isDark(x, y + 1) || isDark(x, y - 2) || isDark(x, y + 2)) dark++;
         }
-        return total > 0 && (dark / total) >= 0.42;
+        return total > 0 && (dark / total) >= 0.35;
       };
 
       // Xây ma trận ô có hỗ trợ colspan & rowspan
@@ -302,7 +313,8 @@
     for (let i = 1; i < runs.length; i++) {
       const r = runs[i];
       const gap = r.x0 - prevX1;
-      const minGap = Math.max(0.8, (r.fontSize || 12) * 0.12);
+      // Ngưỡng khoảng trắng chính xác theo cỡ chữ (0.06 * fontSize) để không bao giờ làm dính chữ
+      const minGap = Math.max(0.5, (r.fontSize || 14) * 0.06);
       const needSpace = (r.precededBySpace || gap > minGap) && !/\s$/.test(out) && !/^\s/.test(r.str);
       out += (needSpace ? ' ' : '') + r.str;
       prevX1 = Math.max(prevX1, r.x1);
@@ -403,11 +415,53 @@
     const aboveLines = groupPdfRunsToLines(aboveRuns);
     const belowLines = groupPdfRunsToLines(belowRuns);
 
+    // Dựng chuẩn thể thức 2 cột Quốc hiệu/Cơ quan cho vùng trên bảng (NĐ 30 / 05-HD/VPTW)
+    const allAboveText = aboveLines.join('\n');
+    const isPartyDoc = (typeof global.detectIsPartyDocInOcr === 'function')
+      ? global.detectIsPartyDocInOcr(allAboveText)
+      : /ĐẢNG CỘNG SẢN VIỆT NAM|ĐẢNG ỦY|CHI BỘ/i.test(allAboveText);
+
     let htmlParts = [];
-    aboveLines.forEach(ln => {
+    const headerLeftRuns = [];
+    const headerRightRuns = [];
+    const titleRuns = [];
+    const splitHeaderX = offCanvas.width * 0.45;
+    // Tìm dòng bắt đầu Tiêu đề (VD: LỊCH CÔNG TÁC TUẦN, BẢNG TỔNG HỢP...) để không gộp vào bảng Quốc hiệu 2 cột
+    let titleStartY = Infinity;
+    for (const r of aboveRuns) {
+      if (/^(LỊCH\s+CÔNG|BẢNG\s+|DANH\s+SÁCH|PHỤ\s+LỤC|KẾ\s+HOẠCH|BÁO\s+CÁO|THÔNG\s+BÁO|QUYẾT\s+ĐỊNH)/i.test(r.str.trim())) {
+        if (r.y0 < titleStartY) titleStartY = r.y0;
+      }
+    }
+    for (const r of aboveRuns) {
+      if (r.y0 >= titleStartY - 6) {
+        titleRuns.push(r);
+      } else if (r.cx < splitHeaderX) {
+        headerLeftRuns.push(r);
+      } else {
+        headerRightRuns.push(r);
+      }
+    }
+
+    const hdrLeftLines = groupPdfRunsToLines(headerLeftRuns);
+    const hdrRightLines = groupPdfRunsToLines(headerRightRuns);
+    const titleLines = groupPdfRunsToLines(titleRuns);
+
+    if ((hdrLeftLines.length > 0 || hdrRightLines.length > 0) && typeof global.buildOcrHeaderTableHtml === 'function') {
+      htmlParts.push(global.buildOcrHeaderTableHtml(hdrLeftLines, hdrRightLines, isPartyDoc));
+      hdrLeftLines.forEach(l => plainLinesOut.push(l));
+      hdrRightLines.forEach(l => plainLinesOut.push(l));
+    } else {
+      aboveLines.forEach(ln => {
+        plainLinesOut.push(ln);
+        htmlParts.push(`<p align="center" style="text-align:center; text-indent:0; margin:0 0 4pt 0; font-size:14pt; font-weight:bold;">${escHtml(ln)}</p>`);
+      });
+    }
+
+    titleLines.forEach((ln, idx) => {
       plainLinesOut.push(ln);
-      const isCenter = /^(LỊCH|BẢNG|DANH SÁCH|PHỤ LỤC|CỘNG HÒA|Độc lập|Tuần\s+\d+|Từ ngày)/i.test(ln) || ln === ln.toUpperCase();
-      htmlParts.push(`<p align="${isCenter ? 'center' : 'left'}" style="text-align:${isCenter ? 'center' : 'left'}; text-indent:0; margin:0 0 4pt 0; font-size:14pt; ${ln === ln.toUpperCase() ? 'font-weight:bold;' : ''}">${escHtml(ln)}</p>`);
+      const isMainTitle = idx === 0 || ln === ln.toUpperCase();
+      htmlParts.push(`<p align="center" style="text-align:center; text-indent:0; margin:${idx === 0 ? '8pt' : '2pt'} 0 3pt 0; font-size:${isMainTitle ? '14pt' : '13.5pt'}; ${isMainTitle ? 'font-weight:bold;' : 'font-style:italic;'}">${escHtml(ln)}</p>`);
     });
 
     let tableHtml = `<table width="100%" cellpadding="4" cellspacing="0" border="1" style="width:100%; border-collapse:collapse; border:1px solid #000000; margin:8pt 0;">`;
@@ -441,10 +495,26 @@
     tableHtml += '</table>';
     htmlParts.push(tableHtml);
 
-    belowLines.forEach(ln => {
-      plainLinesOut.push(ln);
-      htmlParts.push(`<p style="margin:4pt 0; text-indent:0; font-size:13.5pt;">${escHtml(ln)}</p>`);
-    });
+    // Dựng chuẩn thể thức 2 cột Nơi nhận & Chữ ký cho vùng dưới bảng
+    if (belowRuns.length > 0) {
+      const ftrLeftRuns = [];
+      const ftrRightRuns = [];
+      const splitFtrX = offCanvas.width * 0.47;
+      for (const r of belowRuns) {
+        if (r.cx < splitFtrX) ftrLeftRuns.push(r);
+        else ftrRightRuns.push(r);
+      }
+      const fLeftLines = groupPdfRunsToLines(ftrLeftRuns);
+      const fRightLines = groupPdfRunsToLines(ftrRightRuns);
+      belowLines.forEach(l => plainLinesOut.push(l));
+      if ((fLeftLines.length > 0 && fRightLines.length > 0) && typeof global.buildOcrFooterTableHtml === 'function') {
+        htmlParts.push(global.buildOcrFooterTableHtml(fLeftLines, fRightLines, isPartyDoc));
+      } else {
+        belowLines.forEach(ln => {
+          htmlParts.push(`<p style="margin:4pt 0; text-indent:0; font-size:13.5pt;">${escHtml(ln)}</p>`);
+        });
+      }
+    }
 
     lastStructuredModel = {
       source: 'native_pdf',
