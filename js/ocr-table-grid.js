@@ -305,24 +305,35 @@
     return lastStructuredModel;
   }
 
-  function joinCellPdfRuns(runs) {
-    if (!runs || runs.length === 0) return '';
+  function joinCellPdfRunsRich(runs) {
+    if (!runs || runs.length === 0) return { text: '', html: '' };
     runs.sort((a, b) => a.x0 - b.x0);
-    let out = runs[0].str;
-    let prevX1 = runs[0].x1;
-    for (let i = 1; i < runs.length; i++) {
+    let plainOut = '';
+    let htmlOut = '';
+    let prevX1 = runs[0].x0;
+    for (let i = 0; i < runs.length; i++) {
       const r = runs[i];
-      const gap = r.x0 - prevX1;
-      // Ngưỡng khoảng trắng chính xác theo cỡ chữ (0.06 * fontSize) để không bao giờ làm dính chữ
+      const gap = i === 0 ? 0 : (r.x0 - prevX1);
       const minGap = Math.max(0.5, (r.fontSize || 14) * 0.06);
-      const needSpace = (r.precededBySpace || gap > minGap) && !/\s$/.test(out) && !/^\s/.test(r.str);
-      out += (needSpace ? ' ' : '') + r.str;
+      const needSpace = i > 0 && (r.precededBySpace || gap > minGap) && !/\s$/.test(plainOut) && !/^\s/.test(r.str);
+      if (needSpace) {
+        plainOut += ' ';
+        htmlOut += ' ';
+      }
+      plainOut += r.str;
+      let seg = escHtml(r.str);
+      if (r.isBold) seg = `<b>${seg}</b>`;
+      if (r.isItalic) seg = `<i>${seg}</i>`;
+      htmlOut += seg;
       prevX1 = Math.max(prevX1, r.x1);
     }
-    return out.replace(/[ \t]{2,}/g, ' ').trim();
+    return {
+      text: plainOut.replace(/[ \t]{2,}/g, ' ').trim(),
+      html: htmlOut.trim()
+    };
   }
 
-  function groupPdfRunsToLines(runs) {
+  function groupPdfRunsToRichLines(runs, cellX0, cellX1) {
     if (!runs || runs.length === 0) return [];
     const sorted = runs.slice().sort((a, b) => a.cy - b.cy || a.x0 - b.x0);
     const rows = [];
@@ -334,7 +345,29 @@
       if (!target) { target = { cy: r.cy, items: [] }; rows.push(target); }
       target.items.push(r);
     }
-    return rows.map(ln => joinCellPdfRuns(ln.items)).filter(Boolean);
+    const cellW = Math.max(10, (cellX1 || 0) - (cellX0 || 0));
+    return rows.map(ln => {
+      const joined = joinCellPdfRunsRich(ln.items);
+      const minX = Math.min(...ln.items.map(x => x.x0));
+      const maxX = Math.max(...ln.items.map(x => x.x1));
+      const leftPad = minX - (cellX0 || 0);
+      const rightPad = (cellX1 || maxX) - maxX;
+      let align = 'left';
+      if (cellX1 > cellX0 && (maxX - minX) < cellW * 0.84) {
+        if (Math.abs(leftPad - rightPad) < cellW * 0.14 && leftPad > cellW * 0.08) align = 'center';
+        else if (leftPad > cellW * 0.35 && rightPad < cellW * 0.12) align = 'right';
+      }
+      const avgPt = Math.min(18, Math.max(9, Math.round((ln.items.reduce((a, x) => a + (x.ptSize || 12), 0) / ln.items.length) * 2) / 2));
+      return { text: joined.text, html: joined.html, align, ptSize: avgPt };
+    }).filter(x => x.text);
+  }
+
+  function joinCellPdfRuns(runs) {
+    return joinCellPdfRunsRich(runs).text;
+  }
+
+  function groupPdfRunsToLines(runs) {
+    return groupPdfRunsToRichLines(runs, 0, 0).map(x => x.text);
   }
 
   function cropCellToDataUrl(sourceCanvas, cell) {
@@ -350,12 +383,13 @@
     } catch { return ''; }
   }
 
-  // Tái tạo trang PDF gốc (có lớp văn bản) thành BẢNG THẬT giữ nguyên khoảng trắng, hàng, cột, ô gộp & ô trống
-  function reconstructNativePdfPageWithRealTables(offCanvas, rawItems, viewportRender, viewport1x) {
+  // Tái tạo trang PDF gốc (có lớp văn bản) thành BẢNG THẬT 1:1 giữ nguyên Bold/Italic/Cỡ chữ/Căn lề/Khổ ngang-đứng/Khoảng trắng
+  function reconstructNativePdfPageWithRealTables(offCanvas, rawItems, viewportRender, viewport1x, page, textContent) {
     if (!offCanvas || !Array.isArray(rawItems) || rawItems.length === 0 || !global.pdfjsLib) return null;
     const grid = detectTableGridFromCanvas(offCanvas);
     if (!grid) return null;
 
+    const styles = textContent?.styles || {};
     const mappedRuns = [];
     let pendingSpace = false;
     for (const it of rawItems) {
@@ -370,12 +404,24 @@
       const yBottom = tx[5];
       const h = Math.max(10, Math.hypot(tx[2], tx[3]) || 14);
       const w = Math.max(2, (it.width || 0) * viewportRender.scale);
+      const ptSize = Math.min(22, Math.max(9, Math.round((h / Math.max(0.5, viewportRender.scale)) * 2) / 2));
+
+      let fontDesc = String(it.fontName || '') + ' ' + String(styles[it.fontName]?.fontFamily || '');
+      try {
+        if (page && page.commonObjs && page.commonObjs.has(it.fontName)) {
+          const fo = page.commonObjs.get(it.fontName);
+          if (fo && fo.name) fontDesc += ' ' + fo.name;
+        }
+      } catch (e) {}
+      const isBold = /bold|bd|black|heavy|demi|-b\b/i.test(fontDesc);
+      const isItalic = /italic|ital|oblique|-i\b/i.test(fontDesc) || (Math.abs(it.transform[2] || 0) > 0.12);
+
       mappedRuns.push({
         str: it.str.normalize('NFC'),
         x0, x1: x0 + w,
         y0: yBottom - h, y1: yBottom,
         cx: x0 + w / 2, cy: yBottom - h / 2,
-        h, fontSize: h,
+        h, fontSize: h, ptSize, isBold, isItalic,
         precededBySpace: pendingSpace
       });
       pendingSpace = false;
@@ -471,7 +517,8 @@
       const rowPlainCells = [];
       for (const cell of rowsByIdx[r]) {
         const wPct = Math.max(4, Math.round(((cell.x1 - cell.x0) / totalTableW) * 1000) / 10);
-        const cellLines = groupPdfRunsToLines(cell.words);
+        const richLines = groupPdfRunsToRichLines(cell.words, cell.x0, cell.x1);
+        const cellLines = richLines.map(x => x.text);
         const cellText = cellLines.join('\n');
         rowPlainCells.push(cellLines.join(' '));
         structuredCells.push({
@@ -481,13 +528,14 @@
           cropDataUrl: cropCellToDataUrl(offCanvas, cell)
         });
         const tag = isHeaderRow ? 'th' : 'td';
-        const bgStyle = isHeaderRow ? 'background:#f1f5f9; font-weight:bold; text-align:center;' : 'text-align:left;';
+        const vAlign = (isHeaderRow || cell.c === 0) ? 'middle' : 'top';
+        const bgStyle = isHeaderRow ? 'background:#f1f5f9; font-weight:bold; text-align:center;' : '';
         const csAttr = cell.colspan > 1 ? ` colspan="${cell.colspan}"` : '';
         const rsAttr = cell.rowspan > 1 ? ` rowspan="${cell.rowspan}"` : '';
-        const innerHtml = cellLines.length > 0
-          ? cellLines.map(ln => `<p style="margin:0 0 3pt 0; text-indent:0; font-size:13pt; ${isHeaderRow ? 'font-weight:bold; text-align:center;' : 'text-align:left;'}">${escHtml(ln)}</p>`).join('')
-          : `<p style="margin:0; text-indent:0; font-size:13pt;">&nbsp;</p>`;
-        tableHtml += `<${tag}${csAttr}${rsAttr} width="${wPct}%" style="width:${wPct}%; border:1px solid #000000; padding:4pt 6pt; vertical-align:top; ${bgStyle}">${innerHtml}</${tag}>`;
+        const innerHtml = richLines.length > 0
+          ? richLines.map(ln => `<p align="${isHeaderRow ? 'center' : ln.align}" style="margin:0 0 2.5pt 0; text-indent:0; font-size:${ln.ptSize}pt; text-align:${isHeaderRow ? 'center' : ln.align}; ${isHeaderRow ? 'font-weight:bold;' : ''}">${ln.html}</p>`).join('')
+          : `<p style="margin:0; text-indent:0; font-size:12pt;">&nbsp;</p>`;
+        tableHtml += `<${tag}${csAttr}${rsAttr} width="${wPct}%" valign="${vAlign}" style="width:${wPct}%; border:1px solid #000000; padding:4pt 6pt; vertical-align:${vAlign}; ${bgStyle}">${innerHtml}</${tag}>`;
       }
       tableHtml += '</tr>';
       plainLinesOut.push(rowPlainCells.join(' | '));
