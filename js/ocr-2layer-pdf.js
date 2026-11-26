@@ -135,10 +135,11 @@
   }
 
   async function addTwoLayerPage(pdfDoc, embeddedFont, hasUnicodeFont, pageData) {
-    // Khổ trang A4 tỉ lệ theo ảnh scan gốc (chuẩn chiều rộng A4 = 595.28 pt)
+    // Khổ trang A4 Đứng (595.28 x 841.89 pt) hoặc A4 Ngang (841.89 x 595.28 pt) tự động khớp tỉ lệ gốc 1:1
     const imgW = pageData.width || 1240;
     const imgH = pageData.height || 1754;
-    const pageW = 595.28;
+    const isLandscape = imgW > imgH;
+    const pageW = isLandscape ? 841.89 : 595.28;
     const pageH = Math.max(200, (imgH / imgW) * pageW);
     const scaleX = pageW / imgW;
     const scaleY = pageH / imgH;
