@@ -148,7 +148,7 @@ namespace VBTMProSuite
                 else if (a.Equals("--test-spell-offline", StringComparison.OrdinalIgnoreCase))
                 {
                     string outPath = Path.Combine(Path.GetTempPath(), "vbtm_test_spell_offline.txt");
-                    string sample = "Công tác tập treung lãnh đạo cqác cơ quan vận độeng thực hiện tquyền và cơ scấu tổ chức, chọn đúng người, giáo dục đảng sviên, thàdnh lập tổ công tác phòng chống xunga đột, năm giữ vai trò nòng cốt của nước evà nhân dân, đồng thời năm giữ kỷ luật nghiêm minh.";
+                    string sample = "KẾ HOẠCHHH triển khai Kế hoạchhh và thực hiện kế hoạchhh, tập treung lãnh đạo cqác cơ quan vận độeng thực hiện tquyền và cơ scấu tổ chức, chọn đúng người, giáo dục đảng sviên, thàdnh lập tổ công tác phòng chống xunga đột, năm giữ vai trò nòng cốt của nước evà nhân dân, đồng thời năm giữ kỷ luật nghiêm minh.";
                     System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
                     List<SpellCardIssue> found = OfflineVietnameseSpellEngine.ScanDocumentFast(sample);
                     sw.Stop();
