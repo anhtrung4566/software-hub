@@ -273,10 +273,11 @@
         ink = buildInkMap(work);
       }
       const th = estimateTextHeight(ink);
-      if (th > 0 && th < 26 && work.width < 3200) {
-        scale = Math.min(2.2, Math.max(1.25, 34 / th));
-        scale = Math.min(scale, 3400 / work.width);
-        if (scale > 1.1) {
+      // Chỉ phóng to khi chữ thực sự quá nhỏ (< 18px); chữ 20-26px trên ảnh >= 1500px đã tối ưu cho Tesseract v5
+      if (th > 0 && th < 18 && work.width < 2600) {
+        scale = Math.min(2.0, Math.max(1.25, 26 / th));
+        scale = Math.min(scale, 2800 / work.width);
+        if (scale > 1.15) {
           const up = newCanvas(work.width * scale, work.height * scale);
           const uctx = up.getContext('2d');
           uctx.fillStyle = '#fff'; uctx.fillRect(0, 0, up.width, up.height);
@@ -317,28 +318,37 @@
       }
     }
     const m = median(inner);
-    const thr = Math.max(3, 0.15 * H, 2.4 * m + 1.5);
+    // Khoảng trắng thật giữa 2 từ trong tiếng Việt >= ~0.28 * H; khoảng đệm bên trong chữ số "11", "125" hay trước dấu "." nhỏ hơn nhiều
+    const thr = Math.max(4, 0.28 * H, 3.2 * m + 2);
     const out = [];
     for (const w of words) {
+      const wRaw = String(w.text || '').trim();
+      // Không bao giờ tách bên trong token thuần số/ngày/mã ngắn (VD: 125, 11/9/2026, 1.200, 100%, 1.)
+      if (/^[\d.,/:%-]+$/.test(wRaw)) { out.push(w); continue; }
       const sy = Array.isArray(w.symbols) ? w.symbols.filter(s => s && s.bbox && String(s.text || '') !== '') : [];
       const joined = nfc(sy.map(s => s.text).join(''));
-      const hasSym = sy.length >= 2 && joined === nfc(String(w.text || '').trim());
+      const hasSym = sy.length >= 2 && joined === nfc(wRaw);
       if (!hasSym) {
-        const wText = String(w.text || '').trim();
         const copy = Object.assign({}, w);
-        if (wText.length >= 8) {
-          const runs = findBlankRuns(ink, w.bbox.x0, w.bbox.x1, w.bbox.y0, w.bbox.y1, Math.max(3, 0.2 * H));
-          if (runs.length) { copy.suspectStuck = true; log.suspects.push({ text: wText, bbox: w.bbox, reason: 'Có khoảng trắng trong ảnh nhưng không có bbox ký tự để tách an toàn' }); }
+        if (wRaw.length >= 8) {
+          const runs = findBlankRuns(ink, w.bbox.x0, w.bbox.x1, w.bbox.y0, w.bbox.y1, Math.max(4, 0.28 * H));
+          if (runs.length) { copy.suspectStuck = true; log.suspects.push({ text: wRaw, bbox: w.bbox, reason: 'Có khoảng trắng trong ảnh nhưng không có bbox ký tự để tách an toàn' }); }
         }
         out.push(copy);
         continue;
       }
       const cuts = [];
       for (let i = 0; i + 1 < sy.length; i++) {
+        const leftCh = String(sy[i].text || '');
+        const rightCh = String(sy[i + 1].text || '');
+        // Không tách ngay trước dấu câu kết thúc hoặc giữa 2 chữ số liền nhau trong cùng 1 số/ngày
+        if (/^[.,;:!?%)\]]$/.test(rightCh)) continue;
+        if (/^\d$/.test(leftCh) && /^[\d.,/%-]$/.test(rightCh)) continue;
+        if (/^[\d.,/%-]$/.test(leftCh) && /^\d$/.test(rightCh)) continue;
         const g = sy[i + 1].bbox.x0 - sy[i].bbox.x1;
         if (g < thr) continue;
         const blank = blankColumnFraction(ink, sy[i].bbox.x1, sy[i + 1].bbox.x0, w.bbox.y0, w.bbox.y1);
-        if (blank >= 0.7) cuts.push({ at: i + 1, gap: g, blank });
+        if (blank >= 0.78) cuts.push({ at: i + 1, gap: g, blank });
       }
       if (!cuts.length) { out.push(w); continue; }
       const bounds = [0].concat(cuts.map(c => c.at), [sy.length]);
@@ -353,10 +363,12 @@
           bbox: unionBBox(seg),
           symbols: seg,
           splitFromSpacing: true,
-          origText: String(w.text || '').trim()
+          origText: wRaw
         });
       }
-      if (parts.length >= 2) {
+      // Tránh tách sai thành 1 phụ âm đơn lẻ vô nghĩa (VD: "c ơ" -> giữ nguyên "cơ")
+      const hasInvalidSingleConsonant = parts.some(p => /^[bcdfghjklmnpqrstvwxzđ]$/i.test(p.text));
+      if (parts.length >= 2 && !hasInvalidSingleConsonant) {
         log.repairs.push({
           kind: 'B',
           original: String(w.text || '').trim(),
