@@ -203,6 +203,7 @@ async function handleUploadedFiles(fileList) {
 }
 
 async function handleUploadedFile(file) {
+  if (window.VietNamOcrReview && typeof window.VietNamOcrReview.reset === 'function') window.VietNamOcrReview.reset();
   isSampleDocLoaded = false;
   ocrRotation = 0;
   if (file.name) {
@@ -239,7 +240,7 @@ async function handleUploadedFile(file) {
         }
         const ocrRes = await recognizeCanvasPageHighAccuracy(c, (pct) => {
           if (statusEl) statusEl.textContent = `Đang OCR ảnh TIFF Trang ${idx + 1}/${canvases.length} (${pct}%)...`;
-        });
+        }, idx + 1);
         allTexts.push(ocrRes.text);
         allHtmls.push(ocrRes.lines && ocrRes.lines.length > 0
           ? reconstructLayoutFromTesseractBboxes(ocrRes.lines, ocrRes.procWidth, ocrRes.procHeight, 'auto')
@@ -410,7 +411,7 @@ async function loadRealPdfDocument(file) {
         // Trang PDF là ảnh scan thuần túy (hoặc PDF 2 lớp bị lỗi font): Gọi Tesseract v5 LSTM Tiếng Việt + dò lưới ô bảng thật (colspan/rowspan) + tái tạo bố cục
         const ocrRes = await recognizeCanvasPageHighAccuracy(offCanvas, (pct) => {
           if (statusEl) statusEl.textContent = `Đang OCR Tiếng Việt chính xác cao Trang ${p}/${totalPdfPages} (${pct}%)...`;
-        });
+        }, p);
         let pageHtml = '';
         if (window.VietNamOcrTableGrid && ocrRes.procCanvas && ocrRes.words && ocrRes.words.length > 0) {
           const gridRes = window.VietNamOcrTableGrid.reconstructPageWithRealTables(ocrRes.procCanvas, ocrRes.words, ocrRes.lines, 'auto');
@@ -1232,7 +1233,9 @@ function cleanAndFixVietnameseOcrText(rawText) {
     if (/[BCDFGHJKLMNPQRSTVWXZ]{6,}/.test(line) || /([A-Z])\1{3,}/.test(line)) {
       continue;
     }
-    if (/^[ĨŨÚ|_\-—–=+<>\\\/.,;:()\[\]~`'\"0-9\s]{1,12}$/.test(line) && !/^\d+[.)]?$/.test(line) && !/^[-—]{3,}$/.test(line)) {
+    // Chỉ bỏ dòng thuần ký hiệu nhiễu (KHÔNG chứa chữ cái/chữ số). Trước đây quy tắc này xóa luôn các dòng chỉ gồm ngày/số
+    // ngắn như "07/9/2026", "13/9", "36" (rất phổ biến trong ô lịch công tác) => mất nội dung.
+    if (/^[ĨŨÚ|_\-—–=+<>\\\/.,;:()\[\]~`'\"\s]{1,12}$/.test(line) && !/^[-—]{3,}$/.test(line)) {
       continue;
     }
     if (/[⇙ØÏÑŠ]/.test(line) && line.length < 40) {
@@ -1254,7 +1257,11 @@ function cleanAndFixVietnameseOcrText(rawText) {
 
   text = cleanedLines.join('\n');
 
-  // 2. Tự động hiệu đính 80+ lỗi dấu thanh, ký tự & dính chữ OCR Tiếng Việt phổ biến
+  // 2. Các thay thế chuỗi cố định (hoà→hòa, tô chức→tổ chức...) là SỬA CHÍNH TẢ (loại C), không phải sửa lỗi OCR và có thể
+  //    làm sai lệch nội dung gốc. Mặc định TẮT; chỉ chạy khi người dùng chủ động bật window.OCR_ENABLE_STATIC_SPELL_FIXES = true.
+  if (window.OCR_ENABLE_STATIC_SPELL_FIXES !== true) {
+    return text.replace(/\n{3,}/g, '\n\n').trim();
+  }
   const ocrFixes = [
     [/\bCỘNG HỎA\b/g, 'CỘNG HÒA'], [/\bCÔNG HÒA\b/g, 'CỘNG HÒA'], [/\bXÃ HÔI\b/g, 'XÃ HỘI'],
     [/\bCHỦ NGHIA\b/g, 'CHỦ NGHĨA'], [/\bVIÊT NAM\b/g, 'VIỆT NAM'], [/\bVIET NAM\b/g, 'VIỆT NAM'],
@@ -1545,7 +1552,7 @@ async function proofreadVietnameseOcrWithOllama(rawOcrText) {
   }
 }
 
-async function recognizeCanvasPageHighAccuracy(canvasEl, onProgress = null) {
+async function recognizeCanvasPageHighAccuracy(canvasEl, onProgress = null, pageNo = 1) {
   const cleanCanvas = createPreprocessedOcrCanvas(canvasEl, false);
   const selectedLang = document.getElementById('ocrLangSelect')?.value || 'vie';
   const enableDeskew = document.getElementById('ocrDeskewCheck')?.checked !== false;
@@ -1558,18 +1565,25 @@ async function recognizeCanvasPageHighAccuracy(canvasEl, onProgress = null) {
         if (onProgress) onProgress(pct, msg);
       }
     });
-    return {
+    const out = {
       text: cleanAndFixVietnameseOcrText(res.text),
       lines: res.lines,
       words: res.words,
       confidence: res.confidence,
       docProfile: res.docProfile,
-      procCanvas: cleanCanvas,
+      procCanvas: res.procCanvas || cleanCanvas,
       procWidth: res.procWidth,
       procHeight: res.procHeight,
       deskewAngle: res.deskewAngle,
-      engineSource: res.engineSource
+      engineSource: res.engineSource,
+      layout: res.layout || null,
+      raw: res.raw || null,
+      preprocess: res.preprocess || null
     };
+    if (window.VietNamOcrReview && typeof window.VietNamOcrReview.registerPage === 'function') {
+      try { window.VietNamOcrReview.registerPage(pageNo, out); } catch (e) { /* không làm hỏng luồng OCR */ }
+    }
+    return out;
   }
 
   let text = '';
