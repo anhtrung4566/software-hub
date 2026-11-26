@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>VietNamOCR Pro — Bộ kiểm thử chất lượng OCR</title>
+  <style>
+    body{font-family:'Segoe UI',Arial,sans-serif;margin:20px;color:#111;background:#fafafa}
+    table{border-collapse:collapse;margin:8px 0 16px;background:#fff}
+    th,td{border:1px solid #bbb;padding:5px 10px;font-size:.88rem;text-align:left}
+    th{background:#eef2ff}.good{background:#dcfce7;font-weight:700}.bad{background:#fee2e2}
+    .doc{border-top:2px solid #ddd;margin-top:10px;padding-top:4px}
+    #benchPreview canvas{margin:3px}
+    pre{max-height:240px;overflow:auto;background:#0f172a;color:#cbd5e1;padding:10px;font-size:.72rem}
+    button{padding:9px 18px;font-weight:700}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+  <h1>VietNamOCR Pro — Kiểm thử chất lượng OCR (trước / sau)</h1>
+  <p>Sinh 8 tài liệu có đáp án chuẩn (lịch công tác có bảng, công văn, bảng có ô gộp, 2 cột, scan mờ nghiêng, chữ nhỏ, nhiều trang), OCR bằng chính engine của phần mềm và chấm điểm.
+     Thêm <code>?run=1</code> vào đường dẫn để tự chạy.</p>
+  <button id="benchRun">▶ Chạy kiểm thử</button>
+  <p id="benchStatus">Chưa chạy.</p>
+  <div id="benchPreview"></div>
+  <div id="benchResult"></div>
+  <h3>Dữ liệu JSON</h3>
+  <pre id="benchJson"></pre>
+  <script src="../js/ocr-docx-exporter.js?v=380"></script>
+  <script src="../js/ocr-table-grid.js?v=380"></script>
+  <script src="../js/ocr-layout.js?v=380"></script>
+  <script src="../js/ocr-engine-pro.js?v=380"></script>
+  <script src="../js/ocr-benchmark.js?v=380"></script>
+</body>
+</html>
