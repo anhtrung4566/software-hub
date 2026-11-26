@@ -402,12 +402,12 @@ namespace VBTMProSuite
         /// </summary>
         public static string TryRepairTelexOrExtraChar(string word, string prevWord, string nextWord)
         {
-            if (string.IsNullOrWhiteSpace(word) || word.Length < 2 || word.Length > 10) return null;
+            if (string.IsNullOrWhiteSpace(word) || word.Length < 2 || word.Length > 16) return null;
             VbtmKnowledgeHub.EnsureLoaded();
             if (WhitelistWords.Contains(word) || VbtmKnowledgeHub.ProtectedWhitelist.Contains(word)) return null;
 
             string w = word.Normalize(NormalizationForm.FormC);
-            // Bỏ qua từ viết tắt toàn chữ HOA ngắn (VD: UBND, HĐND, TW, QR)
+            // Bỏ qua từ viết tắt toàn chữ HOA ngắn không dấu (VD: UBND, HĐND, TW, QR)
             if (w.Length <= 6 && w == w.ToUpperInvariant() && !HasVietnameseDiacritic(w)) return null;
 
             string direct;
@@ -425,17 +425,28 @@ namespace VBTMProSuite
             bool neighborHasVn = (!string.IsNullOrEmpty(prevWord) && HasVietnameseDiacritic(prevWord)) ||
                                  (!string.IsNullOrEmpty(nextWord) && HasVietnameseDiacritic(nextWord));
 
-            // Nếu là từ thuần ASCII không dấu và cả 2 từ kề đều không có dấu tiếng Việt -> chỉ bắt lỗi gõ lặp chữ cuối (vd: trongg)
+            // 0. Rút gọn các ký tự bị dính phím lặp liên tiếp 2+ lần (VD: "hoạchhh" -> "hoạch", "HOẠCHHH" -> "HOẠCH", "cônggg" -> "công", "quyếttt" -> "quyết")
+            StringBuilder collapsedSb = new StringBuilder(w.Length);
+            for (int i = 0; i < w.Length; i++)
+            {
+                if (i == 0 || char.ToLowerInvariant(w[i]) != char.ToLowerInvariant(w[i - 1]))
+                {
+                    collapsedSb.Append(w[i]);
+                }
+            }
+            string collapsed = collapsedSb.ToString();
+            if (collapsed.Length < w.Length)
+            {
+                int colScore = ScoreCandidate(w, collapsed, -1, prevWord, nextWord);
+                if (colScore >= 50 || (hasVn && colScore > 0))
+                {
+                    return PreserveCase(w, collapsed);
+                }
+            }
+
+            // Nếu là từ thuần ASCII không dấu và cả 2 từ kề đều không có dấu tiếng Việt -> chỉ bắt lỗi gõ lặp chữ cuối (vd: trongg, tronggg)
             if (!hasVn && !neighborHasVn)
             {
-                if (w.Length >= 4 && char.ToLowerInvariant(w[w.Length - 1]) == char.ToLowerInvariant(w[w.Length - 2]))
-                {
-                    string trimmed = w.Substring(0, w.Length - 1);
-                    if (IsValidVietnameseSyllable(trimmed) && CommonVietnameseSyllables.Contains(trimmed.ToLowerInvariant()))
-                    {
-                        return PreserveCase(w, trimmed);
-                    }
-                }
                 return null;
             }
 
@@ -455,6 +466,27 @@ namespace VBTMProSuite
                     {
                         bestScore = sc;
                         bestCand = cand;
+                    }
+                }
+            }
+
+            // 1b. Nếu từ có dấu tiếng Việt và vẫn chưa khớp -> thử xóa 2 ký tự thừa bất kỳ (VD: "hoạchhs" -> "hoạch", "thànhdf" -> "thành", "đượcjk" -> "được")
+            if (bestCand == null && hasVn && w.Length >= 4 && w.Length <= 11)
+            {
+                for (int i = 0; i < w.Length; i++)
+                {
+                    if (w[i] > 127) continue;
+                    string sub1 = w.Remove(i, 1);
+                    for (int j = i; j < sub1.Length; j++)
+                    {
+                        if (sub1[j] > 127) continue;
+                        string cand2 = sub1.Remove(j, 1);
+                        int sc = ScoreCandidate(w, cand2, -1, prevWord, nextWord);
+                        if (sc >= 50 && sc > bestScore)
+                        {
+                            bestScore = sc;
+                            bestCand = cand2;
+                        }
                     }
                 }
             }
