@@ -420,6 +420,13 @@
     const enableDeskew = options.deskew !== false;
     const onProgress = options.onProgress || null;
 
+    const rawBaseline = options.rawBaseline === true;
+    let preInfo = { applied: [], scale: 1, textHeight: 0 };
+    if (!rawBaseline && global.VietNamOcrLayout && typeof global.VietNamOcrLayout.adaptivePreprocess === 'function') {
+      if (onProgress) onProgress(6, 'Phân tích trang: nền/bóng, nhiễu, cỡ chữ để chọn tiền xử lý riêng...');
+      preInfo = global.VietNamOcrLayout.adaptivePreprocess(procCanvas);
+      procCanvas = preInfo.canvas;
+    }
     const classification = classifyDocumentCanvas(procCanvas);
     let workCanvas = procCanvas;
     let deskewDeg = 0;
@@ -452,8 +459,24 @@
       }
     }
 
-    const words = Array.isArray(data?.words) ? data.words : [];
-    const lines = Array.isArray(data?.lines) ? data.lines : [];
+    const rawWords = Array.isArray(data?.words) ? data.words : [];
+    const rawLines = Array.isArray(data?.lines) ? data.lines : [];
+    const raw = { text: String(data?.text || '').normalize('NFC'), lines: rawLines, words: rawWords };
+
+    // Bước 2-6: OCR riêng từng ô bảng, tách từ dính theo bbox ký tự + khoảng trắng thật trong ảnh,
+    // OCR lại vùng ảnh nghi ngờ, phân vùng bố cục, dựng văn bản theo thứ tự đọc
+    let layout = null;
+    if (!rawBaseline && global.VietNamOcrLayout && !cancelRequested) {
+      try {
+        layout = await global.VietNamOcrLayout.enhancePage({ canvas: workCanvas, data, worker, lang, onProgress });
+      } catch (e) {
+        logSafeError('LayoutEnhance', e.message);
+        layout = null;
+      }
+    }
+    const words = layout ? layout.words : rawWords;
+    const lines = layout ? layout.lines : rawLines;
+    const pageText = layout && layout.text ? layout.text : raw.text;
     const lowConfWords = words.filter(w => String(w?.text || '').trim() && Number(w.confidence) < 70);
     const confusableTokens = detectConfusableTokens(words);
     const elapsedMs = Math.round(performance.now() - t0);
@@ -475,9 +498,13 @@
     };
 
     return {
-      text: String(data?.text || '').normalize('NFC'),
+      text: pageText,
       lines,
       words,
+      raw,
+      layout,
+      preprocess: preInfo,
+      procCanvas: workCanvas, // CÙNG hệ tọa độ với words/lines (đã deskew/phóng) — sửa lỗi lệch lưới bảng khi trang nghiêng
       confidence: bestConf,
       lowConfCount: lowConfWords.length,
       confusableTokens,
