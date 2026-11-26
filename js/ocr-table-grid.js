@@ -182,10 +182,9 @@
     }
     return lines.map(ln => {
       ln.words.sort((a, b) => a.bbox.x0 - b.bbox.x0);
-      const text = ln.words.map(w => String(w.text || '').trim()).filter(Boolean).join(' ');
-      return (typeof global.cleanAndFixVietnameseOcrText === 'function')
-        ? global.cleanAndFixVietnameseOcrText(text)
-        : text;
+      // Giữ NGUYÊN nội dung OCR của ô: chỉ chuẩn hóa Unicode NFC + ghép các từ bằng đúng 1 dấu cách.
+      // (Trước đây dùng cleanAndFixVietnameseOcrText nên dòng ngày/số ngắn như "07/9/2026" trong ô có thể bị xóa.)
+      return String(ln.words.map(w => String(w.text || '').trim()).filter(Boolean).join(' ')).normalize('NFC');
     }).filter(Boolean);
   }
 
