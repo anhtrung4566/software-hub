@@ -46,8 +46,91 @@ namespace VBTMProSuite
             "WWW", "COM", "GOV", "VN", "ORG", "NET", "AI", "QR", "ISO", "OCR", "VBTM", "WIFI",
             "WORD", "EXCEL", "OFFICE", "WINDOWS", "MICROSOFT", "GOOGLE", "CHROME", "OLLAMA",
             "EMAIL", "ONLINE", "OFFLINE", "WEBSITE", "INTERNET", "ZALO", "FACEBOOK", "YOUTUBE",
-            "BOONG", "SOONG", "XOONG", "GÒONG", "GOÒNG", "PC09", "PA05", "CSGT", "PCCC"
+            "BOONG", "SOONG", "XOONG", "GÒONG", "GOÒNG", "PC09", "PA05", "CSGT", "PCCC",
+            "FILE", "FOLDER", "FORMAT", "STYLE", "TABLE", "CHART", "DATA", "CODE", "LINK",
+            "WEB", "APP", "PRO", "PLUS", "SMART", "AUTO", "TEST", "DEMO", "ADMIN", "USER",
+            "LOGIN", "TOKEN", "MODEL", "PROMPT", "CHAT", "CLOUD", "DRIVE", "SHEET", "SLIDE",
+            "MAIL", "ZOOM", "MEET", "TEAMS", "SKYPE", "TIKTOK", "ADOBE", "PYTHON", "JAVA",
+            "LINUX", "MACOS", "ANDROID", "IPHONE", "IPAD", "SAMSUNG", "VIETTEL", "VNPT", "FPT",
+            "COVID", "UNESCO", "ASEAN", "APEC", "WTO", "WHO", "UNDP", "UNICEF", "GDP", "CPI",
+            "VAT", "KPI", "OKR", "TCVN", "QCVN", "CMND", "CCCD", "BHTN", "THPT", "THCS",
+            "CSVC", "TNHH", "CTCP", "KCNC", "SERVER", "CLIENT", "SYSTEM", "UPDATE", "VERSION",
+            "PRINT", "START", "STOP", "ENTER", "SHIFT", "CTRL", "ALT", "SAVE", "OPEN", "CLOSE",
+            "COPY", "PASTE", "EDIT", "VIEW", "HELP", "TOOL", "TOOLS", "MENU", "ICON", "FONT",
+            "SIZE", "COLOR", "TEXT", "PAGE", "LINE", "LIST", "ITEM", "NOTE", "INFO", "DATE",
+            "TIME", "NAME", "TYPE", "PATH", "PORT", "HOST", "LOCAL", "CHECK", "SCAN", "SEARCH"
         };
+
+        private static readonly HashSet<string> CommonVietnameseSyllables = new HashSet<string>(
+            (
+                "a à á ả ã ạ ai ăn ân ấn ấp âu ẩu ấy ba bà bá bả bã bạ bác bạc bài bãi ban bàn bán bản bạn bang bảng bao bảo báo bát bay bắc bằng bắt bầu bây bấy bé bên bền bến bệnh bị bí bì bia biển biết biểu bình bỏ bó bò bồ bổ bộ bởi bốn bông bóng bột bới bước bướu bưởi " +
+                "ca cà cá cả cã cạ các cách cái cam cảm cạn càng cảnh cao cáo cấp cắt câu cầu cấu cây cắm căn cắt cần cẩn cận cấp cất cân câu chà chả chán chánh chào cháu chạy chắc chắn chăm chăng chặt chất châu chấy che chè chế chia chỉ chi chiến chiếc chiều chịu chính cho chờ chở chợ chơi chọn chồng chống chỗ chủ chú chu chưa chức chứng chương chuyện chuyển chuyên chung chúng chuỗi chuông chuẩn chuỗi chúi chúc có cỏ cò cõ cọ coi con còn cọn công cộng cổng cống cơ cờ cỡ cớ cơm cứu cử cứ cửa cực cứng cười cường cứu " +
+                "da dà đá dả dã dạ dài dám dán dân dẫn dần dấu dây dày dặn dắt đặt đầu đấu đấy dễ để đế đề đêm đến đều điểm điện điều diện diệt diễn diệu dinh dịp do đó dò dõ dọ dọc dòng dùng đúng đứng dư dự dựa đưa đường được dưới dương dưỡng duy duyệt " +
+                "đa đà đá đả đã đạ đại đan đàn đản đạn đang đảng đạo đạt đau đắc đằng đặng đặt đầu đấu đây đầy đẩy đấy đen đèn đem đến đều đi địa điểm điền điều điện điệp đinh đỉnh định đo đỏ đó đò đọa đoạn đọc đòi đón đóng đông đồng động đỗ độ đổi đối đôn đốn đơn đợt đức đứng đưa đường được dưới đương đương đứt " +
+                "e è é ẻ ẽ ẹ em ép êm ếch " +
+                "ga gà gá gả gã gạ gái gan gắn gặp gần gấp gắt gật gây gãy ghế ghi gia già giá giả giã giạ giai giam giảm gian giản giang giao giáo giáp giàu gay gãy gay gắt gầy gây giấy ghép ghé ghi gì gia giảm gián giao giáp giàu giây giấy giữ giữa gọi gói gọn góp gỗ gồ gồm gốc gối giới gửi gương gươm gương " +
+                "ha hà há hả hã hạ hai hại hàm hàn hạn hàng hằng hào hảo háo hát hay hãy hặc hằn hằng hẳn hẳn hắt hầu hầu hậu hệ hết hi hiển hiện hiệp hiệu hình hò hỏi hóa hòa họa hoài hoàn hoãn hoạt học hỏi hôn hỗn hồng hổ hỗ hộ hồi hội hối hỗn hợp hơi hơn hứa hướng hưởng hư hử hứ hữu huy huyền huyện huyết hủy " +
+                "i ì í ỉ ĩ ị ích in ít " +
+                "ke kẻ kế kệ kem kém kèm ken kén kéo kép kết kêu kể kê kênh kết kha khả khá khác khai khái kham khảm khám khan khản khang kháng khảo khát khắc khăn khăng khẳng khắp khắt khâu khẩu khu khủ khúc khuê khuôn khuya khuyên khuyến khích khi khí khiêm khiến khiếu kho khó khỏ khoa khóa khoan khoản khoáng khoát khóc khỏi khói khóm không khổ khố khô khối khôn khủng khởi khu khuất khúc khuông khung khuynh khứa " +
+                "la là lá lả lã lạ lại làm lan lạn làng lãnh lao lão lát lay lắp lắt lặng lặp lâm lầm lẫn lập lâu lầu lấy lẻ lề lễ lên lệnh lệ li lịch liên liền liệm liều liệu linh lĩnh lính lo lò ló lỏ lọ loa loại loan loàn loãng lọc lợi lộn lồng lối lỗi lộc lớn lời lợi lùi lúc luật luận lùng luôn lượt lương lượng lưới lướt lưu lựu lý " +
+                "ma mà má mả mã mạ mai mái mại mang màng mạng mạnh mao màu máy mặc mặn mắng mắt mặt mâm mầm mẫn mất mẫu mây mấy mẹ mẻ mè mê mềm mệnh mi miền miễn mình mịn mọi mỏi món mong mỏng mổ mồ mỗ mộ môi mỗi mối mồi môn mông mộng một mới mời mở mỡ mớ mua mùa múa mục mùi mũi mụn muôn muốn muộn mưa mừa mứa mức mực mừng mười mượn mứt mỹ " +
+                "na nà ná nả nã nạ nai nài nại nam năm nắm năn nắn năng nắng nặng nâng nấp nâu nấu này nảy nãy nay nấy nề nẻ né nêm nếm nên nền nếp nếu nêu ngà ngả ngã ngạ ngại ngài ngàn ngạn ngang ngàng ngàng ngày ngắn ngắt ngẫu ngây nghe nghè nghé nghề nghệ nghi nghỉ nghĩ nghị nghiêm nghiên nghiện nghèo nghẽn nghẹt ngó ngỏ ngõ ngọ ngoa ngoái ngoài ngoan ngoãn ngoặt ngọc ngòi ngọn ngon ngọt ngôi ngô ngộ ngôn ngông ngơ ngỡ ngớ ngủ ngũ ngu nguồn nguyên nguyễn nguyệt nguy hiểm ngữ ngư ngự ngựa ngược ngươi người ngưỡng ngưng ngừng nha nhà nhá nhả nhã nhạ nhai nhầm nhân nhận nhẫn nhắn nhặt nhăn nhằng nhất nhạt nhau nhảy nhạy nhắc nhắm nhắn nhặt nhầm nhẫn nhập nhất nhì nhi nhiêm nhiệm nhiên nhiệt nhiều nhiễu nhịn nhìn nhịp nho nhỏ nhõ nhọ nhọc nhóm nhọn nhổ nhô nhộn nhớ nhỡ nhờ nhơn nhơ nhu nhủ nhũ nhu cầu nhuận nhục nhún nhung nhường nhược như nhữ nhứ nhựa nhưng những " +
+                "o ò ó ỏ õ ọ oa oai oan oán oanh óc ôi ối ôm ốm ôn ổn ồn ông ổng ống ộp ở ỡ ớ ơi ới ơn ớt " +
+                "pha phà phá phả phã phạ phai phải phàm phàn phán phản phạm phan phanh phao phát phay phần phân phấn phận phất phẩu phê phế phên phi phí phì phỉ phia phiên phiện phiếu phím phìn phình pho phó phòng phỏng phố phổi phồn phổ phối phong phóng phụ phủ phú phù phu phúc phục phun phụng phút phương phượng phượt " +
+                "qua quà quá quả quã quạ quai quái quan quản quán quạn quang quàng quảng quãng quát quay quắc quặn quăng quắt quấy quê quề quế quên quét qui quí quì quỉ quĩ quị quy quý quỳ quỷ quỹ quỵ quyền quyết quốc quở quơ quỡ quớ quờ quợ " +
+                "ra rà rá rả rã rạ rải ranh rành rãnh rao ráo rào rạo rát ray rắc răn rắn rằng rặng rắp rắt rậm rần rấn rập rất râu rầu rầy rẫy rẻ rẽ rệ rèm rèn rẽo rét rêu rì rỉ rĩ rị ria riêng riệt rinh rình rính ro rõ rọ rọc roi rọi ròn rón rong ròng rộng rổ rồ rộ rỗi rồi rối rỗng rốt rơi rời rợi rơm rớm rợn ru rủ rũ rụ rủa rục rui rủi rùi run rủn rung rùng rụng ruồi ruộng rút rứa rữa rửa rực rừng rưng rửng rước rưới rướn rượt rượu " +
+                "sa sà sá sả sã sạ sai sài sải sạm san sàn sản sạn sang sàng sáng sảng sành sao sào sáo sảo sáp sát sau sáu say sắc sắm săn sẵn sáng sắp sắt sâm sầm sấm sẩm sậm sân sần sấn sập sâu sầu sấu sẽ sẻ sé sê sến sếp si sĩ sỉ sỹ sỉa siêng siết sim sin sinh sình sính so sò só sỏ sõ sọ soa soái soạn soạt soi sói sỏi sòi son sonh song sòng sóng sỏng sót số sổ sỗ sộ sôi sồi sối sổi sống sốt sơ sở sờ sỡ sớ sợ sớm sơn sờn sớn sợi su sù sú sủ sụ sua suối suốt suy suýt sư sử sứ sự sữa sửa sức sưng sừng sững sước sườn sướng sượt sứt " +
+                "ta tà tá tả tã tạ tai tài tái tải tại tam tàm tám tạm tan tàn tán tản tạn tang tàng táng tảng tạng tanh tạnh tao tào táo tảo tạo táp tát tau tàu táu tay tày táy tắc tăm tằm tắm tắn tăng tằng tặng tắt tâm tầm tấm tẩm tậm tân tần tấn tẩn tận tập tất tây tầy tấy tẩu te tè té tẻ tẽ tẹ tem tên tế tề tệ tết thà thả thã thạ thai thải thái tham thảm thám than thản thán thang thàng tháng thẳng thanh thảnh thánh thành thạo tháo thảo thác thách thăm thẳm thắm thăn thắn thăng thẳng thắng thắp thắt thâm thầm thấm thẩm thậm thân thần thấn thận thấp thất thâu thấu thầu thấy thầy thẩy thể thế thề thệ thêm thềm thèm thẹn theo thép thét thi thì thí thỉ thị thia thích thiên thiền thiển thiện thiệp thiết thiếu thiệu thinh thỉnh thịnh thít thịt tho thỏ thó thò thọ thoa thỏa thoái thoải thoảng thoát thọc thoi thói thỏi thòi thom thòm thôn thổ thố thồ thôi thối thổi thông thống thổng thốt thơ thở thớ thờ thợ thời thơm thu thù thú thủ thụ thua thuấn thuận thuật thuê thuế thuở thuôn thuổng thuốc thuộm thuôn thuồng thưa thừa thửa thửa thức thực thừng thưởng thước thướt thượt thư thử thứ tự " +
+                "ti tỉ tí tì tị tia tích tiền tiên tiến tiễn tiện tiếp tiết tiêu tiểu tiếu tiệu tim tìm tím tin tín tỉnh tình tính tít thịt to tò tó tỏ tõ tọ toa tỏa tọa toàn toán toan toang toáng toát tóc toi tỏi tòi tóm tọn tòng tông tổng tống tốt tổ tố tồ tội tối tồi tôn tồn tốn tổn tông tống tơ tờ tớ tở tợ tới tơi tời tớp tu tù tú tủ tụ tua tuần tuân tuấn tuất tuế tục tuổi túi tủi tùi tùm tụm tung tùng túng tụng tuôn tuột tuy tùy túy tủy tụy tuyên tuyển tuyến tuyệt tư từ tứ tử tự tựa tức tực từng tứng tưng tương tường tưởng tượng tươi tười tưới tưởi tước tướt tựu " +
+                "u ù ú ủ ũ ụ ủa ủi ủn ủng uốn uống uất ư ừ ứ ử ữ ự ưa ứa ửa ức ưng ừng ứng ựng ước ướt ưu uy ủy úy uý uyên uyển " +
+                "va và vá vả vã vạ vai vài vái vải vại vam vạm van vàn ván vản vạn vang vàng váng vảng vạng vành vao vào váo vảo váp vát vay vày váy vảy vạy vắc văm vằm vắn văng vằng vắng vẳng vắt vặt vân vần vấn vẩn vận vấp vất vây vầy vấy vẩy vậy ve vè vé vẻ vẽ vẹ ven vén vèn vẹn veo vèo véo vẹo vét vêu về vẻ vé vế vệ vên vệnh vi vì ví vỉ vĩ vị vỉa việc viên viền viễn viện viết việt vinh vịnh vít vịt vo vò vó vỏ võ vọ vọc voi vòi vói vỏi vọi vòm von vón vòng võng vọng vót vọt vô vồ vố vổ vỗ vộ vôi vội vồn vốn vồng vơ vờ vớ vở vỡ vợ vơi vời với vợi vu vù vú vũ vụ vua vủa vui vùi vung vùng vũng vụng vuốt vuột vưa vừa vứa vửa vựa vực vừng vững vưng vước vương vướng vượng vượt vứt " +
+                "xa xà xá xả xã xạ xài xám xan xán xang xàng xáng xảnh xao xào xáo xảo xáp xát xay xáy xắc xăm xắm xăn xắn xăng xằng xắp xắt xâm xầm xấm xẩm xậm xân xấp xất xấu xâu xầu xây xầy xấy xe xè xé xẻ xẽ xẹ xem xen xén xèn xẻn xẹo xép xét xê xế xề xệ xếp xi xì xí xỉ xĩ xị xía xích xiêm xiển xiết xin xỉn xinh xình xính xít xịt xo xò xó xỏ xõ xọ xoa xóa xỏa xoài xoan xoàn xoán xoang xoàng xoảng xoay xoáy xoắc xoăn xoắn xoắt xóc xoi xói xỏi xòi xom xóm xỏm xòm xon xón xong xòng xóng xót xọt xô xồ xố xổ xỗ xộ xôi xối xổi xồi xồm xôm xông xống xốp xốt xơ xờ xớ xở xỡ xợ xơi xới xởi xời xới xơm xớm xu xù xú xủ xũ xụ xua xủa xuẩn xuân xuấn xuất xúc xui xúi xủi xùi xum xùm xúm xủm xun xùn xún xung xùng xúng xụng xuôi xuồng xuổng xúp xút xuy xuýt xưa xửa xứa xức xưng xừng xứng xựng xước xướng xướt xử xứ sự " +
+                "y ỳ ý ỷ ỹ ỵ yểm yếm yên yến yểm yết yêu yếu yểu"
+            ).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries),
+            StringComparer.OrdinalIgnoreCase);
+
+        private static readonly HashSet<string> CommonVietnameseBigrams = new HashSet<string>(
+            new string[]
+            {
+                "tập trung", "vận động", "cơ cấu", "đảng viên", "thành lập", "xung đột", "nước nhà", "nước và", "nhà nước",
+                "phát triển", "thực hiện", "tổ chức", "cán bộ", "quản lý", "chính sách", "kinh tế", "xã hội", "an ninh",
+                "quốc phòng", "xây dựng", "bảo vệ", "kiểm tra", "giám sát", "đoàn kết", "nhiệm vụ", "mục tiêu", "giải pháp",
+                "kế hoạch", "nghị quyết", "chủ trương", "đường lối", "chất lượng", "hiệu quả", "trách nhiệm", "quyền lực",
+                "chính quyền", "nhân dân", "mặt trận", "đoàn thể", "cơ quan", "đơn vị", "địa phương", "trung ương", "cấp ủy",
+                "chi bộ", "đảng bộ", "thường vụ", "chấp hành", "tư tưởng", "đạo đức", "lối sống", "tuyên truyền", "giáo dục",
+                "đào tạo", "bồi dưỡng", "khoa học", "công nghệ", "chuyển đổi", "hành chính", "cải cách", "thủ tục", "dịch vụ",
+                "ngân sách", "tài chính", "đầu tư", "hạ tầng", "môi trường", "tài nguyên", "y tế", "văn hóa", "thể thao",
+                "du lịch", "an sinh", "giảm nghèo", "lao động", "việc làm", "pháp luật", "tư pháp", "thanh tra", "khiếu nại",
+                "tố cáo", "phòng chống", "tham nhũng", "tiêu cực", "lãng phí", "kiểm điểm", "phê bình", "sâu sắc", "nghiêm túc",
+                "nghiêm minh", "kỷ luật", "kỷ cương", "nắm giữ", "vai trò", "nòng cốt", "đúng người", "đứng người", "đảng phái",
+                "cục bộ", "lợi ích", "tự phê", "chỉnh đốn", "hệ thống", "chính trị", "toàn diện", "đồng bộ", "kịp thời",
+                "chủ động", "tích cực", "sáng tạo", "đổi mới", "nâng cao", "tăng cường", "bảo đảm", "đảm bảo", "hoàn thiện",
+                "triển khai", "ban hành", "quy định", "hướng dẫn", "đánh giá", "tổng kết", "sơ kết", "báo cáo", "thông báo",
+                "quyết định", "công tác", "nội dung", "phương pháp", "đối tượng", "thời gian", "không gian", "điều kiện",
+                "hoạt động", "phong trào", "thi đua", "khen thưởng", "xử lý", "giải quyết", "tháo gỡ", "khó khăn", "vướng mắc",
+                "tồn tại", "hạn chế", "nguyên nhân", "bài học", "kinh nghiệm", "phương hướng", "trọng tâm", "đột phá",
+                "chiến lược", "quy hoạch", "dự án", "chương trình", "đề án", "công trình", "sản xuất", "kinh doanh",
+                "thương mại", "xuất khẩu", "nhập khẩu", "thị trường", "doanh nghiệp", "hợp tác", "liên kết", "hội nhập",
+                "quốc tế", "đối ngoại", "chủ quyền", "biên giới", "hải đảo", "trật tự", "an toàn", "giao thông", "đô thị",
+                "nông thôn", "nông nghiệp", "công nghiệp", "xây lắp", "giao lưu", "văn bản", "hồ sơ", "lưu trữ", "văn thư",
+                "lãnh đạo", "chỉ đạo", "điều hành", "phối hợp", "hỗ trợ", "tạo điều", "thuận lợi", "công khai", "minh bạch",
+                "dân chủ", "công bằng", "văn minh", "hiện đại", "bền vững", "ổn định", "phồn vinh", "hạnh phúc", "độc lập",
+                "tự do", "thống nhất", "toàn vẹn", "lãnh thổ", "tổ quốc", "đất nước", "dân tộc", "giai cấp", "công nhân",
+                "nông dân", "trí thức", "thanh niên", "phụ nữ", "cựu chiến", "người cao", "trẻ em", "gia đình", "cộng đồng",
+                "cơ sở", "phường xã", "quận huyện", "tỉnh thành", "thành phố", "thủ đô", "tổ dân", "khu phố", "thôn xóm",
+                "bản làng", "ấp khóm", "bầu cử", "ứng cử", "đại biểu", "đại hội", "hội nghị", "hội thảo", "tọa đàm",
+                "gặp mặt", "tiếp xúc", "cử tri", "lắng nghe", "ý kiến", "kiến nghị", "phản ánh", "nguyện vọng", "chính đáng",
+                "quyền lợi", "nghĩa vụ", "công dân", "nhà máy", "xí nghiệp", "trường học", "bệnh viện", "cơ sở", "trụ sở",
+                "học tập", "làm theo", "tấm gương", "phong cách", "hồ chí", "chủ nghĩa", "mác lê", "cách mạng", "truyền thống",
+                "lịch sử", "anh hùng", "liệt sĩ", "thương binh", "có công", "chính sách", "đền ơn", "đáp nghĩa", "nhân đạo",
+                "từ thiện", "xóa đói", "nhà ở", "đất đai", "giải phóng", "mặt bằng", "tái định", "bồi thường", "cấp giấy",
+                "chứng nhận", "đăng ký", "cấp phép", "thuế phí", "lệ phí", "kiểm toán", "quyết toán", "dự toán", "phân bổ",
+                "sử dụng", "tiết kiệm", "hiệu lực", "thi hành", "áp dụng", "bổ sung", "sửa đổi", "thay thế", "bãi bỏ",
+                "tổng hợp", "thống kê", "phân tích", "dự báo", "cảnh báo", "ứng phó", "thiên tai", "dịch bệnh", "biến đổi",
+                "khí hậu", "năng lượng", "tái tạo", "số hóa", "dữ liệu", "thông tin", "truyền thông", "báo chí", "xuất bản",
+                "mạng xã", "không gian", "an ninh", "trực tuyến", "tự động", "thông minh", "kết nối", "chia sẻ", "đồng thuận"
+            },
+            StringComparer.OrdinalIgnoreCase);
 
         private static readonly string[,] ContextAndTypoPairs = new string[,]
         {
@@ -273,16 +356,58 @@ namespace VBTMProSuite
             return replacement;
         }
 
-        /// <summary>
-        /// Repairs stray Telex keys / doubled chars inside a Vietnamese word:
-        /// e.g. "điểsm" -> "điểm", "sắcs" -> "sắc", "hoạchh" -> "hoạch", "thựcj" -> "thực", "côngf" -> "công"
-        /// </summary>
+        private static int ScoreCandidate(string original, string cand, int deletedIndex, string prevWord, string nextWord)
+        {
+            if (string.IsNullOrEmpty(cand) || !IsValidVietnameseSyllable(cand)) return -1;
+            string lc = cand.ToLowerInvariant();
+            int score = 5;
+
+            if (CommonVietnameseSyllables.Contains(lc)) score += 45;
+
+            if (!string.IsNullOrEmpty(prevWord) && CommonVietnameseBigrams.Contains(prevWord.ToLowerInvariant() + " " + lc))
+            {
+                score += 120;
+            }
+            if (!string.IsNullOrEmpty(nextWord) && CommonVietnameseBigrams.Contains(lc + " " + nextWord.ToLowerInvariant()))
+            {
+                score += 120;
+            }
+
+            if (deletedIndex >= 0 && deletedIndex < original.Length)
+            {
+                char removed = original[deletedIndex];
+                // Ưu tiên giữ nguyên nguyên âm có dấu tiếng Việt
+                if (removed <= 127) score += 15;
+                char rl = char.ToLowerInvariant(removed);
+                if ("sfrxjzw".IndexOf(rl) >= 0) score += 8;
+                if ((deletedIndex > 0 && char.ToLowerInvariant(original[deletedIndex - 1]) == rl) ||
+                    (deletedIndex + 1 < original.Length && char.ToLowerInvariant(original[deletedIndex + 1]) == rl))
+                {
+                    score += 10;
+                }
+            }
+
+            return score;
+        }
+
         public static string TryRepairTelexOrExtraChar(string word)
+        {
+            return TryRepairTelexOrExtraChar(word, null, null);
+        }
+
+        /// <summary>
+        /// Universal high-precision Vietnamese typo & Telex repair engine:
+        /// Catches extra consonant/vowel anywhere (0..N-1), stray Telex keys, transpositions, missing n/h, missing tone on -c/-ch/-p/-t, and 1-char substitutions.
+        /// </summary>
+        public static string TryRepairTelexOrExtraChar(string word, string prevWord, string nextWord)
         {
             if (string.IsNullOrWhiteSpace(word) || word.Length < 2 || word.Length > 10) return null;
             if (WhitelistWords.Contains(word)) return null;
 
             string w = word.Normalize(NormalizationForm.FormC);
+            // Bỏ qua từ viết tắt toàn chữ HOA ngắn (VD: UBND, HĐND, TW, QR)
+            if (w.Length <= 6 && w == w.ToUpperInvariant() && !HasVietnameseDiacritic(w)) return null;
+
             string direct;
             if (DirectWordRepairs.TryGetValue(w, out direct) && !string.Equals(w, direct, StringComparison.OrdinalIgnoreCase))
             {
@@ -290,55 +415,86 @@ namespace VBTMProSuite
             }
             if (IsValidVietnameseSyllable(w)) return null;
 
-            if (!HasVietnameseDiacritic(w))
+            bool hasVn = HasVietnameseDiacritic(w);
+            bool neighborHasVn = (!string.IsNullOrEmpty(prevWord) && HasVietnameseDiacritic(prevWord)) ||
+                                 (!string.IsNullOrEmpty(nextWord) && HasVietnameseDiacritic(nextWord));
+
+            // Nếu là từ thuần ASCII không dấu và cả 2 từ kề đều không có dấu tiếng Việt -> chỉ bắt lỗi gõ lặp chữ cuối (vd: trongg)
+            if (!hasVn && !neighborHasVn)
             {
-                // Catch doubled trailing consonant on pure ASCII Vietnamese words like "trongg", "cungg"
-                if (w.Length >= 4 && char.ToLower(w[w.Length - 1]) == char.ToLower(w[w.Length - 2]))
+                if (w.Length >= 4 && char.ToLowerInvariant(w[w.Length - 1]) == char.ToLowerInvariant(w[w.Length - 2]))
                 {
                     string trimmed = w.Substring(0, w.Length - 1);
-                    if (IsValidVietnameseSyllable(trimmed)) return trimmed;
+                    if (IsValidVietnameseSyllable(trimmed) && CommonVietnameseSyllables.Contains(trimmed.ToLowerInvariant()))
+                    {
+                        return PreserveCase(w, trimmed);
+                    }
                 }
                 return null;
             }
 
-            // 1. Try deleting 1 stray Telex key ('s','f','r','x','j','w','z') or adjacent duplicate letter anywhere after the first char
-            const string telexKeys = "sfrxjzw";
-            for (int i = w.Length - 1; i >= 1; i--)
+            string bestCand = null;
+            int bestScore = -1;
+
+            // 1. Thử xóa BẤT KỲ 1 ký tự thừa nào tại mọi vị trí 0..w.Length-1 (bắt: tập treung, cqác, vận độeng, tquyền, cơ scấu, đảng sviên, thàdnh, xunga, evà, điểsm, sắcs...)
+            if (w.Length >= 3)
             {
-                char ch = char.ToLower(w[i]);
-                bool isTelex = telexKeys.IndexOf(ch) >= 0;
-                bool isDup = (i > 0 && char.ToLower(w[i]) == char.ToLower(w[i - 1]));
-                if (isTelex || isDup)
+                for (int i = 0; i < w.Length; i++)
                 {
                     string cand = w.Remove(i, 1);
-                    if (IsValidVietnameseSyllable(cand)) return cand;
+                    int sc = ScoreCandidate(w, cand, i, prevWord, nextWord);
+                    // Với từ thuần ASCII (không dấu), yêu cầu ứng viên phải là âm tiết phổ biến hoặc khớp cụm từ tiếng Việt để tránh báo nhầm từ tiếng Anh
+                    if (!hasVn && sc < 50) continue;
+                    if (sc > bestScore)
+                    {
+                        bestScore = sc;
+                        bestCand = cand;
+                    }
                 }
             }
 
-            // 2. Try inserting missing 'n' before trailing 'g' (e.g. "nhưg"->"nhưng", "trườg"->"trường")
+            // 2. Thử đảo vị trí 2 ký tự liền kề (lỗi gõ nhanh: thnhà -> thành, trugn -> trung, côgn -> công)
+            if (w.Length >= 3)
+            {
+                char[] arr = w.ToCharArray();
+                for (int i = 0; i < arr.Length - 1; i++)
+                {
+                    if (arr[i] == arr[i + 1]) continue;
+                    char tmp = arr[i]; arr[i] = arr[i + 1]; arr[i + 1] = tmp;
+                    string cand = new string(arr);
+                    arr[i + 1] = arr[i]; arr[i] = tmp;
+
+                    int sc = ScoreCandidate(w, cand, -1, prevWord, nextWord);
+                    if (!hasVn && sc < 50) continue;
+                    if (sc > bestScore)
+                    {
+                        bestScore = sc;
+                        bestCand = cand;
+                    }
+                }
+            }
+
+            // 3. Thử chèn thiếu 'n' trước 'g' cuối (nhưg -> nhưng, trườg -> trường, côg -> công)
             if (w.EndsWith("g", StringComparison.OrdinalIgnoreCase) && w.Length >= 3)
             {
                 string candNg = w.Substring(0, w.Length - 1) + "ng";
-                if (IsValidVietnameseSyllable(candNg)) return candNg;
-            }
-
-            // 3. Try deleting any single extra consonant inside the coda (e.g. "điểkm" -> "điểm")
-            for (int i = w.Length - 1; i >= 2; i--)
-            {
-                if (!IsVietnameseVowel(w[i]))
+                int sc = ScoreCandidate(w, candNg, -1, prevWord, nextWord);
+                if (sc > bestScore)
                 {
-                    string cand = w.Remove(i, 1);
-                    if (IsValidVietnameseSyllable(cand)) return cand;
+                    bestScore = sc;
+                    bestCand = candNg;
                 }
             }
 
-            // 4. Missing tone on -c/-ch/-p/-t coda (try adding sắc or nặng on last vowel)
+            // 4. Thiếu dấu sắc/nặng trên vần kết thúc bằng -c, -ch, -p, -t (thưc -> thực, hoach -> hoạch, quyêt -> quyết)
             string lw = w.ToLowerInvariant();
             if (lw.EndsWith("c") || lw.EndsWith("ch") || lw.EndsWith("p") || lw.EndsWith("t"))
             {
                 string[,] toneAdd = new string[,] {
-                    { "a", "á" }, { "ă", "ắ" }, { "â", "ấ" }, { "e", "é" }, { "ê", "ế" },
-                    { "i", "í" }, { "o", "ó" }, { "ô", "ố" }, { "ơ", "ớ" }, { "u", "ú" }, { "ư", "ứ" }
+                    { "a", "á" }, { "a", "ạ" }, { "ă", "ắ" }, { "ă", "ặ" }, { "â", "ấ" }, { "â", "ậ" },
+                    { "e", "é" }, { "e", "ẹ" }, { "ê", "ế" }, { "ê", "ệ" },
+                    { "i", "í" }, { "i", "ị" }, { "o", "ó" }, { "o", "ọ" }, { "ô", "ố" }, { "ô", "ộ" },
+                    { "ơ", "ớ" }, { "ơ", "ợ" }, { "u", "ú" }, { "u", "ụ" }, { "ư", "ứ" }, { "ư", "ự" }
                 };
                 for (int i = w.Length - 1; i >= 0; i--)
                 {
@@ -350,12 +506,44 @@ namespace VBTMProSuite
                             if (toneAdd[k, 0] == ch)
                             {
                                 string cand = w.Substring(0, i) + toneAdd[k, 1] + w.Substring(i + 1);
-                                if (IsValidVietnameseSyllable(cand)) return PreserveCase(w, cand);
+                                int sc = ScoreCandidate(w, cand, -1, prevWord, nextWord);
+                                if (!hasVn && sc < 50) continue;
+                                if (sc > bestScore)
+                                {
+                                    bestScore = sc;
+                                    bestCand = cand;
+                                }
                             }
                         }
                         break;
                     }
                 }
+            }
+
+            // 5. Nếu chưa tìm thấy bằng xóa/đảo và từ có dấu tiếng Việt -> thử thay 1 ký tự cuối/giữa (vd: cônh -> công, viêb -> viên)
+            if (bestCand == null && hasVn && w.Length >= 3)
+            {
+                const string subChars = "acdeghiklmnopqrstuvxy";
+                for (int i = w.Length - 1; i >= 0; i--)
+                {
+                    if (w[i] > 127) continue; // giữ nguyên nguyên âm có dấu
+                    for (int k = 0; k < subChars.Length; k++)
+                    {
+                        if (char.ToLowerInvariant(w[i]) == subChars[k]) continue;
+                        string cand = w.Substring(0, i) + subChars[k] + w.Substring(i + 1);
+                        int sc = ScoreCandidate(w, cand, -1, prevWord, nextWord);
+                        if (sc >= 50 && sc > bestScore)
+                        {
+                            bestScore = sc;
+                            bestCand = cand;
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(bestCand))
+            {
+                return PreserveCase(w, bestCand);
             }
 
             return null;
@@ -391,7 +579,7 @@ namespace VBTMProSuite
                 }
             }
 
-            // 1. Scan Telex / extra-character typos with 1-word left context (e.g., "kiểm điểsm" -> "kiểm điểm", "sâu sắcs" -> "sâu sắc")
+            // 1. Scan Telex / extra-character / transposition typos with smart 2-way context (left & right neighbor)
             MatchCollection wordMatches = Regex.Matches(text, @"[A-Za-zÀ-Ỹà-ỹĐđ]+");
             for (int i = 0; i < wordMatches.Count; i++)
             {
@@ -400,7 +588,33 @@ namespace VBTMProSuite
                 string tok = wm.Value;
                 if (goodWords.Contains(tok) || WhitelistWords.Contains(tok)) continue;
 
-                string repaired = TryRepairTelexOrExtraChar(tok);
+                string prevWord = null;
+                bool hasLeftSpace = false;
+                if (i > 0)
+                {
+                    Match prev = wordMatches[i - 1];
+                    int gapStart = prev.Index + prev.Length;
+                    if (wm.Index - gapStart == 1 && text[gapStart] == ' ')
+                    {
+                        prevWord = prev.Value;
+                        hasLeftSpace = true;
+                    }
+                }
+
+                string nextWord = null;
+                bool hasRightSpace = false;
+                if (i + 1 < wordMatches.Count)
+                {
+                    Match next = wordMatches[i + 1];
+                    int gapStart = wm.Index + wm.Length;
+                    if (next.Index - gapStart == 1 && text[gapStart] == ' ')
+                    {
+                        nextWord = next.Value;
+                        hasRightSpace = true;
+                    }
+                }
+
+                string repaired = TryRepairTelexOrExtraChar(tok, prevWord, nextWord);
                 if (!string.IsNullOrEmpty(repaired) && !string.Equals(tok, repaired, StringComparison.Ordinal))
                 {
                     string displayWrong = tok;
@@ -408,18 +622,33 @@ namespace VBTMProSuite
                     int spanStart = wm.Index;
                     int spanLen = wm.Length;
 
-                    // Include immediately preceding word if separated by a single space so "kiểm điểsm -> kiểm điểm" & "sâu sắcs -> sâu sắc" read naturally!
-                    if (i > 0)
+                    bool leftBigram = hasLeftSpace && CommonVietnameseBigrams.Contains(prevWord.ToLowerInvariant() + " " + repaired.ToLowerInvariant());
+                    bool rightBigram = hasRightSpace && CommonVietnameseBigrams.Contains(repaired.ToLowerInvariant() + " " + nextWord.ToLowerInvariant());
+
+                    if (leftBigram)
                     {
                         Match prev = wordMatches[i - 1];
-                        int gapStart = prev.Index + prev.Length;
-                        if (wm.Index - gapStart == 1 && text[gapStart] == ' ')
-                        {
-                            displayWrong = prev.Value + " " + tok;
-                            displaySug = prev.Value + " " + repaired;
-                            spanStart = prev.Index;
-                            spanLen = (wm.Index + wm.Length) - prev.Index;
-                        }
+                        displayWrong = prev.Value + " " + tok;
+                        displaySug = prev.Value + " " + repaired;
+                        spanStart = prev.Index;
+                        spanLen = (wm.Index + wm.Length) - prev.Index;
+                    }
+                    else if (rightBigram)
+                    {
+                        Match next = wordMatches[i + 1];
+                        displayWrong = tok + " " + next.Value;
+                        displaySug = repaired + " " + next.Value;
+                        spanStart = wm.Index;
+                        spanLen = (next.Index + next.Length) - wm.Index;
+                    }
+                    else if (hasLeftSpace && repaired.Length <= 2)
+                    {
+                        // Cụm ngắn như "nước evà -> nước và" giữ thêm từ trước để dễ xác định vị trí trong văn bản
+                        Match prev = wordMatches[i - 1];
+                        displayWrong = prev.Value + " " + tok;
+                        displaySug = prev.Value + " " + repaired;
+                        spanStart = prev.Index;
+                        spanLen = (wm.Index + wm.Length) - prev.Index;
                     }
 
                     if (!goodWords.Contains(displayWrong))
@@ -429,7 +658,7 @@ namespace VBTMProSuite
                             Wrong = displayWrong,
                             Suggest = displaySug,
                             Badge = "Chính tả",
-                            Reason = "Lỗi gõ dư phím Telex / sai âm tiết tiếng Việt",
+                            Reason = "Lỗi gõ dư phím / sai âm tiết tiếng Việt",
                             IsSuspicious = false
                         }));
                         for (int p = spanStart; p < spanStart + spanLen; p++) coveredPositions.Add(p);
