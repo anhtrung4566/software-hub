@@ -93,6 +93,10 @@ namespace VBTMProSuite
             new string[]
             {
                 "tập trung", "vận động", "cơ cấu", "đảng viên", "thành lập", "xung đột", "nước nhà", "nước và", "nhà nước",
+                "phù hợp", "phối hợp", "tổng hợp", "hợp tác", "hợp đồng", "hợp lý", "hợp pháp", "hợp nhất", "trường hợp",
+                "kết hợp", "tập hợp", "tổ hợp", "giải phóng", "tiếp nhận", "xác nhận", "ghi nhận", "chấp nhận", "nhận định",
+                "nhận thức", "nhận xét", "nơi nhận", "cấp trên", "cấp dưới", "bàn giao", "phân công", "thời hạn", "thời điểm",
+                "tiến độ", "kết quả", "mục đích", "khắc phục", "phát huy", "phổ biến", "quán triệt", "chấp thuận", "phê duyệt",
                 "phát triển", "thực hiện", "tổ chức", "cán bộ", "quản lý", "chính sách", "kinh tế", "xã hội", "an ninh",
                 "quốc phòng", "xây dựng", "bảo vệ", "kiểm tra", "giám sát", "đoàn kết", "nhiệm vụ", "mục tiêu", "giải pháp",
                 "kế hoạch", "nghị quyết", "chủ trương", "đường lối", "chất lượng", "hiệu quả", "trách nhiệm", "quyền lực",
@@ -209,7 +213,7 @@ namespace VBTMProSuite
             "a", "ă", "â", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "y",
             "ai", "ao", "au", "âu", "ay", "ây", "eo", "êu", "ia", "iê", "iu",
             "oa", "oă", "oe", "oi", "ôi", "ơi", "oo", "ua", "uâ", "uê", "ui",
-            "uô", "uơ", "uy", "ưa", "ươ", "ưu", "yê",
+            "uô", "uơ", "uy", "ưa", "ưi", "ươ", "ưu", "yê",
             "iêu", "oai", "oao", "oay", "oeo", "uai", "uây", "uôi", "uya", "uyê", "uyu", "ươi", "ươu", "yêu"
         };
 
@@ -354,6 +358,107 @@ namespace VBTMProSuite
             if (original == original.ToUpper()) return replacement.ToUpper();
             if (char.IsUpper(original[0])) return char.ToUpper(replacement[0]) + replacement.Substring(1);
             return replacement;
+        }
+
+        private static readonly HashSet<string> ValidAmbiguousPairs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "công nhân", "công nhận", "phó ban", "phó bản", "bản thân", "bán thân", "chỉ số", "chỉ sổ",
+            "tự do", "nhà ở", "cơ sở", "đề nghị", "nghị định", "hội đồng", "văn phòng", "trưởng phòng",
+            "phó phòng", "trưởng ban", "tổ trưởng", "ban hành", "địa bàn", "công dân", "tư nhân", "cá nhân",
+            "tự nhiên", "dự toán", "quyết toán", "kiểm toán", "công an", "quân sự", "báo chí", "tạp chí",
+            "ghi chú", "chú ý", "lưu ý", "đồng ý", "nhất trí", "ý chí", "địa chỉ", "nội bộ", "họp ban",
+            "họp giao", "cuộc họp", "phiên họp", "phòng họp", "dự họp", "mời họp", "nhân lực", "nhân sự",
+            "nhân viên", "nhân ái", "thương nhân", "doanh nhân", "bệnh nhân", "tội nhân", "nạn nhân",
+            "hôn nhân", "nguyên nhân", "tác nhân", "nhân tạo", "nhân bản", "nhân phẩm", "nhân cách",
+            "nhân quyền", "nhân đạo", "nhân văn", "nhân chứng", "nhân giống", "nhân rộng", "nhân dịp",
+            "cấp phát", "cấp cứu", "cấp bách", "cấp thiết", "cấp độ", "cấp bậc", "cấp ủy", "cấp bộ",
+            "tổ quốc", "tổ tiên", "tổ ấm", "tổ dân", "bộ phận", "bộ máy", "bộ đội", "bộ trưởng",
+            "đại diện", "đại biểu", "đại hội", "đại học", "đại tá", "đại úy", "chính trị", "chính phủ",
+            "chính quyền", "chính sách", "chính thức", "chính xác", "chính đáng", "chính thống",
+            "phòng ngừa", "phòng tránh", "phòng hộ", "phòng thủ", "phòng bệnh", "phòng cháy",
+            "bảo hiểm", "bảo hành", "bảo trì", "bảo dưỡng", "bảo quản", "bảo mật", "bảo tồn",
+            "bảo trợ", "bảo lãnh", "bảo lưu", "bảo toàn", "bảo chứng", "tổng đài", "tổng cục",
+            "tổng thể", "tổng quan", "tổng số", "tổng mức", "tổng thu", "tổng chi", "tổng lực",
+            "giải thích", "giải trình", "giải đáp", "giải tán", "giải thể", "giải cứu", "giải ngân",
+            "giải trí", "giải thưởng", "giải đấu", "kết nối", "kết thúc", "kết cấu", "kết nạp",
+            "kết luận", "kết nghĩa", "kết bạn", "kết hôn", "kết quả", "tập thể", "tập đoàn",
+            "tập huấn", "tập sự", "tập luyện", "tập quán", "tập san", "tập tin", "tập lệnh",
+            "thành phố", "thành viên", "thành phần", "thành công", "thành tích", "thành quả",
+            "thành tựu", "thành thạo", "thành thật", "thành kính", "thành ngữ", "thành thị",
+            "định hướng", "định mức", "định kỳ", "định giá", "định danh", "định cư", "định lượng",
+            "định tính", "định nghĩa", "định luật", "định lý", "định dạng", "định tuyến", "định vị",
+            "phân tích", "phân loại", "phân cấp", "phân quyền", "phân khu", "phân vùng", "phân luồng",
+            "phân phối", "phân chia", "phân tách", "phân định", "phân biệt", "phân xử", "phân giải",
+            "công bố", "công nhận", "công chứng", "công chức", "công vụ", "công ích", "công cộng",
+            "công lập", "công thương", "công ty", "công xưởng", "công trường", "công cụ", "công thức",
+            "công suất", "công năng", "công đức", "công lao", "công trạng", "công bằng", "công lý",
+            "công minh", "công tâm", "công luận", "công chúng", "công ước", "công hàm", "công điện",
+            "hành vi", "hành động", "hành trình", "hành lang", "hành lý", "hành nghề", "hành hạ",
+            "hành quân", "hành lễ", "hành xử", "văn hóa", "văn học", "văn nghệ", "văn minh",
+            "văn kiện", "văn bằng", "văn án", "văn phong", "văn ngôn", "văn tự", "văn bia",
+            "tài sản", "tài liệu", "tài khoản", "tài trợ", "tài năng", "tài nguyên", "tài xế",
+            "tài phán", "tài khóa", "tài vụ", "người dân", "người lao", "người dùng", "người bệnh",
+            "người mua", "người bán", "người gửi", "người nhận", "người ký", "người đứng", "người đại",
+            "bộ gửi", "gửi kèm", "gửi trả", "gửi lên", "gửi về", "gửi đi", "gửi tới", "gửi đến"
+        };
+
+        private static Dictionary<string, string> _compoundSkeletonMap = null;
+
+        private static string ToAsciiSkeleton(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            StringBuilder sb = new StringBuilder(s.Length);
+            foreach (char ch in s.ToLowerInvariant().Normalize(NormalizationForm.FormC))
+            {
+                if ("aàáảãạăằắẳẵặâầấẩẫậ".IndexOf(ch) >= 0) sb.Append('a');
+                else if ("eèéẻẽẹêềếểễệ".IndexOf(ch) >= 0) sb.Append('e');
+                else if ("iìíỉĩị".IndexOf(ch) >= 0) sb.Append('i');
+                else if ("oòóỏõọôồốổỗộơờớởỡợ".IndexOf(ch) >= 0) sb.Append('o');
+                else if ("uùúủũụưừứửữự".IndexOf(ch) >= 0) sb.Append('u');
+                else if ("yỳýỷỹỵ".IndexOf(ch) >= 0) sb.Append('y');
+                else if (ch == 'đ') sb.Append('d');
+                else sb.Append(ch);
+            }
+            return sb.ToString();
+        }
+
+        private static Dictionary<string, string> GetCompoundSkeletonMap()
+        {
+            if (_compoundSkeletonMap != null) return _compoundSkeletonMap;
+            Dictionary<string, string> map = new Dictionary<string, string>(StringComparer.Ordinal);
+            HashSet<string> ambiguous = new HashSet<string>(StringComparer.Ordinal);
+
+            // Đánh dấu mọi khung ASCII đã có hơn 1 cụm từ hợp lệ (tránh báo nhầm)
+            foreach (string pair in ValidAmbiguousPairs)
+            {
+                string[] ps = pair.Split(' ');
+                if (ps.Length != 2) continue;
+                string sk = ToAsciiSkeleton(ps[0]) + " " + ToAsciiSkeleton(ps[1]);
+                if (map.ContainsKey(sk) && !string.Equals(map[sk], pair, StringComparison.OrdinalIgnoreCase))
+                    ambiguous.Add(sk);
+                else
+                    map[sk] = pair.ToLowerInvariant();
+            }
+
+            foreach (string bg in CommonVietnameseBigrams)
+            {
+                string[] ps = bg.Split(' ');
+                if (ps.Length != 2) continue;
+                string sk = ToAsciiSkeleton(ps[0]) + " " + ToAsciiSkeleton(ps[1]);
+                string low = bg.ToLowerInvariant();
+                if (map.ContainsKey(sk) && !string.Equals(map[sk], low, StringComparison.OrdinalIgnoreCase))
+                    ambiguous.Add(sk);
+                else
+                    map[sk] = low;
+            }
+
+            foreach (string amb in ambiguous) map.Remove(amb);
+            // Xóa các cặp có khung dễ trùng câu thông thường
+            map.Remove("co so"); map.Remove("co quan"); map.Remove("ca nhan"); map.Remove("tu nhan");
+            map.Remove("nha nuoc"); map.Remove("nuoc nha"); map.Remove("nuoc va"); map.Remove("dat nuoc");
+            map.Remove("pho ban"); map.Remove("cong nhan"); map.Remove("bo gui");
+            _compoundSkeletonMap = map;
+            return _compoundSkeletonMap;
         }
 
         private static int ScoreCandidate(string original, string cand, int deletedIndex, string prevWord, string nextWord)
@@ -787,6 +892,67 @@ namespace VBTMProSuite
                     }));
                     for (int p = m.Index; p < m.Index + m.Length; p++) coveredPositions.Add(p);
                 }
+            }
+
+            // 2d. Automatic Real-Word Compound Tone / Vowel-Hat Confusable Detector (Offline < 15ms!)
+            // Tự động bắt hàng nghìn lỗi sai dấu / sai mũ chữ cái trong cụm từ thật (VD: phù họp -> phù hợp, tố chức -> tổ chức, giải phong -> giải phóng, phối họp -> phối hợp, nơi nhân -> nơi nhận, quốc phong -> quốc phòng...)
+            Dictionary<string, string> skelMap = GetCompoundSkeletonMap();
+            for (int i = 0; i + 1 < wordMatches.Count; i++)
+            {
+                Match m1 = wordMatches[i];
+                Match m2 = wordMatches[i + 1];
+                int gapStart = m1.Index + m1.Length;
+                if (m2.Index - gapStart != 1 || text[gapStart] != ' ') continue;
+                if (coveredPositions.Contains(m1.Index) || coveredPositions.Contains(m2.Index)) continue;
+
+                string pairOrig = m1.Value + " " + m2.Value;
+                string pairLow = pairOrig.ToLowerInvariant();
+                if (CommonVietnameseBigrams.Contains(pairLow) || ValidAmbiguousPairs.Contains(pairLow)) continue;
+                if (goodWords.Contains(pairOrig) || goodWords.Contains(m1.Value) || goodWords.Contains(m2.Value)) continue;
+
+                string skel = ToAsciiSkeleton(m1.Value) + " " + ToAsciiSkeleton(m2.Value);
+                string canonical;
+                if (skelMap.TryGetValue(skel, out canonical) && !string.Equals(pairLow, canonical, StringComparison.Ordinal))
+                {
+                    string[] cParts = canonical.Split(' ');
+                    if (cParts.Length == 2)
+                    {
+                        bool eq1 = string.Equals(m1.Value, cParts[0], StringComparison.OrdinalIgnoreCase);
+                        bool eq2 = string.Equals(m2.Value, cParts[1], StringComparison.OrdinalIgnoreCase);
+                        // Chỉ bắt khi đúng 1 trong 2 âm tiết bị sai dấu/sai mũ (tránh báo nhầm cụm hoàn toàn khác)
+                        if (eq1 ^ eq2)
+                        {
+                            string prop = PreserveCase(m1.Value, cParts[0]) + " " + PreserveCase(m2.Value, cParts[1]);
+                            if (!string.Equals(pairOrig, prop, StringComparison.Ordinal))
+                            {
+                                ordered.Add(new KeyValuePair<int, SpellCardIssue>(m1.Index, new SpellCardIssue
+                                {
+                                    Wrong = pairOrig,
+                                    Suggest = prop,
+                                    Badge = "Chính tả",
+                                    Reason = "Nhầm dấu thanh / nguyên âm trong cụm từ hành chính ('" + prop + "')",
+                                    IsSuspicious = false
+                                }));
+                                for (int p = m1.Index; p < m2.Index + m2.Length; p++) coveredPositions.Add(p);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2e. Bắt lỗi thể thức đơn từ ngữ cảnh rõ ràng (VD: "Sổ: 12/..." -> "Số: 12/...")
+            foreach (Match sm in Regex.Matches(text, @"(?<![A-Za-zÀ-Ỹà-ỹĐđ])Sổ(?=\s*[:/])"))
+            {
+                if (coveredPositions.Contains(sm.Index) || goodWords.Contains(sm.Value)) continue;
+                ordered.Add(new KeyValuePair<int, SpellCardIssue>(sm.Index, new SpellCardIssue
+                {
+                    Wrong = sm.Value,
+                    Suggest = "Số",
+                    Badge = "Nghi ngờ",
+                    Reason = "Kiểm tra số ký hiệu văn bản ('Số:' thay vì 'Sổ:')",
+                    IsSuspicious = true
+                }));
+                for (int p = sm.Index; p < sm.Index + sm.Length; p++) coveredPositions.Add(p);
             }
 
             ordered.Sort((a, b) => a.Key.CompareTo(b.Key));
@@ -1294,11 +1460,14 @@ namespace VBTMProSuite
 
                         string prompt = "Chỉ liệt kê lỗi chính tả, sai dấu, sai thanh điệu hoặc nhầm từ ngữ cảnh tiếng Việt thật sự sai trong đoạn văn sau dưới dạng JSON array: [{\"original\":\"cụm sai\",\"suggestion\":\"cụm đúng\",\"reason\":\"ngắn gọn\"}]. Không sửa tên riêng/số liệu. Nếu không có lỗi trả về [].\n\n" + chunks[ci];
                         long ttftMs, totalMs; bool fromCache; string usedModel;
+                        string prevSpeed = DesktopAiGateway.SpeedMode;
+                        DesktopAiGateway.SpeedMode = "Cân bằng";
                         string resp = DesktopAiGateway.GenerateStreaming(
                             "Bạn là chuyên gia hiệu đính văn bản tiếng Việt chuẩn NĐ 30 và Hướng dẫn 05-HD/VPTW.",
                             prompt,
                             null,
                             out ttftMs, out totalMs, out fromCache, out usedModel);
+                        DesktopAiGateway.SpeedMode = prevSpeed;
                         List<string[]> aiFound = WordSpellInspectorForm.ParseAiSpellResponseSafe(resp, chunks[ci]);
                         int chunkAdded = 0;
                         foreach (string[] row in aiFound)
